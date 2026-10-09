@@ -1,0 +1,9 @@
+1 tcp 1024 B clients=16 window=16 shared:4 work=0 callback
+1 tcp 1024 B clients=16 window=16 shared:4 work=0 coroutine
+1 tcp 1024 B clients=16 window=16 shared:4 work=10000 callback
+1 tcp 1024 B clients=16 window=16 shared:4 work=10000 coroutine
+1 tcp 1024 B clients=16 window=16 sharded:4 work=0 callback
+1 tcp 1024 B clients=16 window=16 sharded:4 work=0 coroutine
+1 tcp 1024 B clients=16 window=16 sharded:4 work=10000 callback
+1 tcp 1024 B clients=16 window=16 sharded:4 work=10000 coroutine
+Saved 8 measurements

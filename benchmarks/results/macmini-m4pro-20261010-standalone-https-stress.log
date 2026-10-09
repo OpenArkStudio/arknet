@@ -1,0 +1,10 @@
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+HTTPS owned: 16 clients, 2 restarts, 1672 batches, 1712128 verified echoes
+HTTPS shared-1: 16 clients, 2 restarts, 1010 batches, 1034240 verified echoes
+HTTPS shared-4: 16 clients, 2 restarts, 1708 batches, 1748992 verified echoes
+HTTPS sharded-4: 16 clients, 2 restarts, 1946 batches, 1992704 verified echoes
+===============================================================================
+[doctest] test cases:        1 |        1 passed | 0 failed | 9 skipped
+[doctest] assertions: 12976284 | 12976284 passed | 0 failed |
+[doctest] Status: SUCCESS!

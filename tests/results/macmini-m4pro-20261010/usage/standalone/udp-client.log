@@ -1,0 +1,5 @@
+stdout:
+echo received
+
+stderr:
+

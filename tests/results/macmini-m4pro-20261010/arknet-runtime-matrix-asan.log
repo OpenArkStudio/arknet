@@ -1,0 +1,192 @@
+[1/39] Building CXX object tests/CMakeFiles/arknet_tcp_test.dir/test_main.cpp.o
+[2/39] Building CXX object tests/CMakeFiles/arknet_udp_test.dir/test_main.cpp.o
+[3/39] Building CXX object tests/CMakeFiles/arknet_udp_test.dir/udp.cpp.o
+[4/39] Building CXX object tests/CMakeFiles/arknet_websocket_test.dir/test_main.cpp.o
+[5/39] Building CXX object tests/CMakeFiles/arknet_tcp_test.dir/tcp.cpp.o
+[6/39] Building CXX object tests/CMakeFiles/arknet_lifecycle_test.dir/test_main.cpp.o
+[7/39] Building CXX object tests/CMakeFiles/arknet_detail_test.dir/detail.cpp.o
+[8/39] Building CXX object tests/CMakeFiles/arknet_detail_test.dir/test_main.cpp.o
+[9/39] Building CXX object tests/CMakeFiles/arknet_websocket_test.dir/websocket.cpp.o
+[10/39] Building CXX object tests/CMakeFiles/arknet_concurrency_test.dir/test_main.cpp.o
+[11/39] Building CXX object tests/CMakeFiles/arknet_lifecycle_test.dir/lifecycle.cpp.o
+[12/39] Building CXX object tests/CMakeFiles/arknet_http_test.dir/test_main.cpp.o
+[13/39] Building CXX object tests/CMakeFiles/arknet_router_test.dir/router.cpp.o
+[14/39] Building CXX object tests/CMakeFiles/arknet_router_test.dir/test_main.cpp.o
+[15/39] Building CXX object tests/CMakeFiles/arknet_http_test.dir/http.cpp.o
+[16/39] Building CXX object tests/CMakeFiles/arknet_io_pool_test.dir/test_main.cpp.o
+[17/39] Building CXX object tests/CMakeFiles/arknet_io_pool_test.dir/io_pool.cpp.o
+[18/39] Building CXX object tests/CMakeFiles/arknet_keepalive_test.dir/test_main.cpp.o
+[19/39] Building CXX object tests/CMakeFiles/arknet_keepalive_test.dir/keepalive.cpp.o
+[20/39] Building CXX object tests/CMakeFiles/arknet_coroutine_shutdown_test.dir/test_main.cpp.o
+[21/39] Building CXX object tests/CMakeFiles/arknet_coroutine_shutdown_test.dir/coroutine_shutdown.cpp.o
+[22/39] Building CXX object tests/CMakeFiles/arknet_concurrency_test.dir/concurrency.cpp.o
+[23/39] Building CXX object tests/CMakeFiles/arknet_tls_test.dir/test_main.cpp.o
+[24/39] Linking CXX executable tests/arknet_tcp_test
+[25/39] Linking CXX executable tests/arknet_udp_test
+[26/39] Linking CXX executable tests/arknet_websocket_test
+[27/39] Linking CXX executable tests/arknet_lifecycle_test
+[28/39] Linking CXX executable tests/arknet_detail_test
+[29/39] Linking CXX executable tests/arknet_concurrency_test
+[30/39] Linking CXX executable tests/arknet_http_test
+[31/39] Linking CXX executable tests/arknet_router_test
+[32/39] Linking CXX executable tests/arknet_io_pool_test
+[33/39] Linking CXX executable tests/arknet_keepalive_test
+[34/39] Linking CXX executable tests/arknet_coroutine_shutdown_test
+[35/39] Building CXX object tests/CMakeFiles/arknet_tls_test.dir/tls.cpp.o
+[36/39] Linking CXX executable tests/arknet_tls_test
+[37/39] Building CXX object tests/CMakeFiles/arknet_stress_test.dir/stress.cpp.o
+[38/39] Linking CXX executable tests/arknet_stress_test
+[38/39] cd /private/tmp/arknet-macmini-asan && /opt/homebrew/bin/cmake -DARKNET_TEST_COMMANDS=/private/tmp/arknet-macmini-asan/tests/check-Debug.cmake -DARKNET_TEST_LOG_DIR=/private/tmp/arknet-macmini-asan/tests/logs/Debug -P /Users/nick/work/opensource/arknet/tests/run.cmake
+-- Running tcp
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  5 |  5 passed | 0 failed | 0 skipped
+[doctest] assertions: 30 | 30 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running udp
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  12 |  12 passed | 0 failed | 0 skipped
+[doctest] assertions: 968 | 968 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running websocket
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  3 |  3 passed | 0 failed | 0 skipped
+[doctest] assertions: 17 | 17 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running lifecycle
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  15 |  15 passed | 0 failed | 0 skipped
+[doctest] assertions: 152 | 152 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running detail
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 11 | 11 passed | 0 failed | 0 skipped
+[doctest] assertions: 35 | 35 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running concurrency
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCP external stop before write: 202 ms, peer watchdog=0
+TCP reconnect generation: 1 -> 2, old completion=Operation aborted./0, received=1
+TCP dgram owned: concurrent admission, recovery, and stop passed
+TCP dgram external: concurrent admission, recovery, and stop passed
+WebSocket owned: concurrent admission, recovery, and stop passed
+WebSocket external: concurrent admission, recovery, and stop passed
+WebSocket TLS owned/external: concurrent admission and recovery passed
+===============================================================================
+[doctest] test cases:     6 |     6 passed | 0 failed | 0 skipped
+[doctest] assertions: 44428 | 44428 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running http
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 15 | 15 passed | 0 failed | 0 skipped
+[doctest] assertions: 98 | 98 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running router
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  9 |  9 passed | 0 failed | 0 skipped
+[doctest] assertions: 86 | 86 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running io_pool
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:   6 |   6 passed | 0 failed | 0 skipped
+[doctest] assertions: 125 | 125 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running keepalive
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
+[doctest] assertions: 21 | 21 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running coroutine_shutdown
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+[doctest] assertions: 4 | 4 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running stress
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCP owned: 16 clients, 2 restarts, 18 batches, 18432 verified echoes
+TCP shared-1: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+TCP shared-4: 16 clients, 2 restarts, 10 batches, 10240 verified echoes
+TCP sharded-4: 16 clients, 2 restarts, 12 batches, 12288 verified echoes
+TCP slow receiver: 3 accepted, 9 rejected, queue drained
+TCP blocked writer stop: 202 ms, peer watchdog=0
+TCP blocked server owned: 0 ms, peer watchdog=0
+TCP blocked server external: 202 ms, peer watchdog=0
+TCP stop in connect owned: session cleaned
+TCP stop in connect external: session cleaned
+UDP owned: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+UDP shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+UDP shared-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+UDP sharded-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+WS owned: 16 clients, 2 restarts, 10 batches, 10240 verified echoes
+WS shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+WS shared-4: 16 clients, 2 restarts, 6 batches, 6144 verified echoes
+WS sharded-4: 16 clients, 2 restarts, 6 batches, 6144 verified echoes
+HTTP owned: 16 clients, 2 restarts, 8 batches, 8192 verified echoes
+HTTP shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+HTTP shared-4: 16 clients, 2 restarts, 6 batches, 6144 verified echoes
+HTTP sharded-4: 16 clients, 2 restarts, 6 batches, 6144 verified echoes
+TCPS owned: 16 clients, 2 restarts, 14 batches, 14336 verified echoes
+TCPS shared-1: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+TCPS shared-4: 16 clients, 2 restarts, 8 batches, 8192 verified echoes
+TCPS sharded-4: 16 clients, 2 restarts, 8 batches, 8192 verified echoes
+WSS owned: 16 clients, 2 restarts, 8 batches, 8192 verified echoes
+WSS shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+WSS shared-4: 16 clients, 2 restarts, 6 batches, 6144 verified echoes
+WSS sharded-4: 16 clients, 2 restarts, 6 batches, 6144 verified echoes
+HTTPS owned: 16 clients, 2 restarts, 8 batches, 8192 verified echoes
+HTTPS shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+HTTPS shared-4: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+HTTPS sharded-4: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+===============================================================================
+[doctest] test cases:     10 |     10 passed | 0 failed | 0 skipped
+[doctest] assertions: 353361 | 353361 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running tls
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+verified TLS connect (localhost): 4 ms
+verified TLS connect (127.0.0.1): 2 ms
+verified TLS connect (localhost): 6 ms
+verified TLS connect (127.0.0.1): 2 ms
+mTLS client connect (localhost): 3 ms
+mTLS client connect (localhost): 4 ms
+===============================================================================
+[doctest] test cases:  20 |  20 passed | 0 failed | 0 skipped
+[doctest] assertions: 120 | 120 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running check_runner
+-- Running install_consumer

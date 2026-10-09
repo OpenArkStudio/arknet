@@ -1,0 +1,24 @@
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCP owned: 16 clients, 2 restarts, 1971 batches, 2018304 verified echoes
+TCP shared-1: 16 clients, 2 restarts, 1672 batches, 1712128 verified echoes
+TCP shared-4: 16 clients, 2 restarts, 2602 batches, 2664448 verified echoes
+TCP sharded-4: 16 clients, 2 restarts, 3243 batches, 3320832 verified echoes
+TCP slow receiver: 2 accepted, 10 rejected, queue drained
+TCP blocked writer stop: 202 ms, peer watchdog=0
+TCP blocked server owned: 202 ms, peer watchdog=0
+TCP blocked server external: 200 ms, peer watchdog=0
+TCP stop in connect owned: session cleaned
+TCP stop in connect external: session cleaned
+UDP owned: 16 clients, 2 restarts, 878 batches, 899072 verified echoes
+===============================================================================
+/Users/nick/work/opensource/arknet/tests/stress.cpp:693:
+TEST SUITE: stress.udp
+TEST CASE:  stress.udp.load
+
+/Users/nick/work/opensource/arknet/tests/stress.cpp:693: FATAL ERROR: test case CRASHED: SIGTERM - Termination request signal
+
+===============================================================================
+[doctest] test cases:        5 |        4 passed | 1 failed | 5 skipped
+[doctest] assertions: 21450979 | 21450979 passed | 0 failed |
+[doctest] Status: FAILURE!

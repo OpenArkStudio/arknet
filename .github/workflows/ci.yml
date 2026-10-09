@@ -1,0 +1,97 @@
+name: CI
+run-name: CI - ${{ github.event_name }} - ${{ github.ref_name }}
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  format:
+    name: Style - clang-format 18
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-format 18
+        run: sudo apt-get update && sudo apt-get install -y clang-format-18
+      - name: Check project C++ formatting
+        env:
+          CLANG_FORMAT: clang-format-18
+        run: |
+          bash scripts/test_format.sh
+          bash scripts/format.sh --check
+  test:
+    name: Test - ${{ matrix.os }} - ${{ matrix.boost == 'ON' && 'Boost' || 'Standalone' }} - ${{ matrix.ssl == 'ON' && 'TLS' || 'NoTLS' }} - ${{ matrix.sanitize == 'THREAD' && 'TSan' || matrix.sanitize == 'ON' && 'ASan+UBSan' || 'Release' }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        boost: ["OFF", "ON"]
+        ssl: ["ON"]
+        sanitize: ["OFF"]
+        include:
+          - {os: ubuntu-latest, boost: "OFF", ssl: "OFF", sanitize: "OFF"}
+          - {os: ubuntu-latest, boost: "ON", ssl: "OFF", sanitize: "OFF"}
+          - {os: ubuntu-latest, boost: "OFF", ssl: "ON", sanitize: "ON"}
+          - {os: ubuntu-latest, boost: "ON", ssl: "ON", sanitize: "ON"}
+          - {os: ubuntu-latest, boost: "OFF", ssl: "ON", sanitize: "THREAD"}
+          - {os: ubuntu-latest, boost: "ON", ssl: "ON", sanitize: "THREAD"}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - uses: lukka/get-cmake@latest
+      - uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 0699a19d0c6386247ce50d4dedbb8217d484d536
+          vcpkgJsonGlob: vcpkg.json
+      - name: Configure TSan address space
+        if: matrix.sanitize == 'THREAD'
+        run: sudo sysctl -w vm.mmap_rnd_bits=28
+      - name: Configure
+        shell: pwsh
+        run: >-
+          cmake -S . -B build -G Ninja
+          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          "-DVCPKG_MANIFEST_FEATURES=boost;ssl"
+          -DCMAKE_BUILD_TYPE=${{ matrix.sanitize != 'OFF' && 'Debug' || 'Release' }}
+          -DARKNET_USE_BOOST_ASIO=${{ matrix.boost }}
+          -DARKNET_ENABLE_SSL=${{ matrix.ssl }}
+          -DARKNET_BUILD_BENCHMARKS=${{ matrix.sanitize != 'OFF' && 'OFF' || 'ON' }}
+          ${{ matrix.sanitize == 'ON' && '"-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"' || matrix.sanitize == 'THREAD' && '"-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=thread"' || '' }}
+      - run: cmake --build build --parallel ${{ matrix.sanitize == 'ON' && '1' || matrix.sanitize == 'THREAD' && '2' || '3' }}
+      - name: Test
+        if: matrix.sanitize == 'OFF'
+        run: cmake --build build --target arknet_check
+      - name: Test with sanitizers
+        if: matrix.sanitize == 'ON'
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: cmake --build build --target arknet_check
+      - name: Test with thread sanitizer
+        if: matrix.sanitize == 'THREAD'
+        env:
+          TSAN_OPTIONS: halt_on_error=1:second_deadlock_stack=1
+        run: cmake --build build --target arknet_check
+      - name: Check benchmark batch runner and report calculations
+        if: runner.os == 'Linux' && matrix.ssl == 'ON' && matrix.sanitize == 'OFF'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          bash scripts/test_benchmark_matrix.sh
+          python3 -m unittest discover -s benchmarks -p 'test_*.py' -v
+          python3 -m unittest discover -s scripts -p 'test_udp_limits_report.py' -v
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ matrix.os }}-${{ matrix.boost == 'ON' && 'Boost' || 'Standalone' }}-${{ matrix.ssl == 'ON' && 'TLS' || 'NoTLS' }}-${{ matrix.sanitize == 'THREAD' && 'TSan' || matrix.sanitize == 'ON' && 'ASan+UBSan' || 'Release' }}
+          path: |
+            build/tests/logs/**/*.log

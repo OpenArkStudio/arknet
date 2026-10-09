@@ -1,0 +1,7 @@
+ native TCP traffic timed out
+
+Traceback (most recent call last):
+  File "<string>", line 7, in <module>
+    assert result.returncode==0,(command,result.returncode)
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError: (['/private/tmp/arknet-macmini-standalone/benchmarks/arknet_coroutine_benchmark', '--execution', 'callback', '--io-model', 'shared', '--io-threads', '4', '--clients', '4', '--payload', '65507', '--window', '64', '--seconds', '0.3', '--warmup', '0.2'], 1)

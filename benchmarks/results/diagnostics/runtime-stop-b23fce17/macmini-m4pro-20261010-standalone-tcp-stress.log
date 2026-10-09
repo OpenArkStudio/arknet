@@ -1,0 +1,16 @@
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCP owned: 16 clients, 2 restarts, 1933 batches, 1979392 verified echoes
+TCP shared-1: 16 clients, 2 restarts, 1702 batches, 1742848 verified echoes
+TCP shared-4: 16 clients, 2 restarts, 2838 batches, 2906112 verified echoes
+TCP sharded-4: 16 clients, 2 restarts, 3305 batches, 3384320 verified echoes
+TCP slow receiver: 2 accepted, 10 rejected, queue drained
+TCP blocked writer stop: 202 ms, peer watchdog=0
+TCP blocked server owned: 201 ms, peer watchdog=0
+TCP blocked server external: 202 ms, peer watchdog=0
+TCP stop in connect owned: session cleaned
+TCP stop in connect external: session cleaned
+===============================================================================
+[doctest] test cases:        4 |        4 passed | 0 failed | 6 skipped
+[doctest] assertions: 20025537 | 20025537 passed | 0 failed |
+[doctest] Status: SUCCESS!

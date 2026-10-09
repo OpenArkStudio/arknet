@@ -1,0 +1,8 @@
+1 tcp 1024 B clients=2 window=1 shared:1 work=0 arknet-callback
+1 udp 1024 B clients=2 window=1 shared:1 work=0 arknet-callback
+1 websocket 1024 B clients=2 window=1 shared:1 work=0 arknet-callback
+1 tcps 1024 B clients=2 window=1 shared:1 work=0 arknet-callback
+1 wss 1024 B clients=2 window=1 shared:1 work=0 arknet-callback
+1 http 1024 B clients=2 window=1 shared:1 work=0 arknet-callback
+1 https 1024 B clients=2 window=1 shared:1 work=0 arknet-callback
+Saved 7 measurements

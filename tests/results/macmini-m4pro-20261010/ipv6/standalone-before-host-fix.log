@@ -1,0 +1,30 @@
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+/Users/nick/work/opensource/arknet/tests/ipv6.cpp:254:
+TEST CASE:  WebSocket IPv6 Host uses brackets and the connected port
+
+/Users/nick/work/opensource/arknet/tests/ipv6.cpp:115: FATAL ERROR: REQUIRE( (hosts.wait(1).front() == authority) ) is NOT correct!
+  values: REQUIRE( false )
+  logged: WebSocket Host brackets IPv6 and includes the actual port
+
+===============================================================================
+/Users/nick/work/opensource/arknet/tests/ipv6.cpp:259:
+TEST CASE:  WebSocket IPv4 Host retains its address and connected port
+
+/Users/nick/work/opensource/arknet/tests/ipv6.cpp:115: FATAL ERROR: REQUIRE( (hosts.wait(1).front() == authority) ) is NOT correct!
+  values: REQUIRE( false )
+  logged: WebSocket Host brackets IPv6 and includes the actual port
+
+===============================================================================
+/Users/nick/work/opensource/arknet/tests/ipv6.cpp:275:
+TEST CASE:  WSS verifies IPv6 identity and sends a bracketed Host
+
+/Users/nick/work/opensource/arknet/tests/ipv6.cpp:115: FATAL ERROR: REQUIRE( (hosts.wait(1).front() == authority) ) is NOT correct!
+  values: REQUIRE( false )
+  logged: WebSocket Host brackets IPv6 and includes the actual port
+
+===============================================================================
+[doctest] test cases: 11 |  8 passed | 3 failed | 0 skipped
+[doctest] assertions: 90 | 87 passed | 3 failed |
+[doctest] Status: FAILURE!

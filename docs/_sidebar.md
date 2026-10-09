@@ -1,0 +1,39 @@
+- <span data-group data-en="Getting Started" data-zh="快速开始">Getting Started</span>
+  - <a href="#/README" data-page="README" data-en="Overview" data-zh="概览">Overview</a>
+  - <a href="#/guide" data-page="guide" data-en="Installation and Configuration" data-zh="安装与配置">Installation and Configuration</a>
+  - <a href="#/quickstart" data-page="quickstart" data-en="First Client and Server" data-zh="第一个客户端与服务端">First Client and Server</a>
+- <span data-group data-en="TCP" data-zh="TCP">TCP</span>
+  - <a href="#/tcp/overview" data-page="tcp/overview" data-en="Introduction" data-zh="介绍">Introduction</a>
+  - <a href="#/tcp/usage" data-page="tcp/usage" data-en="Usage" data-zh="使用">Usage</a>
+  - <a href="#/tcp/performance" data-page="tcp/performance" data-en="Performance" data-zh="性能">Performance</a>
+- <span data-group data-en="UDP" data-zh="UDP">UDP</span>
+  - <a href="#/udp/overview" data-page="udp/overview" data-en="Introduction" data-zh="介绍">Introduction</a>
+  - <a href="#/udp/usage" data-page="udp/usage" data-en="Usage" data-zh="使用">Usage</a>
+  - <a href="#/udp/performance" data-page="udp/performance" data-en="Performance" data-zh="性能">Performance</a>
+- <span data-group data-en="WebSocket" data-zh="WebSocket">WebSocket</span>
+  - <a href="#/websocket/overview" data-page="websocket/overview" data-en="Introduction" data-zh="介绍">Introduction</a>
+  - <a href="#/websocket/usage" data-page="websocket/usage" data-en="Usage" data-zh="使用">Usage</a>
+  - <a href="#/websocket/performance" data-page="websocket/performance" data-en="Performance" data-zh="性能">Performance</a>
+- <span data-group data-en="TLS / mTLS" data-zh="TLS / mTLS">TLS / mTLS</span>
+  - <a href="#/tls/overview" data-page="tls/overview" data-en="Introduction" data-zh="介绍">Introduction</a>
+  - <a href="#/tls/usage" data-page="tls/usage" data-en="Usage" data-zh="使用">Usage</a>
+  - <a href="#/tls/performance" data-page="tls/performance" data-en="Performance" data-zh="性能">Performance</a>
+- <span data-group data-en="HTTP / HTTPS" data-zh="HTTP / HTTPS">HTTP / HTTPS</span>
+  - <a href="#/http" data-page="http" data-en="Introduction" data-zh="介绍">Introduction</a>
+  - <a href="#/http/usage" data-page="http/usage" data-en="Usage" data-zh="使用">Usage</a>
+  - <a href="#/http/routing" data-page="http/routing" data-en="Routing and Middleware" data-zh="路由与中间件">Routing and Middleware</a>
+  - <a href="#/http/performance" data-page="http/performance" data-en="Performance" data-zh="性能">Performance</a>
+- <span data-group data-en="Concepts and Reference" data-zh="概念与参考">Concepts and Reference</span>
+  - <a href="#/addressing" data-page="addressing" data-en="IPv4 and IPv6" data-zh="IPv4 与 IPv6">IPv4 and IPv6</a>
+  - <a href="#/runtime" data-page="runtime" data-en="Lifecycle, Sends and Timers" data-zh="生命周期、发送与定时器">Lifecycle, Sends and Timers</a>
+  - <a href="#/threading" data-page="threading" data-en="IO Models and Coroutines" data-zh="IO 模型与协程">IO Models and Coroutines</a>
+  - <a href="#/api" data-page="api" data-en="Public API Index" data-zh="公共 API 索引">Public API Index</a>
+  - <a href="#/design" data-page="design" data-en="Architecture and Extension" data-zh="架构与扩展">Architecture and Extension</a>
+- <span data-group data-en="Validation and Development" data-zh="验证与开发">Validation and Development</span>
+  - <a href="#/testing" data-page="testing" data-en="Testing and Measurement" data-zh="测试与测量方法">Testing and Measurement</a>
+  - <a href="#/performance/overview" data-page="performance/overview" data-en="Local Performance Report" data-zh="本地性能报告">Local Performance Report</a>
+  - <a href="#/performance/dimensions" data-page="performance/dimensions" data-en="Payload, Batch and Execution" data-zh="包体、批量与执行方式">Payload, Batch and Execution</a>
+  - <a href="#/troubleshooting" data-page="troubleshooting" data-en="Troubleshooting" data-zh="故障排查">Troubleshooting</a>
+  - <a href="#/roadmap" data-page="roadmap" data-en="Roadmap and TODO" data-zh="路线图与 TODO">Roadmap and TODO</a>
+  - <a href="#/contributing" data-page="contributing" data-en="Contributing" data-zh="参与开发">Contributing</a>
+  - <a href="#/THIRD_PARTY_NOTICES" data-page="THIRD_PARTY_NOTICES" data-en="Third-Party Notices" data-zh="第三方声明">Third-Party Notices</a>

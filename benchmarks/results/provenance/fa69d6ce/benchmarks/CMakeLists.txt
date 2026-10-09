@@ -1,0 +1,8 @@
+add_executable(arknet_loopback_benchmark loopback.cpp)
+target_link_libraries(arknet_loopback_benchmark PRIVATE arknet::arknet)
+add_executable(arknet_coroutine_benchmark coroutine.cpp)
+target_link_libraries(arknet_coroutine_benchmark PRIVATE arknet::arknet)
+if(WIN32)
+    target_link_libraries(arknet_loopback_benchmark PRIVATE psapi)
+    target_link_libraries(arknet_coroutine_benchmark PRIVATE psapi)
+endif()

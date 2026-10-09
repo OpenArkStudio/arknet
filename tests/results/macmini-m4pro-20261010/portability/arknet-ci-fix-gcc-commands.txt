@@ -1,0 +1,40 @@
+Compiler: g++-15 (Homebrew GCC 15.2.0_1) 15.2.0
+Standard library: libstdc++
+Configuration: C++20, standalone Asio 1.38.2, NoTLS, -O0, pthread
+Working directory: /Users/nick/work/opensource/arknet
+
+Lifecycle baseline before the future callback fix:
+TLS disabled: ARKNET_ENABLE_SSL was not defined; no OpenSSL libraries were linked.
+/opt/homebrew/bin/g++-15 -std=c++20 -O0 -pthread -Iinclude -I/private/tmp/arknet-asio-1.38.2/include tests/lifecycle.cpp tests/framework.cpp tests/test_main.cpp -o /private/tmp/arknet-lifecycle-gcc-before
+Compile exit: 0
+/private/tmp/arknet-lifecycle-gcc-before '--test-case=External timer stop drains canceled waits and releases callback state'
+Run exit: 1; 1 failed case, 14 skipped; 2/3 assertions passed
+Run log: /private/tmp/arknet-lifecycle-gcc-before.log
+
+Lifecycle after the future callback fix:
+TLS disabled: ARKNET_ENABLE_SSL was not defined; no OpenSSL libraries were linked.
+/opt/homebrew/bin/g++-15 -std=c++20 -O0 -pthread -Iinclude -I/private/tmp/arknet-asio-1.38.2/include tests/lifecycle.cpp tests/framework.cpp tests/test_main.cpp -o /private/tmp/arknet-lifecycle-gcc-after
+Compile exit: 0
+/private/tmp/arknet-lifecycle-gcc-after
+Run exit: 0; 18/18 cases, 180/180 assertions
+Run log: /private/tmp/arknet-lifecycle-gcc-after.log
+The original before binary was compiled before editing the future task implementation.
+Both runs used the same GCC/libstdc++ toolchain and standalone Asio headers.
+
+/opt/homebrew/bin/g++-15 -std=c++20 -O0 -pthread -Iinclude -I/private/tmp/arknet-asio-1.38.2/include tests/tcp.cpp tests/framework.cpp tests/test_main.cpp -o /private/tmp/arknet-ci-fix-gcc-tcp.test
+Compile exit: 0
+/private/tmp/arknet-ci-fix-gcc-tcp.test
+Run exit: 0; 5/5 cases, 30/30 assertions
+Run log: /private/tmp/arknet-ci-fix-gcc-tcp.log
+
+/opt/homebrew/bin/g++-15 -std=c++20 -O0 -pthread -Iinclude -I/private/tmp/arknet-asio-1.38.2/include tests/detail.cpp tests/framework.cpp tests/test_main.cpp -o /private/tmp/arknet-ci-fix-gcc-detail.test
+Compile exit: 0
+/private/tmp/arknet-ci-fix-gcc-detail.test
+Run exit: 0; 11/11 cases, 35/35 assertions
+Run log: /private/tmp/arknet-ci-fix-gcc-detail.log
+
+/opt/homebrew/bin/g++-15 -std=c++20 -O0 -pthread -Iinclude -I/private/tmp/arknet-asio-1.38.2/include tests/io_pool.cpp tests/framework.cpp tests/test_main.cpp -o /private/tmp/arknet-ci-fix-gcc-io_pool.test
+Compile exit: 0
+/private/tmp/arknet-ci-fix-gcc-io_pool.test
+Run exit: 0; 6/6 cases, 125/125 assertions
+Run log: /private/tmp/arknet-ci-fix-gcc-io_pool.log

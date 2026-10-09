@@ -1,0 +1,23 @@
+include(CMakeFindDependencyMacro)
+find_dependency(Threads ${_ARKNET_DEPENDENCIES_REQUIRED})
+if(ARKNET_USE_BOOST_ASIO)
+    find_dependency(Boost 1.90 CONFIG ${_ARKNET_DEPENDENCIES_REQUIRED})
+else()
+    find_path(ARKNET_ASIO_INCLUDE_DIR asio.hpp REQUIRED)
+    file(STRINGS "${ARKNET_ASIO_INCLUDE_DIR}/asio/version.hpp" _arknet_asio_version
+        REGEX "^#define ASIO_VERSION [0-9]+")
+    string(REGEX REPLACE "^#define ASIO_VERSION ([0-9]+).*" "\\1"
+        _arknet_asio_version "${_arknet_asio_version}")
+    if(NOT _arknet_asio_version MATCHES "^[0-9]+$" OR _arknet_asio_version LESS 103800)
+        message(FATAL_ERROR "arknet requires Standalone Asio 1.38.0 or newer for the kqueue descriptor publication fix. Use the repository vcpkg overlay or set ARKNET_ASIO_INCLUDE_DIR to newer headers.")
+    endif()
+    unset(_arknet_asio_version)
+    if(NOT TARGET arknet::asio)
+        add_library(arknet::asio INTERFACE IMPORTED)
+        set_target_properties(arknet::asio PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${ARKNET_ASIO_INCLUDE_DIR}")
+    endif()
+endif()
+if(ARKNET_ENABLE_SSL)
+    find_dependency(OpenSSL 1.1.1 ${_ARKNET_DEPENDENCIES_REQUIRED})
+endif()

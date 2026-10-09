@@ -1,0 +1,10 @@
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+WS owned: 16 clients, 2 restarts, 1913 batches, 1958912 verified echoes
+WS shared-1: 16 clients, 2 restarts, 1392 batches, 1425408 verified echoes
+WS shared-4: 16 clients, 2 restarts, 1876 batches, 1921024 verified echoes
+WS sharded-4: 16 clients, 2 restarts, 2550 batches, 2611200 verified echoes
+===============================================================================
+[doctest] test cases:        1 |        1 passed | 0 failed | 9 skipped
+[doctest] assertions: 15833236 | 15833236 passed | 0 failed |
+[doctest] Status: SUCCESS!

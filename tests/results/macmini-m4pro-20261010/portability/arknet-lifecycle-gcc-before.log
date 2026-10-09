@@ -1,0 +1,14 @@
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+tests/lifecycle.cpp:268:
+TEST CASE:  External timer stop drains canceled waits and releases callback state
+
+tests/lifecycle.cpp:287: FATAL ERROR: REQUIRE( (released.expired()) ) is NOT correct!
+  values: REQUIRE( false )
+  logged: stop releases canceled timer and post captures
+
+===============================================================================
+[doctest] test cases: 1 | 0 passed | 1 failed | 14 skipped
+[doctest] assertions: 3 | 2 passed | 1 failed |
+[doctest] Status: FAILURE!

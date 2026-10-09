@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "protocol": "tcp",
+      "ok": true,
+      "server_pid": 87745,
+      "client_returncode": 0,
+      "server_returncode": 0,
+      "server_reaped": true
+    },
+    {
+      "protocol": "udp",
+      "ok": true,
+      "server_pid": 87747,
+      "client_returncode": 0,
+      "server_returncode": 0,
+      "server_reaped": true
+    },
+    {
+      "protocol": "websocket",
+      "ok": true,
+      "server_pid": 87751,
+      "client_returncode": 0,
+      "server_returncode": 0,
+      "server_reaped": true
+    },
+    {
+      "protocol": "tls",
+      "ok": true,
+      "server_pid": 87753,
+      "client_returncode": 0,
+      "server_returncode": 0,
+      "server_reaped": true
+    },
+    {
+      "protocol": "http",
+      "ok": true,
+      "server_pid": 87755,
+      "client_returncode": 0,
+      "server_returncode": 0,
+      "server_reaped": true
+    },
+    {
+      "protocol": "https",
+      "ok": true,
+      "server_pid": 87757,
+      "client_returncode": 0,
+      "server_returncode": 0,
+      "server_reaped": true
+    },
+    {
+      "protocol": "wss",
+      "ok": true,
+      "server_pid": 87770,
+      "client_returncode": 0,
+      "server_returncode": 0,
+      "server_reaped": true
+    }
+  ]
+}

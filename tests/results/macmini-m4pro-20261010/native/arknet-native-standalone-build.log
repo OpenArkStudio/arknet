@@ -1,0 +1,4 @@
+[1/4] Building CXX object benchmarks/CMakeFiles/arknet_coroutine_benchmark.dir/coroutine.cpp.o
+[2/4] Building CXX object tests/CMakeFiles/arknet_coroutine_shutdown_test.dir/coroutine_shutdown.cpp.o
+[3/4] Linking CXX executable benchmarks/arknet_coroutine_benchmark
+[4/4] Linking CXX executable tests/arknet_coroutine_shutdown_test

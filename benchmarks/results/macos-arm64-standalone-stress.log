@@ -1,0 +1,23 @@
+2026-10-09T10:31:46.777892+00:00 /private/tmp/arknet-validation-standalone/tests/arknet_stress_test --protocol all --seconds 180 --clients 16 --rounds 2 --window 4 --certs tests/certs
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCP owned: 16 clients, 2 restarts, 9443 batches, 9669632 verified echoes
+TCP external: 16 clients, 2 restarts, 6016 batches, 6160384 verified echoes
+TCP slow receiver: 2 accepted, 10 rejected, queue drained
+TCP blocked writer stop: 203 ms, peer watchdog=0
+TCP blocked server owned: 216 ms, peer watchdog=0
+TCP blocked server external: 202 ms, peer watchdog=0
+TCP stop in connect owned: session cleaned
+TCP stop in connect external: session cleaned
+UDP owned: 16 clients, 2 restarts, 3730 batches, 3819520 verified echoes
+UDP external: 16 clients, 2 restarts, 4235 batches, 4336640 verified echoes
+WS owned: 16 clients, 2 restarts, 9470 batches, 9697280 verified echoes
+WS external: 16 clients, 2 restarts, 6144 batches, 6291456 verified echoes
+TCPS owned: 16 clients, 2 restarts, 9553 batches, 9782272 verified echoes
+TCPS external: 16 clients, 2 restarts, 5260 batches, 5386240 verified echoes
+WSS owned: 16 clients, 2 restarts, 9378 batches, 9603072 verified echoes
+WSS external: 16 clients, 2 restarts, 4478 batches, 4585472 verified echoes
+===============================================================================
+[doctest] test cases:         8 |         8 passed | 0 failed | 0 skipped
+[doctest] assertions: 138664349 | 138664349 passed | 0 failed |
+[doctest] Status: SUCCESS!

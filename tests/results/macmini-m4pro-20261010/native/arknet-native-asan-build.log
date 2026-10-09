@@ -1,0 +1,2 @@
+[1/2] Building CXX object tests/CMakeFiles/arknet_coroutine_shutdown_test.dir/coroutine_shutdown.cpp.o
+[2/2] Linking CXX executable tests/arknet_coroutine_shutdown_test

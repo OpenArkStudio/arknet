@@ -1,0 +1,44 @@
+ip:
+	2652833084 total packet received
+		0 bad header checksum
+		285991 headers (5719820 bytes) checksummed in software
+		0 with size smaller than minimum
+		0 with data size < data length
+		118603 with data size > data length
+			0 packet forced to software checksum
+		0 with ip length > max ip packet size
+		0 with header length < data size
+		0 with data length < header length
+		0 with bad options
+		0 with incorrect version number
+		0 fragment received
+			0 dropped (dup or out of space)
+			0 dropped after timeout
+			0 reassembled ok
+		2652833307 packet for this host
+		213 packets for unknown/unsupported protocol
+		0 packet forwarded (0 packet fast forwarded)
+		0 packet not forwardable
+		0 packet received for unknown multicast group
+		0 redirect sent
+		411236 input packets not chained due to collision
+		2652417400 input packet processed in a chain
+		445 input packets unable to chain
+		307313254 input packet chains processed with length greater than 2
+		117481449 input packet chains processed with length greater than 4
+		0 input packet did not go through list processing path
+		0 input packet that passed the weak ES interface address match
+		0 input packet with no interface address match
+	2652567440 packet sent from this host
+		0 packet sent with fabricated ip header
+		0 output packet dropped due to no bufs, etc.
+		0 output packet discarded due to no route
+		0 output datagram fragmented
+		0 fragment created
+		0 datagram that can't be fragmented
+		0 tunneling packet that can't find gif
+		0 datagram with bad address in header
+		0 packet dropped due to no bufs for control data
+		0 packet dropped due to NECP policy
+		3450686 headers (69013728 bytes) checksummed in software
+	1 open raw IP socket

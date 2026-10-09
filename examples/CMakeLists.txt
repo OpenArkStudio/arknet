@@ -1,0 +1,6 @@
+add_executable(arknet_echo_server echo_server.cpp)
+target_link_libraries(arknet_echo_server PRIVATE arknet::arknet)
+add_executable(arknet_http_echo_server http_echo_server.cpp)
+target_link_libraries(arknet_http_echo_server PRIVATE arknet::arknet)
+add_executable(arknet_ipv6_echo ipv6_echo.cpp)
+target_link_libraries(arknet_ipv6_echo PRIVATE arknet::arknet)

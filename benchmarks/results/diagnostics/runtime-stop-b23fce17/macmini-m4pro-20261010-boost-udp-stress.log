@@ -1,0 +1,10 @@
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+UDP owned: 16 clients, 2 restarts, 926 batches, 948224 verified echoes
+UDP shared-1: 16 clients, 2 restarts, 947 batches, 969728 verified echoes
+UDP shared-4: 16 clients, 2 restarts, 885 batches, 906240 verified echoes
+UDP sharded-4: 16 clients, 2 restarts, 930 batches, 952320 verified echoes
+===============================================================================
+[doctest] test cases:       1 |       1 passed | 0 failed | 9 skipped
+[doctest] assertions: 7553172 | 7553172 passed | 0 failed |
+[doctest] Status: SUCCESS!

@@ -1,0 +1,174 @@
+[0/1] cd /private/tmp/arknet-macmini-tsan && /opt/homebrew/bin/cmake -DARKNET_TEST_COMMANDS=/private/tmp/arknet-macmini-tsan/tests/check-Debug.cmake -DARKNET_TEST_LOG_DIR=/private/tmp/arknet-macmini-tsan/tests/logs/Debug -P /Users/nick/work/opensource/arknet/tests/run.cmake
+-- Running tcp
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  5 |  5 passed | 0 failed | 0 skipped
+[doctest] assertions: 30 | 30 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running udp
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:   13 |   13 passed | 0 failed | 0 skipped
+[doctest] assertions: 1008 | 1008 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running websocket
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  3 |  3 passed | 0 failed | 0 skipped
+[doctest] assertions: 17 | 17 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running lifecycle
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  18 |  18 passed | 0 failed | 0 skipped
+[doctest] assertions: 180 | 180 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running detail
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 11 | 11 passed | 0 failed | 0 skipped
+[doctest] assertions: 35 | 35 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running concurrency
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCP external stop before write: 203 ms, peer watchdog=0
+TCP reconnect generation: 1 -> 2, old completion=Operation aborted./0, received=1
+TCP dgram owned: concurrent admission, recovery, and stop passed
+TCP dgram external: concurrent admission, recovery, and stop passed
+WebSocket owned: concurrent admission, recovery, and stop passed
+WebSocket external: concurrent admission, recovery, and stop passed
+WebSocket TLS owned/external: concurrent admission and recovery passed
+===============================================================================
+[doctest] test cases:     6 |     6 passed | 0 failed | 0 skipped
+[doctest] assertions: 44424 | 44424 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running http
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 15 | 15 passed | 0 failed | 0 skipped
+[doctest] assertions: 98 | 98 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running router
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  9 |  9 passed | 0 failed | 0 skipped
+[doctest] assertions: 86 | 86 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running io_pool
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:   7 |   7 passed | 0 failed | 0 skipped
+[doctest] assertions: 129 | 129 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running keepalive
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
+[doctest] assertions: 21 | 21 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running coroutine_shutdown
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+{"schema_version":1,"implementation":"asio-callback","execution":"callback","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":64,"clients":4,"window":1,"io_model":"shared","io_threads":4,"io_contexts":1,"requested_seconds":0.1,"warmup_seconds":0.05,"handler_work":0,"elapsed_seconds":0.100084959,"messages":3359,"roundtrips_per_second":33561.4864967,"payload_mib_per_second":4.09686114462,"latency_mode":"message","rtt_samples":3359,"rtt_observations":3359,"rtt_p50_us":108.708,"rtt_p95_us":128.75,"rtt_p99_us":143.667,"warmup_messages":1639,"total_cpu_seconds":0.573186,"cpu_elapsed_seconds":0.150556916,"cpu_percent":380.710508,"peak_rss_bytes":62668800,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-callback","execution":"callback","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":64,"clients":4,"window":64,"io_model":"shared","io_threads":4,"io_contexts":1,"requested_seconds":0.1,"warmup_seconds":0.05,"handler_work":0,"elapsed_seconds":0.100350125,"messages":62080,"roundtrips_per_second":618634.007681,"payload_mib_per_second":75.5168466407,"latency_mode":"batch","rtt_samples":970,"rtt_observations":970,"rtt_p50_us":106.875,"rtt_p95_us":129.792,"rtt_p99_us":145.125,"warmup_messages":30400,"total_cpu_seconds":0.590234,"cpu_elapsed_seconds":0.15044125,"cpu_percent":392.335214,"peak_rss_bytes":63176704,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-callback","execution":"callback","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":64,"clients":4,"window":1,"io_model":"sharded","io_threads":4,"io_contexts":4,"requested_seconds":0.1,"warmup_seconds":0.05,"handler_work":0,"elapsed_seconds":0.100083792,"messages":3948,"roundtrips_per_second":39446.9466145,"payload_mib_per_second":4.8153011004,"latency_mode":"message","rtt_samples":3948,"rtt_observations":3948,"rtt_p50_us":93.209,"rtt_p95_us":100.792,"rtt_p99_us":110.625,"warmup_messages":1974,"total_cpu_seconds":0.590791,"cpu_elapsed_seconds":0.1503875,"cpu_percent":392.845815,"peak_rss_bytes":63455232,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-callback","execution":"callback","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":64,"clients":4,"window":64,"io_model":"sharded","io_threads":4,"io_contexts":4,"requested_seconds":0.1,"warmup_seconds":0.05,"handler_work":0,"elapsed_seconds":0.100312541,"messages":64960,"roundtrips_per_second":647576.059308,"payload_mib_per_second":79.0498119273,"latency_mode":"batch","rtt_samples":1015,"rtt_observations":1015,"rtt_p50_us":99.125,"rtt_p95_us":116.875,"rtt_p99_us":129.375,"warmup_messages":32704,"total_cpu_seconds":0.590037,"cpu_elapsed_seconds":0.150456584,"cpu_percent":392.164294,"peak_rss_bytes":63586304,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-coroutine","execution":"coroutine","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":64,"clients":4,"window":1,"io_model":"shared","io_threads":4,"io_contexts":1,"requested_seconds":0.1,"warmup_seconds":0.05,"handler_work":0,"elapsed_seconds":0.100098458,"messages":2616,"roundtrips_per_second":26134.2687217,"payload_mib_per_second":3.19021834982,"latency_mode":"message","rtt_samples":2616,"rtt_observations":2616,"rtt_p50_us":143.666,"rtt_p95_us":164.208,"rtt_p99_us":179.042,"warmup_messages":1336,"total_cpu_seconds":0.586154,"cpu_elapsed_seconds":0.150530875,"cpu_percent":389.391213,"peak_rss_bytes":66633728,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-coroutine","execution":"coroutine","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":64,"clients":4,"window":64,"io_model":"shared","io_threads":4,"io_contexts":1,"requested_seconds":0.1,"warmup_seconds":0.05,"handler_work":0,"elapsed_seconds":0.10036825,"messages":57856,"roundtrips_per_second":576437.269754,"payload_mib_per_second":70.3658776555,"latency_mode":"batch","rtt_samples":904,"rtt_observations":904,"rtt_p50_us":137.292,"rtt_p95_us":164.667,"rtt_p99_us":174.666,"warmup_messages":28416,"total_cpu_seconds":0.588776,"cpu_elapsed_seconds":0.150436375,"cpu_percent":391.378747,"peak_rss_bytes":66945024,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-coroutine","execution":"coroutine","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":64,"clients":4,"window":1,"io_model":"sharded","io_threads":4,"io_contexts":4,"requested_seconds":0.1,"warmup_seconds":0.05,"handler_work":0,"elapsed_seconds":0.100123875,"messages":3046,"roundtrips_per_second":30422.3143581,"payload_mib_per_second":3.71366142067,"latency_mode":"message","rtt_samples":3046,"rtt_observations":3046,"rtt_p50_us":122.75,"rtt_p95_us":134.167,"rtt_p99_us":143.416,"warmup_messages":1548,"total_cpu_seconds":0.591770,"cpu_elapsed_seconds":0.1503375,"cpu_percent":393.627671,"peak_rss_bytes":67043328,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-coroutine","execution":"coroutine","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":64,"clients":4,"window":64,"io_model":"sharded","io_threads":4,"io_contexts":4,"requested_seconds":0.1,"warmup_seconds":0.05,"handler_work":0,"elapsed_seconds":0.100433791,"messages":59904,"roundtrips_per_second":596452.642119,"payload_mib_per_second":72.8091604149,"latency_mode":"batch","rtt_samples":936,"rtt_observations":936,"rtt_p50_us":128.875,"rtt_p95_us":145,"rtt_p99_us":156.334,"warmup_messages":30784,"total_cpu_seconds":0.594855,"cpu_elapsed_seconds":0.150530792,"cpu_percent":395.171640,"peak_rss_bytes":67141632,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-callback","execution":"callback","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":65507,"clients":2,"window":64,"io_model":"shared","io_threads":4,"io_contexts":1,"requested_seconds":0.2,"warmup_seconds":0,"handler_work":0,"elapsed_seconds":0.271575041,"messages":128,"roundtrips_per_second":471.32460895,"payload_mib_per_second":58.8895056887,"latency_mode":"batch","rtt_samples":2,"rtt_observations":2,"rtt_p50_us":3448.125,"rtt_p95_us":3448.125,"rtt_p99_us":3448.125,"warmup_messages":0,"total_cpu_seconds":0.548014,"cpu_elapsed_seconds":0.271611291,"cpu_percent":201.764072,"peak_rss_bytes":114786304,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-callback","execution":"callback","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":65507,"clients":2,"window":64,"io_model":"sharded","io_threads":4,"io_contexts":4,"requested_seconds":0.2,"warmup_seconds":0,"handler_work":0,"elapsed_seconds":0.276165291,"messages":128,"roundtrips_per_second":463.490540526,"payload_mib_per_second":57.9106804623,"latency_mode":"batch","rtt_samples":2,"rtt_observations":2,"rtt_p50_us":6809,"rtt_p95_us":6809,"rtt_p99_us":6809,"warmup_messages":0,"total_cpu_seconds":0.549807,"cpu_elapsed_seconds":0.276193958,"cpu_percent":199.065542,"peak_rss_bytes":128024576,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-coroutine","execution":"coroutine","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":65507,"clients":2,"window":64,"io_model":"shared","io_threads":4,"io_contexts":1,"requested_seconds":0.2,"warmup_seconds":0,"handler_work":0,"elapsed_seconds":0.28707425,"messages":128,"roundtrips_per_second":445.877677987,"payload_mib_per_second":55.7100468672,"latency_mode":"batch","rtt_samples":2,"rtt_observations":2,"rtt_p50_us":5878.416,"rtt_p95_us":5878.416,"rtt_p99_us":5878.416,"warmup_messages":0,"total_cpu_seconds":0.583649,"cpu_elapsed_seconds":0.287857,"cpu_percent":202.756577,"peak_rss_bytes":130383872,"content_or_io_errors":0,"ok":true}
+{"schema_version":1,"implementation":"asio-coroutine","execution":"coroutine","backend":"standalone","protocol":"tcp","address_family":"ipv4","payload_bytes":65507,"clients":2,"window":64,"io_model":"sharded","io_threads":4,"io_contexts":4,"requested_seconds":0.2,"warmup_seconds":0,"handler_work":0,"elapsed_seconds":0.283029292,"messages":128,"roundtrips_per_second":452.250009515,"payload_mib_per_second":56.5062358347,"latency_mode":"batch","rtt_samples":2,"rtt_observations":2,"rtt_p50_us":7809.625,"rtt_p95_us":7809.625,"rtt_p99_us":7809.625,"warmup_messages":0,"total_cpu_seconds":0.564168,"cpu_elapsed_seconds":0.283913417,"cpu_percent":198.711285,"peak_rss_bytes":130383872,"content_or_io_errors":0,"ok":true}
+===============================================================================
+[doctest] test cases:  3 |  3 passed | 0 failed | 0 skipped
+[doctest] assertions: 20 | 20 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running ipv6
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  11 |  11 passed | 0 failed | 0 skipped
+[doctest] assertions: 114 | 114 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running stress
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCP owned: 16 clients, 2 restarts, 6 batches, 6144 verified echoes
+TCP shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+TCP shared-4: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+TCP sharded-4: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+TCP slow receiver: 4 accepted, 8 rejected, queue drained
+TCP blocked writer stop: 203 ms, peer watchdog=0
+TCP blocked server owned: 201 ms, peer watchdog=0
+TCP blocked server external: 203 ms, peer watchdog=0
+TCP stop in connect owned: session cleaned
+TCP stop in connect external: session cleaned
+UDP owned: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+UDP shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+UDP shared-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+UDP sharded-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+WS owned: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+WS shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+WS shared-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+WS sharded-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+HTTP owned: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+HTTP shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+HTTP shared-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+HTTP sharded-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+TCPS owned: 16 clients, 2 restarts, 6 batches, 6144 verified echoes
+TCPS shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+TCPS shared-4: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+TCPS sharded-4: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+WSS owned: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+WSS shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+WSS shared-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+WSS sharded-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+HTTPS owned: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+HTTPS shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+HTTPS shared-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+HTTPS sharded-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+===============================================================================
+[doctest] test cases:     10 |     10 passed | 0 failed | 0 skipped
+[doctest] assertions: 164945 | 164945 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running tls
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+verified TLS connect (localhost): 5 ms
+verified TLS connect (127.0.0.1): 2 ms
+verified TLS connect (localhost): 4 ms
+verified TLS connect (127.0.0.1): 3 ms
+mTLS client connect (localhost): 3 ms
+mTLS client connect (localhost): 5 ms
+===============================================================================
+[doctest] test cases:  20 |  20 passed | 0 failed | 0 skipped
+[doctest] assertions: 120 | 120 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running check_runner
+-- Running install_consumer

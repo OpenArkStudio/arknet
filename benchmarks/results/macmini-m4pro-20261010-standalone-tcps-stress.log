@@ -1,0 +1,10 @@
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCPS owned: 16 clients, 2 restarts, 1909 batches, 1954816 verified echoes
+TCPS shared-1: 16 clients, 2 restarts, 1151 batches, 1178624 verified echoes
+TCPS shared-4: 16 clients, 2 restarts, 2062 batches, 2111488 verified echoes
+TCPS sharded-4: 16 clients, 2 restarts, 2213 batches, 2266112 verified echoes
+===============================================================================
+[doctest] test cases:        1 |        1 passed | 0 failed | 9 skipped
+[doctest] assertions: 15022236 | 15022236 passed | 0 failed |
+[doctest] Status: SUCCESS!

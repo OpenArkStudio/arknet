@@ -1,0 +1,17 @@
+command: D:/a/arknet/arknet/build/tests/arknet_udp_test.exe
+result: 1
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+D:\a\arknet\arknet\tests\udp.cpp(453):
+TEST CASE:  UDP cast preserves empty, binary, and maximum IPv4 payloads
+
+D:\a\arknet\arknet\tests\udp.cpp(479): FATAL ERROR: REQUIRE( (too_large_error == asio::error::message_size && too_large_count == 0) ) is NOT correct!
+  values: REQUIRE( false )
+  logged: error=1784, category=1, message=The supplied user buffer is not valid for the requested operation, bytes=0
+          oversized UDP payload completes with message_size
+
+===============================================================================
+[doctest] test cases:  13 |  12 passed | 1 failed | 0 skipped
+[doctest] assertions: 996 | 995 passed | 1 failed |
+[doctest] Status: FAILURE!

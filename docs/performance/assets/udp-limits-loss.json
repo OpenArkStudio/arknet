@@ -1,0 +1,2844 @@
+{
+  "address_family": "ipv4",
+  "source_sha256": "fa69d6ce97745281290a263cb0f2515470ede0edb77f5132ce6e3ac7ae7cd9b4",
+  "host": {
+    "system": "Darwin",
+    "release": "27.0.0",
+    "machine": "arm64",
+    "processor": "arm",
+    "logical_cpus": 14,
+    "model": "Mac16,11",
+    "cpu": "Apple M4 Pro",
+    "physical_cpus": 14,
+    "memory_bytes": 51539607552,
+    "os_version": "27.0.1",
+    "os_build": "26A434"
+  },
+  "settings": {
+    "seconds": 1,
+    "warmup": 0.25,
+    "repetitions": 3,
+    "payloads": [
+      1472,
+      8192,
+      16356,
+      16357,
+      16384,
+      65507
+    ],
+    "protocols": [
+      "udp"
+    ],
+    "execution_modes": null,
+    "udp_throughput_window": null,
+    "profiles": [
+      {
+        "clients": 16,
+        "window": 1
+      },
+      {
+        "clients": 16,
+        "window": 16
+      },
+      {
+        "clients": 16,
+        "window": 64
+      }
+    ],
+    "io_profiles": [
+      {
+        "io_model": "shared",
+        "io_threads": 1,
+        "handler_work": 0
+      }
+    ],
+    "address_family": "ipv4"
+  },
+  "measurements": 108,
+  "profiles": [
+    {
+      "backend": "standalone",
+      "payload_bytes": 1472,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1472,
+      "window": 16,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1472,
+      "window": 64,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 8192,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 8192,
+      "window": 16,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 8192,
+      "window": 64,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 512,
+        "min": 512,
+        "max": 512
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 512,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 513
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 512,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 513
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 512,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 513
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16356,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16356,
+      "window": 16,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16356,
+      "window": 64,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 767,
+        "min": 767,
+        "max": 767
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16357,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16357,
+      "window": 16,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16357,
+      "window": 64,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 767,
+        "min": 767,
+        "max": 767
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 16,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 64,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 767,
+        "min": 767,
+        "max": 767
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 65507,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 65507,
+      "window": 16,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 191,
+        "min": 191,
+        "max": 191
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 191,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 192
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 191,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 192
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 191,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 192
+          }
+        }
+      ]
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 65507,
+      "window": 64,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 959,
+        "min": 959,
+        "max": 959
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 959,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 960
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 959,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 960
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 959,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 960
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1472,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1472,
+      "window": 16,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1472,
+      "window": 64,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 8192,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 8192,
+      "window": 16,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 8192,
+      "window": 64,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 512,
+        "min": 512,
+        "max": 512
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 512,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 513
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 512,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 513
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 512,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 513
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16356,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16356,
+      "window": 16,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16356,
+      "window": 64,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 767,
+        "min": 767,
+        "max": 767
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16357,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16357,
+      "window": 16,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16357,
+      "window": 64,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 767,
+        "min": 767,
+        "max": 767
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 16,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 64,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 767,
+        "min": 767,
+        "max": 767
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 767,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 768
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 65507,
+      "window": 1,
+      "passed_repetitions": 3,
+      "lost_echoes": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": true,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 0,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 0,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 65507,
+      "window": 16,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 191,
+        "min": 191,
+        "max": 191
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 191,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 192
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 191,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 192
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 191,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 192
+          }
+        }
+      ]
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 65507,
+      "window": 64,
+      "passed_repetitions": 0,
+      "lost_echoes": {
+        "median": 959,
+        "min": 959,
+        "max": 959
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 959,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 960
+          }
+        },
+        {
+          "repetition": 2,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 959,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 960
+          }
+        },
+        {
+          "repetition": 3,
+          "passed": false,
+          "counters": {
+            "client_send_rejections": 0,
+            "client_send_completion_errors": 0,
+            "server_send_rejections": 0,
+            "server_send_completion_errors": 0,
+            "content_errors": 0,
+            "order_errors": 0,
+            "unexpected_messages": 0,
+            "disconnect_errors": 0,
+            "udp_lost_messages": 959,
+            "unfinished_messages": 0,
+            "callback_exceptions": 0,
+            "drain_timeouts": 1,
+            "duplicate_completions": 0,
+            "pending_completions": 0,
+            "warmup_errors": 960
+          }
+        }
+      ]
+    }
+  ],
+  "kernel": {
+    "standalone": {
+      "before": {
+        "full_socket_buffer_drops": 27666,
+        "fragment received": 0,
+        "reassembled ok": 0,
+        "output datagram fragmented": 0,
+        "fragment created": 0
+      },
+      "after": {
+        "full_socket_buffer_drops": 51444,
+        "fragment received": 0,
+        "reassembled ok": 0,
+        "output datagram fragmented": 0,
+        "fragment created": 0
+      },
+      "delta": {
+        "full_socket_buffer_drops": 23778,
+        "fragment received": 0,
+        "reassembled ok": 0,
+        "output datagram fragmented": 0,
+        "fragment created": 0
+      }
+    },
+    "boost": {
+      "before": {
+        "full_socket_buffer_drops": 51444,
+        "fragment received": 0,
+        "reassembled ok": 0,
+        "output datagram fragmented": 0,
+        "fragment created": 0
+      },
+      "after": {
+        "full_socket_buffer_drops": 75222,
+        "fragment received": 0,
+        "reassembled ok": 0,
+        "output datagram fragmented": 0,
+        "fragment created": 0
+      },
+      "delta": {
+        "full_socket_buffer_drops": 23778,
+        "fragment received": 0,
+        "reassembled ok": 0,
+        "output datagram fragmented": 0,
+        "fragment created": 0
+      }
+    }
+  }
+}

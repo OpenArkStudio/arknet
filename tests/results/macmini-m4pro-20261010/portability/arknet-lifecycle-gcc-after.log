@@ -1,0 +1,10 @@
+Command: /private/tmp/arknet-lifecycle-gcc-after
+Working directory: /Users/nick/work/opensource/arknet
+Exit code: 0
+
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  18 |  18 passed | 0 failed | 0 skipped
+[doctest] assertions: 180 | 180 passed | 0 failed |
+[doctest] Status: SUCCESS!

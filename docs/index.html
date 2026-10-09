@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="arknet C++20 networking documentation">
+  <title>arknet</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4.13.1/lib/themes/vue.css">
+  <style>
+    :root { --theme-color: #18764b; }
+    body { color: #292d32; }
+    .markdown-section { max-width: 900px; }
+    .markdown-section h1 { font-size: 30px; }
+    .markdown-section h2 { font-size: 23px; }
+    .app-nav { background: white; padding: 8px 12px; margin: 12px 20px 0 0; }
+    .app-nav select { font: inherit; font-size: 14px; color: inherit; background: white; border: 1px solid #cbd1d7; border-radius: 4px; padding: 6px 8px; max-width: 150px; }
+    span.scroll-to-top { width: 40px !important; height: 40px !important; line-height: 38px !important; font-size: 24px !important; box-shadow: none !important; z-index: 30; }
+    span.scroll-to-top:focus-visible { outline: 2px solid var(--theme-color); outline-offset: 3px; }
+    .markdown-section table { display: block; overflow-x: auto; }
+    .markdown-section th, .markdown-section td { min-width: 120px; }
+    .markdown-section pre { overflow-x: auto; }
+    .markdown-section pre code { white-space: pre; }
+    .markdown-section img[src*="/assets/"] { width: 100%; height: auto; max-width: 100%; }
+    .token.comment { color: #69727c; }
+    .token.keyword, .token.directive { color: #9540a1; }
+    .token.string, .token.char { color: #186647; }
+    .token.function, .token.class-name { color: #165fa0; }
+    .token.number, .token.boolean { color: #ae4519; }
+    .sidebar-nav > ul > li { margin-top: 18px; }
+    @media (max-width: 768px) {
+      .markdown-section { padding-top: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="app-nav" aria-label="Language">
+    <select id="language-switch" aria-label="Documentation language">
+      <option value="en">English</option>
+      <option value="zh">简体中文</option>
+    </select>
+  </nav>
+  <div id="app"></div>
+  <script>
+    window.$docsify = {
+      name: 'arknet',
+      repo: 'https://github.com/OpenArkStudio/arknet',
+      loadSidebar: true,
+      relativePath: true,
+      alias: { '/.*/_sidebar.md': '/_sidebar.md' },
+      subMaxLevel: 2,
+      auto2top: true,
+      scrollToTop: { auto: true, text: '\u2191', right: 20, bottom: 20, offset: 400 },
+      search: {
+        paths: ['README', 'guide', 'quickstart', 'tcp/overview', 'tcp/usage', 'tcp/performance',
+                'udp/overview', 'udp/usage', 'udp/performance', 'websocket/overview',
+                'websocket/usage', 'websocket/performance', 'tls/overview', 'tls/usage',
+                'tls/performance', 'http', 'http/usage', 'http/routing', 'http/performance',
+                'addressing', 'runtime', 'threading', 'api', 'design', 'testing', 'troubleshooting',
+                'roadmap', 'contributing', 'THIRD_PARTY_NOTICES', 'performance/overview', 'performance/tcp',
+                'performance/udp', 'performance/websocket', 'performance/tcps',
+                'performance/wss', 'performance/http', 'performance/https', 'performance/coroutine',
+                'performance/dimensions', 'performance/dimensions-tcp', 'performance/dimensions-udp',
+                'performance/dimensions-websocket', 'performance/dimensions-tcps',
+                'performance/dimensions-wss', 'performance/dimensions-http',
+                'performance/dimensions-https', 'performance/dimensions-native-tcp', 'performance/udp-limits']
+          .flatMap(function (page) { return ['/' + page, '/' + page + '_CN']; }),
+        // Refresh cached indexes when adding or moving searchable pages.
+        namespace: 'arknet-0.1.0-notices',
+        placeholder: 'Search documentation', noData: 'No results', depth: 3
+      },
+      plugins: [function (hook, vm) {
+        hook.doneEach(function () {
+          const page = vm.route.path.replace(/^\//, '').replace(/\.md$/, '') || 'README';
+          const chinese = page.endsWith('_CN');
+          const base = page.replace(/_CN$/, '');
+          document.documentElement.lang = chinese ? 'zh-CN' : 'en';
+          const heading = document.querySelector('.markdown-section h1');
+          document.title = heading ? heading.textContent + ' | arknet' : 'arknet';
+          const language = document.getElementById('language-switch');
+          language.value = chinese ? 'zh' : 'en';
+          language.setAttribute('aria-label', chinese ? '文档语言' : 'Documentation language');
+          language.onchange = function () {
+            window.location.hash = '/' + base + (language.value === 'zh' ? '_CN' : '');
+          };
+          const pageUrl = new URL(page + '.md', window.location.href.split('#')[0]);
+          document.querySelectorAll('.markdown-section a[href]').forEach(function (link) {
+            const href = link.getAttribute('href');
+            const asset = new URL(href, pageUrl);
+            if (!href.startsWith('#') && asset.origin === window.location.origin && asset.pathname.endsWith('.json')) {
+              link.href = asset.href;
+            }
+          });
+          const top = document.querySelector('span.scroll-to-top');
+          if (top) {
+            const label = chinese ? '回到顶部' : 'Back to top';
+            top.setAttribute('role', 'button');
+            top.setAttribute('aria-label', label);
+            top.title = label;
+            top.tabIndex = 0;
+            top.onkeydown = function (event) {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                top.click();
+              }
+            };
+          }
+          document.querySelectorAll('.sidebar-nav a[data-page]').forEach(function (link) {
+            link.href = '#/' + link.dataset.page + (chinese ? '_CN' : '');
+            link.textContent = chinese ? link.dataset.zh : link.dataset.en;
+            link.classList.toggle('active', link.dataset.page === base);
+          });
+          document.querySelectorAll('.sidebar-nav [data-group]').forEach(function (label) {
+            label.textContent = chinese ? label.dataset.zh : label.dataset.en;
+          });
+          const search = document.querySelector('.search input');
+          if (search) {
+            search.placeholder = chinese ? '\u641c\u7d22\u6587\u6863' : 'Search documentation';
+            search.setAttribute('aria-label', search.placeholder);
+          }
+        });
+      }]
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4.13.1/lib/docsify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-c.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-cpp.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-cmake.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4.13.1/lib/plugins/search.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4.13.1/lib/plugins/zoom-image.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify-scroll-to-top@1.0.2/dist/docsify-scroll-to-top.min.js"></script>
+</body>
+</html>

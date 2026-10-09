@@ -1,0 +1,107 @@
+# TCP Local Performance
+
+Measurements come from independent local Release loopback processes, not CI.
+
+[Metric definitions and methodology](../testing.md).
+
+Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; legacy values are marked estimated, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+
+## No added computation
+
+![Throughput](assets/tcp-work0-throughput.svg)
+
+![p99 RTT](assets/tcp-work0-latency.svg)
+
+### All Measured Profiles
+
+#### 64 B / 1 clients / window=1
+
+| Backend / model | Round trips/s | MiB/s | p50 / us | p95 / us | p99 / us | CPU / % | RSS / MiB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Boost.Asio / 2 contexts / 2 threads | 59,430 [59,390, 60,057] | 7.25 | 16.67 | 19.79 | 26.00 | 73.9 (estimated) | 7.06 |
+| Boost.Asio / 4 contexts / 4 threads | 59,362 [59,244, 60,179] | 7.25 | 16.67 | 20.00 | 25.67 | 73.5 (estimated) | 7.12 |
+| Boost.Asio / 1 context / 1 thread | 51,897 [44,622, 56,008] | 6.34 | 18.79 | 22.25 | 29.21 | 72.6 (estimated) | 7.00 |
+| Boost.Asio / 1 context / 2 threads | 52,792 [51,693, 53,166] | 6.44 | 18.38 | 24.33 | 32.00 | 107.7 (estimated) | 7.02 |
+| Boost.Asio / 1 context / 4 threads | 43,604 [43,604, 44,905] | 5.32 | 21.92 | 29.96 | 42.46 | 172.1 (estimated) | 7.06 |
+| Standalone Asio / 2 contexts / 2 threads | 58,602 [58,445, 60,258] | 7.15 | 16.75 | 19.17 | 23.29 | 73.3 (estimated) | 7.47 |
+| Standalone Asio / 4 contexts / 4 threads | 58,603 [56,473, 59,790] | 7.15 | 16.71 | 19.17 | 22.92 | 72.7 (estimated) | 7.48 |
+| Standalone Asio / 1 context / 1 thread | 54,344 [54,173, 54,487] | 6.63 | 18.12 | 22.25 | 23.46 | 72.7 (estimated) | 7.42 |
+| Standalone Asio / 1 context / 2 threads | 52,192 [52,156, 52,975] | 6.37 | 18.96 | 23.96 | 26.17 | 106.6 (estimated) | 7.39 |
+| Standalone Asio / 1 context / 4 threads | 44,675 [42,729, 44,875] | 5.45 | 21.83 | 27.96 | 38.50 | 172.3 (estimated) | 7.48 |
+
+#### 1024 B / 1 clients / window=1
+
+| Backend / model | Round trips/s | MiB/s | p50 / us | p95 / us | p99 / us | CPU / % | RSS / MiB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Boost.Asio / 2 contexts / 2 threads | 57,741 [56,127, 57,808] | 112.78 | 15.88 | 21.42 | 27.33 | 82.0 (estimated) | 7.03 |
+| Boost.Asio / 4 contexts / 4 threads | 57,639 [56,429, 57,907] | 112.58 | 15.92 | 21.29 | 26.25 | 82.0 (estimated) | 7.14 |
+| Boost.Asio / 1 context / 1 thread | 54,386 [53,166, 54,864] | 106.22 | 17.33 | 22.25 | 27.42 | 75.5 (estimated) | 7.03 |
+| Boost.Asio / 1 context / 2 threads | 49,739 [47,909, 50,131] | 97.15 | 19.00 | 24.08 | 29.75 | 108.2 (estimated) | 7.05 |
+| Boost.Asio / 1 context / 4 threads | 41,420 [41,121, 42,935] | 80.90 | 22.62 | 30.75 | 45.00 | 163.7 (estimated) | 7.06 |
+| Standalone Asio / 2 contexts / 2 threads | 54,414 [54,006, 56,483] | 106.28 | 16.46 | 22.04 | 25.17 | 82.0 (estimated) | 7.41 |
+| Standalone Asio / 4 contexts / 4 threads | 55,325 [54,331, 61,146] | 108.06 | 16.42 | 22.08 | 24.92 | 82.1 (estimated) | 7.52 |
+| Standalone Asio / 1 context / 1 thread | 56,877 [55,526, 58,685] | 111.09 | 15.33 | 21.83 | 24.12 | 73.5 (estimated) | 7.44 |
+| Standalone Asio / 1 context / 2 threads | 47,400 [46,566, 48,509] | 92.58 | 19.54 | 26.33 | 41.00 | 107.3 (estimated) | 7.48 |
+| Standalone Asio / 1 context / 4 threads | 42,972 [42,858, 43,126] | 83.93 | 22.25 | 27.17 | 34.92 | 165.6 (estimated) | 7.48 |
+
+#### 16384 B / 1 clients / window=1
+
+| Backend / model | Round trips/s | MiB/s | p50 / us | p95 / us | p99 / us | CPU / % | RSS / MiB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Boost.Asio / 2 contexts / 2 threads | 29,424 [29,363, 29,453] | 919.49 | 23.62 | 28.88 | 37.88 | 96.7 (estimated) | 7.20 |
+| Boost.Asio / 4 contexts / 4 threads | 29,454 [29,289, 29,662] | 920.44 | 23.67 | 28.67 | 37.12 | 96.8 (estimated) | 7.25 |
+| Boost.Asio / 1 context / 1 thread | 29,949 [29,805, 30,202] | 935.89 | 23.42 | 27.21 | 30.83 | 83.5 (estimated) | 7.14 |
+| Boost.Asio / 1 context / 2 threads | 28,812 [26,266, 29,027] | 900.39 | 23.58 | 28.17 | 37.75 | 107.3 (estimated) | 7.19 |
+| Boost.Asio / 1 context / 4 threads | 26,419 [26,413, 26,832] | 825.58 | 25.92 | 32.67 | 46.04 | 125.5 (estimated) | 7.25 |
+| Standalone Asio / 2 contexts / 2 threads | 29,531 [29,444, 29,922] | 922.83 | 21.58 | 27.38 | 30.62 | 96.9 (estimated) | 7.64 |
+| Standalone Asio / 4 contexts / 4 threads | 29,849 [29,647, 30,048] | 932.79 | 22.96 | 26.96 | 29.08 | 97.5 (estimated) | 7.69 |
+| Standalone Asio / 1 context / 1 thread | 30,386 [30,376, 30,458] | 949.57 | 22.96 | 26.00 | 28.75 | 83.9 (estimated) | 7.59 |
+| Standalone Asio / 1 context / 2 threads | 28,987 [28,353, 29,073] | 905.84 | 23.58 | 26.46 | 29.96 | 107.0 (estimated) | 7.61 |
+| Standalone Asio / 1 context / 4 threads | 26,615 [26,448, 26,686] | 831.72 | 26.00 | 30.62 | 34.92 | 125.6 (estimated) | 7.69 |
+
+#### 64 B / 16 clients / window=16
+
+| Backend / model | Round trips/s | MiB/s | p50 / us | p95 / us | p99 / us | CPU / % | RSS / MiB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Boost.Asio / 2 contexts / 2 threads | 353,751 [332,547, 385,945] | 43.18 | 630.50 | 1,386.21 | 1,645.96 | 198.3 (estimated) | 7.75 |
+| Boost.Asio / 4 contexts / 4 threads | 337,371 [316,652, 378,249] | 41.18 | 723.42 | 1,175.12 | 1,306.62 | 386.7 (estimated) | 8.06 |
+| Boost.Asio / 1 context / 1 thread | 206,555 [186,590, 220,080] | 25.21 | 1,143.38 | 1,292.00 | 1,400.50 | 92.6 (estimated) | 7.67 |
+| Boost.Asio / 1 context / 2 threads | 269,589 [265,087, 279,678] | 32.91 | 924.92 | 1,115.54 | 1,247.21 | 190.4 (estimated) | 7.75 |
+| Boost.Asio / 1 context / 4 threads | 270,820 [252,850, 278,262] | 33.06 | 937.71 | 1,198.58 | 1,373.25 | 347.6 (estimated) | 7.78 |
+| Standalone Asio / 2 contexts / 2 threads | 394,247 [380,536, 405,659] | 48.13 | 628.96 | 707.25 | 829.88 | 198.7 (estimated) | 8.12 |
+| Standalone Asio / 4 contexts / 4 threads | 366,652 [330,421, 386,971] | 44.76 | 603.96 | 1,024.42 | 1,288.08 | 388.5 (estimated) | 8.44 |
+| Standalone Asio / 1 context / 1 thread | 217,308 [212,278, 219,504] | 26.53 | 1,156.62 | 1,274.71 | 1,315.58 | 93.6 (estimated) | 8.11 |
+| Standalone Asio / 1 context / 2 threads | 285,174 [283,238, 288,514] | 34.81 | 883.83 | 947.75 | 1,121.67 | 193.7 (estimated) | 8.11 |
+| Standalone Asio / 1 context / 4 threads | 288,163 [276,394, 293,016] | 35.18 | 873.54 | 1,088.08 | 1,160.21 | 350.3 (estimated) | 8.22 |
+
+#### 1024 B / 16 clients / window=16
+
+| Backend / model | Round trips/s | MiB/s | p50 / us | p95 / us | p99 / us | CPU / % | RSS / MiB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Boost.Asio / 2 contexts / 2 threads | 244,553 [222,067, 292,123] | 477.64 | 880.25 | 1,998.96 | 2,143.50 | 198.0 (estimated) | 8.42 |
+| Boost.Asio / 4 contexts / 4 threads | 318,860 [303,099, 358,789] | 622.77 | 780.79 | 1,296.62 | 1,355.54 | 386.1 (estimated) | 9.22 |
+| Boost.Asio / 1 context / 1 thread | 180,045 [172,130, 183,104] | 351.65 | 1,383.71 | 1,869.00 | 2,115.67 | 98.3 (estimated) | 8.42 |
+| Boost.Asio / 1 context / 2 threads | 228,518 [218,598, 238,567] | 446.32 | 1,084.58 | 1,354.42 | 1,563.54 | 192.1 (estimated) | 8.39 |
+| Boost.Asio / 1 context / 4 threads | 249,081 [245,620, 266,010] | 486.49 | 996.83 | 1,317.00 | 1,503.62 | 356.9 (estimated) | 8.52 |
+| Standalone Asio / 2 contexts / 2 threads | 279,356 [267,876, 293,718] | 545.62 | 866.33 | 1,225.62 | 1,921.58 | 198.9 (estimated) | 8.88 |
+| Standalone Asio / 4 contexts / 4 threads | 367,535 [339,487, 384,398] | 717.84 | 555.17 | 1,248.25 | 1,346.00 | 383.4 (estimated) | 10.52 |
+| Standalone Asio / 1 context / 1 thread | 185,779 [182,846, 199,625] | 362.85 | 1,357.42 | 1,470.71 | 1,491.79 | 97.2 (estimated) | 8.80 |
+| Standalone Asio / 1 context / 2 threads | 242,684 [242,348, 246,017] | 473.99 | 1,033.83 | 1,113.62 | 1,255.75 | 195.7 (estimated) | 8.80 |
+| Standalone Asio / 1 context / 4 threads | 269,311 [263,372, 271,047] | 526.00 | 904.92 | 1,218.21 | 1,268.12 | 360.5 (estimated) | 8.86 |
+
+#### 16384 B / 16 clients / window=16
+
+| Backend / model | Round trips/s | MiB/s | p50 / us | p95 / us | p99 / us | CPU / % | RSS / MiB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Boost.Asio / 2 contexts / 2 threads | 96,161 [95,965, 104,362] | 3,005.03 | 2,482.12 | 3,397.50 | 3,679.67 | 198.2 (estimated) | 20.25 |
+| Boost.Asio / 4 contexts / 4 threads | 148,025 [147,285, 148,683] | 4,625.78 | 1,717.62 | 2,070.46 | 2,115.83 | 395.6 (estimated) | 20.53 |
+| Boost.Asio / 1 context / 1 thread | 48,945 [48,371, 49,648] | 1,529.53 | 5,209.58 | 5,369.21 | 5,476.25 | 96.4 (estimated) | 20.17 |
+| Boost.Asio / 1 context / 2 threads | 94,887 [92,178, 101,487] | 2,965.21 | 2,605.42 | 3,078.71 | 3,396.25 | 197.2 (estimated) | 20.38 |
+| Boost.Asio / 1 context / 4 threads | 146,104 [141,990, 159,259] | 4,565.75 | 1,662.62 | 2,231.62 | 2,517.04 | 386.1 (estimated) | 20.42 |
+| Standalone Asio / 2 contexts / 2 threads | 103,133 [100,600, 103,868] | 3,222.89 | 2,426.38 | 2,545.00 | 3,439.38 | 198.3 (estimated) | 20.69 |
+| Standalone Asio / 4 contexts / 4 threads | 152,527 [151,687, 153,073] | 4,766.46 | 1,596.12 | 2,085.83 | 2,140.21 | 393.9 (estimated) | 29.03 |
+| Standalone Asio / 1 context / 1 thread | 51,629 [48,682, 51,653] | 1,613.40 | 4,953.25 | 5,028.42 | 5,122.96 | 100.0 (estimated) | 20.67 |
+| Standalone Asio / 1 context / 2 threads | 100,397 [97,068, 101,140] | 3,137.40 | 2,511.00 | 2,765.21 | 3,189.75 | 197.7 (estimated) | 20.62 |
+| Standalone Asio / 1 context / 4 threads | 154,490 [153,953, 160,717] | 4,827.80 | 1,583.00 | 2,191.58 | 2,474.79 | 389.5 (estimated) | 20.64 |
+
+Tables show repeated-run medians; throughput brackets show min/max, not confidence intervals. Latencies are medians of per-run sampled percentiles, without pooling samples.

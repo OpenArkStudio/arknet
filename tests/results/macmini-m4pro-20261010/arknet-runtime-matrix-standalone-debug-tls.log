@@ -1,0 +1,271 @@
+[1/43] Building CXX object tests/CMakeFiles/arknet_tcp_test.dir/test_main.cpp.o
+[2/43] Building CXX object tests/CMakeFiles/arknet_udp_test.dir/test_main.cpp.o
+[3/43] Building CXX object tests/CMakeFiles/arknet_udp_test.dir/udp.cpp.o
+[4/43] Building CXX object tests/CMakeFiles/arknet_tcp_test.dir/tcp.cpp.o
+[5/43] Building CXX object tests/CMakeFiles/arknet_websocket_test.dir/test_main.cpp.o
+[6/43] Building CXX object tests/CMakeFiles/arknet_lifecycle_test.dir/test_main.cpp.o
+[7/43] Building CXX object tests/CMakeFiles/arknet_detail_test.dir/detail.cpp.o
+[8/43] Building CXX object tests/CMakeFiles/arknet_detail_test.dir/test_main.cpp.o
+[9/43] Building CXX object tests/CMakeFiles/arknet_websocket_test.dir/websocket.cpp.o
+[10/43] Building CXX object tests/CMakeFiles/arknet_concurrency_test.dir/test_main.cpp.o
+[11/43] Building CXX object tests/CMakeFiles/arknet_lifecycle_test.dir/lifecycle.cpp.o
+[12/43] Building CXX object tests/CMakeFiles/arknet_http_test.dir/test_main.cpp.o
+[13/43] Building CXX object tests/CMakeFiles/arknet_router_test.dir/router.cpp.o
+[14/43] Building CXX object tests/CMakeFiles/arknet_http_test.dir/http.cpp.o
+[15/43] Building CXX object tests/CMakeFiles/arknet_router_test.dir/test_main.cpp.o
+[16/43] Building CXX object tests/CMakeFiles/arknet_io_pool_test.dir/test_main.cpp.o
+[17/43] Building CXX object tests/CMakeFiles/arknet_io_pool_test.dir/io_pool.cpp.o
+[18/43] Building CXX object tests/CMakeFiles/arknet_keepalive_test.dir/keepalive.cpp.o
+[19/43] Building CXX object tests/CMakeFiles/arknet_keepalive_test.dir/test_main.cpp.o
+[20/43] Building CXX object tests/CMakeFiles/arknet_coroutine_shutdown_test.dir/test_main.cpp.o
+[21/43] Building CXX object tests/CMakeFiles/arknet_coroutine_shutdown_test.dir/coroutine_shutdown.cpp.o
+[22/43] Building CXX object tests/CMakeFiles/arknet_concurrency_test.dir/concurrency.cpp.o
+[23/43] Building CXX object tests/CMakeFiles/arknet_tls_test.dir/test_main.cpp.o
+[24/43] Building CXX object tests/CMakeFiles/arknet_tls_test.dir/tls.cpp.o
+[25/43] Building CXX object benchmarks/CMakeFiles/arknet_coroutine_benchmark.dir/coroutine.cpp.o
+[26/43] Linking CXX executable tests/arknet_tcp_test
+[27/43] Linking CXX executable tests/arknet_udp_test
+[28/43] Linking CXX executable tests/arknet_websocket_test
+[29/43] Linking CXX executable tests/arknet_lifecycle_test
+[30/43] Linking CXX executable tests/arknet_detail_test
+[31/43] Linking CXX executable tests/arknet_concurrency_test
+[32/43] Linking CXX executable tests/arknet_http_test
+[33/43] Linking CXX executable tests/arknet_router_test
+[34/43] Linking CXX executable tests/arknet_io_pool_test
+[35/43] Linking CXX executable tests/arknet_keepalive_test
+[36/43] Linking CXX executable tests/arknet_coroutine_shutdown_test
+[37/43] Linking CXX executable tests/arknet_tls_test
+[38/43] Linking CXX executable benchmarks/arknet_coroutine_benchmark
+[39/43] Building CXX object tests/CMakeFiles/arknet_stress_test.dir/stress.cpp.o
+[40/43] Linking CXX executable tests/arknet_stress_test
+[41/43] Building CXX object benchmarks/CMakeFiles/arknet_loopback_benchmark.dir/loopback.cpp.o
+[42/43] Linking CXX executable benchmarks/arknet_loopback_benchmark
+[42/43] cd /private/tmp/arknet-macmini-standalone-debug-tls && /opt/homebrew/bin/cmake -DARKNET_TEST_COMMANDS=/private/tmp/arknet-macmini-standalone-debug-tls/tests/check-Debug.cmake -DARKNET_TEST_LOG_DIR=/private/tmp/arknet-macmini-standalone-debug-tls/tests/logs/Debug -P /Users/nick/work/opensource/arknet/tests/run.cmake
+-- Running tcp
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  5 |  5 passed | 0 failed | 0 skipped
+[doctest] assertions: 30 | 30 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running udp
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  12 |  12 passed | 0 failed | 0 skipped
+[doctest] assertions: 968 | 968 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running websocket
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  3 |  3 passed | 0 failed | 0 skipped
+[doctest] assertions: 17 | 17 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running lifecycle
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  15 |  15 passed | 0 failed | 0 skipped
+[doctest] assertions: 152 | 152 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running detail
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 11 | 11 passed | 0 failed | 0 skipped
+[doctest] assertions: 35 | 35 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running concurrency
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCP external stop before write: 202 ms, peer watchdog=0
+TCP reconnect generation: 1 -> 2, old completion=Operation aborted./0, received=1
+TCP dgram owned: concurrent admission, recovery, and stop passed
+TCP dgram external: concurrent admission, recovery, and stop passed
+WebSocket owned: concurrent admission, recovery, and stop passed
+WebSocket external: concurrent admission, recovery, and stop passed
+WebSocket TLS owned/external: concurrent admission and recovery passed
+===============================================================================
+[doctest] test cases:     6 |     6 passed | 0 failed | 0 skipped
+[doctest] assertions: 44428 | 44428 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running http
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 15 | 15 passed | 0 failed | 0 skipped
+[doctest] assertions: 98 | 98 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running router
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  9 |  9 passed | 0 failed | 0 skipped
+[doctest] assertions: 86 | 86 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running io_pool
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:   6 |   6 passed | 0 failed | 0 skipped
+[doctest] assertions: 125 | 125 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running keepalive
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  2 |  2 passed | 0 failed | 0 skipped
+[doctest] assertions: 21 | 21 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running coroutine_shutdown
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+[doctest] assertions: 4 | 4 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running stress
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCP owned: 16 clients, 2 restarts, 28 batches, 28672 verified echoes
+TCP shared-1: 16 clients, 2 restarts, 10 batches, 10240 verified echoes
+TCP shared-4: 16 clients, 2 restarts, 22 batches, 22528 verified echoes
+TCP sharded-4: 16 clients, 2 restarts, 23 batches, 23552 verified echoes
+TCP slow receiver: 2 accepted, 10 rejected, queue drained
+TCP blocked writer stop: 202 ms, peer watchdog=0
+TCP blocked server owned: 201 ms, peer watchdog=0
+TCP blocked server external: 202 ms, peer watchdog=0
+TCP stop in connect owned: session cleaned
+TCP stop in connect external: session cleaned
+UDP owned: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+UDP shared-1: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+UDP shared-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+UDP sharded-4: 16 clients, 2 restarts, 2 batches, 2048 verified echoes
+WS owned: 16 clients, 2 restarts, 18 batches, 18432 verified echoes
+WS shared-1: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+WS shared-4: 16 clients, 2 restarts, 12 batches, 12288 verified echoes
+WS sharded-4: 16 clients, 2 restarts, 14 batches, 14336 verified echoes
+HTTP owned: 16 clients, 2 restarts, 16 batches, 16384 verified echoes
+HTTP shared-1: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+HTTP shared-4: 16 clients, 2 restarts, 12 batches, 12288 verified echoes
+HTTP sharded-4: 16 clients, 2 restarts, 12 batches, 12288 verified echoes
+TCPS owned: 16 clients, 2 restarts, 26 batches, 26624 verified echoes
+TCPS shared-1: 16 clients, 2 restarts, 8 batches, 8192 verified echoes
+TCPS shared-4: 16 clients, 2 restarts, 20 batches, 20480 verified echoes
+TCPS sharded-4: 16 clients, 2 restarts, 20 batches, 20480 verified echoes
+WSS owned: 16 clients, 2 restarts, 16 batches, 16384 verified echoes
+WSS shared-1: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+WSS shared-4: 16 clients, 2 restarts, 10 batches, 10240 verified echoes
+WSS sharded-4: 16 clients, 2 restarts, 10 batches, 10240 verified echoes
+HTTPS owned: 16 clients, 2 restarts, 15 batches, 15360 verified echoes
+HTTPS shared-1: 16 clients, 2 restarts, 4 batches, 4096 verified echoes
+HTTPS shared-4: 16 clients, 2 restarts, 10 batches, 10240 verified echoes
+HTTPS sharded-4: 16 clients, 2 restarts, 8 batches, 8192 verified echoes
+===============================================================================
+[doctest] test cases:     10 |     10 passed | 0 failed | 0 skipped
+[doctest] assertions: 685137 | 685137 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running tls
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+verified TLS connect (localhost): 3 ms
+verified TLS connect (127.0.0.1): 1 ms
+verified TLS connect (localhost): 2 ms
+verified TLS connect (127.0.0.1): 1 ms
+mTLS client connect (localhost): 1 ms
+mTLS client connect (localhost): 2 ms
+===============================================================================
+[doctest] test cases:  20 |  20 passed | 0 failed | 0 skipped
+[doctest] assertions: 120 | 120 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+-- Running check_runner
+-- Running install_consumer
+-- Running benchmark_tcp
+{"schema_version":1,"backend":"standalone","protocol":"tcp","payload_bytes":1024,"clients":2,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":1,"server_io_lanes":3,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.208245458,"messages_sent":6802,"messages":6802,"payload_roundtrip_bytes":13930496,"roundtrips_per_second":32663.3774649,"payload_mib_per_second":63.7956591111,"rtt_samples":6802,"rtt_observations":6802,"rtt_sample_limit":8192,"rtt_p50_us":51.792,"rtt_p95_us":53.708,"rtt_p99_us":57.791,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.200083,"peak_rss_bytes":49004544,"ok":true,"error":null}
+
+-- Running benchmark_tcp_shared4
+{"schema_version":1,"backend":"standalone","protocol":"tcp","payload_bytes":1024,"clients":16,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.206471,"messages_sent":20857,"messages":20857,"payload_roundtrip_bytes":42715136,"roundtrips_per_second":101016.607659,"payload_mib_per_second":197.298061834,"rtt_samples":8192,"rtt_observations":20857,"rtt_sample_limit":8192,"rtt_p50_us":141.292,"rtt_p95_us":185.083,"rtt_p99_us":217.167,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.738664,"peak_rss_bytes":49790976,"ok":true,"error":null}
+
+-- Running benchmark_tcp_sharded4
+{"schema_version":1,"backend":"standalone","protocol":"tcp","payload_bytes":1024,"clients":16,"window":1,"io_model":"sharded","handler_work":0,"io_contexts":4,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.200215042,"messages_sent":22378,"messages":22378,"payload_roundtrip_bytes":45830144,"roundtrips_per_second":111769.823968,"payload_mib_per_second":218.300437437,"rtt_samples":8192,"rtt_observations":22378,"rtt_sample_limit":8192,"rtt_p50_us":129.583,"rtt_p95_us":177.583,"rtt_p99_us":190.333,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.787663,"peak_rss_bytes":49872896,"ok":true,"error":null}
+
+-- Running benchmark_udp
+{"schema_version":1,"backend":"standalone","protocol":"udp","payload_bytes":1024,"clients":2,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":1,"server_io_lanes":3,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.210136708,"messages_sent":294,"messages":294,"payload_roundtrip_bytes":602112,"roundtrips_per_second":1399.08920625,"payload_mib_per_second":2.73259610596,"rtt_samples":294,"rtt_observations":294,"rtt_sample_limit":8192,"rtt_p50_us":1364.5,"rtt_p95_us":1390.916,"rtt_p99_us":1422.208,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":65536,"udp_receive_buffer_requested_bytes":4194304,"udp_server_send_buffer_bytes":65536,"udp_server_receive_buffer_bytes":4194304,"udp_client_send_buffer_min_bytes":65536,"udp_client_send_buffer_max_bytes":65536,"udp_client_receive_buffer_min_bytes":4194304,"udp_client_receive_buffer_max_bytes":4194304,"cpu_seconds":0.201382,"peak_rss_bytes":49545216,"ok":true,"error":null}
+
+-- Running benchmark_udp_shared4
+{"schema_version":1,"backend":"standalone","protocol":"udp","payload_bytes":1024,"clients":16,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.207091459,"messages_sent":591,"messages":591,"payload_roundtrip_bytes":1210368,"roundtrips_per_second":2853.81156159,"payload_mib_per_second":5.57385070622,"rtt_samples":591,"rtt_observations":591,"rtt_sample_limit":8192,"rtt_p50_us":5563.25,"rtt_p95_us":5632.833,"rtt_p99_us":5650.375,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":65536,"udp_receive_buffer_requested_bytes":4194304,"udp_server_send_buffer_bytes":65536,"udp_server_receive_buffer_bytes":4194304,"udp_client_send_buffer_min_bytes":65536,"udp_client_send_buffer_max_bytes":65536,"udp_client_receive_buffer_min_bytes":4194304,"udp_client_receive_buffer_max_bytes":4194304,"cpu_seconds":0.427484,"peak_rss_bytes":51773440,"ok":true,"error":null}
+
+-- Running benchmark_udp_sharded4
+{"schema_version":1,"backend":"standalone","protocol":"udp","payload_bytes":1024,"clients":16,"window":1,"io_model":"sharded","handler_work":0,"io_contexts":4,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.206843833,"messages_sent":485,"messages":485,"payload_roundtrip_bytes":993280,"roundtrips_per_second":2344.76412937,"payload_mib_per_second":4.57961744018,"rtt_samples":485,"rtt_observations":485,"rtt_sample_limit":8192,"rtt_p50_us":6858.334,"rtt_p95_us":7281.292,"rtt_p99_us":7307.5,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":65536,"udp_receive_buffer_requested_bytes":4194304,"udp_server_send_buffer_bytes":65536,"udp_server_receive_buffer_bytes":4194304,"udp_client_send_buffer_min_bytes":65536,"udp_client_send_buffer_max_bytes":65536,"udp_client_receive_buffer_min_bytes":4194304,"udp_client_receive_buffer_max_bytes":4194304,"cpu_seconds":0.33809,"peak_rss_bytes":51904512,"ok":true,"error":null}
+
+-- Running benchmark_websocket
+{"schema_version":1,"backend":"standalone","protocol":"websocket","payload_bytes":1024,"clients":2,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":1,"server_io_lanes":3,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.206585917,"messages_sent":3254,"messages":3254,"payload_roundtrip_bytes":6664192,"roundtrips_per_second":15751.3157105,"payload_mib_per_second":30.764288497,"rtt_samples":3254,"rtt_observations":3254,"rtt_sample_limit":8192,"rtt_p50_us":116,"rtt_p95_us":119.542,"rtt_p99_us":124.625,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.200181,"peak_rss_bytes":50888704,"ok":true,"error":null}
+
+-- Running benchmark_websocket_shared4
+{"schema_version":1,"backend":"standalone","protocol":"websocket","payload_bytes":1024,"clients":16,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.210224042,"messages_sent":11296,"messages":11296,"payload_roundtrip_bytes":23134208,"roundtrips_per_second":53733.1500838,"payload_mib_per_second":104.947558757,"rtt_samples":8192,"rtt_observations":11296,"rtt_sample_limit":8192,"rtt_p50_us":272,"rtt_p95_us":312.792,"rtt_p99_us":340.125,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.793465,"peak_rss_bytes":52002816,"ok":true,"error":null}
+
+-- Running benchmark_websocket_sharded4
+{"schema_version":1,"backend":"standalone","protocol":"websocket","payload_bytes":1024,"clients":16,"window":1,"io_model":"sharded","handler_work":0,"io_contexts":4,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.202906833,"messages_sent":11768,"messages":11768,"payload_roundtrip_bytes":24100864,"roundtrips_per_second":57997.0611438,"payload_mib_per_second":113.275510047,"rtt_samples":8192,"rtt_observations":11768,"rtt_sample_limit":8192,"rtt_p50_us":236.834,"rtt_p95_us":416.583,"rtt_p99_us":452.792,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.786086,"peak_rss_bytes":52035584,"ok":true,"error":null}
+
+-- Running benchmark_http
+{"schema_version":1,"backend":"standalone","protocol":"http","payload_bytes":1024,"clients":2,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":1,"server_io_lanes":3,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.21004725,"messages_sent":2012,"messages":2012,"payload_roundtrip_bytes":4120576,"roundtrips_per_second":9578.79715159,"payload_mib_per_second":18.7085881867,"rtt_samples":2012,"rtt_observations":2012,"rtt_sample_limit":8192,"rtt_p50_us":191.083,"rtt_p95_us":199.708,"rtt_p99_us":214.792,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.177922,"peak_rss_bytes":50429952,"ok":true,"error":null}
+
+-- Running benchmark_http_shared4
+{"schema_version":1,"backend":"standalone","protocol":"http","payload_bytes":1024,"clients":16,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.210151958,"messages_sent":8022,"messages":8022,"payload_roundtrip_bytes":16429056,"roundtrips_per_second":38172.3781037,"payload_mib_per_second":74.5554259837,"rtt_samples":8022,"rtt_observations":8022,"rtt_sample_limit":8192,"rtt_p50_us":391.541,"rtt_p95_us":430,"rtt_p99_us":461.209,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.795999,"peak_rss_bytes":51265536,"ok":true,"error":null}
+
+-- Running benchmark_http_sharded4
+{"schema_version":1,"backend":"standalone","protocol":"http","payload_bytes":1024,"clients":16,"window":1,"io_model":"sharded","handler_work":0,"io_contexts":4,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.210210292,"messages_sent":8139,"messages":8139,"payload_roundtrip_bytes":16668672,"roundtrips_per_second":38718.3706495,"payload_mib_per_second":75.6218176748,"rtt_samples":8139,"rtt_observations":8139,"rtt_sample_limit":8192,"rtt_p50_us":382.208,"rtt_p95_us":438.625,"rtt_p99_us":474.958,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.779853,"peak_rss_bytes":51396608,"ok":true,"error":null}
+
+-- Running benchmark_tcps
+{"schema_version":1,"backend":"standalone","protocol":"tcps","payload_bytes":1024,"clients":2,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":1,"server_io_lanes":3,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.203297541,"messages_sent":5140,"messages":5140,"payload_roundtrip_bytes":10526720,"roundtrips_per_second":25283.1390617,"payload_mib_per_second":49.3811309798,"rtt_samples":5140,"rtt_observations":5140,"rtt_sample_limit":8192,"rtt_p50_us":70.916,"rtt_p95_us":74.083,"rtt_p99_us":85.708,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.199983,"peak_rss_bytes":57819136,"ok":true,"error":null}
+
+-- Running benchmark_tcps_shared4
+{"schema_version":1,"backend":"standalone","protocol":"tcps","payload_bytes":1024,"clients":16,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.210244292,"messages_sent":17739,"messages":17739,"payload_roundtrip_bytes":36329472,"roundtrips_per_second":84373.2775394,"payload_mib_per_second":164.791557694,"rtt_samples":8192,"rtt_observations":17739,"rtt_sample_limit":8192,"rtt_p50_us":170.709,"rtt_p95_us":203.75,"rtt_p99_us":229.166,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.771502,"peak_rss_bytes":78004224,"ok":true,"error":null}
+
+-- Running benchmark_tcps_sharded4
+{"schema_version":1,"backend":"standalone","protocol":"tcps","payload_bytes":1024,"clients":16,"window":1,"io_model":"sharded","handler_work":0,"io_contexts":4,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.210178541,"messages_sent":18715,"messages":18715,"payload_roundtrip_bytes":38328320,"roundtrips_per_second":89043.3433925,"payload_mib_per_second":173.912780063,"rtt_samples":8192,"rtt_observations":18715,"rtt_sample_limit":8192,"rtt_p50_us":162.208,"rtt_p95_us":199,"rtt_p99_us":211.792,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.792608,"peak_rss_bytes":78118912,"ok":true,"error":null}
+
+-- Running benchmark_wss
+{"schema_version":1,"backend":"standalone","protocol":"wss","payload_bytes":1024,"clients":2,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":1,"server_io_lanes":3,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.200076375,"messages_sent":2658,"messages":2658,"payload_roundtrip_bytes":5443584,"roundtrips_per_second":13284.9268186,"payload_mib_per_second":25.9471226925,"rtt_samples":2658,"rtt_observations":2658,"rtt_sample_limit":8192,"rtt_p50_us":143.25,"rtt_p95_us":147.916,"rtt_p99_us":153.875,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.200034,"peak_rss_bytes":60129280,"ok":true,"error":null}
+
+-- Running benchmark_wss_shared4
+{"schema_version":1,"backend":"standalone","protocol":"wss","payload_bytes":1024,"clients":16,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.210205041,"messages_sent":9670,"messages":9670,"payload_roundtrip_bytes":19804160,"roundtrips_per_second":46002.7026659,"payload_mib_per_second":89.8490286444,"rtt_samples":8192,"rtt_observations":9670,"rtt_sample_limit":8192,"rtt_p50_us":318.875,"rtt_p95_us":359.375,"rtt_p99_us":382.459,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.796327,"peak_rss_bytes":80674816,"ok":true,"error":null}
+
+-- Running benchmark_wss_sharded4
+{"schema_version":1,"backend":"standalone","protocol":"wss","payload_bytes":1024,"clients":16,"window":1,"io_model":"sharded","handler_work":0,"io_contexts":4,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.210185459,"messages_sent":9966,"messages":9966,"payload_roundtrip_bytes":20410368,"roundtrips_per_second":47415.2686271,"payload_mib_per_second":92.6079465373,"rtt_samples":8192,"rtt_observations":9966,"rtt_sample_limit":8192,"rtt_p50_us":285.833,"rtt_p95_us":475.25,"rtt_p99_us":522.292,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.792233,"peak_rss_bytes":80592896,"ok":true,"error":null}
+
+-- Running benchmark_https
+{"schema_version":1,"backend":"standalone","protocol":"https","payload_bytes":1024,"clients":2,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":1,"server_io_lanes":3,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.208005959,"messages_sent":1782,"messages":1782,"payload_roundtrip_bytes":3649536,"roundtrips_per_second":8567.06225421,"payload_mib_per_second":16.7325434653,"rtt_samples":1782,"rtt_observations":1782,"rtt_sample_limit":8192,"rtt_p50_us":216.042,"rtt_p95_us":227.25,"rtt_p99_us":259.75,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.180955,"peak_rss_bytes":59211776,"ok":true,"error":null}
+
+-- Running benchmark_https_shared4
+{"schema_version":1,"backend":"standalone","protocol":"https","payload_bytes":1024,"clients":16,"window":1,"io_model":"shared","handler_work":0,"io_contexts":1,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.21014525,"messages_sent":7349,"messages":7349,"payload_roundtrip_bytes":15050752,"roundtrips_per_second":34971.0497858,"payload_mib_per_second":68.3028316129,"rtt_samples":7349,"rtt_observations":7349,"rtt_sample_limit":8192,"rtt_p50_us":424.167,"rtt_p95_us":474.458,"rtt_p99_us":504.375,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.796531,"peak_rss_bytes":79609856,"ok":true,"error":null}
+
+-- Running benchmark_https_sharded4
+{"schema_version":1,"backend":"standalone","protocol":"https","payload_bytes":1024,"clients":16,"window":1,"io_model":"sharded","handler_work":0,"io_contexts":4,"io_threads":4,"server_io_lanes":17,"requested_seconds":0.2,"warmup_seconds":0.1,"elapsed_seconds":0.200357291,"messages_sent":7466,"messages":7466,"payload_roundtrip_bytes":15290368,"roundtrips_per_second":37263.4305582,"payload_mib_per_second":72.7801378089,"rtt_samples":7466,"rtt_observations":7466,"rtt_sample_limit":8192,"rtt_p50_us":421.833,"rtt_p95_us":474.875,"rtt_p99_us":512.166,"client_send_rejections":0,"client_send_completion_errors":0,"server_send_rejections":0,"server_send_completion_errors":0,"content_errors":0,"order_errors":0,"unexpected_messages":0,"disconnect_errors":0,"udp_lost_messages":0,"unfinished_messages":0,"callback_exceptions":0,"drain_timeouts":0,"duplicate_completions":0,"pending_completions":0,"warmup_ok":true,"warmup_errors":0,"udp_send_buffer_requested_bytes":null,"udp_receive_buffer_requested_bytes":null,"udp_server_send_buffer_bytes":null,"udp_server_receive_buffer_bytes":null,"udp_client_send_buffer_min_bytes":null,"udp_client_send_buffer_max_bytes":null,"udp_client_receive_buffer_min_bytes":null,"udp_client_receive_buffer_max_bytes":null,"cpu_seconds":0.781272,"peak_rss_bytes":79626240,"ok":true,"error":null}
+
+-- Running coroutine_shared
+{"schema_version":1,"implementation":"asio-coroutine","backend":"standalone","protocol":"tcp","payload_bytes":1024,"clients":16,"window":1,"io_model":"shared","io_threads":4,"io_contexts":1,"requested_seconds":0.2,"warmup_seconds":0.1,"handler_work":0,"elapsed_seconds":0.200075792,"messages":28844,"roundtrips_per_second":144165.367092,"payload_mib_per_second":281.572982603,"latency_mode":"message","rtt_samples":28844,"rtt_observations":28844,"rtt_p50_us":106.042,"rtt_p95_us":126.834,"rtt_p99_us":150.041,"warmup_messages":12648,"total_cpu_seconds":1.038190,"peak_rss_bytes":4980736,"content_or_io_errors":0,"ok":true}
+
+-- Running coroutine_shared_cpu
+{"schema_version":1,"implementation":"asio-coroutine","backend":"standalone","protocol":"tcp","payload_bytes":1024,"clients":16,"window":1,"io_model":"shared","io_threads":4,"io_contexts":1,"requested_seconds":0.2,"warmup_seconds":0.1,"handler_work":10000,"elapsed_seconds":0.200092583,"messages":18691,"roundtrips_per_second":93411.7582959,"payload_mib_per_second":182.444840422,"latency_mode":"message","rtt_samples":18691,"rtt_observations":18691,"rtt_p50_us":164.875,"rtt_p95_us":192.459,"rtt_p99_us":221.25,"warmup_messages":9229,"total_cpu_seconds":1.155688,"peak_rss_bytes":4587520,"content_or_io_errors":0,"ok":true}
+
+-- Running coroutine_sharded
+{"schema_version":1,"implementation":"asio-coroutine","backend":"standalone","protocol":"tcp","payload_bytes":1024,"clients":16,"window":1,"io_model":"sharded","io_threads":4,"io_contexts":4,"requested_seconds":0.2,"warmup_seconds":0.1,"handler_work":0,"elapsed_seconds":0.200065292,"messages":34565,"roundtrips_per_second":172768.597964,"payload_mib_per_second":337.438667897,"latency_mode":"message","rtt_samples":34565,"rtt_observations":34565,"rtt_p50_us":83.375,"rtt_p95_us":121.167,"rtt_p99_us":138.292,"warmup_messages":17080,"total_cpu_seconds":1.196333,"peak_rss_bytes":5472256,"content_or_io_errors":0,"ok":true}
+
+-- Running coroutine_sharded_cpu
+{"schema_version":1,"implementation":"asio-coroutine","backend":"standalone","protocol":"tcp","payload_bytes":1024,"clients":16,"window":1,"io_model":"sharded","io_threads":4,"io_contexts":4,"requested_seconds":0.2,"warmup_seconds":0.1,"handler_work":10000,"elapsed_seconds":0.200095958,"messages":20315,"roundtrips_per_second":101526.288702,"payload_mib_per_second":198.293532621,"latency_mode":"message","rtt_samples":20315,"rtt_observations":20315,"rtt_p50_us":153.291,"rtt_p95_us":182.083,"rtt_p99_us":210,"warmup_messages":10159,"total_cpu_seconds":1.195023,"peak_rss_bytes":4603904,"content_or_io_errors":0,"ok":true}
+

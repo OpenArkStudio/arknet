@@ -1,0 +1,12 @@
+{
+  "source_sha256": "fa69d6ce97745281290a263cb0f2515470ede0edb77f5132ce6e3ac7ae7cd9b4",
+  "runner_sha256": "f06e481d4044eed7138efacb7ea65553ac4b494fbd88cc72bac38391a98b4a91",
+  "checks": {
+    "source_hash_matches": true,
+    "host_matches": true,
+    "runner_hash_matches": true,
+    "complete": true,
+    "execution_order": true,
+    "metrics": true
+  }
+}
