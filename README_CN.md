@@ -2,11 +2,12 @@
 
 [English](README.md)
 
-arknet 是 OpenArkStudio 维护的 C++20 header-only 网络库。
+arknet 是 OpenArkStudio 维护的通用 C++20 header-only 网络库。
 
 ## 功能
 
 - **协议**：TCP、UDP、WebSocket/WSS、HTTP/HTTPS 与路由，以及可选的 TLS/mTLS。
+- **可靠 UDP**：实验性 RUDP 端点，使用 C++20 ARQ 核心与兼容 KCP 的消息报文。
 - **地址族**：IPv4 和 IPv6 使用同一套客户端、服务端接口。
 - **运行机制**：自动重连、定时器、post、发送队列限额，以及内置或外部 IO context。
 - **扩展方式**：CRTP 继承、组件组合和自定义 Session。
@@ -16,7 +17,7 @@ arknet 是 OpenArkStudio 维护的 C++20 header-only 网络库。
 - **C++20**：支持该标准的编译器和标准库。
 - **CMake** 3.21+：用于仓库提供的构建配置、示例和测试。
 - **Standalone Asio** 1.38+：默认网络后端。
-- **Boost** 1.90+：可替代 standalone Asio，提供 Asio 和 Beast。
+- **Boost** 1.90+：可替代 Standalone Asio，提供 Asio 和 Beast。
 - **OpenSSL** 1.1.1+：仅在启用 TLS、HTTPS 或 WSS 时需要。
 
 Standalone Asio 与 Boost 二选一。依赖安装和 CMake 选项见[安装与配置](docs/get-started/installation_CN.md)。
@@ -39,9 +40,10 @@ cmake --build build --target arknet_check
 ## 文档
 
 - [文档与协议指南](docs/README_CN.md)
-- [本地性能报告](docs/performance/overview_CN.md)
-- [路线图与 TODO](docs/project/roadmap_CN.md)，包括后续计划开发的 C++ KCP
-- [在线文档](https://openarkstudio.github.io/arknet/#/README_CN)
+- [本地性能报告](docs/performance/index_CN.md)
+- [RUDP 指南](docs/features/rudp/index_CN.md)与[单次 HTTP 请求](docs/features/http/requests_CN.md)
+- [路线图与 TODO](docs/project/roadmap_CN.md)
+- [在线文档](https://openarkstudio.github.io/arknet/zh/)
 
 ## 许可证
 

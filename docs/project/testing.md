@@ -46,6 +46,8 @@ and `shasum` are not prerequisites for these C++ tests or single benchmarks.
 | --- | --- |
 | TCP / UDP / WebSocket | Framing and binary/empty data, custom sessions, endpoint routing, reconnect and owned sends |
 | HTTP / router | Raw-peer chunked/HEAD/Expect semantics, ordered pipelines, limits, method/path dispatch, middleware, errors and HTTP/HTTPS binding |
+| HTTP requests | Independent raw peers, HEAD/interim/chunked/EOF responses, cancellation, deadlines, limits and exactly-once completion |
+| ARQ / RUDP | Canonical protocol interop, loss/reordering, bounded memory, handshake retries, IPv4/IPv6, stale SYN handling and shutdown |
 | Lifecycle / detail / IO pool | Timer/post cancellation, real completion before destruction, mutable listeners, executor serialization, queued work and restart |
 | Concurrency / keepalive | Send limits, callback completion accounting, concurrent shutdown, TCP keepalive options |
 | TLS | Trust/identity rejection, mTLS, deadlines, WSS and fresh stream on reconnect |
@@ -65,7 +67,17 @@ and teardown. Slow receivers test backpressure rather than throughput.
 The current verification host is a Mac mini `Mac16,11`, Apple M4 Pro,
 14 physical/logical cores (10 performance and 4 efficiency cores), 48 GiB RAM,
 macOS 27.0.1 (26A434), Apple Clang
-21.0.0, CMake 4.3.3, standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
+21.0.0, CMake 4.3.3, Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
+
+The latest RUDP, ARQ and HTTP request additions passed **48 complete checks /
+174 doctest cases** with each Release + TLS backend on 2026-10-12. Targeted
+ASan/UBSan checks passed 40 cases, and RUDP/HTTP request TSan checks passed
+18 cases. The test-only canonical KCP source disables `null,object-size`
+instrumentation; arknet's own code remains fully instrumented. See the
+[test record and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/README.md)
+and the separate [RUDP performance report](../performance/rudp.md).
+These additions are experimental and are not part of `v0.1.0-rc.1`.
+
 Complete checks on 2026-10-10 passed as follows. Normal builds include benchmark
 smoke cases and the installed consumer; sanitizer builds disable benchmarks.
 Checks count programs invoked by `arknet_check`; cases count doctest cases.

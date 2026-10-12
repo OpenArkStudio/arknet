@@ -1,5 +1,6 @@
 ---
 import DocsLayout from "./DocsLayout.astro";
+import HomeLinks from "../components/HomeLinks.astro";
 import { navigation, pageBreadcrumbs } from "../navigation";
 import {
   getCollectionPage,
@@ -60,4 +61,5 @@ const socialImage = entry.data.socialImage ?? ogImageUrl;
   entryId={entry.id}
 >
   <Content />
+  {(currentSlug === "/" || currentSlug === "/zh") && <HomeLinks chinese={entry.collection === "zh"} />}
 </DocsLayout>

@@ -9,6 +9,9 @@
 | --- | --- | --- | --- |
 | TCP | `tcp_client`、`tcp_client_t<Derived>` | `tcp_server`、`tcp_server_t<Session>`、`tcp_session_t<Derived>` | [TCP](../features/tcp/index_CN.md) |
 | UDP | `udp_client` | `udp_server`、`udp_session`；独立的 `udp_cast` | [UDP](../features/udp/index_CN.md) |
+| RUDP（实验性） | `rudp_client`、`rudp_client_t<Derived>` | `rudp_server`、`rudp_server_t<Session>`、`rudp_session_t<Derived>` | [RUDP](../features/rudp/index_CN.md) |
+| ARQ 核心 | `arq::control_block`、`arq::options` | 不依赖 Asio，调用必须串行 | [ARQ 配置](../features/rudp/configuration_CN.md) |
+| 单次 HTTP 请求 | `http_request`、`http_request_options` | 回调或 future 完成通知、取消与超时 | [请求](../features/http/requests_CN.md) |
 | WebSocket | `ws_client` | `ws_server`、`ws_session` | [WebSocket](../features/websocket/index_CN.md) |
 | HTTP | `http_client` | `http_server`、`http_session`、`http_router` | [HTTP](../features/http/index_CN.md)、[路由](../guides/http-routing_CN.md) |
 | TLS TCP | `tcps_client` | `tcps_server`、`tcps_session` | [TLS](../features/tls/index_CN.md) |

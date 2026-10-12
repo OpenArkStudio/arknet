@@ -6,6 +6,8 @@ arknet 的 HTTP 客户端、服务端和 Session 交换 Beast HTTP/1 消息。
 
 ## 开始使用
 
+[单次 HTTP 请求](requests_CN.md)提供独立完成通知、超时与取消。
+
 - [创建服务端](server_CN.md)：监听并接收消息。
 - [创建客户端](client_CN.md)：连接、发送并验证响应。
 - [配置与进阶使用](configuration_CN.md)：协议选项与限制。

@@ -27,6 +27,12 @@ pinned checksum; its BSL-1.0 license is installed with the dependency.
 Viktor Kirilov, under the MIT License preserved in
 `tests/vendor/doctest/LICENSE.txt`. It is used only by development tests.
 
+`tests/vendor/kcp/ikcp.c` and `ikcp.h` are the canonical KCP implementation
+at commit `b1a7a2101dcbb96017681a500d6b82bbe5a88766`, copyright (c) 2017
+Lin Wei (skywind3000), under the MIT license retained in `tests/vendor/kcp/LICENSE`.
+They are independent interoperability test references, not runtime dependencies
+or installed headers. The C++ ARQ core is maintained by OpenArkStudio under BSL-1.0.
+
 The documentation uses [Cloudflare Nimbus](https://github.com/cloudflare/nimbus)
 0.17.0 and its 0.7.11 starter, copyright (c) 2025 Cloudflare, Inc., under MIT.
 The starter license is preserved in [docs/site/LICENSE](https://github.com/OpenArkStudio/arknet/blob/main/docs/site/LICENSE).

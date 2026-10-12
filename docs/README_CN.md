@@ -1,8 +1,8 @@
 # arknet
 
-arknet 是面向客户端与服务端的 C++20 header-only 网络库，提供 TCP、UDP、
-WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，支持 IPv4 和 IPv6，
-可选择 standalone Asio 或 Boost.Asio 后端。
+arknet 是面向客户端与服务端的通用 C++20 header-only 网络库，提供 TCP、UDP、
+RUDP（实验性）、WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，
+支持 IPv4 和 IPv6，可选择 Standalone Asio 或 Boost.Asio 后端。
 
 ## 开始使用
 
@@ -16,6 +16,7 @@ WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，支持 IPv4
 | --- | --- | --- |
 | TCP | 有序字节流与应用自定义消息边界 | [TCP](features/tcp/index_CN.md) |
 | UDP | 原生数据报与来源端点 Session | [UDP](features/udp/index_CN.md) |
+| RUDP（实验性） | 基于 ARQ 核心的可靠、有序 UDP 消息 | [RUDP](features/rudp/index_CN.md) |
 | WebSocket / WSS | 完整消息与 HTTP Upgrade | [WebSocket](features/websocket/index_CN.md) |
 | HTTP / HTTPS | HTTP/1.1 请求、响应、路由与中间件 | [HTTP](features/http/index_CN.md) |
 | TLS / mTLS | 加密传输与证书校验 | [TLS](features/tls/index_CN.md) |
@@ -35,8 +36,9 @@ WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，支持 IPv4
 [性能](performance/index_CN.md)提供本地测量的吞吐量、RTT、CPU 占用、机器配置
 和原始数据。[测试](project/testing_CN.md)记录正确性检查及覆盖范围。
 
-[项目](project/index_CN.md)包含架构、贡献规范与路线图。HTTP/2、HTTP/3、KCP、
+[项目](project/index_CN.md)包含架构、贡献规范与路线图。HTTP/2、HTTP/3、
 named pipe、Unix domain socket 和 RPC 仍为 TODO。
+RUDP 处于实验阶段，不属于 `v0.1.0-rc.1`。
 
 [源码](https://github.com/OpenArkStudio/arknet) ·
 [BSL-1.0](https://github.com/OpenArkStudio/arknet/blob/main/LICENSE) ·

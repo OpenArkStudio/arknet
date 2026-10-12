@@ -5,7 +5,10 @@
 #include <arknet/config.hpp>
 #include <arknet/http/http_client.hpp>
 #include <arknet/http/http_server.hpp>
+#include <arknet/http/request.hpp>
 #include <arknet/http/router.hpp>
+#include <arknet/rudp/rudp_client.hpp>
+#include <arknet/rudp/rudp_server.hpp>
 #include <arknet/tcp/tcp_client.hpp>
 #include <arknet/tcp/tcp_server.hpp>
 #include <arknet/udp/udp_cast.hpp>

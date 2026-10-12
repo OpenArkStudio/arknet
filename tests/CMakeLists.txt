@@ -30,7 +30,7 @@ function(arknet_configure_check_target)
         USES_TERMINAL)
 endfunction()
 
-foreach(name tcp udp websocket lifecycle detail concurrency http router io_pool keepalive coroutine_shutdown ipv6)
+foreach(name tcp udp websocket lifecycle detail concurrency http router io_pool keepalive coroutine_shutdown ipv6 arq_core rudp httprequest)
     add_executable(arknet_${name}_test ${name}.cpp test_main.cpp)
     target_link_libraries(arknet_${name}_test PRIVATE arknet::arknet arknet_test_framework)
     target_compile_definitions(arknet_${name}_test PRIVATE
@@ -43,6 +43,13 @@ foreach(name tcp udp websocket lifecycle detail concurrency http router io_pool 
         arknet_add_check(${name} 30 arknet_${name}_test)
     endif()
 endforeach()
+add_executable(arknet_arq_interop_test arq_interop.cpp vendor/kcp/ikcp.c test_main.cpp)
+set_source_files_properties(vendor/kcp/ikcp.c PROPERTIES LANGUAGE CXX)
+# The reference's null-member offsets also trigger Clang's object-size instrumentation.
+set_property(SOURCE vendor/kcp/ikcp.c APPEND PROPERTY COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-fno-sanitize=null,object-size>")
+target_link_libraries(arknet_arq_interop_test PRIVATE arknet::arknet arknet_test_framework)
+arknet_add_check(arq_interop 30 arknet_arq_interop_test)
 add_executable(arknet_stress_test stress.cpp)
 target_link_libraries(arknet_stress_test PRIVATE arknet::arknet arknet_test_framework)
 target_compile_definitions(arknet_stress_test PRIVATE

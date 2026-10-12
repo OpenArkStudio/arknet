@@ -1,0 +1,40 @@
+---
+import { withBase } from "@cloudflare/nimbus-docs/runtime";
+import { CardGrid } from "@/components/ui/card-grid";
+import { LinkCard } from "@/components/ui/link-card";
+
+interface Props { chinese: boolean; }
+const { chinese } = Astro.props;
+const destinations = [
+  { slug: "get-started/installation", icon: "ph:download-simple",
+    en: "Install and configure", zh: "安装与配置",
+    description: "Dependencies, build options and your first application.", summary: "依赖、构建选项与第一个应用。" },
+  { slug: "features", icon: "ph:plugs-connected",
+    en: "Network features", zh: "网络能力",
+    description: "Choose a protocol and build its client and server.", summary: "选择协议，创建对应的客户端与服务端。" },
+  { slug: "concepts", icon: "ph:book-open-text",
+    en: "Core concepts", zh: "核心概念",
+    description: "Understand sessions, IO models and lifecycle.", summary: "理解 Session、IO 模型与生命周期。" },
+  { slug: "guides", icon: "ph:compass",
+    en: "Practical guides", zh: "使用指南",
+    description: "Configure buffers, reconnect, timers and routing.", summary: "配置缓冲、重连、定时器与路由。" },
+  { slug: "reference/api", icon: "ph:code",
+    en: "API reference", zh: "API 参考",
+    description: "Look up public types, options and errors.", summary: "查阅公共类型、配置项与错误信息。" },
+  { slug: "performance", icon: "ph:gauge",
+    en: "Performance and tests", zh: "性能与测试",
+    description: "Compare throughput, latency and CPU utilization.", summary: "对比吞吐量、延迟与 CPU 占用率。" },
+];
+---
+
+<section aria-labelledby="where-to-go-next">
+  <h2 id="where-to-go-next">{chinese ? "接下来" : "Where to go next"}</h2>
+  <CardGrid data-home-links>
+    {destinations.map((item) => <LinkCard
+      title={chinese ? item.zh : item.en}
+      description={chinese ? item.summary : item.description}
+      href={withBase(`${chinese ? "/zh/" : "/"}${item.slug}`, import.meta.env.BASE_URL)}
+      icon={item.icon}
+    />)}
+  </CardGrid>
+</section>

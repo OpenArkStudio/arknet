@@ -4,6 +4,14 @@ These reports measure local loopback workloads on a Mac mini M4 Pro, not CI
 runner performance. Choose a report with matching protocol, payload, concurrency
 and execution mode; each report records its host, source, commands and scope.
 
+## RUDP measurements
+
+[2026-10-12 RUDP report](rudp.md): 216 runs across both Asio backends,
+64/1024/4096/16384-byte messages, 1/4/16 in-flight requests and three IO models.
+Charts compare round trips per second, p99 RTT and process CPU utilization.
+The public RUDP API currently uses callbacks; coroutine and FEC comparisons
+are not included.
+
 ## Current UDP measurements
 
 [2026-10-12 retest](udp-update.md) includes 504 matrix runs, 21 buffer probes and

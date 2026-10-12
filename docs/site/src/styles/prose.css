@@ -234,6 +234,16 @@
   border-bottom-right-radius: 0.75rem;
 }
 
+@media (max-width: 640px) {
+  .docs-content p:has(> img[src*="/performance/assets/"][src$=".svg"]) {
+    overflow-x: auto;
+  }
+
+  .docs-content img[src*="/performance/assets/"][src$=".svg"] {
+    min-width: 48rem;
+  }
+}
+
 .docs-content :where(a:not([class])) {
   color: var(--nb-foreground);
   text-decoration-line: underline;

@@ -1,0 +1,4084 @@
+{
+  "metadata": [
+    {
+      "schema_version": 1,
+      "protocol": "rudp",
+      "wire_protocol": "kcp",
+      "api": "callback",
+      "backend": "standalone",
+      "backend_version": "1.38.2",
+      "compiler": "/usr/bin/c++",
+      "compiler_version": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin",
+      "compiler_flags": " -O3 -DNDEBUG",
+      "build_directory": "/private/tmp/arknet-macmini-standalone",
+      "build_type": "Release",
+      "cxx_standard": 20,
+      "executable": "/private/tmp/arknet-macmini-standalone/benchmarks/arknet_rudp_benchmark",
+      "source_sha256": "2ef5a172d7186652d1f7fa256a2e99fd80104e85d66791969ef21c1652c41bdb",
+      "binary_sha256": "036229c1811ce6714a09e5201f5b0c0299aa9409c878d5691ae7d35cc62333da",
+      "runner_sha256": "4c539a05f7d077a6bd869a6193ca8cb0ac097f39fbddf8e78694a50c140f64a7",
+      "git_head": "e1cdce5e58aa3f7d0376e8ccfda21448650c17a7",
+      "git_status": " M .github/workflows/ci.yml\n M CMakeLists.txt\n M README.md\n M README_CN.md\n M benchmarks/CMakeLists.txt\n M docs/README.md\n M docs/README_CN.md\n M docs/features/http/index.md\n M docs/features/http/index_CN.md\n M docs/features/index.md\n M docs/features/index_CN.md\n M docs/project/roadmap.md\n M docs/project/roadmap_CN.md\n M docs/project/third-party-notices.md\n M docs/project/third-party-notices_CN.md\n M docs/reference/api.md\n M docs/reference/api_CN.md\n M docs/site/src/layouts/ContentPage.astro\n M docs/site/src/navigation.ts\n M include/arknet/arknet.hpp\n M tests/CMakeLists.txt\n?? benchmarks/rudp.cpp\n?? benchmarks/rudp_report.py\n?? docs/features/http/requests.md\n?? docs/features/http/requests_CN.md\n?? docs/features/rudp/\n?? docs/site/src/components/HomeLinks.astro\n?? docs/site/src/components/ui/link-card/\n?? include/arknet/arq/\n?? include/arknet/http/request.hpp\n?? include/arknet/rudp/\n?? scripts/rudp_matrix.sh\n?? scripts/test_rudp_matrix.sh\n?? tests/arq_core.cpp\n?? tests/arq_interop.cpp\n?? tests/httprequest.cpp\n?? tests/rudp.cpp\n?? tests/vendor/kcp/",
+      "started_at_utc": "2026-10-12T10:38:20Z",
+      "host": {
+        "system": "Darwin",
+        "release": "27.0.0",
+        "architecture": "arm64",
+        "logical_cpus": 14,
+        "model": "Mac16,11",
+        "cpu": "Apple M4 Pro",
+        "physical_cpus": 14,
+        "memory_bytes": 51539607552,
+        "os_version": "27.0.1",
+        "os_build": "26A434"
+      },
+      "settings": {
+        "seconds": 1,
+        "warmup": 0.25,
+        "rounds": 3,
+        "clients": 8,
+        "payloads": [
+          64,
+          1024,
+          4096,
+          16384
+        ],
+        "windows": [
+          1,
+          4,
+          16
+        ],
+        "profiles": [
+          "shared:1",
+          "shared:4",
+          "sharded:4"
+        ]
+      },
+      "complete": true,
+      "cases": [
+        "standalone-payload64-window1-shared1.json",
+        "standalone-payload64-window1-shared4.json",
+        "standalone-payload64-window1-sharded4.json",
+        "standalone-payload64-window4-shared1.json",
+        "standalone-payload64-window4-shared4.json",
+        "standalone-payload64-window4-sharded4.json",
+        "standalone-payload64-window16-shared1.json",
+        "standalone-payload64-window16-shared4.json",
+        "standalone-payload64-window16-sharded4.json",
+        "standalone-payload1024-window1-shared1.json",
+        "standalone-payload1024-window1-shared4.json",
+        "standalone-payload1024-window1-sharded4.json",
+        "standalone-payload1024-window4-shared1.json",
+        "standalone-payload1024-window4-shared4.json",
+        "standalone-payload1024-window4-sharded4.json",
+        "standalone-payload1024-window16-shared1.json",
+        "standalone-payload1024-window16-shared4.json",
+        "standalone-payload1024-window16-sharded4.json",
+        "standalone-payload4096-window1-shared1.json",
+        "standalone-payload4096-window1-shared4.json",
+        "standalone-payload4096-window1-sharded4.json",
+        "standalone-payload4096-window4-shared1.json",
+        "standalone-payload4096-window4-shared4.json",
+        "standalone-payload4096-window4-sharded4.json",
+        "standalone-payload4096-window16-shared1.json",
+        "standalone-payload4096-window16-shared4.json",
+        "standalone-payload4096-window16-sharded4.json",
+        "standalone-payload16384-window1-shared1.json",
+        "standalone-payload16384-window1-shared4.json",
+        "standalone-payload16384-window1-sharded4.json",
+        "standalone-payload16384-window4-shared1.json",
+        "standalone-payload16384-window4-shared4.json",
+        "standalone-payload16384-window4-sharded4.json",
+        "standalone-payload16384-window16-shared1.json",
+        "standalone-payload16384-window16-shared4.json",
+        "standalone-payload16384-window16-sharded4.json"
+      ],
+      "finished_at_utc": "2026-10-12T10:40:40Z"
+    },
+    {
+      "schema_version": 1,
+      "protocol": "rudp",
+      "wire_protocol": "kcp",
+      "api": "callback",
+      "backend": "boost",
+      "backend_version": "1.90.0",
+      "compiler": "/usr/bin/c++",
+      "compiler_version": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin",
+      "compiler_flags": " -O3 -DNDEBUG",
+      "build_directory": "/private/tmp/arknet-macmini-boost",
+      "build_type": "Release",
+      "cxx_standard": 20,
+      "executable": "/private/tmp/arknet-macmini-boost/benchmarks/arknet_rudp_benchmark",
+      "source_sha256": "2ef5a172d7186652d1f7fa256a2e99fd80104e85d66791969ef21c1652c41bdb",
+      "binary_sha256": "7270db5e975cd63cd1868aa342c85b0d8917a5d7973b274eafd708b26fa05249",
+      "runner_sha256": "4c539a05f7d077a6bd869a6193ca8cb0ac097f39fbddf8e78694a50c140f64a7",
+      "git_head": "e1cdce5e58aa3f7d0376e8ccfda21448650c17a7",
+      "git_status": " M .github/workflows/ci.yml\n M CMakeLists.txt\n M README.md\n M README_CN.md\n M benchmarks/CMakeLists.txt\n M docs/README.md\n M docs/README_CN.md\n M docs/features/http/index.md\n M docs/features/http/index_CN.md\n M docs/features/index.md\n M docs/features/index_CN.md\n M docs/project/roadmap.md\n M docs/project/roadmap_CN.md\n M docs/project/third-party-notices.md\n M docs/project/third-party-notices_CN.md\n M docs/reference/api.md\n M docs/reference/api_CN.md\n M docs/site/src/layouts/ContentPage.astro\n M docs/site/src/navigation.ts\n M include/arknet/arknet.hpp\n M tests/CMakeLists.txt\n?? benchmarks/results/macmini-m4pro-20261012-rudp/\n?? benchmarks/rudp.cpp\n?? benchmarks/rudp_report.py\n?? docs/features/http/requests.md\n?? docs/features/http/requests_CN.md\n?? docs/features/rudp/\n?? docs/site/src/components/HomeLinks.astro\n?? docs/site/src/components/ui/link-card/\n?? include/arknet/arq/\n?? include/arknet/http/request.hpp\n?? include/arknet/rudp/\n?? scripts/rudp_matrix.sh\n?? scripts/test_rudp_matrix.sh\n?? tests/arq_core.cpp\n?? tests/arq_interop.cpp\n?? tests/httprequest.cpp\n?? tests/rudp.cpp\n?? tests/vendor/kcp/",
+      "started_at_utc": "2026-10-12T10:42:37Z",
+      "host": {
+        "system": "Darwin",
+        "release": "27.0.0",
+        "architecture": "arm64",
+        "logical_cpus": 14,
+        "model": "Mac16,11",
+        "cpu": "Apple M4 Pro",
+        "physical_cpus": 14,
+        "memory_bytes": 51539607552,
+        "os_version": "27.0.1",
+        "os_build": "26A434"
+      },
+      "settings": {
+        "seconds": 1,
+        "warmup": 0.25,
+        "rounds": 3,
+        "clients": 8,
+        "payloads": [
+          64,
+          1024,
+          4096,
+          16384
+        ],
+        "windows": [
+          1,
+          4,
+          16
+        ],
+        "profiles": [
+          "shared:1",
+          "shared:4",
+          "sharded:4"
+        ]
+      },
+      "complete": true,
+      "cases": [
+        "boost-payload64-window1-shared1.json",
+        "boost-payload64-window1-shared4.json",
+        "boost-payload64-window1-sharded4.json",
+        "boost-payload64-window4-shared1.json",
+        "boost-payload64-window4-shared4.json",
+        "boost-payload64-window4-sharded4.json",
+        "boost-payload64-window16-shared1.json",
+        "boost-payload64-window16-shared4.json",
+        "boost-payload64-window16-sharded4.json",
+        "boost-payload1024-window1-shared1.json",
+        "boost-payload1024-window1-shared4.json",
+        "boost-payload1024-window1-sharded4.json",
+        "boost-payload1024-window4-shared1.json",
+        "boost-payload1024-window4-shared4.json",
+        "boost-payload1024-window4-sharded4.json",
+        "boost-payload1024-window16-shared1.json",
+        "boost-payload1024-window16-shared4.json",
+        "boost-payload1024-window16-sharded4.json",
+        "boost-payload4096-window1-shared1.json",
+        "boost-payload4096-window1-shared4.json",
+        "boost-payload4096-window1-sharded4.json",
+        "boost-payload4096-window4-shared1.json",
+        "boost-payload4096-window4-shared4.json",
+        "boost-payload4096-window4-sharded4.json",
+        "boost-payload4096-window16-shared1.json",
+        "boost-payload4096-window16-shared4.json",
+        "boost-payload4096-window16-sharded4.json",
+        "boost-payload16384-window1-shared1.json",
+        "boost-payload16384-window1-shared4.json",
+        "boost-payload16384-window1-sharded4.json",
+        "boost-payload16384-window4-shared1.json",
+        "boost-payload16384-window4-shared4.json",
+        "boost-payload16384-window4-sharded4.json",
+        "boost-payload16384-window16-shared1.json",
+        "boost-payload16384-window16-shared4.json",
+        "boost-payload16384-window16-sharded4.json"
+      ],
+      "finished_at_utc": "2026-10-12T10:44:57Z"
+    }
+  ],
+  "results": [
+    {
+      "backend": "standalone",
+      "payload_bytes": 64,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload64-window1-shared1.json",
+      "rounds": 3,
+      "messages": 259422,
+      "peak_rss_bytes": 5619712,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 86117.3633913,
+        "min": 85910.1298354,
+        "max": 87127.2378229
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 88.1841801127,
+        "min": 87.9719729514,
+        "max": 89.2182915306
+      },
+      "rtt_p50_us": {
+        "median": 89.458,
+        "min": 89.208,
+        "max": 89.833
+      },
+      "rtt_p99_us": {
+        "median": 131.625,
+        "min": 128.208,
+        "max": 142.333
+      },
+      "cpu_percent": {
+        "median": 99.1196064632,
+        "min": 99.0062543121,
+        "max": 99.3310903028
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.079971890228571,
+        "min": 7.071875308007143,
+        "max": 7.095077878771429
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 64,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload64-window1-shared4.json",
+      "rounds": 3,
+      "messages": 218511,
+      "peak_rss_bytes": 7045120,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 72481.9960723,
+        "min": 71738.9887366,
+        "max": 73192.0176669
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 74.2215639781,
+        "min": 73.4607244663,
+        "max": 74.9486260909
+      },
+      "rtt_p50_us": {
+        "median": 106.125,
+        "min": 105.542,
+        "max": 106.875
+      },
+      "rtt_p99_us": {
+        "median": 179.5,
+        "min": 173.208,
+        "max": 179.917
+      },
+      "cpu_percent": {
+        "median": 259.484809657,
+        "min": 259.085583679,
+        "max": 259.581772487
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.534629261214288,
+        "min": 18.506113119928575,
+        "max": 18.54155517764286
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 64,
+      "window": 1,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload64-window1-sharded4.json",
+      "rounds": 3,
+      "messages": 217783,
+      "peak_rss_bytes": 7012352,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 72084.6663605,
+        "min": 71720.9139536,
+        "max": 73125.5930656
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 73.8146983532,
+        "min": 73.4422158885,
+        "max": 74.8806072992
+      },
+      "rtt_p50_us": {
+        "median": 108.583,
+        "min": 107.166,
+        "max": 108.791
+      },
+      "rtt_p99_us": {
+        "median": 162.916,
+        "min": 149.125,
+        "max": 164.125
+      },
+      "cpu_percent": {
+        "median": 147.730002218,
+        "min": 147.432779421,
+        "max": 148.045000073
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.55214301557143,
+        "min": 10.530912815785713,
+        "max": 10.574642862357143
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 64,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload64-window4-shared1.json",
+      "rounds": 3,
+      "messages": 260267,
+      "peak_rss_bytes": 6881280,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 86516.5492718,
+        "min": 85678.3812366,
+        "max": 86761.2226992
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 88.5929464543,
+        "min": 87.7346623862,
+        "max": 88.8434920439
+      },
+      "rtt_p50_us": {
+        "median": 362.667,
+        "min": 361.833,
+        "max": 365.416
+      },
+      "rtt_p99_us": {
+        "median": 464.333,
+        "min": 458.625,
+        "max": 468.291
+      },
+      "cpu_percent": {
+        "median": 98.8604151237,
+        "min": 98.7707733758,
+        "max": 98.8892326967
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.061458223121428,
+        "min": 7.055055241128572,
+        "max": 7.063516621192858
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 64,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload64-window4-shared4.json",
+      "rounds": 3,
+      "messages": 218001,
+      "peak_rss_bytes": 7061504,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 72394.3338073,
+        "min": 71801.3731544,
+        "max": 73415.0538741
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 74.1317978186,
+        "min": 73.5246061101,
+        "max": 75.1770151671
+      },
+      "rtt_p50_us": {
+        "median": 427.667,
+        "min": 424.042,
+        "max": 428.25
+      },
+      "rtt_p99_us": {
+        "median": 626,
+        "min": 595.375,
+        "max": 631.5
+      },
+      "cpu_percent": {
+        "median": 260.490108353,
+        "min": 259.868063391,
+        "max": 260.897657036
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.60643631092857,
+        "min": 18.562004527928572,
+        "max": 18.63554693114286
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 64,
+      "window": 4,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload64-window4-sharded4.json",
+      "rounds": 3,
+      "messages": 220096,
+      "peak_rss_bytes": 7094272,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 73100.0367386,
+        "min": 69403.3161647,
+        "max": 77486.207578
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 74.8544376203,
+        "min": 71.0689957526,
+        "max": 79.3458765599
+      },
+      "rtt_p50_us": {
+        "median": 432.416,
+        "min": 408.084,
+        "max": 443
+      },
+      "rtt_p99_us": {
+        "median": 596.5,
+        "min": 524.458,
+        "max": 960.416
+      },
+      "cpu_percent": {
+        "median": 146.988563988,
+        "min": 145.393110191,
+        "max": 149.864338368
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.499183142000001,
+        "min": 10.385222156500001,
+        "max": 10.704595597714286
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 64,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload64-window16-shared1.json",
+      "rounds": 3,
+      "messages": 256299,
+      "peak_rss_bytes": 7127040,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 85517.1817419,
+        "min": 84427.6803125,
+        "max": 85653.7271486
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 87.5695941037,
+        "min": 86.45394464,
+        "max": 87.7094166002
+      },
+      "rtt_p50_us": {
+        "median": 1480.5,
+        "min": 1477.334,
+        "max": 1499
+      },
+      "rtt_p99_us": {
+        "median": 1729.209,
+        "min": 1715.75,
+        "max": 1755.792
+      },
+      "cpu_percent": {
+        "median": 99.2595053391,
+        "min": 98.9934455389,
+        "max": 99.2898428493
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.089964667078571,
+        "min": 7.070960395635715,
+        "max": 7.092131632092857
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 64,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload64-window16-shared4.json",
+      "rounds": 3,
+      "messages": 216036,
+      "peak_rss_bytes": 7258112,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 72493.9143806,
+        "min": 70238.7328278,
+        "max": 72690.5693673
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 74.2337683257,
+        "min": 71.9244624156,
+        "max": 74.4351430321
+      },
+      "rtt_p50_us": {
+        "median": 1728.417,
+        "min": 1722.791,
+        "max": 1782.458
+      },
+      "rtt_p99_us": {
+        "median": 2220.375,
+        "min": 2180.875,
+        "max": 2298.083
+      },
+      "cpu_percent": {
+        "median": 259.452616468,
+        "min": 258.564288755,
+        "max": 260.639913923
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.532329747714282,
+        "min": 18.468877768214288,
+        "max": 18.617136708785715
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 64,
+      "window": 16,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload64-window16-sharded4.json",
+      "rounds": 3,
+      "messages": 222178,
+      "peak_rss_bytes": 7471104,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 74436.7832942,
+        "min": 72685.186499,
+        "max": 74543.4082989
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 76.2232660932,
+        "min": 74.4296309749,
+        "max": 76.3324500981
+      },
+      "rtt_p50_us": {
+        "median": 1696.292,
+        "min": 1693,
+        "max": 1742.792
+      },
+      "rtt_p99_us": {
+        "median": 2102.292,
+        "min": 2082.5,
+        "max": 2103.917
+      },
+      "cpu_percent": {
+        "median": 147.944812557,
+        "min": 147.186222485,
+        "max": 150.250652784
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.567486611214287,
+        "min": 10.513301606071428,
+        "max": 10.73218948457143
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1024,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload1024-window1-shared1.json",
+      "rounds": 3,
+      "messages": 226640,
+      "peak_rss_bytes": 6946816,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 75391.0699465,
+        "min": 75007.8753742,
+        "max": 75459.1782028
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1235.20729,
+        "min": 1228.92903013,
+        "max": 1236.32317567
+      },
+      "rtt_p50_us": {
+        "median": 105.333,
+        "min": 105.084,
+        "max": 105.584
+      },
+      "rtt_p99_us": {
+        "median": 136.459,
+        "min": 129.542,
+        "max": 139.333
+      },
+      "cpu_percent": {
+        "median": 99.352112364,
+        "min": 99.304572897,
+        "max": 99.7872444508
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.096579454571429,
+        "min": 7.093183778357143,
+        "max": 7.127660317914286
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1024,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload1024-window1-shared4.json",
+      "rounds": 3,
+      "messages": 212100,
+      "peak_rss_bytes": 7110656,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 70224.7290249,
+        "min": 69891.6083151,
+        "max": 71557.2101688
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1150.56196034,
+        "min": 1145.10411064,
+        "max": 1172.39333141
+      },
+      "rtt_p50_us": {
+        "median": 108.334,
+        "min": 107.292,
+        "max": 109.625
+      },
+      "rtt_p99_us": {
+        "median": 183.833,
+        "min": 183.375,
+        "max": 184
+      },
+      "cpu_percent": {
+        "median": 261.509767331,
+        "min": 260.528221445,
+        "max": 262.311351912
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.679269095071426,
+        "min": 18.609158674642856,
+        "max": 18.73652513657143
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1024,
+      "window": 1,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload1024-window1-sharded4.json",
+      "rounds": 3,
+      "messages": 205390,
+      "peak_rss_bytes": 5931008,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 68667.1763327,
+        "min": 67168.3061233,
+        "max": 68939.9099119
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1125.04301703,
+        "min": 1100.48552752,
+        "max": 1129.511484
+      },
+      "rtt_p50_us": {
+        "median": 113.5,
+        "min": 113,
+        "max": 114.333
+      },
+      "rtt_p99_us": {
+        "median": 183.334,
+        "min": 178.042,
+        "max": 229
+      },
+      "cpu_percent": {
+        "median": 150.11624841,
+        "min": 149.813195638,
+        "max": 150.519801502
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.722589172142857,
+        "min": 10.700942545571428,
+        "max": 10.751414393000001
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1024,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload1024-window4-shared1.json",
+      "rounds": 3,
+      "messages": 222884,
+      "peak_rss_bytes": 7061504,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 73880.6953029,
+        "min": 73529.0990295,
+        "max": 74690.2068437
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1210.46131184,
+        "min": 1204.7007585,
+        "max": 1223.72434893
+      },
+      "rtt_p50_us": {
+        "median": 427.458,
+        "min": 426.459,
+        "max": 427.959
+      },
+      "rtt_p99_us": {
+        "median": 541.917,
+        "min": 493.541,
+        "max": 543.333
+      },
+      "cpu_percent": {
+        "median": 99.2534051087,
+        "min": 99.1582273215,
+        "max": 99.8547951089
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.0895289363357135,
+        "min": 7.082730522964285,
+        "max": 7.132485364921429
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1024,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload1024-window4-shared4.json",
+      "rounds": 3,
+      "messages": 212723,
+      "peak_rss_bytes": 7208960,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 71555.6592227,
+        "min": 69045.1540446,
+        "max": 71834.8487518
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1172.3679207,
+        "min": 1131.23580387,
+        "max": 1176.94216195
+      },
+      "rtt_p50_us": {
+        "median": 435.958,
+        "min": 432.75,
+        "max": 445
+      },
+      "rtt_p99_us": {
+        "median": 630.459,
+        "min": 623.208,
+        "max": 644.583
+      },
+      "cpu_percent": {
+        "median": 262.510769895,
+        "min": 261.598775966,
+        "max": 263.203983934
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.750769278214285,
+        "min": 18.685626854714286,
+        "max": 18.800284566714286
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1024,
+      "window": 4,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload1024-window4-sharded4.json",
+      "rounds": 3,
+      "messages": 209911,
+      "peak_rss_bytes": 7258112,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 69500.6174885,
+        "min": 69162.3064067,
+        "max": 70985.1045038
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1138.69811693,
+        "min": 1133.15522817,
+        "max": 1163.01995219
+      },
+      "rtt_p50_us": {
+        "median": 445.875,
+        "min": 441.458,
+        "max": 455.167
+      },
+      "rtt_p99_us": {
+        "median": 609.583,
+        "min": 608.375,
+        "max": 691.375
+      },
+      "cpu_percent": {
+        "median": 149.785152432,
+        "min": 148.432969023,
+        "max": 150.183035781
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.698939459428571,
+        "min": 10.602354930214286,
+        "max": 10.727359698642857
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1024,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload1024-window16-shared1.json",
+      "rounds": 3,
+      "messages": 217262,
+      "peak_rss_bytes": 7651328,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 72013.8736774,
+        "min": 71882.6793167,
+        "max": 72835.9979428
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1179.87530633,
+        "min": 1177.72581793,
+        "max": 1193.34499029
+      },
+      "rtt_p50_us": {
+        "median": 1759.458,
+        "min": 1746.334,
+        "max": 1763.041
+      },
+      "rtt_p99_us": {
+        "median": 2065.208,
+        "min": 2056.333,
+        "max": 2081.708
+      },
+      "cpu_percent": {
+        "median": 99.6059484486,
+        "min": 99.444329271,
+        "max": 99.8075339334
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.114710603471429,
+        "min": 7.1031663765,
+        "max": 7.129109566671429
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1024,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload1024-window16-shared4.json",
+      "rounds": 3,
+      "messages": 206149,
+      "peak_rss_bytes": 7716864,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 68529.4944982,
+        "min": 66423.0018824,
+        "max": 70739.9604163
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1122.78723786,
+        "min": 1088.27446284,
+        "max": 1159.00351146
+      },
+      "rtt_p50_us": {
+        "median": 1816,
+        "min": 1771.584,
+        "max": 1859.958
+      },
+      "rtt_p99_us": {
+        "median": 2439.292,
+        "min": 2378.917,
+        "max": 2645.791
+      },
+      "cpu_percent": {
+        "median": 261.18393887,
+        "min": 260.588894959,
+        "max": 262.835883132
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.65599563357143,
+        "min": 18.61349249707143,
+        "max": 18.773991652285712
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 1024,
+      "window": 16,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload1024-window16-sharded4.json",
+      "rounds": 3,
+      "messages": 216560,
+      "peak_rss_bytes": 7897088,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 71680.9677855,
+        "min": 71229.8372477,
+        "max": 73017.633509
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1174.4209762,
+        "min": 1167.02965347,
+        "max": 1196.32090741
+      },
+      "rtt_p50_us": {
+        "median": 1764,
+        "min": 1733.5,
+        "max": 1775.375
+      },
+      "rtt_p99_us": {
+        "median": 2186.75,
+        "min": 2159.959,
+        "max": 2281.833
+      },
+      "cpu_percent": {
+        "median": 151.159390668,
+        "min": 151.106943906,
+        "max": 153.188108493
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.797099333428571,
+        "min": 10.793353136142857,
+        "max": 10.942007749499998
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 4096,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload4096-window1-shared1.json",
+      "rounds": 3,
+      "messages": 30530,
+      "peak_rss_bytes": 5865472,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 10302.6331859,
+        "min": 9760.58881259,
+        "max": 10401.8436682
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 675.193368471,
+        "min": 639.669948422,
+        "max": 681.69522664
+      },
+      "rtt_p50_us": {
+        "median": 753.708,
+        "min": 752.583,
+        "max": 762.417
+      },
+      "rtt_p99_us": {
+        "median": 950.292,
+        "min": 927.916,
+        "max": 1899.708
+      },
+      "cpu_percent": {
+        "median": 97.7174585114,
+        "min": 95.2519166608,
+        "max": 97.7843984388
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 6.9798184651,
+        "min": 6.803708332914286,
+        "max": 6.984599888485714
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 4096,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload4096-window1-shared4.json",
+      "rounds": 3,
+      "messages": 28946,
+      "peak_rss_bytes": 7274496,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 9610.77028186,
+        "min": 9290.92469347,
+        "max": 9964.01785639
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 629.851441192,
+        "min": 608.890040711,
+        "max": 653.001874236
+      },
+      "rtt_p50_us": {
+        "median": 801.5,
+        "min": 778.5,
+        "max": 833.166
+      },
+      "rtt_p99_us": {
+        "median": 1091.541,
+        "min": 1054.209,
+        "max": 1144.416
+      },
+      "cpu_percent": {
+        "median": 257.034078923,
+        "min": 257.014900531,
+        "max": 258.74854905
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.35957706592857,
+        "min": 18.358207180785715,
+        "max": 18.482039217857142
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 4096,
+      "window": 1,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload4096-window1-sharded4.json",
+      "rounds": 3,
+      "messages": 25706,
+      "peak_rss_bytes": 7274496,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 8685.86247268,
+        "min": 8176.24223027,
+        "max": 8749.01614115
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 569.236683009,
+        "min": 535.838210803,
+        "max": 573.375521826
+      },
+      "rtt_p50_us": {
+        "median": 913.666,
+        "min": 903.167,
+        "max": 921.042
+      },
+      "rtt_p99_us": {
+        "median": 1096.083,
+        "min": 1088.666,
+        "max": 1897.083
+      },
+      "cpu_percent": {
+        "median": 126.956441823,
+        "min": 125.949515011,
+        "max": 127.329103783
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 9.068317273071429,
+        "min": 8.996393929357144,
+        "max": 9.0949359845
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 4096,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload4096-window4-shared1.json",
+      "rounds": 3,
+      "messages": 31428,
+      "peak_rss_bytes": 6356992,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 10417.44662,
+        "min": 10400.1747046,
+        "max": 10490.9713938
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 682.71778169,
+        "min": 681.585849441,
+        "max": 687.536301264
+      },
+      "rtt_p50_us": {
+        "median": 3037.583,
+        "min": 3025.25,
+        "max": 3044.5
+      },
+      "rtt_p99_us": {
+        "median": 3462.417,
+        "min": 3310.875,
+        "max": 3529.333
+      },
+      "cpu_percent": {
+        "median": 98.1681477947,
+        "min": 98.0599001071,
+        "max": 98.2717087048
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.012010556764286,
+        "min": 7.004278579078572,
+        "max": 7.019407764628572
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 4096,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload4096-window4-shared4.json",
+      "rounds": 3,
+      "messages": 29755,
+      "peak_rss_bytes": 7733248,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 9962.16217496,
+        "min": 9607.95062398,
+        "max": 10087.3433946
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 652.880260298,
+        "min": 629.666652093,
+        "max": 661.084136708
+      },
+      "rtt_p50_us": {
+        "median": 3178.458,
+        "min": 3139.375,
+        "max": 3221.875
+      },
+      "rtt_p99_us": {
+        "median": 3642.541,
+        "min": 3579.416,
+        "max": 4453.209
+      },
+      "cpu_percent": {
+        "median": 259.439862629,
+        "min": 257.362738625,
+        "max": 259.470416964
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.531418759214286,
+        "min": 18.383052758928574,
+        "max": 18.533601211714284
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 4096,
+      "window": 4,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload4096-window4-sharded4.json",
+      "rounds": 3,
+      "messages": 25600,
+      "peak_rss_bytes": 7749632,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 8563.68709562,
+        "min": 8305.42152958,
+        "max": 8628.06317756
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 561.229797498,
+        "min": 544.304105363,
+        "max": 565.448748404
+      },
+      "rtt_p50_us": {
+        "median": 3697.5,
+        "min": 3673,
+        "max": 3723.375
+      },
+      "rtt_p99_us": {
+        "median": 4291.875,
+        "min": 4070.75,
+        "max": 8193.417
+      },
+      "cpu_percent": {
+        "median": 126.03743594,
+        "min": 125.477537731,
+        "max": 126.120213024
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 9.002673995714286,
+        "min": 8.9626812665,
+        "max": 9.008586644571428
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 4096,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload4096-window16-shared1.json",
+      "rounds": 3,
+      "messages": 28402,
+      "peak_rss_bytes": 9486336,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 9892.474207,
+        "min": 8201.42953835,
+        "max": 9902.70049679
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 648.31318963,
+        "min": 537.488886225,
+        "max": 648.983379757
+      },
+      "rtt_p50_us": {
+        "median": 12623.583,
+        "min": 12551.625,
+        "max": 14893.334
+      },
+      "rtt_p99_us": {
+        "median": 15827.083,
+        "min": 15497.417,
+        "max": 21461.75
+      },
+      "cpu_percent": {
+        "median": 97.5468335712,
+        "min": 93.7406638504,
+        "max": 97.7081892208
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 6.967630969371428,
+        "min": 6.6957617036,
+        "max": 6.979156372914285
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 4096,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload4096-window16-shared4.json",
+      "rounds": 3,
+      "messages": 28994,
+      "peak_rss_bytes": 9682944,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 9596.03925379,
+        "min": 9295.56215399,
+        "max": 9716.08295968
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 628.886028536,
+        "min": 609.193961324,
+        "max": 636.753212846
+      },
+      "rtt_p50_us": {
+        "median": 13251,
+        "min": 13136.666,
+        "max": 13667.708
+      },
+      "rtt_p99_us": {
+        "median": 14842.667,
+        "min": 14255.833,
+        "max": 15054.292
+      },
+      "cpu_percent": {
+        "median": 258.31862082,
+        "min": 255.315311851,
+        "max": 258.454968129
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.451330058571425,
+        "min": 18.236807989357143,
+        "max": 18.461069152071428
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 4096,
+      "window": 16,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload4096-window16-sharded4.json",
+      "rounds": 3,
+      "messages": 25560,
+      "peak_rss_bytes": 9764864,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 8429.13831029,
+        "min": 8240.23887171,
+        "max": 8468.24745374
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 552.412008303,
+        "min": 540.032294697,
+        "max": 554.975065128
+      },
+      "rtt_p50_us": {
+        "median": 15119.25,
+        "min": 15061.875,
+        "max": 15441.75
+      },
+      "rtt_p99_us": {
+        "median": 16008.458,
+        "min": 15903.125,
+        "max": 17202.458
+      },
+      "cpu_percent": {
+        "median": 126.441893553,
+        "min": 126.166065648,
+        "max": 126.619071993
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 9.031563825214286,
+        "min": 9.011861832,
+        "max": 9.044219428071429
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload16384-window1-shared1.json",
+      "rounds": 3,
+      "messages": 8643,
+      "peak_rss_bytes": 7471104,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2881.98692403,
+        "min": 2845.05943911,
+        "max": 2892.93690173
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 755.495580212,
+        "min": 745.815261605,
+        "max": 758.366051168
+      },
+      "rtt_p50_us": {
+        "median": 2750.334,
+        "min": 2737.167,
+        "max": 2787.958
+      },
+      "rtt_p99_us": {
+        "median": 3033.334,
+        "min": 3028.584,
+        "max": 3128.5
+      },
+      "cpu_percent": {
+        "median": 95.5324297614,
+        "min": 95.2265227749,
+        "max": 95.8850523463
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 6.823744982957143,
+        "min": 6.801894483921429,
+        "max": 6.84893231045
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload16384-window1-shared4.json",
+      "rounds": 3,
+      "messages": 8962,
+      "peak_rss_bytes": 7733248,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2991.97086411,
+        "min": 2949.87787999,
+        "max": 2996.89564495
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 784.327210202,
+        "min": 773.292786973,
+        "max": 785.61821195
+      },
+      "rtt_p50_us": {
+        "median": 2652.041,
+        "min": 2647.417,
+        "max": 2685.416
+      },
+      "rtt_p99_us": {
+        "median": 2934.083,
+        "min": 2907.292,
+        "max": 3017.917
+      },
+      "cpu_percent": {
+        "median": 261.81767954,
+        "min": 260.794734298,
+        "max": 261.845637403
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.701262824285713,
+        "min": 18.628195307,
+        "max": 18.7032598145
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 1,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload16384-window1-sharded4.json",
+      "rounds": 3,
+      "messages": 7568,
+      "peak_rss_bytes": 7749632,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2515.64564647,
+        "min": 2505.33097395,
+        "max": 2523.22950279
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 659.461412347,
+        "min": 656.757482834,
+        "max": 661.449474781
+      },
+      "rtt_p50_us": {
+        "median": 3169.583,
+        "min": 3165.708,
+        "max": 3180.5
+      },
+      "rtt_p99_us": {
+        "median": 3487.125,
+        "min": 3477.792,
+        "max": 3527.959
+      },
+      "cpu_percent": {
+        "median": 121.24405359,
+        "min": 121.175828856,
+        "max": 121.495791299
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 8.660289542142857,
+        "min": 8.655416346857143,
+        "max": 8.67827080707143
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload16384-window4-shared1.json",
+      "rounds": 3,
+      "messages": 8390,
+      "peak_rss_bytes": 9437184,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2763.99285887,
+        "min": 2756.01683093,
+        "max": 2765.28005329
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 724.564143995,
+        "min": 722.473276127,
+        "max": 724.901574289
+      },
+      "rtt_p50_us": {
+        "median": 11297.125,
+        "min": 11253.042,
+        "max": 11328.042
+      },
+      "rtt_p99_us": {
+        "median": 14554.042,
+        "min": 14276.625,
+        "max": 14609.375
+      },
+      "cpu_percent": {
+        "median": 94.843198364,
+        "min": 94.5348284848,
+        "max": 94.9619703675
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 6.774514168857143,
+        "min": 6.752487748914286,
+        "max": 6.7829978833928575
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload16384-window4-shared4.json",
+      "rounds": 3,
+      "messages": 8686,
+      "peak_rss_bytes": 9650176,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2875.04688585,
+        "min": 2826.43670925,
+        "max": 2891.57175047
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 753.676290843,
+        "min": 740.93342471,
+        "max": 758.008184955
+      },
+      "rtt_p50_us": {
+        "median": 11102.208,
+        "min": 11069.958,
+        "max": 11283.125
+      },
+      "rtt_p99_us": {
+        "median": 11691.084,
+        "min": 11430.75,
+        "max": 12530.958
+      },
+      "cpu_percent": {
+        "median": 259.255549978,
+        "min": 258.892530653,
+        "max": 259.988222357
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.51825356985714,
+        "min": 18.492323618071428,
+        "max": 18.570587311214286
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 4,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload16384-window4-sharded4.json",
+      "rounds": 3,
+      "messages": 7513,
+      "peak_rss_bytes": 9666560,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2453.64149257,
+        "min": 2439.48633671,
+        "max": 2515.65742568
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 643.207395427,
+        "min": 639.49670625,
+        "max": 659.464500199
+      },
+      "rtt_p50_us": {
+        "median": 12927.416,
+        "min": 12667.75,
+        "max": 12978.291
+      },
+      "rtt_p99_us": {
+        "median": 14442.083,
+        "min": 13803.625,
+        "max": 15486.125
+      },
+      "cpu_percent": {
+        "median": 121.573917521,
+        "min": 121.307150864,
+        "max": 122.862474947
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 8.6838512515,
+        "min": 8.664796490285713,
+        "max": 8.775891067642856
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "standalone-payload16384-window16-shared1.json",
+      "rounds": 3,
+      "messages": 7807,
+      "peak_rss_bytes": 15204352,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2512.94477691,
+        "min": 2412.48299916,
+        "max": 2535.55832638
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 658.753395599,
+        "min": 632.417943332,
+        "max": 664.681401911
+      },
+      "rtt_p50_us": {
+        "median": 51454.791,
+        "min": 49030.959,
+        "max": 51587.5
+      },
+      "rtt_p99_us": {
+        "median": 78745.959,
+        "min": 75054.291,
+        "max": 83928.541
+      },
+      "cpu_percent": {
+        "median": 94.9854891442,
+        "min": 91.7315847529,
+        "max": 95.0423407418
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 6.784677796014286,
+        "min": 6.552256053778572,
+        "max": 6.788738624414286
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "standalone-payload16384-window16-shared4.json",
+      "rounds": 3,
+      "messages": 8267,
+      "peak_rss_bytes": 15384576,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2643.16790293,
+        "min": 2618.17442944,
+        "max": 2652.68650596
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 692.890606745,
+        "min": 686.338717632,
+        "max": 695.38585142
+      },
+      "rtt_p50_us": {
+        "median": 48467.875,
+        "min": 48416.458,
+        "max": 48633.875
+      },
+      "rtt_p99_us": {
+        "median": 49996.667,
+        "min": 49694.583,
+        "max": 69822.125
+      },
+      "cpu_percent": {
+        "median": 261.21346218,
+        "min": 260.682006245,
+        "max": 261.379095236
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.658104441428573,
+        "min": 18.620143303214288,
+        "max": 18.669935374
+      }
+    },
+    {
+      "backend": "standalone",
+      "payload_bytes": 16384,
+      "window": 16,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "standalone-payload16384-window16-sharded4.json",
+      "rounds": 3,
+      "messages": 8152,
+      "peak_rss_bytes": 14286848,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2591.46500056,
+        "min": 2514.81981231,
+        "max": 2620.55339478
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 679.337001108,
+        "min": 659.244924878,
+        "max": 686.962349122
+      },
+      "rtt_p50_us": {
+        "median": 49297.167,
+        "min": 49249.708,
+        "max": 50309.542
+      },
+      "rtt_p99_us": {
+        "median": 79193.208,
+        "min": 54378.042,
+        "max": 82489.833
+      },
+      "cpu_percent": {
+        "median": 133.496292976,
+        "min": 132.138051668,
+        "max": 144.132242025
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 9.535449498285715,
+        "min": 9.438432262000001,
+        "max": 10.295160144642859
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 64,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload64-window1-shared1.json",
+      "rounds": 3,
+      "messages": 273917,
+      "peak_rss_bytes": 6946816,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 90598.6491254,
+        "min": 90484.195824,
+        "max": 91509.0532295
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 92.7730167044,
+        "min": 92.6558165237,
+        "max": 93.705270507
+      },
+      "rtt_p50_us": {
+        "median": 85.25,
+        "min": 84.959,
+        "max": 85.5
+      },
+      "rtt_p99_us": {
+        "median": 106.459,
+        "min": 105.834,
+        "max": 112.792
+      },
+      "cpu_percent": {
+        "median": 98.8772116491,
+        "min": 98.8311853904,
+        "max": 99.5622898611
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.062657974935715,
+        "min": 7.059370385028571,
+        "max": 7.111592132935714
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 64,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload64-window1-shared4.json",
+      "rounds": 3,
+      "messages": 226641,
+      "peak_rss_bytes": 7045120,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 75072.5846217,
+        "min": 74944.4663916,
+        "max": 75300.0335236
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 76.8743266526,
+        "min": 76.743133585,
+        "max": 77.1072343282
+      },
+      "rtt_p50_us": {
+        "median": 104.458,
+        "min": 104.167,
+        "max": 105.25
+      },
+      "rtt_p99_us": {
+        "median": 174.042,
+        "min": 168.833,
+        "max": 174.416
+      },
+      "cpu_percent": {
+        "median": 248.458109029,
+        "min": 248.012833887,
+        "max": 249.621993158
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 17.747007787785716,
+        "min": 17.7152024205,
+        "max": 17.83014236842857
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 64,
+      "window": 1,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload64-window1-sharded4.json",
+      "rounds": 3,
+      "messages": 219951,
+      "peak_rss_bytes": 5881856,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 73177.8604013,
+        "min": 72582.0920161,
+        "max": 73602.7968123
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 74.9341290509,
+        "min": 74.3240622244,
+        "max": 75.3692639358
+      },
+      "rtt_p50_us": {
+        "median": 107.833,
+        "min": 107.708,
+        "max": 109.083
+      },
+      "rtt_p99_us": {
+        "median": 143.416,
+        "min": 141.042,
+        "max": 146.208
+      },
+      "cpu_percent": {
+        "median": 146.620099165,
+        "min": 146.428006677,
+        "max": 146.629673462
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.472864226071428,
+        "min": 10.45914333407143,
+        "max": 10.473548104428572
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 64,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload64-window4-shared1.json",
+      "rounds": 3,
+      "messages": 270555,
+      "peak_rss_bytes": 5799936,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 89947.8771214,
+        "min": 89565.5342352,
+        "max": 89995.736631
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 92.1066261723,
+        "min": 91.7151070568,
+        "max": 92.1556343102
+      },
+      "rtt_p50_us": {
+        "median": 352.583,
+        "min": 351.416,
+        "max": 352.834
+      },
+      "rtt_p99_us": {
+        "median": 409.708,
+        "min": 402.75,
+        "max": 427.333
+      },
+      "cpu_percent": {
+        "median": 99.2854490693,
+        "min": 99.0731668762,
+        "max": 99.7231340449
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.091817790664286,
+        "min": 7.076654776871429,
+        "max": 7.123081003207142
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 64,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload64-window4-shared4.json",
+      "rounds": 3,
+      "messages": 229395,
+      "peak_rss_bytes": 7143424,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 75971.0161584,
+        "min": 75798.8854738,
+        "max": 76176.9833107
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 77.7943205462,
+        "min": 77.6180587252,
+        "max": 78.0052309101
+      },
+      "rtt_p50_us": {
+        "median": 415.791,
+        "min": 414.75,
+        "max": 416.5
+      },
+      "rtt_p99_us": {
+        "median": 539.375,
+        "min": 488.958,
+        "max": 545.084
+      },
+      "cpu_percent": {
+        "median": 247.958739178,
+        "min": 247.786831071,
+        "max": 250.359004496
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 17.711338512714285,
+        "min": 17.699059362214285,
+        "max": 17.882786035428573
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 64,
+      "window": 4,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload64-window4-sharded4.json",
+      "rounds": 3,
+      "messages": 223522,
+      "peak_rss_bytes": 7241728,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 74510.2976169,
+        "min": 72094.3913127,
+        "max": 75945.9509436
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 76.2985447597,
+        "min": 73.8246567042,
+        "max": 77.7686537663
+      },
+      "rtt_p50_us": {
+        "median": 424.042,
+        "min": 417.667,
+        "max": 427.375
+      },
+      "rtt_p99_us": {
+        "median": 526.959,
+        "min": 498.625,
+        "max": 766.666
+      },
+      "cpu_percent": {
+        "median": 147.245538613,
+        "min": 145.185069116,
+        "max": 147.443554799
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.517538472357144,
+        "min": 10.370362079714285,
+        "max": 10.531682485642857
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 64,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload64-window16-shared1.json",
+      "rounds": 3,
+      "messages": 262404,
+      "peak_rss_bytes": 7258112,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 87419.8394735,
+        "min": 86761.7390831,
+        "max": 87674.8485671
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 89.5179156208,
+        "min": 88.8440208211,
+        "max": 89.7790449327
+      },
+      "rtt_p50_us": {
+        "median": 1460.416,
+        "min": 1459.75,
+        "max": 1470.917
+      },
+      "rtt_p99_us": {
+        "median": 1658.375,
+        "min": 1598.459,
+        "max": 1735.083
+      },
+      "cpu_percent": {
+        "median": 99.7288308511,
+        "min": 99.5182034883,
+        "max": 99.8031210714
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.123487917935714,
+        "min": 7.108443106307143,
+        "max": 7.128794362242857
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 64,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload64-window16-shared4.json",
+      "rounds": 3,
+      "messages": 227941,
+      "peak_rss_bytes": 7520256,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 75353.9337984,
+        "min": 74719.0831315,
+        "max": 76212.2177012
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 77.1624282095,
+        "min": 76.5123411267,
+        "max": 78.0413109261
+      },
+      "rtt_p50_us": {
+        "median": 1680.583,
+        "min": 1671.5,
+        "max": 1690.667
+      },
+      "rtt_p99_us": {
+        "median": 1843.208,
+        "min": 1797.208,
+        "max": 2026.334
+      },
+      "cpu_percent": {
+        "median": 247.883704935,
+        "min": 247.258328085,
+        "max": 248.828281947
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 17.705978923928573,
+        "min": 17.66130914892857,
+        "max": 17.7734487105
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 64,
+      "window": 16,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload64-window16-sharded4.json",
+      "rounds": 3,
+      "messages": 229219,
+      "peak_rss_bytes": 6209536,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 75950.5482382,
+        "min": 75402.8343914,
+        "max": 76237.4709394
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 77.7733613959,
+        "min": 77.2125024168,
+        "max": 78.067170242
+      },
+      "rtt_p50_us": {
+        "median": 1662.625,
+        "min": 1659.917,
+        "max": 1686.333
+      },
+      "rtt_p99_us": {
+        "median": 1834.375,
+        "min": 1818.542,
+        "max": 1846.416
+      },
+      "cpu_percent": {
+        "median": 148.0143287,
+        "min": 147.953625143,
+        "max": 148.674373843
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.572452049999999,
+        "min": 10.568116081642858,
+        "max": 10.619598131642858
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1024,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload1024-window1-shared1.json",
+      "rounds": 3,
+      "messages": 232251,
+      "peak_rss_bytes": 5816320,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 76859.0348289,
+        "min": 76619.9452619,
+        "max": 77383.2623316
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1259.25842664,
+        "min": 1255.34118317,
+        "max": 1267.84737004
+      },
+      "rtt_p50_us": {
+        "median": 103.458,
+        "min": 102.375,
+        "max": 104.625
+      },
+      "rtt_p99_us": {
+        "median": 121.209,
+        "min": 119.667,
+        "max": 126.959
+      },
+      "cpu_percent": {
+        "median": 99.0698343011,
+        "min": 98.9188975106,
+        "max": 99.943441469
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.076416735792857,
+        "min": 7.0656355364714285,
+        "max": 7.138817247785715
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1024,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload1024-window1-shared4.json",
+      "rounds": 3,
+      "messages": 220915,
+      "peak_rss_bytes": 7159808,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 73956.0201894,
+        "min": 69623.313784,
+        "max": 75831.8901519
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1211.69543478,
+        "min": 1140.70837304,
+        "max": 1242.42968825
+      },
+      "rtt_p50_us": {
+        "median": 105.583,
+        "min": 103.208,
+        "max": 108
+      },
+      "rtt_p99_us": {
+        "median": 171.542,
+        "min": 159.375,
+        "max": 245.791
+      },
+      "cpu_percent": {
+        "median": 249.265874955,
+        "min": 247.579674755,
+        "max": 249.950698144
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 17.804705353928572,
+        "min": 17.6842624825,
+        "max": 17.853621296
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1024,
+      "window": 1,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload1024-window1-sharded4.json",
+      "rounds": 3,
+      "messages": 213275,
+      "peak_rss_bytes": 7208960,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 70786.1648845,
+        "min": 70648.1101274,
+        "max": 70836.6744187
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1159.76052547,
+        "min": 1157.49863633,
+        "max": 1160.58807368
+      },
+      "rtt_p50_us": {
+        "median": 111.625,
+        "min": 111.083,
+        "max": 111.792
+      },
+      "rtt_p99_us": {
+        "median": 143.417,
+        "min": 142.291,
+        "max": 144.709
+      },
+      "cpu_percent": {
+        "median": 151.114935883,
+        "min": 149.127133283,
+        "max": 151.315571091
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.793923991642856,
+        "min": 10.651938091642858,
+        "max": 10.808255077928573
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1024,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload1024-window4-shared1.json",
+      "rounds": 3,
+      "messages": 222236,
+      "peak_rss_bytes": 7274496,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 73006.0871405,
+        "min": 72636.9005914,
+        "max": 75337.8757218
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1196.13173171,
+        "min": 1190.08297929,
+        "max": 1234.33575583
+      },
+      "rtt_p50_us": {
+        "median": 426.417,
+        "min": 423.541,
+        "max": 427.167
+      },
+      "rtt_p99_us": {
+        "median": 562.333,
+        "min": 452.125,
+        "max": 656.667
+      },
+      "cpu_percent": {
+        "median": 99.3288050118,
+        "min": 98.8422924476,
+        "max": 99.3689510464
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.0949146437,
+        "min": 7.060163746257143,
+        "max": 7.0977822176
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1024,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload1024-window4-shared4.json",
+      "rounds": 3,
+      "messages": 225448,
+      "peak_rss_bytes": 7290880,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 74344.5466277,
+        "min": 74338.0099873,
+        "max": 75153.4828591
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1218.06105195,
+        "min": 1217.95395563,
+        "max": 1231.31466316
+      },
+      "rtt_p50_us": {
+        "median": 421.917,
+        "min": 421.042,
+        "max": 422.791
+      },
+      "rtt_p99_us": {
+        "median": 537.834,
+        "min": 522.209,
+        "max": 547.833
+      },
+      "cpu_percent": {
+        "median": 250.934938236,
+        "min": 249.59000182,
+        "max": 251.958319151
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 17.923924159714286,
+        "min": 17.82785727285714,
+        "max": 17.9970227965
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1024,
+      "window": 4,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload1024-window4-sharded4.json",
+      "rounds": 3,
+      "messages": 215171,
+      "peak_rss_bytes": 6209536,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 71366.7708818,
+        "min": 70480.9738457,
+        "max": 72509.5522394
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1169.27317413,
+        "min": 1154.76027549,
+        "max": 1187.99650389
+      },
+      "rtt_p50_us": {
+        "median": 444.416,
+        "min": 437.167,
+        "max": 452
+      },
+      "rtt_p99_us": {
+        "median": 513.042,
+        "min": 507.25,
+        "max": 527.875
+      },
+      "cpu_percent": {
+        "median": 149.512157329,
+        "min": 149.419913431,
+        "max": 149.888111754
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.679439809214285,
+        "min": 10.672850959357143,
+        "max": 10.706293696714285
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1024,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload1024-window16-shared1.json",
+      "rounds": 3,
+      "messages": 225838,
+      "peak_rss_bytes": 6356992,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 74453.2428755,
+        "min": 74104.9409745,
+        "max": 75900.173315
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1219.84193127,
+        "min": 1214.13535293,
+        "max": 1243.54843959
+      },
+      "rtt_p50_us": {
+        "median": 1721.125,
+        "min": 1670.083,
+        "max": 1725.875
+      },
+      "rtt_p99_us": {
+        "median": 1826.541,
+        "min": 1781.875,
+        "max": 1835.917
+      },
+      "cpu_percent": {
+        "median": 99.399826536,
+        "min": 99.323296982,
+        "max": 99.7652122653
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.099987609714286,
+        "min": 7.094521213,
+        "max": 7.126086590378571
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1024,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload1024-window16-shared4.json",
+      "rounds": 3,
+      "messages": 220934,
+      "peak_rss_bytes": 8011776,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 72762.0433936,
+        "min": 72682.2577067,
+        "max": 74158.1844499
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1192.13331896,
+        "min": 1190.82611027,
+        "max": 1215.00769403
+      },
+      "rtt_p50_us": {
+        "median": 1734.791,
+        "min": 1715.667,
+        "max": 1734.958
+      },
+      "rtt_p99_us": {
+        "median": 1966.666,
+        "min": 1885.333,
+        "max": 2047.834
+      },
+      "cpu_percent": {
+        "median": 251.683392668,
+        "min": 251.29429085,
+        "max": 252.554961311
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 17.97738519057143,
+        "min": 17.94959220357143,
+        "max": 18.039640093642856
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 1024,
+      "window": 16,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload1024-window16-sharded4.json",
+      "rounds": 3,
+      "messages": 215901,
+      "peak_rss_bytes": 7979008,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 70929.6880214,
+        "min": 70406.6242735,
+        "max": 73083.7817999
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 1162.11200854,
+        "min": 1153.5421321,
+        "max": 1197.40468101
+      },
+      "rtt_p50_us": {
+        "median": 1782.291,
+        "min": 1741.583,
+        "max": 1792.75
+      },
+      "rtt_p99_us": {
+        "median": 2115.833,
+        "min": 1878.792,
+        "max": 2125.333
+      },
+      "cpu_percent": {
+        "median": 150.968769137,
+        "min": 148.199492036,
+        "max": 151.828575323
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 10.783483509785714,
+        "min": 10.585678002571429,
+        "max": 10.844898237357143
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 4096,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload4096-window1-shared1.json",
+      "rounds": 3,
+      "messages": 32779,
+      "peak_rss_bytes": 7127040,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 10954.1182024,
+        "min": 10612.3789924,
+        "max": 11026.999647
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 717.889090514,
+        "min": 695.492869645,
+        "max": 722.665448867
+      },
+      "rtt_p50_us": {
+        "median": 721.75,
+        "min": 719.709,
+        "max": 731.75
+      },
+      "rtt_p99_us": {
+        "median": 799.583,
+        "min": 785.875,
+        "max": 1070.584
+      },
+      "cpu_percent": {
+        "median": 98.0298882069,
+        "min": 97.3369827322,
+        "max": 98.6155177674
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.002134871921428,
+        "min": 6.952641623728572,
+        "max": 7.043965554814285
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 4096,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload4096-window1-shared4.json",
+      "rounds": 3,
+      "messages": 31579,
+      "peak_rss_bytes": 7258112,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 10507.2378462,
+        "min": 10503.0732361,
+        "max": 10542.5183226
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 688.602339491,
+        "min": 688.329407601,
+        "max": 690.914480789
+      },
+      "rtt_p50_us": {
+        "median": 752.416,
+        "min": 751.792,
+        "max": 752.417
+      },
+      "rtt_p99_us": {
+        "median": 924.75,
+        "min": 888.542,
+        "max": 930.834
+      },
+      "cpu_percent": {
+        "median": 255.349859666,
+        "min": 254.082041996,
+        "max": 255.462043824
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.23927569042857,
+        "min": 18.14871728542857,
+        "max": 18.24728884457143
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 4096,
+      "window": 1,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload4096-window1-sharded4.json",
+      "rounds": 3,
+      "messages": 26210,
+      "peak_rss_bytes": 7290880,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 8703.12570992,
+        "min": 8685.90592485,
+        "max": 8721.1520533
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 570.368046525,
+        "min": 569.239530691,
+        "max": 571.549420965
+      },
+      "rtt_p50_us": {
+        "median": 914.958,
+        "min": 908.083,
+        "max": 916.25
+      },
+      "rtt_p99_us": {
+        "median": 1032.333,
+        "min": 1027.375,
+        "max": 1036.542
+      },
+      "cpu_percent": {
+        "median": 126.136592834,
+        "min": 125.660563071,
+        "max": 126.945657702
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 9.009756631,
+        "min": 8.975754505071428,
+        "max": 9.067546978714287
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 4096,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload4096-window4-shared1.json",
+      "rounds": 3,
+      "messages": 32789,
+      "peak_rss_bytes": 7618560,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 10900.5990669,
+        "min": 10821.5810384,
+        "max": 10904.3166797
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 714.38166045,
+        "min": 709.203134931,
+        "max": 714.625297922
+      },
+      "rtt_p50_us": {
+        "median": 2920.375,
+        "min": 2914.875,
+        "max": 2936.916
+      },
+      "rtt_p99_us": {
+        "median": 3207.292,
+        "min": 3147.583,
+        "max": 3292.25
+      },
+      "cpu_percent": {
+        "median": 98.4656266467,
+        "min": 98.2453523184,
+        "max": 98.6546056642
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.033259046192858,
+        "min": 7.0175251655999995,
+        "max": 7.046757547442858
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 4096,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload4096-window4-shared4.json",
+      "rounds": 3,
+      "messages": 31365,
+      "peak_rss_bytes": 7782400,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 10463.3480613,
+        "min": 10292.0477041,
+        "max": 10480.947951
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 685.725978546,
+        "min": 674.499638334,
+        "max": 686.87940492
+      },
+      "rtt_p50_us": {
+        "median": 3041.666,
+        "min": 3040.917,
+        "max": 3077.167
+      },
+      "rtt_p99_us": {
+        "median": 3425.083,
+        "min": 3279.208,
+        "max": 3809.416
+      },
+      "cpu_percent": {
+        "median": 254.684512418,
+        "min": 252.890258235,
+        "max": 254.864293134
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.191750887,
+        "min": 18.06358987392857,
+        "max": 18.204592366714287
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 4096,
+      "window": 4,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload4096-window4-sharded4.json",
+      "rounds": 3,
+      "messages": 26085,
+      "peak_rss_bytes": 6701056,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 8686.99331394,
+        "min": 8606.08867836,
+        "max": 8687.75558265
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 569.310793823,
+        "min": 564.008627625,
+        "max": 569.360749865
+      },
+      "rtt_p50_us": {
+        "median": 3687.667,
+        "min": 3677.459,
+        "max": 3708.167
+      },
+      "rtt_p99_us": {
+        "median": 3922.167,
+        "min": 3919.25,
+        "max": 3988.917
+      },
+      "cpu_percent": {
+        "median": 126.571315448,
+        "min": 126.461498309,
+        "max": 126.843223426
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 9.040808246285714,
+        "min": 9.032964164928572,
+        "max": 9.060230244714285
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 4096,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload4096-window16-shared1.json",
+      "rounds": 3,
+      "messages": 31803,
+      "peak_rss_bytes": 9650176,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 10474.885531,
+        "min": 10381.7926472,
+        "max": 10479.6442123
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 686.482098159,
+        "min": 680.381162929,
+        "max": 686.793963096
+      },
+      "rtt_p50_us": {
+        "median": 12033.417,
+        "min": 12024.666,
+        "max": 12151.708
+      },
+      "rtt_p99_us": {
+        "median": 14833,
+        "min": 14538.166,
+        "max": 14883.333
+      },
+      "cpu_percent": {
+        "median": 98.1877920987,
+        "min": 98.0592003999,
+        "max": 98.2680681069
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 7.013413721335715,
+        "min": 7.0042285999928575,
+        "max": 7.019147721921429
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 4096,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload4096-window16-shared4.json",
+      "rounds": 3,
+      "messages": 30496,
+      "peak_rss_bytes": 9830400,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 10102.2880554,
+        "min": 9898.6781217,
+        "max": 10113.9324658
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 662.06355,
+        "min": 648.719769384,
+        "max": 662.826678079
+      },
+      "rtt_p50_us": {
+        "median": 12655.583,
+        "min": 12654.75,
+        "max": 12911.166
+      },
+      "rtt_p99_us": {
+        "median": 13216.25,
+        "min": 13043,
+        "max": 14316.875
+      },
+      "cpu_percent": {
+        "median": 253.347497635,
+        "min": 253.269163553,
+        "max": 253.506562307
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.09624983107143,
+        "min": 18.0906545395,
+        "max": 18.10761159335714
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 4096,
+      "window": 16,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload4096-window16-sharded4.json",
+      "rounds": 3,
+      "messages": 25919,
+      "peak_rss_bytes": 8667136,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 8462.65394454,
+        "min": 8458.00845359,
+        "max": 8584.83728935
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 554.60848891,
+        "min": 554.304042015,
+        "max": 562.615896595
+      },
+      "rtt_p50_us": {
+        "median": 15077,
+        "min": 14861.083,
+        "max": 15096.708
+      },
+      "rtt_p99_us": {
+        "median": 15863.875,
+        "min": 15469.125,
+        "max": 16049.25
+      },
+      "cpu_percent": {
+        "median": 128.175340433,
+        "min": 127.634840983,
+        "max": 128.611380128
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 9.155381459500001,
+        "min": 9.116774355928571,
+        "max": 9.186527152
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload16384-window1-shared1.json",
+      "rounds": 3,
+      "messages": 8992,
+      "peak_rss_bytes": 6373376,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2984.93133132,
+        "min": 2963.17905927,
+        "max": 2993.67359171
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 782.481838918,
+        "min": 776.779611313,
+        "max": 784.773570025
+      },
+      "rtt_p50_us": {
+        "median": 2641.25,
+        "min": 2639.042,
+        "max": 2671.833
+      },
+      "rtt_p99_us": {
+        "median": 2955.042,
+        "min": 2920.583,
+        "max": 2969.75
+      },
+      "cpu_percent": {
+        "median": 95.8584934887,
+        "min": 95.6445232576,
+        "max": 95.9051602616
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 6.847035249192857,
+        "min": 6.831751661257143,
+        "max": 6.850368590114286
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 1,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload16384-window1-shared4.json",
+      "rounds": 3,
+      "messages": 9263,
+      "peak_rss_bytes": 7766016,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 3075.08931026,
+        "min": 3048.08919353,
+        "max": 3084.24246244
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 806.116212148,
+        "min": 799.038293548,
+        "max": 808.515656075
+      },
+      "rtt_p50_us": {
+        "median": 2562.5,
+        "min": 2559.292,
+        "max": 2579.625
+      },
+      "rtt_p99_us": {
+        "median": 2949.417,
+        "min": 2763.542,
+        "max": 3099.208
+      },
+      "cpu_percent": {
+        "median": 252.580682263,
+        "min": 252.542767871,
+        "max": 254.515248177
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.0414773045,
+        "min": 18.038769133642855,
+        "max": 18.179660584071428
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 1,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload16384-window1-sharded4.json",
+      "rounds": 3,
+      "messages": 7494,
+      "peak_rss_bytes": 7831552,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2486.72955031,
+        "min": 2480.11054802,
+        "max": 2492.03172855
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 651.881231237,
+        "min": 650.146099501,
+        "max": 653.271165448
+      },
+      "rtt_p50_us": {
+        "median": 3198.375,
+        "min": 3195.292,
+        "max": 3207
+      },
+      "rtt_p99_us": {
+        "median": 3517.792,
+        "min": 3506.791,
+        "max": 3525.75
+      },
+      "cpu_percent": {
+        "median": 121.536786126,
+        "min": 121.238105127,
+        "max": 121.839880782
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 8.681199009,
+        "min": 8.65986465192857,
+        "max": 8.702848627285714
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload16384-window4-shared1.json",
+      "rounds": 3,
+      "messages": 8816,
+      "peak_rss_bytes": 9551872,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2911.76115451,
+        "min": 2877.0580259,
+        "max": 2925.8973266
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 763.300716088,
+        "min": 754.203499141,
+        "max": 767.006428784
+      },
+      "rtt_p50_us": {
+        "median": 10665.333,
+        "min": 10659.125,
+        "max": 10729.5
+      },
+      "rtt_p99_us": {
+        "median": 14181.292,
+        "min": 14007.459,
+        "max": 14739.042
+      },
+      "cpu_percent": {
+        "median": 95.9042915577,
+        "min": 95.2843863586,
+        "max": 95.9677916702
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 6.850306539835715,
+        "min": 6.806027597042857,
+        "max": 6.854842262157143
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 4,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload16384-window4-shared4.json",
+      "rounds": 3,
+      "messages": 9065,
+      "peak_rss_bytes": 9650176,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2990.68318662,
+        "min": 2982.0924753,
+        "max": 2998.27524958
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 783.989653273,
+        "min": 781.737649845,
+        "max": 785.979867027
+      },
+      "rtt_p50_us": {
+        "median": 10652.25,
+        "min": 10631.916,
+        "max": 10698.875
+      },
+      "rtt_p99_us": {
+        "median": 11598.75,
+        "min": 11227.792,
+        "max": 11942.667
+      },
+      "cpu_percent": {
+        "median": 253.879794604,
+        "min": 252.300409368,
+        "max": 254.238650648
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 18.134271043142856,
+        "min": 18.021457812,
+        "max": 18.159903617714285
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 4,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload16384-window4-sharded4.json",
+      "rounds": 3,
+      "messages": 7527,
+      "peak_rss_bytes": 8699904,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2476.51301478,
+        "min": 2468.35853663,
+        "max": 2477.9313858
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 649.203027747,
+        "min": 647.065380226,
+        "max": 649.5748452
+      },
+      "rtt_p50_us": {
+        "median": 12848.166,
+        "min": 12843.208,
+        "max": 12906.541
+      },
+      "rtt_p99_us": {
+        "median": 13774.792,
+        "min": 13744.791,
+        "max": 13804.167
+      },
+      "cpu_percent": {
+        "median": 122.018052565,
+        "min": 121.962441788,
+        "max": 122.942703687
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 8.715575183214286,
+        "min": 8.711602984857143,
+        "max": 8.781621691928573
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 1,
+      "raw_file": "boost-payload16384-window16-shared1.json",
+      "rounds": 3,
+      "messages": 8046,
+      "peak_rss_bytes": 14008320,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2576.57908374,
+        "min": 2514.45427066,
+        "max": 2631.24602247
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 675.434747329,
+        "min": 659.149100328,
+        "max": 689.765357313
+      },
+      "rtt_p50_us": {
+        "median": 49487.541,
+        "min": 47993.167,
+        "max": 51032.042
+      },
+      "rtt_p99_us": {
+        "median": 80894.542,
+        "min": 74823.25,
+        "max": 104782.25
+      },
+      "cpu_percent": {
+        "median": 95.5822485657,
+        "min": 91.7944839709,
+        "max": 95.9276364204
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 6.827303468978571,
+        "min": 6.556748855064286,
+        "max": 6.851974030028572
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 16,
+      "io_model": "shared",
+      "io_threads": 4,
+      "raw_file": "boost-payload16384-window16-shared4.json",
+      "rounds": 3,
+      "messages": 8301,
+      "peak_rss_bytes": 15400960,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2626.41471939,
+        "min": 2607.04012367,
+        "max": 2726.14852085
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 688.498860199,
+        "min": 683.419926179,
+        "max": 714.64347785
+      },
+      "rtt_p50_us": {
+        "median": 48782.292,
+        "min": 46942.375,
+        "max": 48813.792
+      },
+      "rtt_p99_us": {
+        "median": 57116.292,
+        "min": 51575.208,
+        "max": 75476.958
+      },
+      "cpu_percent": {
+        "median": 251.77577549,
+        "min": 251.541454168,
+        "max": 252.002908324
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 17.98398396357143,
+        "min": 17.967246726285715,
+        "max": 18.00020773742857
+      }
+    },
+    {
+      "backend": "boost",
+      "payload_bytes": 16384,
+      "window": 16,
+      "io_model": "sharded",
+      "io_threads": 4,
+      "raw_file": "boost-payload16384-window16-sharded4.json",
+      "rounds": 3,
+      "messages": 7966,
+      "peak_rss_bytes": 15515648,
+      "requested_receive_buffer_bytes": 4194304,
+      "server_receive_buffer_bytes": {
+        "median": 4194304,
+        "min": 4194304,
+        "max": 4194304
+      },
+      "client_receive_buffer_min_bytes": 4194304,
+      "client_receive_buffer_max_bytes": 4194304,
+      "roundtrips_per_second": {
+        "median": 2527.29263304,
+        "min": 2488.15994535,
+        "max": 2535.51488351
+      },
+      "payload_roundtrip_mbit_per_second": {
+        "median": 662.514599995,
+        "min": 652.256200713,
+        "max": 664.670013624
+      },
+      "rtt_p50_us": {
+        "median": 50306.917,
+        "min": 49690.166,
+        "max": 50844.125
+      },
+      "rtt_p99_us": {
+        "median": 83452.375,
+        "min": 76753.709,
+        "max": 84123.458
+      },
+      "cpu_percent": {
+        "median": 133.370777991,
+        "min": 133.174581325,
+        "max": 134.427217202
+      },
+      "arq_mtu_bytes": 1200,
+      "arq_send_window_segments": 128,
+      "arq_receive_window_segments": 512,
+      "arq_update_interval_ms": 10,
+      "arq_congestion_control": true,
+      "cpu_machine_percent": {
+        "median": 9.526484142214287,
+        "min": 9.512470094642856,
+        "max": 9.601944085857143
+      }
+    }
+  ]
+}

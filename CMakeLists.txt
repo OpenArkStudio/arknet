@@ -78,6 +78,13 @@ if(ARKNET_BUILD_BENCHMARKS)
                 --certs ${PROJECT_SOURCE_DIR}/tests/certs)
         endforeach()
         unset(_arknet_benchmark_protocols)
+        arknet_add_check(benchmark_rudp 45 arknet_rudp_benchmark
+            --payload 1024 --clients 2 --window 4 --seconds 0.2 --warmup 0.1 --rounds 1)
+        foreach(model shared sharded)
+            arknet_add_check(benchmark_rudp_${model}4 45 arknet_rudp_benchmark
+                --payload 1024 --clients 4 --window 4 --seconds 0.2 --warmup 0.1 --rounds 1
+                --io-model ${model} --io-threads 4)
+        endforeach()
         foreach(model shared sharded)
             arknet_add_check(coroutine_${model} 45 arknet_coroutine_benchmark
                 --protocol tcp --payload 1024 --clients 16 --window 1

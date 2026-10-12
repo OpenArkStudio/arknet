@@ -1,16 +1,19 @@
-import type { Breadcrumb, SidebarItem } from "@cloudflare/nimbus-docs/types";
+import type { BadgeVariant, Breadcrumb, SidebarBadge, SidebarItem } from "@cloudflare/nimbus-docs/types";
 
-type Page = [slug: string, en: string, zh: string];
-type Group = { en: string; zh: string; children: Entry[]; open?: boolean };
+type Badge = { en: string; zh: string; variant: BadgeVariant };
+type Page = [slug: string, en: string, zh: string, badge?: Badge];
+type Group = { en: string; zh: string; children: Entry[]; open?: boolean; badge?: Badge };
 type Entry = Page | Group;
 const protocols: Page[] = [
   ["tcp", "TCP", "TCP"], ["udp", "UDP", "UDP"],
+  ["rudp", "RUDP", "RUDP", { en: "Experimental", zh: "实验性", variant: "warning" }],
   ["websocket", "WebSocket / WSS", "WebSocket / WSS"],
   ["http", "HTTP / HTTPS", "HTTP / HTTPS"], ["tls", "TLS / mTLS", "TLS / mTLS"],
 ];
 const tree: Entry[] = [
   ["", "Overview", "概览"],
-  { en: "Get started", zh: "开始使用", open: true, children: [
+  { en: "Get started", zh: "开始使用", open: true,
+    badge: { en: "Start here", zh: "从这里开始", variant: "success" }, children: [
     ["get-started/installation", "Install and configure", "安装与配置"],
     ["get-started/first-application", "First client and server", "第一个客户端与服务端"],
   ] },
@@ -23,10 +26,12 @@ const tree: Entry[] = [
   ] },
   { en: "Features", zh: "功能", open: true, children: [
     ["features", "Capabilities and support", "能力与支持状态"],
-    ...protocols.map(([slug, en, zh]): Group => ({ en, zh, children: [
+    ...protocols.map(([slug, en, zh, badge]): Group => ({ en, zh, badge, children: [
       [`features/${slug}`, "Overview", "概览"],
       [`features/${slug}/server`, "Create a server", "创建服务端"],
       [`features/${slug}/client`, "Create a client", "创建客户端"],
+      ...(slug === "http" ? [["features/http/requests", "Send a single request", "发送单次请求"] as Page] : []),
+      ...(slug === "rudp" ? [["features/rudp/fec", "Optional FEC design", "可选 FEC 设计", { en: "TODO", zh: "TODO", variant: "warning" }] as Page] : []),
       [`features/${slug}/configuration`, "Configuration and advanced usage", "配置与进阶使用"],
       [`features/${slug}/performance`, "Performance", "性能"],
     ] })),
@@ -41,13 +46,14 @@ const tree: Entry[] = [
     ["guides/ipv4-ipv6", "Use IPv4 and IPv6", "使用 IPv4 与 IPv6"],
   ] },
   ["examples", "Examples", "示例"],
-  { en: "Reference", zh: "参考", children: [
+  { en: "Reference", zh: "参考", badge: { en: "API", zh: "API", variant: "info" }, children: [
     ["reference/api", "Public API index", "公共 API 索引"],
     ["reference/configuration", "Build options and defaults", "构建选项与默认值"],
     ["reference/errors", "Errors and TLS verification", "错误处理与 TLS 校验"],
   ] },
   { en: "Performance", zh: "性能", children: [
     ["performance", "Reports and measurement scope", "报告与测量范围"],
+    ["performance/rudp", "RUDP — 2026-10-12", "RUDP · 2026-10-12"],
     ["performance/methodology", "Methodology and metrics", "测量方法与指标"],
     ["performance/io-comparison", "IO and coroutine comparison", "IO 与协程对比"],
     ["performance/dimensions-native-tcp", "Matched callbacks, coroutines and CPU", "同负载回调、协程与 CPU"],
@@ -76,19 +82,24 @@ const tree: Entry[] = [
     ["project/troubleshooting", "Troubleshooting", "故障排查"],
     ["project/architecture", "Architecture and extension", "架构与扩展"],
     ["project/contributing", "Contributing and code style", "贡献与代码规范"],
-    ["project/roadmap", "Roadmap and TODO", "路线图与 TODO"],
+    ["project/roadmap", "Roadmap and TODO", "路线图与 TODO", { en: "TODO", zh: "TODO", variant: "warning" }],
     ["project/third-party-notices", "Third-party notices", "第三方声明"],
   ] },
 ];
 
 export function navigation(chinese: boolean, current: string): SidebarItem[] {
   const prefix = chinese ? "/zh/" : "/";
+  function badge(value?: Badge): SidebarBadge | undefined {
+    return value ? { text: chinese ? value.zh : value.en, variant: value.variant } : undefined;
+  }
   function items(entries: Entry[]): SidebarItem[] {
     return entries.map((entry, order): SidebarItem => Array.isArray(entry) ? {
       type: "link", label: entry[chinese ? 2 : 1], href: prefix + entry[0], order,
+      badge: badge(entry[3]),
       isCurrent: current.replace(/\/$/, "") === (prefix + entry[0]).replace(/\/$/, ""),
     } : {
       type: "group", label: chinese ? entry.zh : entry.en, order,
+      badge: badge(entry.badge),
       collapsed: !entry.open, children: items(entry.children),
     });
   }

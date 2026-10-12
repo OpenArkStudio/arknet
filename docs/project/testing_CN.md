@@ -44,6 +44,8 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 | --- | --- |
 | TCP／UDP／WebSocket | 拆包、二进制／空数据、自定义 Session、端点路由、重连和发送所有权 |
 | HTTP／router | 独立 raw 对端的 chunked／HEAD／Expect、有序流水线、上限、方法／路径、中间件、错误和 HTTP/HTTPS 绑定 |
+| HTTP 请求 | 独立 raw 对端、HEAD／临时／chunked／EOF 响应、取消、截止时间、上限与完成回调恰好执行一次 |
+| ARQ／RUDP | 原版协议互通、丢失／乱序、内存上限、握手重试、IPv4／IPv6、旧 SYN 处理和关闭 |
 | lifecycle／detail／IO pool | timer／post 取消、实际完成后销毁、mutable 监听器、执行器串行化、排队任务和重启 |
 | concurrency／keepalive | 发送配额、回调完成计数、并发停止和 TCP keepalive |
 | TLS | 信任／身份拒绝、mTLS、截止时间、WSS 和重连时创建新 stream |
@@ -59,7 +61,16 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 
 本轮机器为 Mac mini `Mac16,11`、Apple M4 Pro、14 个物理／逻辑核心（10 个性能核心、4 个能效核心）、
 48 GiB 内存、macOS 27.0.1（26A434）、Apple Clang 21.0.0、CMake 4.3.3、
-standalone Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。
+Standalone Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。
+
+2026-10-12 加入 RUDP、ARQ 与 HTTP 单次请求后，两种 Release + TLS 后端
+各通过 **48 项完整检查、174 个 doctest 用例**。新增模块的 ASan/UBSan
+通过 40 个用例，RUDP／HTTP 请求的 TSan 通过 18 个用例。仅用于测试的原版
+KCP 源码关闭 `null,object-size` 检测，arknet 自有代码保留完整检测。
+[测试记录与复现命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/README_CN.md)
+保存了日志；性能数据见独立的 [RUDP 报告](../performance/rudp_CN.md)。
+新增能力仍为实验性，不包含在 `v0.1.0-rc.1` 中。
+
 2026-10-10 的完整检查结果如下。常规构建包含基准冒烟和安装包消费项目；
 Sanitizer 构建关闭性能基准，避免混入测量。检查数是 `arknet_check` 执行的
 程序数，用例数是 doctest 用例总数。

@@ -25,6 +25,12 @@ OpenSSL/SSLeay 许可证。以实际使用的分发包为准。
 `tests/vendor/doctest/doctest.h` 使用 doctest 2.5.3，版权所有 (c) 2016-2023
 Viktor Kirilov；MIT 许可证保存在 `tests/vendor/doctest/LICENSE.txt`，仅用于开发测试。
 
+`tests/vendor/kcp/ikcp.c` 与 `ikcp.h` 是固定提交
+`b1a7a2101dcbb96017681a500d6b82bbe5a88766` 的官方 KCP 实现，
+copyright (c) 2017 Lin Wei (skywind3000)，MIT 许可证保存在 `tests/vendor/kcp/LICENSE`。
+它们仅作为独立互通测试对照，不属于运行时依赖，也不会安装为公开头文件。
+C++ ARQ 核心由 OpenArkStudio 维护，使用 BSL-1.0。
+
 文档使用 [Cloudflare Nimbus](https://github.com/cloudflare/nimbus) 0.17.0
 和 0.7.11 starter，copyright (c) 2025 Cloudflare, Inc.，采用 MIT。
 starter 的许可证保存在 [docs/site/LICENSE](https://github.com/OpenArkStudio/arknet/blob/main/docs/site/LICENSE)。

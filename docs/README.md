@@ -1,8 +1,9 @@
 # arknet
 
-arknet is a C++20 header-only networking library for clients and servers using TCP,
-UDP, WebSocket, HTTP and TLS. It combines CRTP endpoints with reusable components,
-supports IPv4 and IPv6, and runs on standalone Asio or Boost.Asio.
+arknet is a general-purpose C++20 header-only networking library for clients and
+servers using TCP, UDP, experimental RUDP, WebSocket, HTTP and TLS. It combines
+CRTP endpoints with reusable components, supports IPv4 and IPv6, and runs on
+Standalone Asio or Boost.Asio.
 
 ## Get started
 
@@ -16,6 +17,7 @@ target supplies headers, compile settings and dependencies; arknet has no compil
 | --- | --- | --- |
 | TCP | Ordered streams with application-defined message boundaries | [TCP](features/tcp/index.md) |
 | UDP | Native datagrams and endpoint-based sessions | [UDP](features/udp/index.md) |
+| RUDP (experimental) | Reliable, ordered messages over UDP with an ARQ core | [RUDP](features/rudp/index.md) |
 | WebSocket / WSS | Complete messages and HTTP Upgrade | [WebSocket](features/websocket/index.md) |
 | HTTP / HTTPS | HTTP/1.1 requests, responses, routing and middleware | [HTTP](features/http/index.md) |
 | TLS / mTLS | Encrypted transport and certificate verification | [TLS](features/tls/index.md) |
@@ -37,7 +39,8 @@ CPU utilization, host configuration and raw data. [Testing](project/testing.md)
 records correctness checks and their coverage.
 
 [Project](project/index.md) covers architecture, contribution guidelines and the
-roadmap. HTTP/2, HTTP/3, KCP, named pipes, Unix domain sockets and RPC remain TODO.
+roadmap. HTTP/2, HTTP/3, named pipes, Unix domain sockets and RPC remain TODO.
+RUDP is experimental and not part of `v0.1.0-rc.1`.
 
 [Source](https://github.com/OpenArkStudio/arknet) ·
 [BSL-1.0](https://github.com/OpenArkStudio/arknet/blob/main/LICENSE) ·

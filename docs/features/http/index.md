@@ -8,6 +8,7 @@ Both Asio providers expose the same public types and callback signatures.
 
 - [Create a server](server.md): listen and receive messages.
 - [Create a client](client.md): connect, send and verify replies.
+- [Send a single request](requests.md): completion, timeout and cancellation.
 - [Configuration](configuration.md): protocol options and limits.
 - [Performance](performance.md): local measurements and reproduction.
 
