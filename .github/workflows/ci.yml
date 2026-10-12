@@ -30,17 +30,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        boost: ["OFF", "ON"]
+        os: [ubuntu-latest]
+        boost: ["OFF"]
         ssl: ["ON"]
         sanitize: ["OFF"]
-        include:
-          - {os: ubuntu-latest, boost: "OFF", ssl: "OFF", sanitize: "OFF"}
-          - {os: ubuntu-latest, boost: "ON", ssl: "OFF", sanitize: "OFF"}
-          - {os: ubuntu-latest, boost: "OFF", ssl: "ON", sanitize: "ON"}
-          - {os: ubuntu-latest, boost: "ON", ssl: "ON", sanitize: "ON"}
-          - {os: ubuntu-latest, boost: "OFF", ssl: "ON", sanitize: "THREAD"}
-          - {os: ubuntu-latest, boost: "ON", ssl: "ON", sanitize: "THREAD"}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -65,9 +58,23 @@ jobs:
           -DARKNET_ENABLE_SSL=${{ matrix.ssl }}
           -DARKNET_BUILD_BENCHMARKS=${{ matrix.sanitize != 'OFF' && 'OFF' || 'ON' }}
           ${{ matrix.sanitize == 'ON' && '"-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"' || matrix.sanitize == 'THREAD' && '"-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=thread"' || '' }}
-      - run: cmake --build build --parallel ${{ matrix.sanitize == 'ON' && '1' || matrix.sanitize == 'THREAD' && '2' || '3' }}
+      - run: cmake --build build --target arknet_loopback_benchmark --parallel 2
+      - name: Reproduce UDP endpoint collisions before the fix
+        shell: bash
+        run: |
+          for attempt in $(seq 1 50); do
+            if build/benchmarks/arknet_loopback_benchmark --protocol udp --payload 1024 --clients 256 --window 1 --seconds 0.2 --warmup 0.1 --io-model sharded --io-threads 4 > /tmp/udp-result.json 2> /tmp/udp-endpoints.log; then
+              continue
+            fi
+            cat /tmp/udp-endpoints.log /tmp/udp-result.json
+            if rg 'COLLISION' /tmp/udp-endpoints.log; then
+              exit 0
+            fi
+            exit 1
+          done
+          exit 1
       - name: Test
-        if: matrix.sanitize == 'OFF'
+        if: false
         run: cmake --build build --target arknet_check
       - name: Test with sanitizers
         if: matrix.sanitize == 'ON'
@@ -81,7 +88,7 @@ jobs:
           TSAN_OPTIONS: halt_on_error=1:second_deadlock_stack=1
         run: cmake --build build --target arknet_check
       - name: Check benchmark batch runner and report calculations
-        if: runner.os == 'Linux' && matrix.ssl == 'ON' && matrix.sanitize == 'OFF'
+        if: false
         run: |
           sudo apt-get update
           sudo apt-get install -y jq

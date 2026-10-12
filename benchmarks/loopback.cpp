@@ -453,6 +453,11 @@ template <class Client> struct client_state
             if (message.size() != settings.payload || message.substr(0, 3) != "ANB" ||
                 static_cast<unsigned char>(message[3]) > 1 || get_integer(message, 4, 4) != id)
             {
+                std::cerr << "INVALID expected_client=" << id << " bytes=" << message.size();
+                if (message.size() >= 16)
+                    std::cerr << " received_client=" << get_integer(message, 4, 4)
+                              << " phase=" << unsigned(static_cast<unsigned char>(message[3]));
+                std::cerr << '\n';
                 ++(phase ? phase : owner->phases[0])->content_errors;
                 return;
             }
@@ -683,6 +688,14 @@ void benchmark(const options& settings, const std::shared_ptr<context>& owner)
             }();
             if (!connected)
                 throw std::runtime_error("client start failed: " + arknet::get_last_error().message());
+            if constexpr (!Framed && !WebSocket && !Http)
+            {
+                const auto port = client->get_local_port();
+                for (std::size_t previous = 0; previous < clients.size(); ++previous)
+                    if (clients[previous]->get_local_port() == port)
+                        std::cerr << "COLLISION clients=" << previous << ',' << i << " endpoint=" << host << ':' << port
+                                  << " SO_REUSEADDR=" << client->is_reuse_address() << '\n';
+            }
             clients.push_back(std::move(client));
             states.push_back(std::move(state));
         }
