@@ -53,17 +53,17 @@ const tree: Entry[] = [
   ] },
   { en: "Performance", zh: "性能", children: [
     ["performance", "Reports and measurement scope", "报告与测量范围"],
-    ["performance/rudp", "RUDP — 2026-10-12", "RUDP · 2026-10-12"],
+    ["performance/rudp", "RUDP", "RUDP"],
     ["performance/methodology", "Methodology and metrics", "测量方法与指标"],
     ["performance/io-comparison", "IO and coroutine comparison", "IO 与协程对比"],
     ["performance/dimensions-native-tcp", "Matched callbacks, coroutines and CPU", "同负载回调、协程与 CPU"],
-    { en: "UDP retest — 2026-10-12", zh: "UDP 复测 · 2026-10-12", children: [
+    { en: "UDP", zh: "UDP", children: [
       ["performance/udp-update", "Results and buffer diagnosis", "结果与缓冲诊断"],
       ["performance/udp", "IO models", "IO 模型"],
       ["performance/dimensions-udp", "Payload and in-flight requests", "包体与在途数量"],
       ["performance/udp-limits", "Datagram limits and loss", "数据报边界与丢失"],
     ] },
-    { en: "Baseline — 2026-10-10", zh: "基线 · 2026-10-10", children: [
+    { en: "Protocol comparisons", zh: "协议对比", children: [
       ["performance/overview", "Multi-protocol summary", "多协议汇总"],
       ["performance/dimensions", "Payload, batch and execution", "包体、批量与执行方式"],
       ["performance/coroutine", "Native coroutine IO models", "原生协程 IO 模型"],

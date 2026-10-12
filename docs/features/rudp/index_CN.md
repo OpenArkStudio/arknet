@@ -3,8 +3,12 @@
 RUDP 在 UDP 上提供可靠、有序的消息传输。C++20 ARQ 核心负责分片、确认、
 重传与接收排序，公开客户端、服务端与 Session 延续 arknet 的 CRTP 和组件组合架构。
 
+<Aside type="note" title="说明：实验性模块">
+
 该模块处于实验阶段，不包含在 `v0.1.0-rc.1` 中。
 [可选 FEC](../../project/roadmap_CN.md)将作为组件与 ARQ 组合，当前实现与测量均不包含 FEC。
+
+</Aside>
 
 ## 开始使用
 

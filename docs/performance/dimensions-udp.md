@@ -1,6 +1,6 @@
 # UDP Load Comparison
 
-Local retest on 2026-10-12: 216 runs, 62 valid configurations and 10 failed configurations. [Machine, source and buffer diagnosis](udp-update.md).
+Local measurements on 2026-10-12: 216 runs, 62 valid configurations and 10 failed configurations. [Machine, source and buffer diagnosis](udp-update.md).
 
 16 clients; 64/1024/16384-byte messages; windows 1/4/16/64; three repetitions per configuration.
 

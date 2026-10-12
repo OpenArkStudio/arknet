@@ -21,9 +21,14 @@ and move-only callables.
 | Invalid input, disconnected object or queue limit | `false` | Inline on the calling thread, with an error and zero bytes |
 | Admitted operation | `true` | On the object's IO executor after transport completion or cancellation |
 
+<Aside type="caution" title="Warning: Rejected sends complete inline">
+
 A callback can therefore run before `async_send()` returns on rejection. Avoid
 assuming every completion is posted, or holding a lock that the callback will
 acquire. Prefer the two-argument callback to inspect the operation's own error.
+
+</Aside>
+
 Successful transport completion does not acknowledge peer application handling;
 add an application-level response when that is required.
 
@@ -54,8 +59,12 @@ auto completion = client.async_send(std::string("hello"), asio::use_future);
 auto [error, bytes] = completion.get();
 ```
 
+<Aside type="caution" title="Warning: Do not block the IO workers">
+
 Never wait for an incomplete send or posted-task future from a worker of the
 same context. This also applies to a different strand on that context.
+
+</Aside>
 
 `send()` submits an asynchronous operation. Outside the involved context's
 workers, it waits and returns the transport's byte count. On a worker, an

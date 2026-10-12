@@ -2,7 +2,7 @@
 
 ## Local Results
 
-Charts below use the [2026-10-12 retest after the fix](../../performance/udp-update.md).
+Charts below use the [UDP performance report](../../performance/udp-update.md).
 
 Release local loopback: 1024-byte datagrams, 16 clients, window 1 and no extra
 application computation.
@@ -93,11 +93,11 @@ backend while IPv4 fragmentation/reassembly counters stay at zero. The local
 MTU calculation therefore does not establish fragmentation as the loss cause.
 These results do not measure IPv6 loss or cross-host behavior.
 
-The original baseline uses UDP window 1 while TCP and WebSocket use window 16, so these results do
+The IO measurements use UDP window 1 while TCP and WebSocket use window 16, so these results do
 not support a direct capacity ranking across protocols; loss invalidates a
-larger-window measurement. Broadcast, multicast, KCP, DTLS and cross-host
-networks are outside this test; validate pacing, loss, reordering and MTU on
-the deployed network.
+larger-window measurement. Broadcast, multicast, DTLS and cross-host networks
+are outside this test; RUDP has a [separate report](../../performance/rudp.md).
+Validate pacing, loss, reordering and MTU on the deployed network.
 
 See [testing](../../project/testing.md), [IO models](../../concepts/io-models.md) and
 [benchmark source](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/loopback.cpp).

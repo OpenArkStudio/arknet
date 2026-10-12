@@ -1,7 +1,11 @@
 # Optional FEC design
 
-**TODO.** This page records the agreed direction, not an available API.
+<Aside type="note" title="Note: Planned capability (TODO)">
+
+This page records the agreed direction, not an available API.
 The current RUDP implementation uses ARQ only. Its benchmarks do not measure FEC.
+
+</Aside>
 
 arknet is a general-purpose networking library. Games are one workload, alongside
 control messages, service communication and bulk transfer. Presets should express
@@ -53,10 +57,14 @@ FEC recovery from later ARQ retransmission. Insufficient samples retain the curr
 policy. Small or sparse groups must respect latency and byte budgets; when useful
 coding cannot fit those budgets, send through ARQ without parity.
 
+<Aside type="caution" title="Warning: Redundancy does not resolve overload">
+
 Increasing redundancy is not a remedy for overload. RTT inflation and growing
 queues require conservative rate control; neither signal proves the cause of
 packet loss. ARQ congestion control remains active. CPU and bandwidth limits
 must prevent adaptation from aggravating an already overloaded sender or receiver.
+
+</Aside>
 
 ## Wire format and limits
 

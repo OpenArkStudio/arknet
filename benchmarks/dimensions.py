@@ -459,7 +459,7 @@ def index_page(reports, rows, failed, chinese, raw_base, host_description="", na
                      ("次测量" if chinese else "measurements") +
                      f"; executable SHA-256 `{value.get('executable_sha256', 'not recorded')}`")
     lines += ["", f"[{'复现命令与指标定义' if chinese else 'Reproduction and metric definitions'}](../testing{suffix}.md)", "",
-              "本机回环、固定连接分布和短时测量不代表生产容量，业务选型仍需按实际消息与连接分布复测。" if chinese else
+              "本机回环、固定连接分布和短时测量不代表生产容量，业务选型仍需使用实际消息与连接分布测量。" if chinese else
               "Local loopback, fixed connection distributions and short runs do not establish production capacity; repeat with real messages and connection activity.", ""]
     return "\n".join(lines)
 

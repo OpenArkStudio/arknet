@@ -2,7 +2,7 @@
 
 [本地性能报告](../performance/overview_CN.md)
 
-[UDP 修复后复测与缓冲诊断](../performance/udp-update_CN.md) · [缓冲区配置](../guides/socket-buffers_CN.md)
+[UDP 性能报告与缓冲诊断](../performance/udp-update_CN.md) · [缓冲区配置](../guides/socket-buffers_CN.md)
 
 功能测试验证正确性，持续压力测试检查重复工作、重启与清理。
 性能测量在这些检查通过后于本机执行，使用不带 Sanitizer 的 Release 构建。
@@ -59,60 +59,35 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 
 ## 本机验证
 
-本轮机器为 Mac mini `Mac16,11`、Apple M4 Pro、14 个物理／逻辑核心（10 个性能核心、4 个能效核心）、
-48 GiB 内存、macOS 27.0.1（26A434）、Apple Clang 21.0.0、CMake 4.3.3、
-Standalone Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。
+验证日期为 2026-10-12。机器为 Mac mini `Mac16,11`、Apple M4 Pro、14 个物理／逻辑核心
+（10 个性能核心、4 个能效核心）、48 GiB 内存、macOS 27.0.1（26A434）、
+Apple Clang 21.0.0、CMake 4.3.3、Standalone Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。
 
-2026-10-12 加入 RUDP、ARQ 与 HTTP 单次请求后，两种 Release + TLS 后端
-各通过 **48 项完整检查、174 个 doctest 用例**。新增模块的 ASan/UBSan
-通过 40 个用例，RUDP／HTTP 请求的 TSan 通过 18 个用例。仅用于测试的原版
-KCP 源码关闭 `null,object-size` 检测，arknet 自有代码保留完整检测。
-[测试记录与复现命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/README_CN.md)
-保存了日志；性能数据见独立的 [RUDP 报告](../performance/rudp_CN.md)。
-新增能力仍为实验性，不包含在 `v0.1.0-rc.1` 中。
-
-2026-10-10 的完整检查结果如下。常规构建包含基准冒烟和安装包消费项目；
-Sanitizer 构建关闭性能基准，避免混入测量。检查数是 `arknet_check` 执行的
-程序数，用例数是 doctest 用例总数。
-
-| 后端 | 构建 | TLS | 检查 / 用例 | 结果与日志 |
+| 后端 | 构建 | TLS | 检查 / doctest 用例 | 结果 |
 | --- | --- | --- | ---: | --- |
-| Standalone Asio | Release | ON | 40 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone.log) |
-| Standalone Asio | Release | OFF | 30 / 87 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-notls.log) |
-| Standalone Asio | Debug | ON | 40 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-tls.log) |
-| Standalone Asio | Debug | OFF | 30 / 87 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-notls.log) |
-| Boost | Release | ON | 40 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost.log) |
-| Boost | Release | OFF | 30 / 87 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-notls.log) |
-| Boost | Debug | ON | 40 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-debug-tls.log) |
-| Boost | Debug | OFF | 30 / 87 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-debug-notls.log) |
-| Standalone Asio | Debug + ASan/UBSan | ON | 15 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-asan.log) |
-| Standalone Asio | Debug + TSan | ON | 15 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-tsan.log) |
+| Standalone Asio | Release | ON | 48 / 174 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-standalone.log) |
+| Boost.Asio | Release | ON | 48 / 174 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-boost.log) |
 
-加入 IPv6 后，两种后端的 Release + TLS 完整检查再次通过，各 **41 个检查、128 个用例**：
-[standalone 日志](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/final-standalone-tls.log)、
-[Boost 日志](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/final-boost-tls.log)。
-IPv6 独立检查覆盖两后端及 TLS 开关；ASan/UBSan、TSan 和 30 次短基准探测也通过，
-详见 [IPv6 测试记录](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/ipv6/README_CN.md)。
-这些短探测验证参数、协议和 CPU 百分比输出，不作为性能比较。
+检查数是 `arknet_check` 执行的程序数，用例数是 doctest 用例总数。
+完整检查包含基准冒烟和安装包使用检查。
 
-修复 future 回调释放、MSVC 拆包条件、UDP 完成字节数和排队取消的循环引用，
-并统一 clang-format 18 格式后，完整本地检查再次通过：
-两种 Release 后端各 **41 个检查、133 个用例**，standalone 的两种 Sanitizer 构建各
-**16 个检查、133 个用例**。GCC/libstdc++ 回归检查也通过，详见
-[可移植性测试记录](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/portability/README_CN.md)。
+| 检测工具 | 范围 | 用例 | 结果 |
+| --- | --- | ---: | --- |
+| ASan/UBSan | Standalone Asio：ARQ、原版协议互通、RUDP、HTTP 单次请求 | 40 | 通过 |
+| TSan | Standalone Asio：RUDP、HTTP 单次请求 | 18 | 通过 |
 
-2026-10-12 修正 UDP 客户端默认开启 `SO_REUSEADDR` 的行为后，两种 Release + TLS
-后端各通过 **41 项检查、134 个用例**，并各用独立进程重复执行原失败的 UDP
-配置 30 次，全部通过。UDP 的 ASan/UBSan 和 TSan 检查也通过。
-[UDP 端点回归记录](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/udp-endpoints/README_CN.md)
-保存了 Linux 端口冲突证据和本地日志。
+[日志与复现命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/README_CN.md)
+记录了源码版本和检查范围。仅用于测试的原版 KCP 源码关闭 `null,object-size` 检测，
+arknet 自有代码保留完整检测。性能数据见独立的 [RUDP 报告](../performance/rudp_CN.md)。
 
-关闭流程的回归用例覆盖跨 context 保留的 Session/strand，以及协程连接后的异常
-清理。历史诊断数据保存在 `benchmarks/results/diagnostics/`；发布的性能报告
-只使用关闭修复后重新测量的完整数据。
+<Aside type="note" title="说明：发布版本范围">
 
-本机具备 ASan/UBSan 和 TSan，单独执行，不混入性能测量。
-LeakSanitizer 的支持依平台而异；Apple ASan 通过不等同于 Linux 泄漏检查通过。
+RUDP、ARQ 和 HTTP 单次请求仍为实验性能力，不包含在 `v0.1.0-rc.1` 中。
+
+</Aside>
+
+Sanitizer 单独执行，不混入性能测量。LeakSanitizer 的支持依平台而异；
+Apple ASan 通过不等同于 Linux 泄漏检查通过。
 
 ### Sanitizer 检查
 
@@ -134,8 +109,7 @@ Job 名称包含系统、后端、TLS 和检查模式。main push 与 PR 使用�
 过期运行会取消。CI 上传测试日志、执行基准冒烟，不生成性能报告矩阵。
 
 本机回环不能预测跨主机容量和广域网延迟。丢包／延迟注入、文件描述符耗尽
-和生产时长耐久仍需单独验证。`benchmarks/results/macos-arm64-*` 是重写前的历史
-证据，不能代表当前实现的性能。
+和生产时长耐久仍需单独验证。
 
 文档中的 14 个独立客户端、服务端程序也在两种后端上编译、运行通过。每种后端
 的七组协议检查了回显内容，全部 28 个进程正常退出。

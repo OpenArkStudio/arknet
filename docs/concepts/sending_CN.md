@@ -18,9 +18,15 @@ Session；需要逐个对端的结果时，使用每个 Session 的完成回调�
 | 输入无效、对象未连接或队列达到上限 | `false` | 在调用线程立即执行，返回错误和零字节 |
 | 操作被接受 | `true` | 传输完成或取消后，在对象的 IO executor 上执行 |
 
+<Aside type="caution" title="注意：被拒绝的发送立即执行完成回调">
+
 操作被拒绝时，回调可能在 `async_send()` 返回前执行。因此，不能假设全部完成回调
 都会被投递，也不要在持有回调需要获取的锁时提交发送。优先使用带错误和字节数的
-回调，读取本次操作的错误。传输完成不表示对端应用已经处理消息；需要确认时，
+回调，读取本次操作的错误。
+
+</Aside>
+
+传输完成不表示对端应用已经处理消息；需要确认时，
 由应用协议提供响应。
 
 ### 背压
@@ -47,8 +53,12 @@ auto completion = client.async_send(std::string("hello"), asio::use_future);
 auto [error, bytes] = completion.get();
 ```
 
+<Aside type="caution" title="注意：不要阻塞 IO 工作线程">
+
 不要在同一个 context 的工作线程等待未完成的发送或 post future；即使当前回调
 位于另一个 strand，也遵守此约定。
+
+</Aside>
 
 `send()` 会提交异步操作。在所涉及 context 的工作线程以外调用时，它会等待并返回
 传输字节数。在工作线程调用时，如果操作尚未完成，异步操作继续执行，`send()`

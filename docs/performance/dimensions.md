@@ -1,6 +1,6 @@
 # Payload, Batch and Execution Comparisons
 
-This page preserves the historical multi-protocol matrix from 2026-10-10. Current UDP results are in the [2026-10-12 retest](udp-update.md) and [updated UDP load comparison](dimensions-udp.md). Coroutine results still measure native TCP.
+This report contains the final payload and batch measurements: UDP on 2026-10-12, and other protocols and matched native TCP executions on 2026-10-10. Each protocol retains its own source hash. Coroutine results measure native TCP.
 
 Local Release IPv4 loopback: 16 clients, three payload sizes, four windows and three thread models, with three repetitions per configuration.
 
@@ -16,9 +16,10 @@ Local Release IPv4 loopback: 16 clients, three payload sizes, four windows and t
 
 Measurement 1.0 s, warmup 0.25 s. Charts show medians and min/max, not confidence intervals; p99 is the median of per-run sampled percentiles.
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; legacy values are marked estimated, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
 
 - Source SHA-256: `fa69d6ce97745281290a263cb0f2515470ede0edb77f5132ce6e3ac7ae7cd9b4`
+- UDP source SHA-256: `0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`; [raw records and conditions](udp-update.md).
 - Measurements: 2,376; valid profiles: 782; failed profiles: 10.
 
 Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch arm64; TLS ON; sanitizers OFF. Standalone Asio 1.38.2 with BHO Beast based on Boost 1.84 (API 351); Boost 1.90.0 with Asio 1.38.0 and Beast API 359; OpenSSL 3.6.4. Mac mini on AC power, low power mode disabled, no CPU affinity.

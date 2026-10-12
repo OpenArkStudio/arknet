@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { convertPage, pageRoute } from "./content.mjs";
+import { convertPage, pageExtension, pageRoute } from "./content.mjs";
 
 test("bilingual routes and home aliases", () => {
   assert.equal(pageRoute("README_CN.md"), "/zh/");
@@ -24,4 +24,22 @@ test("source references point at GitHub; missing documents fail", () => {
   const result = convertPage("# Page\n\n[source](../include/arknet.hpp)", "page.md", new Set());
   assert.match(result, /https:\/\/github.com\/OpenArkStudio\/arknet\/blob\/main\/include\/arknet.hpp/);
   assert.throws(() => convertPage("# Page\n\n[missing](missing.md)", "page.md", new Set()), /missing document/);
+});
+
+test("native Nimbus components use MDX and retain nested Markdown links", () => {
+  const source = '# Guide\n\n<Steps>\n\n<Step title="Install">\n\n[Setup](installation.md)\n\n</Step>\n\n</Steps>\n\n<Aside type="caution" title="Warning">\n\nRead the [setup](installation.md).\n\n</Aside>\n';
+  const result = convertPage(source, "guide.md", new Set(["installation.md"]));
+  assert.equal(pageExtension(source), ".mdx");
+  assert.match(result, /import \{ Aside \} from "@\/components\/ui\/aside"/);
+  assert.match(result, /import \{ Step, Steps \} from "@\/components\/ui\/steps"/);
+  assert.match(result, /\[Setup\]\(\/installation\)/);
+  assert.match(result, /\[setup\]\(\/installation\)/);
+});
+
+test("component examples inside code blocks and inline code stay plain Markdown", () => {
+  const source = '# Authoring\n\nUse `<Steps>`.\n\n```md\n<Aside type="note">\n\nExample\n\n</Aside>\n```\n';
+  const result = convertPage(source, "authoring.md", new Set());
+  assert.equal(pageExtension(source), ".md");
+  assert.doesNotMatch(result, /import \{/);
+  assert.ok(result.includes('```md\n<Aside type="note">'));
 });

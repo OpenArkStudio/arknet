@@ -2,7 +2,7 @@
 
 ## 本机测量结果
 
-以下图表来自 [2026-10-12 修复后复测](../../performance/udp-update_CN.md)。
+以下图表来自 [UDP 性能报告](../../performance/udp-update_CN.md)。
 
 Release 本机回环测试：1024 字节数据报、16 个客户端、窗口 1，无额外业务计算。
 
@@ -71,6 +71,6 @@ IPv4 和 IPv6 的 IP 头不同，不能混用这些数值。
 每种后端的接收缓冲溢出计数增加 23,778，而 IPv4 分片和重组计数始终为零，
 不能根据本机 MTU 的数学计算断言分片是丢包原因。这些结果未测量 IPv6 丢包或跨主机行为。
 
-原有基线中 UDP 使用窗口 1，TCP 和 WebSocket 使用窗口 16，结果不能直接用于跨协议容量排名；较大窗口发生丢失时，该测量失效。测试未覆盖广播、组播、KCP、DTLS 或跨主机网络，实际部署仍需验证发送节奏、丢失、乱序和 MTU。
+IO 模型测量中 UDP 使用窗口 1，TCP 和 WebSocket 使用窗口 16，结果不能直接用于跨协议容量排名；较大窗口发生丢失时，该测量失效。测试未覆盖广播、组播、DTLS 或跨主机网络；RUDP 有[独立报告](../rudp/performance_CN.md)。实际部署仍需验证发送节奏、丢失、乱序和 MTU。
 
 另见[测试](../../project/testing_CN.md)、[IO 模型](../../concepts/io-models_CN.md)及[基准源码](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/loopback.cpp)。

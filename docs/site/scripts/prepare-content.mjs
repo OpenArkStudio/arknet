@@ -1,7 +1,7 @@
 import { readdir, readFile, mkdir, writeFile, cp, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { posix, join } from "node:path";
-import { convertPage, pageRoute } from "./content.mjs";
+import { convertPage, pageExtension } from "./content.mjs";
 
 const site = fileURLToPath(new URL("../", import.meta.url));
 const docs = fileURLToPath(new URL("../../", import.meta.url));
@@ -23,9 +23,10 @@ for (const file of files) {
   const sibling = chinese ? file.replace(/_CN\.md$/, ".md") : file.replace(/\.md$/, "_CN.md");
   if (!files.has(sibling)) throw new Error(`${file}: missing translation`);
   const slug = file.replace(/(?:_CN)?\.md$/, "").replace(/^README$/, "index");
-  const target = join(content, chinese ? "zh" : "docs", slug + ".md");
+  const source = await readFile(join(docs, file), "utf8");
+  const target = join(content, chinese ? "zh" : "docs", slug + pageExtension(source));
   await mkdir(join(target, ".."), { recursive: true });
-  await writeFile(target, convertPage(await readFile(join(docs, file), "utf8"), file, files));
+  await writeFile(target, convertPage(source, file, files));
 }
 await mkdir(join(site, "public/performance"), { recursive: true });
 await cp(join(docs, "performance/assets"), join(site, "public/performance/assets"), { recursive: true });

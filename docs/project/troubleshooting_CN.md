@@ -19,22 +19,55 @@
 | 定时器查询返回默认值，错误为 `operation_not_supported` 或 `operation_aborted` | 检查是否从同一 context 的另一个 strand 查询，或 context 已停止 | 在对象的 executor 查询，或在运行线程持续运行时由所有者线程查询 |
 | 外部 IO 模式下，启动、future 或停止一直等待 | 检查 `run()` 线程和 work guard 是否仍有效 | 保持宿主 context 运行，直到对象停止完成；按[停止顺序](../concepts/lifecycle_CN.md#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%92%8C%E6%89%A7%E8%A1%8C%E4%B8%8A%E4%B8%8B%E6%96%87)处理 |
 | TCP 接收回调拆分或合并了应用消息 | 检查两端的拆包配置 | 将原始 TCP 视为字节流，或在两端使用一致的分隔符、自定义拆包或 `use_dgram`；见 [TCP 用法](../features/tcp/configuration_CN.md) |
-| 从磁盘打开 Docsify 后页面空白 | 检查浏览器控制台中被阻止的 Markdown 或 CDN 请求 | 通过 HTTP 提供 `docs/`，并确认固定版本的 CDN 资源可以访问 |
+| 本地文档返回 404 | 检查预览 URL 和服务端输出 | 使用下方 Nimbus 开发服务，访问 `/arknet/` |
 
 发送完成且没有错误，只表示传输完成，不表示对端应用已经处理消息。需要确认处理
 结果时，由应用协议提供响应，并记录和验证响应。
 
+<Aside type="danger" title="错误：TLS 证书校验失败">
+
+记录 `bind_handshake` 中的错误，检查 CA 信任链、有效期和请求的 DNS/IP 身份。
+修正证书或连接名称，并保持对端校验开启。
+
+</Aside>
+
 ## 本地运行文档
 
-在仓库根目录执行：
+<Steps>
+
+<Step title="安装文档依赖">
+
+使用 Node.js 22.12 或更新版本，在仓库根目录执行：
 
 ```sh
-python3 -m http.server 8000 --directory docs
+cd docs/site
+npm ci
 ```
 
-打开 [http://127.0.0.1:8000/](http://127.0.0.1:8000/)。Docsify 在运行时请求
-Markdown，因此文档必须通过 HTTP 提供。端口已占用时，选择其他端口。
-顶部语言切换会保留当前页面。
+</Step>
+
+<Step title="启动预览">
+
+```sh
+npm run dev -- --host 127.0.0.1 --port 8767
+```
+
+打开 [http://127.0.0.1:8767/arknet/](http://127.0.0.1:8767/arknet/)。
+端口已占用时选择其他端口。顶部语言下拉框保留当前页面。
+
+</Step>
+
+<Step title="验证文档">
+
+```sh
+npm run check
+```
+
+该命令检查内容转换、类型、静态构建、链接和 AI Markdown 导出。
+
+</Step>
+
+</Steps>
 
 ## 提供复现证据
 

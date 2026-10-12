@@ -16,6 +16,22 @@ function text(node) {
   return node.value ?? (node.children ?? []).map(text).join("");
 }
 
+function components(tree) {
+  const names = new Set();
+  function walk(node) {
+    if (node.type === "html") {
+      for (const match of node.value.matchAll(/<(Aside|Steps|Step)(?=[\s/>])/g)) names.add(match[1]);
+    }
+    for (const child of node.children ?? []) walk(child);
+  }
+  walk(tree);
+  return names;
+}
+
+export function pageExtension(source) {
+  return components(parser.parse(source)).size ? ".mdx" : ".md";
+}
+
 export function convertPage(source, file, files) {
   const tree = parser.parse(source);
   const heading = tree.children.find((node) => node.type === "heading" && node.depth === 1);
@@ -55,5 +71,10 @@ export function convertPage(source, file, files) {
   for (const edit of replacements.sort((a, b) => b.start - a.start)) {
     body = body.slice(0, edit.start) + edit.value + body.slice(edit.end);
   }
-  return `---\ntitle: ${JSON.stringify(title)}\n---\n\n${body.trim()}\n`;
+  const names = components(tree);
+  const imports = [];
+  if (names.has("Aside")) imports.push('import { Aside } from "@/components/ui/aside";');
+  const steps = ["Step", "Steps"].filter(name => names.has(name));
+  if (steps.length) imports.push(`import { ${steps.join(", ")} } from "@/components/ui/steps";`);
+  return `---\ntitle: ${JSON.stringify(title)}\n---\n\n${imports.length ? imports.join("\n") + "\n\n" : ""}${body.trim()}\n`;
 }

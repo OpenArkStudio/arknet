@@ -1,6 +1,6 @@
 # UDP Datagram Size and Burst Loss
 
-Measurements and charts were updated after the fix on 2026-10-12. [Test machine and receive-buffer diagnosis](udp-update.md).
+Measured on 2026-10-12. [Test machine and receive-buffer diagnosis](udp-update.md).
 
 Release IPv4 loopback on the Mac mini M4 Pro: 16 clients, one context/one
 thread, no extra computation, 1 s measurement and 0.25 s warmup. Each backend

@@ -13,9 +13,13 @@ arknet 是 header-only 网络库，没有需要编译或链接的二进制库。
 
 库配置的最低 TLS 版本为 1.2。已验证的依赖和编译器版本见[测试](../project/testing_CN.md)。
 
+<Aside type="note" title="说明：Asio 版本要求">
+
 Asio 版本下限包含 macOS 多线程 IO 所需的 kqueue descriptor 发布同步修复。
 CMake 和直接包含头文件的构建都会拒绝较旧后端。修复记录见
 [Asio 版本历史](https://think-async.com/Asio/asio-1.38.2/doc/asio/history.html)。
+
+</Aside>
 
 ## 选择 Asio 后端
 
@@ -44,7 +48,17 @@ Asio；Boost 模式使用官方 Boost.Beast。BHO 是内置兼容代码，不是
 
 完整选项与默认值见[配置参考](../reference/configuration_CN.md#cmake-选项)。
 
-在仓库根目录选择一种后端：
+<Steps>
+
+<Step title="安装所选依赖">
+
+按上表选择并安装一种 Asio 后端。需要 TLS 时，同时安装 OpenSSL。
+
+</Step>
+
+<Step title="配置项目">
+
+在仓库根目录执行所选后端的配置命令：
 
 ```sh
 # Standalone Asio
@@ -54,6 +68,10 @@ cmake -S . -B build -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 cmake -S . -B build-boost -DARKNET_USE_BOOST_ASIO=ON -DARKNET_ENABLE_SSL=ON
 ```
 
+</Step>
+
+<Step title="构建和验证">
+
 然后构建所选目录中的示例和测试程序：
 
 ```sh
@@ -62,6 +80,10 @@ cmake --build build --parallel 3
 
 使用 Visual Studio 等多配置生成器时，为构建和安装命令添加 `--config Release`。
 测试执行方式见[贡献指南](../project/contributing_CN.md)，性能测量方式见[测量方法](../performance/methodology_CN.md)。
+
+</Step>
+
+</Steps>
 
 ## 从源码接入
 
@@ -127,5 +149,9 @@ cmake --build build-vcpkg --parallel 3
 
 宏的含义见[直接使用头文件时的宏](../reference/configuration_CN.md#直接使用头文件时的宏)。
 
+<Aside type="caution" title="注意：保持构建配置一致">
+
 同一程序的全部翻译单元必须使用相同的后端、TLS 和行为宏。使用 CMake 时，优先
 使用 `arknet::arknet` 接口目标，由目标统一传递配置。
+
+</Aside>

@@ -21,7 +21,13 @@ TCP 和 UDP 都使用有限的 socket 缓冲区。缓冲大小、突发流量和
 
 TCP 的 ACK 确认传输层收到数据，接收窗口负责表达剩余接收容量。它们都不确认应用业务处理完成。TCP 连接仍可能因超时、断连或资源不足而失败。
 
-arknet 不对 UDP 自动切包、重传或限速。可靠传输由计划中的独立 KCP 层提供，见[路线图](../project/roadmap_CN.md)。
+<Aside type="caution" title="注意：本机回环也可能丢失 UDP 数据报">
+
+UDP 接收队列满后会丢弃数据报，本机回环也不例外。发送成功不确认对端收到。缓冲容量需要结合突发流量和接收处理耗时设置。
+
+</Aside>
+
+arknet 不对原生 UDP 自动切包、重传或限速。需要在 UDP 上可靠、有序地传递消息时，使用实验性的 [RUDP 模块](../features/rudp/index_CN.md)。
 
 ## 设置并读取实际大小
 
@@ -32,7 +38,11 @@ arknet 不对 UDP 自动切包、重传或限速。可靠传输由计划中的�
 | TCP／UDP 客户端、TCP Session 及其 TLS／HTTP／WebSocket 派生对象 | `set_sndbuf_size(bytes)`、`set_rcvbuf_size(bytes)` | `get_sndbuf_size()`、`get_rcvbuf_size()` |
 | UDP 服务端 | `acceptor().set_option(asio::socket_base::send_buffer_size(bytes))` 或 `receive_buffer_size(bytes)` | `acceptor().get_option(option)` |
 
-以下 **4 MiB 只是配置示例，不是推荐给所有业务的固定值**。每次调用后立即检查错误；查询会更新线程局部的 `get_last_error()`。
+<Aside type="tip" title="建议：读取实际缓冲大小">
+
+以下 **4 MiB 只是配置示例，不是推荐给所有业务的固定值**。每次调用后立即检查错误，并记录实际大小：操作系统可能限制或拒绝请求值。查询会更新线程局部的 `get_last_error()`。
+
+</Aside>
 
 ### TCP 或 UDP 客户端
 

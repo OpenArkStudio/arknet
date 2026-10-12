@@ -114,6 +114,14 @@ npm run check
 语言下拉框保持当前页面；旧 Docsify hash 链接仍可跳转。
 `@cloudflare/nimbus-docs` 固定版本，升级前审查 starter 的变更。
 
+连续操作使用 Nimbus 的 `<Steps>` 和 `<Step title="…">`；说明、建议、注意和错误
+使用 `<Aside type="note|tip|caution|danger" title="…">`。组件标签与 Markdown 正文之间
+保留空行，标题使用对应页面的语言，提示框用于需要读者留意的信息。
+构建时将这些页面编译为 MDX。AI 导出将步骤转为有序列表、提示框转为带标题的引用，
+保留代码和链接。
+
+公开报告保留最终测量结果、条件和适用范围。被替代的测量及调查日志保存在原始数据归档中。
+
 提交信息使用英文。提交前，将开发过程中的临时 commit squash 为经过审查的连贯
 修改。commit 或 pull request 说明最终行为和验证结果，不保留中间调试历史。
 

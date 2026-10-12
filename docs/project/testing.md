@@ -2,7 +2,7 @@
 
 [Local performance report](../performance/overview.md)
 
-[UDP retest and buffer diagnosis](../performance/udp-update.md) · [Buffer configuration](../guides/socket-buffers.md)
+[UDP report and buffer diagnosis](../performance/udp-update.md) · [Buffer configuration](../guides/socket-buffers.md)
 
 Functional tests establish correctness; sustained stress checks repeated work,
 restarts and cleanup. Performance measurements run locally after those checks
@@ -64,67 +64,37 @@ and teardown. Slow receivers test backpressure rather than throughput.
 
 ## Local Verification
 
-The current verification host is a Mac mini `Mac16,11`, Apple M4 Pro,
+Verified on 2026-10-12 using a Mac mini `Mac16,11`, Apple M4 Pro,
 14 physical/logical cores (10 performance and 4 efficiency cores), 48 GiB RAM,
-macOS 27.0.1 (26A434), Apple Clang
-21.0.0, CMake 4.3.3, Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
+macOS 27.0.1 (26A434), Apple Clang 21.0.0, CMake 4.3.3,
+Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
 
-The latest RUDP, ARQ and HTTP request additions passed **48 complete checks /
-174 doctest cases** with each Release + TLS backend on 2026-10-12. Targeted
-ASan/UBSan checks passed 40 cases, and RUDP/HTTP request TSan checks passed
-18 cases. The test-only canonical KCP source disables `null,object-size`
-instrumentation; arknet's own code remains fully instrumented. See the
-[test record and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/README.md)
-and the separate [RUDP performance report](../performance/rudp.md).
-These additions are experimental and are not part of `v0.1.0-rc.1`.
-
-Complete checks on 2026-10-10 passed as follows. Normal builds include benchmark
-smoke cases and the installed consumer; sanitizer builds disable benchmarks.
-Checks count programs invoked by `arknet_check`; cases count doctest cases.
-
-| Backend | Build | TLS | Checks / cases | Result and log |
+| Backend | Build | TLS | Checks / doctest cases | Result |
 | --- | --- | --- | ---: | --- |
-| Standalone Asio | Release | ON | 40 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone.log) |
-| Standalone Asio | Release | OFF | 30 / 87 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-notls.log) |
-| Standalone Asio | Debug | ON | 40 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-tls.log) |
-| Standalone Asio | Debug | OFF | 30 / 87 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-notls.log) |
-| Boost | Release | ON | 40 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost.log) |
-| Boost | Release | OFF | 30 / 87 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-notls.log) |
-| Boost | Debug | ON | 40 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-debug-tls.log) |
-| Boost | Debug | OFF | 30 / 87 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-debug-notls.log) |
-| Standalone Asio | Debug + ASan/UBSan | ON | 15 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-asan.log) |
-| Standalone Asio | Debug + TSan | ON | 15 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-tsan.log) |
+| Standalone Asio | Release | ON | 48 / 174 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-standalone.log) |
+| Boost.Asio | Release | ON | 48 / 174 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-boost.log) |
 
-After adding IPv6, Release + TLS complete checks passed again for both backends,
-each with **41 checks and 128 cases**:
-[standalone log](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/final-standalone-tls.log),
-[Boost log](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/final-boost-tls.log).
-Separate IPv6 checks cover both backends with TLS on and off; ASan/UBSan, TSan
-and 30 short benchmark probes also passed. See the
-[IPv6 check record](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/ipv6/README.md).
-These probes validate options, protocols and CPU percentage output rather than performance comparisons.
+Checks count programs invoked by `arknet_check`; cases count doctest cases.
+The complete checks include benchmark smoke cases and installed-package consumption.
 
-After the future-lifetime, MSVC matcher, UDP completion and queued-cancellation fixes,
-and the clang-format 18 style pass, the complete local checks passed
-with **41 checks / 133 cases** per Release backend and **16 checks / 133 cases**
-per standalone sanitizer build. GCC/libstdc++ regression checks also passed.
-See the [portability check record](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/portability/README.md).
+| Instrumentation | Scope | Cases | Result |
+| --- | --- | ---: | --- |
+| ASan/UBSan | Standalone Asio: ARQ, canonical protocol interop, RUDP, HTTP single requests | 40 | Passed |
+| TSan | Standalone Asio: RUDP and HTTP single requests | 18 | Passed |
 
-After correcting the UDP client's implicit `SO_REUSEADDR` setting on 2026-10-12,
-both Release + TLS backends passed **41 checks / 134 cases**, and each passed
-30 independent executions of the previously failing UDP configuration.
-UDP ASan/UBSan and TSan checks also passed. See the
-[UDP endpoint regression record](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/udp-endpoints/README.md)
-for the Linux port-collision evidence and local logs.
+[Logs and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/README.md)
+record the source revision and exact scope. The test-only canonical KCP source
+disables `null,object-size` instrumentation; arknet's own code remains fully instrumented.
+RUDP performance has a [separate report](../performance/rudp.md).
 
-Shutdown regressions cover sessions/strands retained across contexts and cleanup
-after coroutine connection failures. Historical diagnostics remain under
-`benchmarks/results/diagnostics/`; published performance reports use only complete
-measurements collected again after the shutdown fix.
+<Aside type="note" title="Note: Release scope">
 
-ASan/UBSan and TSan are available on this Mac and run separately from
-performance measurements. LeakSanitizer support differs by platform; a
-passing Apple ASan run is not a Linux leak-check result.
+RUDP, ARQ and single HTTP requests are experimental and are not part of `v0.1.0-rc.1`.
+
+</Aside>
+
+Sanitizers run separately from performance measurements. LeakSanitizer support
+differs by platform; a passing Apple ASan run is not a Linux leak-check result.
 
 ### Sanitizer Checks
 
@@ -150,8 +120,7 @@ report matrix.
 
 Local loopback cannot predict cross-host capacity or WAN latency. Loss and
 delay injection, descriptor exhaustion and production-length endurance
-require separate validation. Files under `benchmarks/results/macos-arm64-*`
-are historical pre-rewrite evidence and do not establish current performance.
+require separate validation.
 
 All 14 independent client/server usage programs were also built with both
 backends. The seven protocol pairs per backend verified echo contents and all

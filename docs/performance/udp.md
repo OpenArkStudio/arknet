@@ -1,12 +1,12 @@
 # UDP Local Performance
 
-Retested after the fix on 2026-10-12: all 180 measurements passed. [Machine, source baseline and raw records](udp-update.md).
+Measured on 2026-10-12: all 180 measurements passed. [Machine, source and raw records](udp-update.md).
 
 Measurements come from independent local Release loopback processes, not CI.
 
 [Metric definitions and methodology](methodology.md).
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; legacy values are marked estimated, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
 
 ## No added computation
 

@@ -1,6 +1,6 @@
 # Local Performance Report
 
-This is the historical multi-protocol baseline from 2026-10-10. See the [2026-10-12 UDP retest](udp-update.md) for updated measurements, charts and buffer diagnosis. These cohorts use different source baselines.
+The report contains the final measurements for each protocol: UDP on 2026-10-12, and other protocols and native coroutine TCP on 2026-10-10. Each protocol retains its own source hash and raw records.
 
 **1,620 local IPv4 measurements** compare throughput, p99 latency and IO models across the Asio backends.
 
@@ -20,12 +20,12 @@ Release build; measurement=1.0 s; warmup=0.25 s; repetitions=3.
 
 Main charts: **1024 bytes, 16 clients, no added computation**. Inflight messages per connection: UDP 1; other protocols 16. Both peers share the process and IO workers over local loopback.
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; legacy values are marked estimated, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
 
 ## Key Results
 
 - **TCP / Standalone Asio / No added computation**: 4 contexts / 4 threads has this group's highest throughput median (1.98× one thread); its p99 is 1,346.00 us versus 1,491.79 us with one thread.
-- **UDP / Standalone Asio / No added computation**: 1 context / 2 threads has this group's highest throughput median (1.06× one thread); its p99 is 210.92 us versus 221.50 us with one thread.
+- **UDP / Standalone Asio / No added computation**: 1 context / 1 thread has this group's highest throughput median (92,515 round trips/s), with p99 RTT of 207.79 us and process CPU utilization of 99.4%.
 - **Coroutine TCP / Standalone Asio / No added computation**: 1 context / 4 threads has this group's highest throughput median (1.84× one thread); its p99 is 870.46 us versus 1,028.71 us with one thread.
 - **Coroutine TCP / Standalone Asio / 10,000 CPU iterations per echo**: 4 contexts / 4 threads has this group's highest throughput median (3.54× one thread); its p99 is 1,749.29 us versus 5,687.25 us with one thread.
 
@@ -80,7 +80,8 @@ The backends use different Beast versions, so differences between backends also 
 
 ## Raw Data and Reproduction
 
-- Source SHA-256: `127a500ad7e2fbe4c831cc3ebacc63acac96013e2cb8bf3893d7997ca6ea7f56`
+- TCP, TLS, HTTP, WebSocket and native coroutine source SHA-256: `127a500ad7e2fbe4c831cc3ebacc63acac96013e2cb8bf3893d7997ca6ea7f56`
+- UDP source SHA-256: `0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`; [conditions and raw records](udp-update.md).
 - [Completed measurements]: 1620
 - [Commands and validation scope](methodology.md)
 
@@ -89,7 +90,7 @@ The backends use different Beast versions, so differences between backends also 
 - [macmini-m4pro-20261010-boost-https.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-https.json): 90 measurements; 2026-10-10T06:16:12.072913+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
 - [macmini-m4pro-20261010-boost-tcp.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-tcp.json): 90 measurements; 2026-10-10T05:31:57.122216+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
 - [macmini-m4pro-20261010-boost-tcps.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-tcps.json): 90 measurements; 2026-10-10T05:56:20.110867+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
-- [macmini-m4pro-20261010-boost-udp.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-udp.json): 90 measurements; 2026-10-10T05:38:07.209143+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
+- [boost-io.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261012-udp/boost-io.json): 90 UDP measurements.
 - [macmini-m4pro-20261010-boost-websocket.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-websocket.json): 90 measurements; 2026-10-10T05:44:16.816290+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
 - [macmini-m4pro-20261010-boost-wss.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-wss.json): 90 measurements; 2026-10-10T06:02:39.046046+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
 - [macmini-m4pro-20261010-standalone-coroutine.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-coroutine.json): 180 measurements; 2026-10-10T06:18:15.349061+00:00; executable SHA-256 `f2878cefe4ec4259114a9492fa7ac2235deecf797be63735ae51668d7a25b73f`
@@ -97,7 +98,7 @@ The backends use different Beast versions, so differences between backends also 
 - [macmini-m4pro-20261010-standalone-https.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-https.json): 90 measurements; 2026-10-10T06:14:08.452400+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
 - [macmini-m4pro-20261010-standalone-tcp.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-tcp.json): 90 measurements; 2026-10-10T05:29:56.838785+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
 - [macmini-m4pro-20261010-standalone-tcps.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-tcps.json): 90 measurements; 2026-10-10T05:54:16.794729+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
-- [macmini-m4pro-20261010-standalone-udp.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-udp.json): 90 measurements; 2026-10-10T05:36:07.408981+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
+- [standalone-io.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261012-udp/standalone-io.json): 90 UDP measurements.
 - [macmini-m4pro-20261010-standalone-websocket.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-websocket.json): 90 measurements; 2026-10-10T05:42:15.113877+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
 - [macmini-m4pro-20261010-standalone-wss.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-wss.json): 90 measurements; 2026-10-10T06:00:34.943293+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
 

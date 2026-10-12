@@ -136,6 +136,16 @@ internal page links, anchors, SVG paths and AI reading endpoints. The language
 dropdown preserves the current page; legacy Docsify hash links still redirect.
 Keep `@cloudflare/nimbus-docs` pinned and review starter updates before upgrading.
 
+Use Nimbus's `<Steps>` with `<Step title="…">` for sequential tasks, and
+`<Aside type="note|tip|caution|danger" title="…">` for notes, suggestions,
+warnings and errors. Keep a blank line between a component tag and its Markdown
+body. Give callouts localized titles; use them for consequential information.
+The build compiles these pages as MDX. AI exports turn steps into ordered lists
+and callouts into labeled blockquotes, preserving code and links.
+
+Published reports show the final measurements, conditions and limitations.
+Keep superseded measurements and investigation logs in the raw-data archives.
+
 Use English commit messages. Before submission, squash work-in-progress commits
 into coherent, reviewed changes. Describe the final behavior and validation in
 the commit or pull request; do not retain intermediate debugging history.

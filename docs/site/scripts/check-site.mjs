@@ -71,3 +71,22 @@ for (const file of ["llms.txt", "llms-full.txt", "zh/llms.txt", "features/udp/pe
   assert.ok((await stat(join(root, file))).size > 0, `missing agent/SEO output: ${file}`);
 }
 console.log(`Checked ${pages.length} static HTML pages and ${references.size} internal references, including AI Markdown endpoints.`);
+
+for (const prefix of ["", "zh/"]) {
+  for (const route of ["get-started/installation", "get-started/first-application", "project/troubleshooting"]) {
+    const html = await readFile(join(root, prefix, route, "index.html"), "utf8");
+    assert.match(html, /data-steps/, `${prefix}${route}: missing Nimbus steps`);
+    assert.match(html, /data-step/, `${prefix}${route}: missing Nimbus step items`);
+    const markdown = await readFile(join(root, prefix, route, "index.md"), "utf8");
+    assert.match(markdown, /\n1\. /, `${prefix}${route}: missing exported numbered steps`);
+    assert.doesNotMatch(markdown, /<(?:Aside|Step|Steps)[\s>]/, `${prefix}${route}: component leaked into AI export`);
+  }
+  for (const route of ["guides/socket-buffers", "concepts/sending", "features/rudp", "features/rudp/fec", "features/tls/server", "performance/udp-update", "project/testing", "project/troubleshooting"]) {
+    const html = await readFile(join(root, prefix, route, "index.html"), "utf8");
+    assert.match(html, /role="note"/, `${prefix}${route}: missing accessible Nimbus callout`);
+    const markdown = await readFile(join(root, prefix, route, "index.md"), "utf8");
+    assert.match(markdown, /(?:^|\n)> \*\*/, `${prefix}${route}: missing labeled Markdown callout`);
+    assert.doesNotMatch(markdown, /<Aside[\s>]/, `${prefix}${route}: callout leaked into AI export`);
+  }
+}
+console.log("Checked bilingual Nimbus steps, callouts and plain Markdown exports.");

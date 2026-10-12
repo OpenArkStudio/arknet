@@ -1,6 +1,6 @@
 # 本地性能报告
 
-本页为 2026-10-10 的历史多协议基线。UDP 修复后的数据、图表与缓冲诊断见 [2026-10-12 复测](udp-update_CN.md)；不要将两轮测量当作同一源码基线。
+本页汇总各协议的最终测量：UDP 测量于 2026-10-12，其他协议和原生 TCP 协程测量于 2026-10-10。各协议保留自己的源码哈希与原始记录。
 
 本机完成 **1,620 次 IPv4 测量**，比较 Asio 后端配置下的吞吐量、p99 延迟和 IO 模型。
 
@@ -20,12 +20,12 @@ Release 构建；测量 1.0 s，预热 0.25 s，重复 3 次。
 
 主图：**1024 字节、16 个客户端、无额外业务计算**；每连接在途消息上限为 UDP 1 条、其他协议 16 条。客户端与服务端在同一进程内共享 IO 线程，使用本机回环网络。
 
-平均进程 CPU 占用率以单核为 100%，多线程可超过 100%；旧样本标为估算，三次 CPU 采样不完整时为 N/A。 本机有 14 个逻辑核心，整机占比 = 进程 CPU% / 14，单核 100% 对应整机 7.14%。
+平均进程 CPU 占用率以单核为 100%，多线程可超过 100%；估算值单独标注，三次 CPU 采样不完整时为 N/A。 本机有 14 个逻辑核心，整机占比 = 进程 CPU% / 14，单核 100% 对应整机 7.14%。
 
 ## 核心结果
 
 - **TCP / Standalone Asio / 无额外业务计算**：本组吞吐量最高的模型为 4 个 io_context / 4 个线程，相对单线程为 1.98×；对应 p99 为 1,346.00 us，单线程为 1,491.79 us。
-- **UDP / Standalone Asio / 无额外业务计算**：本组吞吐量最高的模型为 1 个 io_context / 2 个线程，相对单线程为 1.06×；对应 p99 为 210.92 us，单线程为 221.50 us。
+- **UDP / Standalone Asio / 无额外业务计算**：本组吞吐量中位数最高的模型为 1 个 io_context / 1 个线程，92,515 次往返/s，p99 RTT 为 207.79 us，进程 CPU 占用率为 99.4%。
 - **协程 TCP / Standalone Asio / 无额外业务计算**：本组吞吐量最高的模型为 1 个 io_context / 4 个线程，相对单线程为 1.84×；对应 p99 为 870.46 us，单线程为 1,028.71 us。
 - **协程 TCP / Standalone Asio / 每次回显执行 10,000 次 CPU 计算**：本组吞吐量最高的模型为 4 个 io_context / 4 个线程，相对单线程为 3.54×；对应 p99 为 1,749.29 us，单线程为 5,687.25 us。
 
@@ -80,7 +80,8 @@ Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch 
 
 ## 原始数据与复现
 
-- Source SHA-256: `127a500ad7e2fbe4c831cc3ebacc63acac96013e2cb8bf3893d7997ca6ea7f56`
+- TCP、TLS、HTTP、WebSocket 和原生协程源码 SHA-256：`127a500ad7e2fbe4c831cc3ebacc63acac96013e2cb8bf3893d7997ca6ea7f56`
+- UDP 源码 SHA-256：`0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`；[测试条件与原始记录](udp-update_CN.md)。
 - [已完成测量]: 1620
 - [复现命令与检查范围](methodology_CN.md)
 
@@ -89,7 +90,7 @@ Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch 
 - [macmini-m4pro-20261010-boost-https.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-https.json): 90 measurements; 2026-10-10T06:16:12.072913+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
 - [macmini-m4pro-20261010-boost-tcp.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-tcp.json): 90 measurements; 2026-10-10T05:31:57.122216+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
 - [macmini-m4pro-20261010-boost-tcps.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-tcps.json): 90 measurements; 2026-10-10T05:56:20.110867+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
-- [macmini-m4pro-20261010-boost-udp.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-udp.json): 90 measurements; 2026-10-10T05:38:07.209143+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
+- [boost-io.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261012-udp/boost-io.json)：90 次 UDP 测量。
 - [macmini-m4pro-20261010-boost-websocket.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-websocket.json): 90 measurements; 2026-10-10T05:44:16.816290+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
 - [macmini-m4pro-20261010-boost-wss.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-wss.json): 90 measurements; 2026-10-10T06:02:39.046046+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
 - [macmini-m4pro-20261010-standalone-coroutine.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-coroutine.json): 180 measurements; 2026-10-10T06:18:15.349061+00:00; executable SHA-256 `f2878cefe4ec4259114a9492fa7ac2235deecf797be63735ae51668d7a25b73f`
@@ -97,10 +98,10 @@ Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch 
 - [macmini-m4pro-20261010-standalone-https.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-https.json): 90 measurements; 2026-10-10T06:14:08.452400+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
 - [macmini-m4pro-20261010-standalone-tcp.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-tcp.json): 90 measurements; 2026-10-10T05:29:56.838785+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
 - [macmini-m4pro-20261010-standalone-tcps.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-tcps.json): 90 measurements; 2026-10-10T05:54:16.794729+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
-- [macmini-m4pro-20261010-standalone-udp.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-udp.json): 90 measurements; 2026-10-10T05:36:07.408981+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
+- [standalone-io.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261012-udp/standalone-io.json)：90 次 UDP 测量。
 - [macmini-m4pro-20261010-standalone-websocket.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-websocket.json): 90 measurements; 2026-10-10T05:42:15.113877+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
 - [macmini-m4pro-20261010-standalone-wss.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-standalone-wss.json): 90 measurements; 2026-10-10T06:00:34.943293+00:00; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
 
 ## 适用范围
 
-本机回环结果不代表跨主机或生产容量。短时测量、调度和温度可能带来波动；部署前需按实际负载复测。
+本机回环结果不代表跨主机或生产容量。短时测量、调度和温度可能带来波动；部署前需使用实际负载测量。

@@ -20,24 +20,56 @@ count. See [Runtime](../concepts/lifecycle.md) for the execution and shutdown co
 | Timer query returns a default result with `operation_not_supported` or `operation_aborted` | Check whether the call uses a different strand on the same context, or a stopped context | Query on the object's executor or from an owner thread while runners remain active |
 | Start, future or shutdown waits indefinitely with external IO | Check that `run()` threads and the work guard are still active | Keep the host context running until objects finish stopping; follow the [shutdown order](../concepts/lifecycle.md#lifecycle-and-execution) |
 | TCP receive callbacks split or combine application messages | Check the framing configured at both ends | Treat raw TCP as a byte stream, or use matching delimiter/custom framing or `use_dgram` at both ends; see [TCP usage](../features/tcp/index.md) |
-| Docsify is blank when opened from disk | Check the browser console for blocked Markdown or CDN requests | Serve `docs/` over HTTP and check access to the pinned CDN assets |
+| Documentation returns 404 locally | Check the preview URL and server output | Open `/arknet/` using the Nimbus development server below |
 
 A send completing without error proves transport completion, not an
 application-level acknowledgment. If the peer must confirm processing, record
 and validate a response in the application protocol.
 
+<Aside type="danger" title="Error: TLS certificate verification failed">
+
+Check the error from `bind_handshake`, the CA chain, validity dates and the requested DNS/IP identity.
+Correct the certificate or connection name; keep peer verification enabled.
+
+</Aside>
+
 ## Serve Documentation Locally
 
-From the repository root:
+<Steps>
+
+<Step title="Install documentation dependencies">
+
+From the repository root, with Node.js 22.12 or newer:
 
 ```sh
-python3 -m http.server 8000 --directory docs
+cd docs/site
+npm ci
 ```
 
-Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/). Docsify fetches Markdown
-at runtime, so the documentation must be served over HTTP. If the port is
-already in use, choose another port. The language switch at the top preserves
-the current page.
+</Step>
+
+<Step title="Start the preview">
+
+```sh
+npm run dev -- --host 127.0.0.1 --port 8767
+```
+
+Open [http://127.0.0.1:8767/arknet/](http://127.0.0.1:8767/arknet/).
+Choose another port if it is occupied. The language dropdown preserves the current page.
+
+</Step>
+
+<Step title="Verify the documentation">
+
+```sh
+npm run check
+```
+
+This checks content conversion, types, the static build, links and AI Markdown exports.
+
+</Step>
+
+</Steps>
 
 ## Include Reproduction Evidence
 

@@ -1,4 +1,4 @@
-# UDP Retest After the Fix
+# UDP Performance Report
 
 Local measurements on 2026-10-12 include 504 matrix runs, 21 receive-buffer isolation runs, and a 60-second UDP stress run for each backend. Independent Release C++ programs produced these results, not CI.
 
@@ -25,7 +25,7 @@ Matrix source SHA-256: `0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e
 | Payload / batch: 3 payloads × 4 windows × 3 models | 93 / 108 passed | 93 / 108 passed | 62 valid configurations and 10 failed configurations combined |
 | Size boundaries: 6 payloads × 3 windows | 36 / 54 passed | 36 / 54 passed | Large bursts exceed receive capacity |
 
-All failed records remain archived. A failed repetition excludes all three runs of that configuration from throughput rankings. The source-port collision fix and receive-buffer overflow are separate issues.
+All failed records remain archived. A failed repetition excludes all three runs of that configuration from throughput rankings.
 
 ## Throughput and Latency
 
@@ -42,7 +42,7 @@ All failed records remain archived. A failed repetition excludes all three runs 
 | Boost | 1 / 1 | 90,452 | 207.96 | 99.7 |
 | Boost | 1 / 2 | 95,095 | 270.71 | 157.4 |
 
-Standalone has the highest median throughput with one thread at this load. Boost gains some throughput with two threads, at higher p99 latency and CPU use. The older claim that both backends perform best with two threads no longer applies.
+Standalone has the highest median throughput with one thread at this load. Boost gains some throughput with two threads, at higher p99 latency and CPU use.
 
 Bars show medians; error bars show the minimum and maximum of three runs, not confidence intervals. CPU uses one core as 100% and includes both clients and server. Whole-machine share is process CPU% / 14.
 
@@ -64,7 +64,11 @@ Bars show medians; error bars show the minimum and maximum of three runs, not co
 
 Every run satisfies: client sends − server receives = missing datagrams; server receives = client echoes. Content and sequence errors are zero. In one 4 MiB / 16 KiB / window-64 run, the kernel's `dropped due to full socket buffers` counter increased from 152,304 to 153,071: exactly 767. IPv4 fragmentation/reassembly increases were zero.
 
-**These losses come from the server receive queue overflowing.** A large burst of small datagrams reproduces the same condition; invalid 16 KiB payloads do not explain it. Loopback still uses finite queues. Total outstanding payload is neither an exact instantaneous queue length nor a universal capacity threshold.
+<Aside type="caution" title="Warning: Receive queue overflow">
+
+**These losses come from the server receive queue overflowing.** A large burst of small datagrams reproduces the same condition. Loopback still uses finite queues. Total outstanding payload is neither an exact instantaneous queue length nor a universal capacity threshold.
+
+</Aside>
 
 See [Buffers and flow control](../guides/socket-buffers.md) for configuration and the TCP/UDP distinction. Native UDP datagram semantics remain unchanged: no new default throttling, fragmentation or retransmission.
 
@@ -83,4 +87,4 @@ This overflow probe is expected to return a nonzero status. Set the window to 16
 
 [Raw records, commands and machine metadata](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-udp) · [Per-run kernel snapshots](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-udp/buffer-probes) · [Size-boundary charts](udp-limits.md)
 
-Results cover short IPv4 loopback runs on this machine. Cross-host capacity, IPv6 stress capacity and reliable UDP are not measured. Current coroutine comparisons use native TCP and must not be generalized to UDP.
+Results cover short IPv4 loopback runs on this machine. Cross-host capacity and IPv6 stress capacity are not measured. RUDP has a [separate report](rudp.md). Coroutine comparisons use native TCP and must not be generalized to UDP.

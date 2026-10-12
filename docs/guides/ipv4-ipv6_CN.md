@@ -1,6 +1,6 @@
 # IPv4 与 IPv6
 
-TCP、UDP、HTTP/HTTPS、WebSocket/WSS 和 TLS 通过同一套 `start(host, port)`
+TCP、UDP、RUDP、HTTP/HTTPS、WebSocket/WSS 和 TLS 通过同一套 `start(host, port)`
 接口接收 IPv4、IPv6 地址。UDP cast 也支持 IPv6 端点。
 
 | 用途 | IPv4 | IPv6 |
@@ -13,6 +13,32 @@ TCP、UDP、HTTP/HTTPS、WebSocket/WSS 和 TLS 通过同一套 `start(host, port
 传给 `start` 的 IPv6 地址不加方括号，端口用单独参数传入。
 HTTP 请求自行设置 `Host`；WebSocket 客户端构造握手地址。
 域名可能解析到任一种地址族，`localhost` 不保证使用 IPv6。
+
+## 域名与地址解析
+
+域名传给 `host`，端口用单独参数传入：
+
+```cpp
+arknet::tcp_client client;
+if (!client.start("example.com", 9000))
+    std::cerr << arknet::last_error_msg() << '\n';
+```
+
+客户端使用 Asio 异步 resolver，遵循操作系统的名称解析配置，包括 DNS 和
+hosts 文件。解析结果可以包含 IPv4 或 IPv6 地址。基于 TCP 的客户端在 socket
+连接失败后，按解析器返回的顺序尝试其他地址，未实现 IPv4／IPv6 并行连接的
+Happy Eyeballs 策略。UDP 的 `connect` 只设置对端地址，不验证对端是否可达；
+UDP 和 RUDP 不会根据对端可达性自动切换地址。
+
+Asio 的 `endpoint` 保存 IP 地址和端口，不能保存域名。
+`arknet::to_endpoint<asio::ip::tcp::endpoint>(host, port)` 同步解析并返回第一个地址，
+使用前检查 `arknet::get_last_error()`。
+UDP cast 的 `async_send(host, port, data)` 异步解析，并选取第一个与 socket
+的 IPv4／IPv6 地址族一致的地址。
+
+HTTPS 和 WSS 保留域名用于 TLS SNI 和证书身份校验。除非证书包含对应 IP
+身份，否则不要用解析后的 IP 替代域名。连接建立后保持当前对端地址，重连时
+重新解析。arknet 尚未提供选择自定义 DNS 服务器的 API。
 
 ## 客户端与服务端
 

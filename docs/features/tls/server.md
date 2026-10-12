@@ -7,10 +7,16 @@ Configure a C++20 application using [Installation](../../get-started/installatio
 Build each block as a separate C++20 executable using the `arknet::arknet`
 interface target with TLS enabled. The examples use the repository's local
 test CA and server identity. Run them from the repository root, or pass a
-test-certificate directory as the first argument of each program. These public
-test keys are not deployment credentials. The test certificate covers
+test-certificate directory as the first argument of each program. The test certificate covers
 `localhost` and `127.0.0.1`. Start the server first, then run the client in
 another terminal. Press Enter in the server terminal to stop it.
+
+<Aside type="caution" title="Warning: Public test keys">
+
+The certificates and private keys under `tests/certs/` are public test material.
+Use your deployment's certificate chain and private key in production.
+
+</Aside>
 
 ```cpp
 #include <iostream>

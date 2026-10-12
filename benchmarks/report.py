@@ -57,8 +57,8 @@ def validate_address_families(reports):
 
 
 def cpu_note(chinese, logical_cpus=None):
-    text = ("平均进程 CPU 占用率以单核为 100%，多线程可超过 100%；旧样本标为估算，三次 CPU 采样不完整时为 N/A。" if chinese else
-            "Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; legacy values are marked estimated, and incomplete sets of three CPU samples show N/A.")
+    text = ("平均进程 CPU 占用率以单核为 100%，多线程可超过 100%；估算值单独标注，三次 CPU 采样不完整时为 N/A。" if chinese else
+            "Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A.")
     if type(logical_cpus) is int and logical_cpus > 0:
         text += (f" 本机有 {logical_cpus} 个逻辑核心，整机占比 = 进程 CPU% / {logical_cpus}，单核 100% 对应整机 {100 / logical_cpus:.2f}%。" if chinese else
                  f" On this {logical_cpus}-logical-CPU host, machine share = process CPU% / {logical_cpus}; 100% of one CPU is {100 / logical_cpus:.2f}% of the machine.")
@@ -422,7 +422,7 @@ def overview(reports, rows, chinese, raw_base, host_description):
     for path, report in reports:
         lines.append(f"- [{path.name}]({raw_base.rstrip('/')}/{path.name}): {len(report['results'])} measurements; {report['recorded_at_utc']}; executable SHA-256 `{report['executable_sha256']}`")
     lines += ["", "## " + ("适用范围" if chinese else "Scope"), "",
-              "本机回环结果不代表跨主机或生产容量。短时测量、调度和温度可能带来波动；部署前需按实际负载复测。" if chinese else "Local loopback results do not establish cross-host or production capacity. Short runs, scheduling and thermals introduce variance; repeat with the deployment workload.", ""]
+              "本机回环结果不代表跨主机或生产容量。短时测量、调度和温度可能带来波动；部署前需使用实际负载测量。" if chinese else "Local loopback results do not establish cross-host or production capacity. Short runs, scheduling and thermals introduce variance; repeat with the deployment workload.", ""]
     return "\n".join(lines)
 
 

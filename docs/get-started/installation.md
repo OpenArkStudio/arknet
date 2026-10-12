@@ -15,9 +15,13 @@ thread libraries, plus OpenSSL when TLS is enabled.
 The configured minimum TLS version is 1.2. Tested dependency and compiler
 versions are recorded in [Testing](../project/testing.md).
 
+<Aside type="note" title="Note: Required Asio version">
+
 The Asio minimum includes the kqueue descriptor-publication synchronization
 fix required for multi-threaded IO on macOS. CMake and direct-header builds
 reject older providers. See [Asio's revision history](https://think-async.com/Asio/asio-1.38.2/doc/asio/history.html).
+
+</Aside>
 
 ## Choose an Asio Provider
 
@@ -49,7 +53,17 @@ package to install. Its notices are listed in
 
 See the [configuration reference](../reference/configuration.md#cmake-options) for all options and defaults.
 
-From the repository root, configure one provider:
+<Steps>
+
+<Step title="Install the selected dependencies">
+
+Install one Asio provider and OpenSSL if you need TLS. Choose a provider using the table above.
+
+</Step>
+
+<Step title="Configure the project">
+
+From the repository root, run the command for your selected provider:
 
 ```sh
 # Standalone Asio
@@ -58,6 +72,10 @@ cmake -S . -B build -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 # Boost.Asio with secure transports
 cmake -S . -B build-boost -DARKNET_USE_BOOST_ASIO=ON -DARKNET_ENABLE_SSL=ON
 ```
+
+</Step>
+
+<Step title="Build and verify">
 
 Then build the examples and tests in the selected directory:
 
@@ -68,6 +86,10 @@ cmake --build build --parallel 3
 For a multi-configuration generator such as Visual Studio, add `--config Release`
 to build and install commands. See [Contributing](../project/contributing.md) for test
 execution and [Testing](../project/testing.md) for correctness evidence; see [measurement methodology](../performance/methodology.md) for benchmarks.
+
+</Step>
+
+</Steps>
 
 ## Integrate From Source
 
@@ -140,6 +162,10 @@ Define configuration macros before including arknet or provider headers:
 
 See [direct-header macros](../reference/configuration.md#direct-header-macros) for their meanings.
 
+<Aside type="caution" title="Warning: Keep build settings consistent">
+
 Use identical provider, TLS and behavior macros in every translation unit of a
 program. Prefer `arknet::arknet` when using CMake so configuration propagates
 to consumers automatically.
+
+</Aside>

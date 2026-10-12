@@ -10,9 +10,9 @@
 图表对比每秒往返次数、p99 RTT 与进程 CPU 占用率。当前 RUDP 公共 API
 使用回调，本轮不包含协程和 FEC 对比。
 
-## 当前 UDP 测量
+## UDP 测量
 
-[2026-10-12 复测](udp-update_CN.md)在来源端口修复后完成 504 次矩阵测量、
+[UDP 性能报告](udp-update_CN.md)包含 504 次矩阵测量、
 21 次缓冲探测，以及两种后端各 60 秒的持续测试。
 
 - [IO 模型](udp_CN.md)：单 context 单线程、单 context 多线程与多 context 分片。
@@ -25,7 +25,7 @@
 [IO 模型对比](io-comparison_CN.md)说明原始调度测量结果与比较范围。
 这些程序使用原生 Asio，arknet 公共协程端点仍为 TODO。
 
-## 协议基线
+## 协议结果
 
 | 协议 | IO 模型结果 | 包体与批量结果 |
 | --- | --- | --- |
@@ -36,8 +36,8 @@
 | HTTP | [结果](http_CN.md) | [结果](dimensions-http_CN.md) |
 | HTTPS | [结果](https_CN.md) | [结果](dimensions-https_CN.md) |
 
-[2026-10-10 多协议汇总](overview_CN.md)与[维度汇总](dimensions_CN.md)是历史基线。
-其中 UDP 数据早于来源端口修复，当前 UDP 结论以 2026-10-12 报告为准。
+[多协议汇总](overview_CN.md)与[维度汇总](dimensions_CN.md)展示各项负载的最终结果，
+保留测量日期和源码哈希。
 这些测量不代表 WAN 容量、IPv6 性能或生产环境的长期运行能力。
 
 [测量方法与指标定义](methodology_CN.md) · [正确性验证](../project/testing_CN.md) · [缓冲配置](../guides/socket-buffers_CN.md)

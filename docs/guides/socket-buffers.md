@@ -21,7 +21,13 @@ Raising the application send limit does not enlarge `SO_RCVBUF`. Adding IO threa
 
 TCP ACKs acknowledge transport reception; the receive window advertises remaining capacity. Neither confirms business processing. TCP connections can still fail through timeouts, disconnections or resource exhaustion.
 
-arknet does not automatically fragment, retransmit or throttle UDP. Reliable transport belongs to the planned independent KCP layer; see the [roadmap](../project/roadmap.md).
+<Aside type="caution" title="Warning: Loopback can lose UDP datagrams">
+
+A full UDP receive queue drops datagrams even on loopback. A successful send does not confirm reception. Buffer capacity must account for bursts and receiver processing time.
+
+</Aside>
+
+arknet does not automatically fragment, retransmit or throttle native UDP. Use the experimental [RUDP module](../features/rudp/index.md) for reliable, ordered messages over UDP.
 
 ## Set and Read Back the Effective Size
 
@@ -32,7 +38,11 @@ Configure clients in `bind_init`, after the socket opens and before connecting. 
 | TCP / UDP clients, TCP Sessions and their TLS / HTTP / WebSocket derivatives | `set_sndbuf_size(bytes)`, `set_rcvbuf_size(bytes)` | `get_sndbuf_size()`, `get_rcvbuf_size()` |
 | UDP server | `acceptor().set_option(asio::socket_base::send_buffer_size(bytes))` or `receive_buffer_size(bytes)` | `acceptor().get_option(option)` |
 
-The **4 MiB below is an example, not a universal recommendation**. Check errors immediately after each call: queries overwrite the thread-local `get_last_error()`.
+<Aside type="tip" title="Tip: Read back the effective buffer size">
+
+The **4 MiB below is an example, not a universal recommendation**. Check errors immediately after each call and record the effective size: the OS may cap or reject a request. Queries overwrite the thread-local `get_last_error()`.
+
+</Aside>
 
 ### TCP or UDP Client
 

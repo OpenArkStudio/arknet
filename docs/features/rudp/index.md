@@ -4,9 +4,13 @@ RUDP provides reliable, ordered messages over UDP. Its C++20 ARQ core handles
 fragmentation, acknowledgements, retransmission and receive ordering. The public
 client, server and session use arknet's CRTP and component architecture.
 
+<Aside type="note" title="Note: Experimental module">
+
 This module is experimental and is not included in `v0.1.0-rc.1`.
 [Optional FEC](../../project/roadmap.md) is planned as a component combined with
 ARQ; the current implementation and measurements do not include it.
+
+</Aside>
 
 ## Get started
 
