@@ -1,0 +1,34 @@
+# 创建 WebSocket 服务端
+
+按[安装与配置](../../get-started/installation_CN.md)接入 C++20 应用。先启动服务端，再运行[对应客户端](client_CN.md)。
+
+## 二进制回显服务端
+
+WebSocket 自行定义消息边界，不应传入 `use_dgram` 或 TCP 分隔符。服务端回复时保留接收到的文本或二进制类型。通过 `arknet::arknet` 接口目标，将本页服务端与[客户端](client_CN.md)分别构建为可执行程序。先启动服务端，再在另一个终端运行客户端。在服务端终端按 Enter 停止服务端。
+
+```cpp
+#include <arknet/websocket/ws_server.hpp>
+#include <iostream>
+#include <string_view>
+
+int main()
+{
+    arknet::ws_server server;
+    server.bind_recv([](auto& session, std::string_view bytes)
+    {
+        session->ws_stream().binary(session->ws_stream().got_binary());
+        session->async_send(bytes);
+    });
+    if (!server.start("127.0.0.1", 7001))
+    {
+        std::cerr << arknet::get_last_error().message() << '\n';
+        return 1;
+    }
+    std::cout << "WebSocket listening on ws://127.0.0.1:7001/echo\n";
+    std::cin.get();
+    server.stop();
+}
+```
+
+
+[协议配置与进阶使用](configuration_CN.md) · [性能](performance_CN.md)

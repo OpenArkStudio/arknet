@@ -1,0 +1,40 @@
+# Examples
+
+The repository includes small C++ applications, and each protocol guide provides
+complete client/server programs. Use the same backend and TLS settings for both peers.
+
+## Repository applications
+
+| Program | Source | Run |
+| --- | --- | --- |
+| TCP echo server | [echo_server.cpp](../../examples/echo_server.cpp) | `build/examples/arknet_echo_server` |
+| HTTP echo server | [http_echo_server.cpp](../../examples/http_echo_server.cpp) | `build/examples/arknet_http_echo_server` |
+| IPv6 client/server | [ipv6_echo.cpp](../../examples/ipv6_echo.cpp) | `build/examples/arknet_ipv6_echo` |
+
+Build from the repository root:
+
+```sh
+cmake -S . -B build -DARKNET_BUILD_EXAMPLES=ON \
+  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+cmake --build build --parallel 3
+```
+
+For Boost, replace the Asio include argument with `-DARKNET_USE_BOOST_ASIO=ON`.
+For Visual Studio, add `--config Release` and run the `.exe` from `examples/Release/`.
+Read each program's source for its port and shutdown behavior.
+
+## Protocol pairs
+
+| Protocol | Server | Client |
+| --- | --- | --- |
+| TCP | [Program](../features/tcp/server.md) | [Program](../features/tcp/client.md) |
+| UDP | [Program](../features/udp/server.md) | [Program](../features/udp/client.md) |
+| WebSocket | [Program](../features/websocket/server.md) | [Program](../features/websocket/client.md) |
+| HTTP | [Program](../features/http/server.md) | [Program](../features/http/client.md) |
+| TLS TCP | [Program](../features/tls/server.md) | [Program](../features/tls/client.md) |
+
+[HTTPS](../features/http/configuration.md) and [WSS](../features/websocket/configuration.md)
+describe adaptations of the complete programs. Secure examples require OpenSSL
+and `ARKNET_ENABLE_SSL=ON`; repository private keys are for local tests only.
+
+Performance executables are under `benchmarks/`; see [measurement methodology](../performance/methodology.md).

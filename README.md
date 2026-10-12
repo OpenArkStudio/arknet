@@ -19,7 +19,7 @@ arknet is a C++20, header-only networking library maintained by OpenArkStudio.
 - **Boost** 1.90+: an alternative to standalone Asio, providing Asio and Beast.
 - **OpenSSL** 1.1.1+: required only for TLS, HTTPS and WSS.
 
-Choose either standalone Asio or Boost. [Installation and configuration](docs/guide.md)
+Choose either standalone Asio or Boost. [Installation and configuration](docs/get-started/installation.md)
 covers dependency setup and CMake options.
 
 ## Quick Start
@@ -41,9 +41,9 @@ Use the `arknet::arknet` CMake interface target to configure applications.
 
 - [Documentation and protocol guides](docs/README.md)
 - [Local performance report](docs/performance/overview.md)
-- [Roadmap and TODOs](docs/roadmap.md), including the planned C++ KCP implementation
+- [Roadmap and TODOs](docs/project/roadmap.md), including the planned C++ KCP implementation
 - [Online documentation](https://openarkstudio.github.io/arknet/)
 
 ## License
 
-Licensed under [BSL-1.0](LICENSE). See [third-party notices](docs/THIRD_PARTY_NOTICES.md).
+Licensed under [BSL-1.0](LICENSE). See [third-party notices](docs/project/third-party-notices.md).

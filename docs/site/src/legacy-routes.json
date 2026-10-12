@@ -1,0 +1,334 @@
+{
+  "/guide": {
+    "to": "/get-started/installation",
+    "anchors": {}
+  },
+  "/quickstart": {
+    "to": "/get-started/first-application",
+    "anchors": {}
+  },
+  "/api": {
+    "to": "/reference/api",
+    "anchors": {}
+  },
+  "/addressing": {
+    "to": "/guides/ipv4-ipv6",
+    "anchors": {}
+  },
+  "/buffers": {
+    "to": "/guides/socket-buffers",
+    "anchors": {}
+  },
+  "/design": {
+    "to": "/project/architecture",
+    "anchors": {}
+  },
+  "/roadmap": {
+    "to": "/project/roadmap",
+    "anchors": {}
+  },
+  "/contributing": {
+    "to": "/project/contributing",
+    "anchors": {}
+  },
+  "/troubleshooting": {
+    "to": "/project/troubleshooting",
+    "anchors": {}
+  },
+  "/third-party-notices": {
+    "to": "/project/third-party-notices",
+    "anchors": {}
+  },
+  "/http": {
+    "to": "/features/http",
+    "anchors": {}
+  },
+  "/tcp/overview": {
+    "to": "/features/tcp",
+    "anchors": {}
+  },
+  "/tcp/performance": {
+    "to": "/features/tcp/performance",
+    "anchors": {}
+  },
+  "/tcp/usage": {
+    "to": "/features/tcp",
+    "anchors": {
+      "echo-server": "/features/tcp/server",
+      "echo-client": "/features/tcp/client",
+      "choose-a-receive-policy": "/features/tcp/configuration",
+      "sending-reconnect-and-errors": "/features/tcp/configuration",
+      "custom-sessions-and-external-io": "/features/tcp/configuration"
+    }
+  },
+  "/udp/overview": {
+    "to": "/features/udp",
+    "anchors": {}
+  },
+  "/udp/performance": {
+    "to": "/features/udp/performance",
+    "anchors": {}
+  },
+  "/udp/usage": {
+    "to": "/features/udp",
+    "anchors": {
+      "echo-server": "/features/udp/server",
+      "echo-client": "/features/udp/client",
+      "cast-to-several-destinations": "/features/udp/configuration",
+      "socket-options-and-session-state": "/features/udp/configuration",
+      "ownership-limits-and-shutdown": "/features/udp/configuration"
+    }
+  },
+  "/websocket/overview": {
+    "to": "/features/websocket",
+    "anchors": {}
+  },
+  "/websocket/performance": {
+    "to": "/features/websocket/performance",
+    "anchors": {}
+  },
+  "/websocket/usage": {
+    "to": "/features/websocket",
+    "anchors": {
+      "binary-echo-server": "/features/websocket/server",
+      "binary-echo-client": "/features/websocket/client",
+      "secure-websocket-wss": "/features/websocket/configuration",
+      "configure-upgrade-headers-and-inspect-the-result": "/features/websocket/configuration",
+      "limits-sessions-and-shutdown": "/features/websocket/configuration"
+    }
+  },
+  "/tls/overview": {
+    "to": "/features/tls",
+    "anchors": {}
+  },
+  "/tls/performance": {
+    "to": "/features/tls/performance",
+    "anchors": {}
+  },
+  "/tls/usage": {
+    "to": "/features/tls",
+    "anchors": {
+      "secure-tcp-echo-server": "/features/tls/server",
+      "secure-tcp-echo-client": "/features/tls/client",
+      "require-a-client-certificate": "/features/tls/configuration",
+      "apply-the-same-policy-to-wss-and-https": "/features/tls/configuration",
+      "shutdown-and-extension": "/features/tls/configuration"
+    }
+  },
+  "/http/performance": {
+    "to": "/features/http/performance",
+    "anchors": {}
+  },
+  "/http/usage": {
+    "to": "/features/http",
+    "anchors": {
+      "http-echo-server": "/features/http/server",
+      "http-echo-client": "/features/http/client",
+      "messages-callbacks-and-ownership": "/features/http/configuration",
+      "keep-alive-and-pipelining": "/features/http/configuration",
+      "limits-and-errors": "/features/http/configuration",
+      "https-server-and-client": "/features/http/configuration",
+      "custom-sessions": "/features/http/configuration",
+      "routing-and-business-work": "/features/http/configuration"
+    }
+  },
+  "/http/routing": {
+    "to": "/guides/http-routing",
+    "anchors": {}
+  },
+  "/runtime": {
+    "to": "/concepts/lifecycle",
+    "anchors": {
+      "sending-and-ownership": "/concepts/sending",
+      "backpressure": "/concepts/sending",
+      "futures-and-send": "/concepts/sending",
+      "timers-post-and-reconnect": "/guides/timers",
+      "errors-and-tls": "/reference/errors"
+    }
+  },
+  "/threading": {
+    "to": "/concepts/io-models",
+    "anchors": {
+      "native-asio-coroutine-baseline": "/performance/io-comparison",
+      "no-extra-application-computation": "/performance/io-comparison",
+      "10000-deterministic-iterations-per-echo": "/performance/io-comparison",
+      "reproducing-the-comparison": "/performance/io-comparison"
+    }
+  },
+  "/testing": {
+    "to": "/project/testing",
+    "anchors": {
+      "single-benchmark": "/performance/methodology",
+      "performance-matrix": "/performance/methodology",
+      "payload-batch-and-execution-modes": "/performance/methodology",
+      "original-io-topology-baseline": "/performance/methodology",
+      "metrics-and-charts": "/performance/methodology"
+    }
+  },
+  "/zh/guide": {
+    "to": "/zh/get-started/installation",
+    "anchors": {}
+  },
+  "/zh/quickstart": {
+    "to": "/zh/get-started/first-application",
+    "anchors": {}
+  },
+  "/zh/api": {
+    "to": "/zh/reference/api",
+    "anchors": {}
+  },
+  "/zh/addressing": {
+    "to": "/zh/guides/ipv4-ipv6",
+    "anchors": {}
+  },
+  "/zh/buffers": {
+    "to": "/zh/guides/socket-buffers",
+    "anchors": {}
+  },
+  "/zh/design": {
+    "to": "/zh/project/architecture",
+    "anchors": {}
+  },
+  "/zh/roadmap": {
+    "to": "/zh/project/roadmap",
+    "anchors": {}
+  },
+  "/zh/contributing": {
+    "to": "/zh/project/contributing",
+    "anchors": {}
+  },
+  "/zh/troubleshooting": {
+    "to": "/zh/project/troubleshooting",
+    "anchors": {}
+  },
+  "/zh/third-party-notices": {
+    "to": "/zh/project/third-party-notices",
+    "anchors": {}
+  },
+  "/zh/http": {
+    "to": "/zh/features/http",
+    "anchors": {}
+  },
+  "/zh/tcp/overview": {
+    "to": "/zh/features/tcp",
+    "anchors": {}
+  },
+  "/zh/tcp/performance": {
+    "to": "/zh/features/tcp/performance",
+    "anchors": {}
+  },
+  "/zh/tcp/usage": {
+    "to": "/zh/features/tcp",
+    "anchors": {
+      "回显服务端": "/zh/features/tcp/server",
+      "回显客户端": "/zh/features/tcp/client",
+      "选择接收策略": "/zh/features/tcp/configuration",
+      "发送重连与错误": "/zh/features/tcp/configuration",
+      "自定义-session-与外部-io": "/zh/features/tcp/configuration"
+    }
+  },
+  "/zh/udp/overview": {
+    "to": "/zh/features/udp",
+    "anchors": {}
+  },
+  "/zh/udp/performance": {
+    "to": "/zh/features/udp/performance",
+    "anchors": {}
+  },
+  "/zh/udp/usage": {
+    "to": "/zh/features/udp",
+    "anchors": {
+      "回显服务端": "/zh/features/udp/server",
+      "回显客户端": "/zh/features/udp/client",
+      "向多个目标发送": "/zh/features/udp/configuration",
+      "socket-选项与-session-状态": "/zh/features/udp/configuration",
+      "所有权容量与关闭": "/zh/features/udp/configuration"
+    }
+  },
+  "/zh/websocket/overview": {
+    "to": "/zh/features/websocket",
+    "anchors": {}
+  },
+  "/zh/websocket/performance": {
+    "to": "/zh/features/websocket/performance",
+    "anchors": {}
+  },
+  "/zh/websocket/usage": {
+    "to": "/zh/features/websocket",
+    "anchors": {
+      "二进制回显服务端": "/zh/features/websocket/server",
+      "二进制回显客户端": "/zh/features/websocket/client",
+      "安全-websocketwss": "/zh/features/websocket/configuration",
+      "配置升级头并查询结果": "/zh/features/websocket/configuration",
+      "容量自定义-session-与关闭": "/zh/features/websocket/configuration"
+    }
+  },
+  "/zh/tls/overview": {
+    "to": "/zh/features/tls",
+    "anchors": {}
+  },
+  "/zh/tls/performance": {
+    "to": "/zh/features/tls/performance",
+    "anchors": {}
+  },
+  "/zh/tls/usage": {
+    "to": "/zh/features/tls",
+    "anchors": {
+      "安全-tcp-回显服务端": "/zh/features/tls/server",
+      "安全-tcp-回显客户端": "/zh/features/tls/client",
+      "要求客户端证书": "/zh/features/tls/configuration",
+      "对-wss-与-https-使用相同规则": "/zh/features/tls/configuration",
+      "关闭与扩展": "/zh/features/tls/configuration"
+    }
+  },
+  "/zh/http/performance": {
+    "to": "/zh/features/http/performance",
+    "anchors": {}
+  },
+  "/zh/http/usage": {
+    "to": "/zh/features/http",
+    "anchors": {
+      "http-回显服务端": "/zh/features/http/server",
+      "http-回显客户端": "/zh/features/http/client",
+      "消息回调与所有权": "/zh/features/http/configuration",
+      "keep-alive-与流水线": "/zh/features/http/configuration",
+      "上限与错误": "/zh/features/http/configuration",
+      "https-服务端与客户端": "/zh/features/http/configuration",
+      "自定义-session": "/zh/features/http/configuration",
+      "路由与业务处理": "/zh/features/http/configuration"
+    }
+  },
+  "/zh/http/routing": {
+    "to": "/zh/guides/http-routing",
+    "anchors": {}
+  },
+  "/zh/runtime": {
+    "to": "/zh/concepts/lifecycle",
+    "anchors": {
+      "发送和数据所有权": "/zh/concepts/sending",
+      "背压": "/zh/concepts/sending",
+      "future-和-send": "/zh/concepts/sending",
+      "定时器post-和重连": "/zh/guides/timers",
+      "错误和-tls": "/zh/reference/errors"
+    }
+  },
+  "/zh/threading": {
+    "to": "/zh/concepts/io-models",
+    "anchors": {
+      "原生-asio-协程基线": "/zh/performance/io-comparison",
+      "无额外业务计算": "/zh/performance/io-comparison",
+      "每次回显增加-10000-次确定性运算": "/zh/performance/io-comparison",
+      "复现比较": "/zh/performance/io-comparison"
+    }
+  },
+  "/zh/testing": {
+    "to": "/zh/project/testing",
+    "anchors": {
+      "单项基准": "/zh/performance/methodology",
+      "性能矩阵": "/zh/performance/methodology",
+      "包体批量与执行方式": "/zh/performance/methodology",
+      "原有-io-拓扑基线": "/zh/performance/methodology",
+      "指标与图表": "/zh/performance/methodology"
+    }
+  }
+}

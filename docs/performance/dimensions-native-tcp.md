@@ -54,4 +54,4 @@ If any repetition fails, all three measurements for that profile are excluded fr
 
 Throughput and CPU ratios pair repetitions at the same backend, payload, batch size, thread model and computation before taking the median; 1 means equal values. Lower CPU utilization does not necessarily complete more requests; compare throughput too. If any CPU sample is missing, its CPU summary and matched ratio are N/A while throughput may remain valid. These results do not predict arknet callback endpoint versus future coroutine API speed.
 
-[Metrics, statistics and reproduction](../testing.md)
+[Metrics, statistics and reproduction](methodology.md)

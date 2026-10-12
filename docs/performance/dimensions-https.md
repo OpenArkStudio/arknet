@@ -21,4 +21,4 @@ No failed profiles for this protocol.
 
 If any repetition fails, all three measurements for that profile are excluded from rate, latency and matched-ratio summaries; raw failures are retained.
 
-[Metrics, statistics and reproduction](../testing.md)
+[Metrics, statistics and reproduction](methodology.md)

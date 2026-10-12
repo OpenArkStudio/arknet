@@ -1,54 +1,44 @@
 # arknet
 
-arknet is a C++20 header-only networking library for applications that need
-TCP, UDP, WebSocket, HTTP/HTTPS and TLS/mTLS. Clients and sessions use CRTP
-inheritance and component composition. Choose standalone Asio or Boost.Asio;
-use owned workers or integrate with your application's IO contexts.
-IPv4 and IPv6 share the same endpoint APIs; see [addresses and listening policy](addressing.md).
+arknet is a C++20 header-only networking library for clients and servers using TCP,
+UDP, WebSocket, HTTP and TLS. It combines CRTP endpoints with reusable components,
+supports IPv4 and IPv6, and runs on standalone Asio or Boost.Asio.
 
-## Requirements
+## Get started
 
-- **C++20:** a compatible compiler and standard library.
-- **CMake** 3.21+: for the provided builds, examples and tests.
-- **standalone Asio** 1.38+: the default networking backend.
-- **Boost** 1.90+: an alternative to standalone Asio, providing Asio and Beast.
-- **OpenSSL** 1.1.1+: required only for TLS, HTTPS and WSS.
+[Install and configure](get-started/installation.md) the library, then build your
+[first client and server](get-started/first-application.md). The CMake interface
+target supplies headers, compile settings and dependencies; arknet has no compiled library.
 
-Choose either standalone Asio or Boost. The standalone backend includes adapted
-Beast headers and does not require a separate Boost installation.
+## Features
 
-## Start Here
+| Capability | Use it for | Start here |
+| --- | --- | --- |
+| TCP | Ordered streams with application-defined message boundaries | [TCP](features/tcp/index.md) |
+| UDP | Native datagrams and endpoint-based sessions | [UDP](features/udp/index.md) |
+| WebSocket / WSS | Complete messages and HTTP Upgrade | [WebSocket](features/websocket/index.md) |
+| HTTP / HTTPS | HTTP/1.1 requests, responses, routing and middleware | [HTTP](features/http/index.md) |
+| TLS / mTLS | Encrypted transport and certificate verification | [TLS](features/tls/index.md) |
 
-- [Installation and configuration](guide.md): dependency setup, backend selection and CMake options.
-- [First client and server](quickstart.md): build and run the basic examples.
-- [Public API index](api.md): public types and common operations.
-- [Lifecycle and sends](runtime.md): ownership, cancellation and error handling.
-- [Local performance report](performance/overview.md): throughput, p99 latency, IO scaling, hardware and raw results.
+Each module includes client and server programs, configuration, limits and a performance entry.
+[Capabilities and support](features/index.md) records dependencies and planned features.
 
-## Protocol Guides
+## Build with arknet
 
-Each guide includes its scope, working examples, limits and reproducible measurements.
+- [Core concepts](concepts/index.md): endpoints, IO models, lifecycle and owned sends.
+- [Guides](guides/index.md): socket buffers, external IO, reconnect, timers, routing and IPv6.
+- [Examples](examples/index.md): complete programs and build commands.
+- [Reference](reference/api.md): public types, common operations and configuration.
 
-| Capability | Introduction | Usage | Performance |
-| --- | --- | --- | --- |
-| TCP and framing | [TCP](tcp/overview.md) | [Client, server and custom sessions](tcp/usage.md) | [TCP measurements](tcp/performance.md) |
-| UDP and cast | [UDP](udp/overview.md) | [Datagrams and endpoint sessions](udp/usage.md) | [UDP measurements](udp/performance.md) |
-| WebSocket / WSS | [WebSocket](websocket/overview.md) | [Messages and upgrade](websocket/usage.md) | [WS / WSS measurements](websocket/performance.md) |
-| HTTP / HTTPS | [HTTP](http.md) | [Messages](http/usage.md), [routing](http/routing.md) | [HTTP / HTTPS measurements](http/performance.md) |
-| TLS / mTLS | [TLS](tls/overview.md) | [Trust, certificates and identity](tls/usage.md) | [Secure transports](tls/performance.md) |
+## Measure and contribute
 
-## Understand and Validate
+[Performance](performance/index.md) provides local results with throughput, RTT,
+CPU utilization, host configuration and raw data. [Testing](project/testing.md)
+records correctness checks and their coverage.
 
-- [IO models and coroutines](threading.md): one context with one or multiple runners, or sharded contexts.
-- [Architecture](design.md): CRTP, components and extension boundaries.
-- [Testing](testing.md) and [local performance report](performance/overview.md): methodology, charts and raw evidence.
-- [Troubleshooting](troubleshooting.md) and [contributing](contributing.md).
-
-## Planned Capabilities
-
-HTTP/2, HTTP/3, named pipes, Unix domain sockets, RPC and a C++ KCP implementation
-are tracked in the [roadmap](roadmap.md). TODO entries are not available APIs.
+[Project](project/index.md) covers architecture, contribution guidelines and the
+roadmap. HTTP/2, HTTP/3, KCP, named pipes, Unix domain sockets and RPC remain TODO.
 
 [Source](https://github.com/OpenArkStudio/arknet) ·
 [BSL-1.0](https://github.com/OpenArkStudio/arknet/blob/main/LICENSE) ·
-[Third-party notices](THIRD_PARTY_NOTICES.md)
+[Third-party notices](project/third-party-notices.md)

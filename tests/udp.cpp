@@ -87,7 +87,7 @@ struct udp_io_runner
     ~udp_io_runner() { finish(); }
 };
 
-DOCTEST_TEST_CASE("UDP clients reserve exclusive local endpoints by default")
+DOCTEST_TEST_CASE("UDP clients do not opt into source port reuse by default")
 {
     for (const auto* host : {"127.0.0.1", "::1"})
     {
@@ -105,6 +105,8 @@ DOCTEST_TEST_CASE("UDP clients reserve exclusive local endpoints by default")
         check(client.start(host, peer.local_endpoint().port()), "UDP client connects");
         DOCTEST_CHECK_MESSAGE(!reuse, "UDP clients do not enable SO_REUSEADDR implicitly");
 
+#ifndef _WIN32
+        // Windows needs SO_EXCLUSIVEADDRUSE for exclusive explicit binds.
         asio::ip::udp::socket competing(context, destination.protocol());
         competing.set_option(asio::socket_base::reuse_address(reuse));
         arknet::error_code error;
@@ -113,6 +115,7 @@ DOCTEST_TEST_CASE("UDP clients reserve exclusive local endpoints by default")
             competing.connect(peer.local_endpoint(), error);
         DOCTEST_CHECK_MESSAGE(error == asio::error::address_in_use,
                               "another default client cannot share the local and remote endpoints");
+#endif
         client.stop();
 
         arknet::udp_client opted_in;

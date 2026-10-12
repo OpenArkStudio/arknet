@@ -48,7 +48,8 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/arknetConfig.cmake
 install(FILES README.md README_CN.md LICENSE
     DESTINATION ${CMAKE_INSTALL_DATADIR}/arknet)
 install(DIRECTORY docs/ DESTINATION ${CMAKE_INSTALL_DATADIR}/arknet/docs
-    FILES_MATCHING PATTERN "*.md" PATTERN "*.html" PATTERN "*.png" PATTERN "*.svg" PATTERN "*.json" PATTERN ".nojekyll")
+    FILES_MATCHING PATTERN "*.md" PATTERN "*.html" PATTERN "*.png" PATTERN "*.svg" PATTERN "*.json" PATTERN ".nojekyll"
+    PATTERN "site" EXCLUDE)
 
 if(ARKNET_BUILD_TESTS)
     add_subdirectory(tests)

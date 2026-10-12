@@ -21,7 +21,7 @@ This record covers macOS; it is not a Linux or Windows validation result.
 stderr, and `summary.json`. `prepare.py` and `run.py` preserve the scripts used
 to collect these historical records; they are not current test entry points.
 Current tests and benchmarks run compiled C++ programs directly. Batch measurements
-use `scripts/benchmark_matrix.sh`; see [Testing](../../../../docs/testing.md).
+use `scripts/benchmark_matrix.sh`; see [Methodology](../../../../docs/performance/methodology.md).
 
 ## Historical Collection Commands
 

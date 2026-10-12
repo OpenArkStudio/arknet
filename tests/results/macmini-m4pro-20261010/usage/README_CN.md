@@ -19,7 +19,7 @@
 `standalone/` 和 `boost/` 保留配置与构建日志、各进程的标准输出和标准错误，以及
 `summary.json`。`prepare.py` 和 `run.py` 是采集这些历史记录时使用的归档脚本，
 不作为当前测试入口。当前功能测试和基准直接编译运行 C++ 程序，批量测量使用
-`scripts/benchmark_matrix.sh`；参见[测试与测量方法](../../../../docs/testing_CN.md)。
+`scripts/benchmark_matrix.sh`；参见[测量方法](../../../../docs/performance/methodology_CN.md)。
 
 ## 历史采集命令
 

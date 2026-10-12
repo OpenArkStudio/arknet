@@ -1,0 +1,27 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { convertPage, pageRoute } from "./content.mjs";
+
+test("bilingual routes and home aliases", () => {
+  assert.equal(pageRoute("README_CN.md"), "/zh/");
+  assert.equal(pageRoute("udp/performance.md"), "/udp/performance");
+  assert.equal(pageRoute("THIRD_PARTY_NOTICES_CN.md"), "/zh/third-party-notices");
+  assert.equal(pageRoute("features/udp/index_CN.md"), "/zh/features/udp");
+  assert.equal(pageRoute("features/index.md"), "/features");
+});
+
+test("convert parsed links while preserving code and labels", () => {
+  const source = '# UDP\n\n[用法](usage_CN.md#示例)\n\n![吞吐](../performance/assets/udp.svg)\n\n```cpp\n// [use](usage_CN.md)\n```\n';
+  const result = convertPage(source, "udp/overview_CN.md", new Set(["udp/usage_CN.md"]));
+  assert.match(result, /\[用法\]\(\/zh\/udp\/usage#%E7%A4%BA%E4%BE%8B\)/);
+  assert.match(result, /!\[吞吐\]\(\/arknet\/performance\/assets\/udp.svg\)/);
+  assert.match(result, /\/\/ \[use\]\(usage_CN.md\)/);
+  assert.match(result, /title: "UDP"/);
+  assert.doesNotMatch(result, /# UDP/);
+});
+
+test("source references point at GitHub; missing documents fail", () => {
+  const result = convertPage("# Page\n\n[source](../include/arknet.hpp)", "page.md", new Set());
+  assert.match(result, /https:\/\/github.com\/OpenArkStudio\/arknet\/blob\/main\/include\/arknet.hpp/);
+  assert.throws(() => convertPage("# Page\n\n[missing](missing.md)", "page.md", new Set()), /missing document/);
+});

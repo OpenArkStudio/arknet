@@ -1,6 +1,6 @@
 {
   "address_family": "ipv4",
-  "source_sha256": "fa69d6ce97745281290a263cb0f2515470ede0edb77f5132ce6e3ac7ae7cd9b4",
+  "source_sha256": "0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1",
   "host": {
     "system": "Darwin",
     "release": "27.0.0",
@@ -26,6 +26,7 @@
       16384,
       65507
     ],
+    "address_family": "ipv4",
     "protocols": [
       "udp"
     ],
@@ -51,8 +52,7 @@
         "io_threads": 1,
         "handler_work": 0
       }
-    ],
-    "address_family": "ipv4"
+    ]
   },
   "measurements": 108,
   "profiles": [
@@ -2796,14 +2796,14 @@
   "kernel": {
     "standalone": {
       "before": {
-        "full_socket_buffer_drops": 27666,
+        "full_socket_buffer_drops": 89059,
         "fragment received": 0,
         "reassembled ok": 0,
         "output datagram fragmented": 0,
         "fragment created": 0
       },
       "after": {
-        "full_socket_buffer_drops": 51444,
+        "full_socket_buffer_drops": 112837,
         "fragment received": 0,
         "reassembled ok": 0,
         "output datagram fragmented": 0,
@@ -2819,14 +2819,14 @@
     },
     "boost": {
       "before": {
-        "full_socket_buffer_drops": 51444,
+        "full_socket_buffer_drops": 126672,
         "fragment received": 0,
         "reassembled ok": 0,
         "output datagram fragmented": 0,
         "fragment created": 0
       },
       "after": {
-        "full_socket_buffer_drops": 75222,
+        "full_socket_buffer_drops": 150450,
         "fragment received": 0,
         "reassembled ok": 0,
         "output datagram fragmented": 0,

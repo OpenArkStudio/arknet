@@ -1,5 +1,7 @@
 # 包体、批量与执行方式对比
 
+本页保留 2026-10-10 的历史多协议矩阵。UDP 当前数据见 [2026-10-12 复测](udp-update_CN.md)与[更新后的 UDP 负载对比](dimensions-udp_CN.md)；协程数据仍属于原生 TCP 测量。
+
 本机 Release IPv4 回环测试：16 个客户端，三种消息大小、四种窗口及三种线程模型，每个配置重复三次。
 
 | 配置 | 实测机器 |
@@ -80,6 +82,6 @@ arknet 协议测试记录单消息 RTT；原生 Asio 的回调／协程匹配测
 - [standalone-native.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-dimensions/standalone-native.json): 432 次测量; executable SHA-256 `5d7ac94153f942eda1494656edc865ab01817a7ea9122a240cc5f3260b061549`
 - [boost-native.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-dimensions/boost-native.json): 432 次测量; executable SHA-256 `d68dc3aea70b8334e5fc88d3bda0739faeb8696842c4f2f582092d92cb1b2d6d`
 
-[复现命令与指标定义](../testing_CN.md)
+[复现命令与指标定义](methodology_CN.md)
 
 本机回环、固定连接分布和短时测量不代表生产容量，业务选型仍需按实际消息与连接分布复测。

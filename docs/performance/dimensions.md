@@ -1,5 +1,7 @@
 # Payload, Batch and Execution Comparisons
 
+This page preserves the historical multi-protocol matrix from 2026-10-10. Current UDP results are in the [2026-10-12 retest](udp-update.md) and [updated UDP load comparison](dimensions-udp.md). Coroutine results still measure native TCP.
+
 Local Release IPv4 loopback: 16 clients, three payload sizes, four windows and three thread models, with three repetitions per configuration.
 
 | Configuration | Test machine |
@@ -80,6 +82,6 @@ The arknet protocol program measures message RTT; matched native Asio callback/c
 - [standalone-native.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-dimensions/standalone-native.json): 432 measurements; executable SHA-256 `5d7ac94153f942eda1494656edc865ab01817a7ea9122a240cc5f3260b061549`
 - [boost-native.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-dimensions/boost-native.json): 432 measurements; executable SHA-256 `d68dc3aea70b8334e5fc88d3bda0739faeb8696842c4f2f582092d92cb1b2d6d`
 
-[Reproduction and metric definitions](../testing.md)
+[Reproduction and metric definitions](methodology.md)
 
 Local loopback, fixed connection distributions and short runs do not establish production capacity; repeat with real messages and connection activity.

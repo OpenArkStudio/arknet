@@ -1,5 +1,7 @@
 # UDP 报文大小与突发丢包
 
+2026-10-12 修复后重新测量，数据与图表已更新。[测试机器与接收缓冲诊断](udp-update_CN.md)。
+
 Mac mini M4 Pro 上的 Release IPv4 回环测试：16 个客户端、1 个 context、1 个线程，
 无额外业务计算，测量 1 秒、预热 0.25 秒。每种后端运行六种包体、三档窗口，
 各重复三次：**36 次通过、18 次失败**。
@@ -33,8 +35,8 @@ IPv6 路由器不执行分片。这组诊断只测量 IPv4，不能据此确定 
 
 | 后端 | 接收缓冲溢出计数：开始 → 结束 | 增量 | IPv4 分片／重组增量 |
 | --- | ---: | ---: | ---: |
-| Standalone Asio | 27,666 → 51,444 | 23,778 | 0 / 0 |
-| Boost.Asio | 51,444 → 75,222 | 23,778 | 0 / 0 |
+| Standalone Asio | 89,059 → 112,837 | 23,778 | 0 / 0 |
+| Boost.Asio | 126,672 → 150,450 | 23,778 | 0 / 0 |
 
 每种后端在测量阶段记录 11,889 条丢失回显。内核计数覆盖整段测试，包括预热，
 并且是系统全局计数。它记录了突发流量期间的接收缓冲溢出；没有 IPv4 分片
@@ -48,7 +50,7 @@ IPv6 路由器不执行分片。这组诊断只测量 IPv4，不能据此确定 
 
 ## 复现
 
-按 [UDP 构建说明](../udp/performance_CN.md#构建与执行)编译后，直接运行独立 C++ 用例：
+按 [UDP 构建说明](../features/udp/performance_CN.md#%E6%9E%84%E5%BB%BA%E4%B8%8E%E6%89%A7%E8%A1%8C)编译后，直接运行独立 C++ 用例：
 
 ```sh
 build-perf/benchmarks/arknet_loopback_benchmark \
@@ -56,12 +58,12 @@ build-perf/benchmarks/arknet_loopback_benchmark \
   --io-model shared --io-threads 1 --work 0 --warmup 0.25 --seconds 1
 ```
 
-归档的[Standalone 命令与内核快照](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261010-udp-limits)
-也保留了完整 shell 矩阵和 Boost 命令。可选离线图表工具使用[报告环境](../testing_CN.md#指标与图表)：
+归档的[Standalone 命令与内核快照](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-udp/limits)
+也保留了完整 shell 矩阵和 Boost 命令。可选离线图表工具使用[报告环境](methodology_CN.md#%E6%8C%87%E6%A0%87%E4%B8%8E%E5%9B%BE%E8%A1%A8)：
 
 ```sh
 build/report-venv/bin/python scripts/udp_limits_report.py \
-  --input-dir benchmarks/results/macmini-m4pro-20261010-udp-limits \
+  --input-dir benchmarks/results/macmini-m4pro-20261012-udp/limits \
   --output docs/performance/assets/udp-limits-loss.svg
 ```
 
@@ -71,8 +73,10 @@ build/report-venv/bin/python scripts/udp_limits_report.py \
 python3 -m unittest discover -s scripts -p 'test_udp_limits_report.py' -v
 ```
 
-[Standalone 原始 JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-udp-limits/standalone.json) ·
-[Boost 原始 JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-udp-limits/boost.json) ·
-[图表数值](assets/udp-limits-loss.json ':ignore') · [环境与测量定义](../testing_CN.md)
+[Standalone 原始 JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261012-udp/limits/standalone.json) ·
+[Boost 原始 JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261012-udp/limits/boost.json) ·
+[图表数值](assets/udp-limits-loss.json ':ignore') · [环境与测量定义](methodology_CN.md)
 
-源码 SHA-256：`fa69d6ce97745281290a263cb0f2515470ede0edb77f5132ce6e3ac7ae7cd9b4`。
+源码 SHA-256：`0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`。
+
+这些突发为什么会溢出、如何设置缓冲，见[缓冲区与流量控制](../guides/socket-buffers_CN.md)。

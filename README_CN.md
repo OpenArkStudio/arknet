@@ -19,7 +19,7 @@ arknet 是 OpenArkStudio 维护的 C++20 header-only 网络库。
 - **Boost** 1.90+：可替代 standalone Asio，提供 Asio 和 Beast。
 - **OpenSSL** 1.1.1+：仅在启用 TLS、HTTPS 或 WSS 时需要。
 
-standalone Asio 与 Boost 二选一。依赖安装和 CMake 选项见[安装与配置](docs/guide_CN.md)。
+standalone Asio 与 Boost 二选一。依赖安装和 CMake 选项见[安装与配置](docs/get-started/installation_CN.md)。
 
 ## 快速开始
 
@@ -40,9 +40,9 @@ cmake --build build --target arknet_check
 
 - [文档与协议指南](docs/README_CN.md)
 - [本地性能报告](docs/performance/overview_CN.md)
-- [路线图与 TODO](docs/roadmap_CN.md)，包括后续计划开发的 C++ KCP
+- [路线图与 TODO](docs/project/roadmap_CN.md)，包括后续计划开发的 C++ KCP
 - [在线文档](https://openarkstudio.github.io/arknet/#/README_CN)
 
 ## 许可证
 
-采用 [BSL-1.0](LICENSE)，第三方依赖见[第三方声明](docs/THIRD_PARTY_NOTICES_CN.md)。
+采用 [BSL-1.0](LICENSE)，第三方依赖见[第三方声明](docs/project/third-party-notices_CN.md)。

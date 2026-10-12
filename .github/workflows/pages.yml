@@ -13,18 +13,28 @@ concurrency:
   cancel-in-progress: true
 jobs:
   publish:
-    name: Publish Docsify to GitHub Pages
+    name: Build and publish Nimbus documentation
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: docs/site/package-lock.json
+      - name: Install documentation dependencies
+        run: npm ci --prefix docs/site
+      - name: Check and build static documentation
+        working-directory: docs/site
+        run: npm run check
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: docs/site/dist
       - name: Deploy documentation
         id: deploy
         uses: actions/deploy-pages@v4

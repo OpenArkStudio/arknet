@@ -135,7 +135,9 @@ def failed_measurement(entry):
             "error": str(error or "measurement failed validation"), "counters": counters}
 
 
-def load_reports(paths):
+def load_reports(paths, scope="full"):
+    if scope not in ("full", "udp"):
+        raise ValueError("unsupported report scope")
     reports, samples, failures = [], defaultdict(dict), defaultdict(list)
     identities = set()
     for path in paths:
@@ -190,9 +192,10 @@ def load_reports(paths):
             raise ValueError(f"{path}: missing requested configuration or repetition")
         reports.append((path, value))
     all_expected = set()
-    for backend, protocol, payload, window, (model, threads) in product(BACKENDS, report.PROTOCOLS, PAYLOADS, WINDOWS, TOPOLOGIES):
+    protocols = ("udp",) if scope == "udp" else report.PROTOCOLS
+    for backend, protocol, payload, window, (model, threads) in product(BACKENDS, protocols, PAYLOADS, WINDOWS, TOPOLOGIES):
         all_expected.add((backend, "arknet-callback", protocol, payload, 16, window, model, threads, 0))
-    for backend, execution, payload, window, (model, threads), work in product(BACKENDS, ("callback", "coroutine"), PAYLOADS, WINDOWS, TOPOLOGIES, (0, 10000)):
+    for backend, execution, payload, window, (model, threads), work in product(BACKENDS, ("callback", "coroutine") if scope == "full" else (), PAYLOADS, WINDOWS, TOPOLOGIES, (0, 10000)):
         all_expected.add((backend, "asio-" + execution, "tcp", payload, 16, window, model, threads, work))
     if set(samples) | set(failures) != all_expected:
         raise ValueError("missing requested protocol, backend or native execution configuration")
@@ -427,7 +430,7 @@ def raw_link(path, raw_base):
     return raw_base.rstrip("/") + "/" + quote(relative, safe="/")
 
 
-def index_page(reports, rows, failed, chinese, raw_base, host_description=""):
+def index_page(reports, rows, failed, chinese, raw_base, host_description="", names=NAMES):
     suffix = "_CN" if chinese else ""
     first = reports[0][1]
     settings = first["settings"]
@@ -445,7 +448,7 @@ def index_page(reports, rows, failed, chinese, raw_base, host_description=""):
              host_description or (f"[{'工具链与构建' if chinese else 'Toolchain and build'}](overview{suffix}.md#{'工具链与构建' if chinese else 'toolchain-and-build'})"), "",
              "arknet 协议测试记录单消息 RTT；原生 Asio 的回调／协程匹配测试记录批次 RTT。后者的固定批次数据不能与前者直接组成协程加速比；公开协程端点 API 仍为 TODO。" if chinese else
              "The arknet protocol program measures message RTT; matched native Asio callback/coroutine executions measure batch RTT. Their fixed-batch results do not establish speedups over arknet endpoints; public coroutine endpoint APIs remain TODO.", ""]
-    for name in NAMES:
+    for name in names:
         title = ("原生 Asio TCP" if chinese else "Native TCP") if name == "native-tcp" else name.upper() if name == "tcps" else report.PROTOCOL_LABELS[name]
         lines += [f'<a id="{name}"></a>', "", f"## {title}", "",
                   f"[{'图表、简短结论与失败记录' if chinese else 'Charts, findings and failed profiles'}](dimensions-{name}{suffix}.md)", ""]
@@ -461,7 +464,7 @@ def index_page(reports, rows, failed, chinese, raw_base, host_description=""):
     return "\n".join(lines)
 
 
-def generate(reports, groups, failed, output, raw_base, host_description=""):
+def generate(reports, groups, failed, output, raw_base, host_description="", names=NAMES):
     logical_cpus = reports[0][1]["host"].get("logical_cpus")
     rows = report.summary(groups, logical_cpus)
     ratios = paired_ratios(groups)
@@ -472,7 +475,7 @@ def generate(reports, groups, failed, output, raw_base, host_description=""):
                "measurements": sum(len(value["results"]) for _, value in reports),
                "profiles": rows, "failed_profiles": failed, "matched_ratios": ratios}
     (output / "dimensions-summary.json").write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-    for name in NAMES:
+    for name in names:
         for work in ((0, 10000) if name == "native-tcp" else (0,)):
             prefix = asset_prefix(name, work)
             for metric, metric_file in METRIC_FILES:
@@ -486,7 +489,7 @@ def generate(reports, groups, failed, output, raw_base, host_description=""):
             (output / f"dimensions-{name}{suffix}.md").write_text(detail_page(name, rows, failed, ratios, chinese, logical_cpus), encoding="utf-8")
     for chinese in (False, True):
         suffix = "_CN" if chinese else ""
-        (output / f"dimensions{suffix}.md").write_text(index_page(reports, rows, failed, chinese, raw_base, host_description), encoding="utf-8")
+        (output / f"dimensions{suffix}.md").write_text(index_page(reports, rows, failed, chinese, raw_base, host_description, names), encoding="utf-8")
     return rows, ratios
 
 
@@ -496,10 +499,12 @@ def main():
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--raw-base", default="https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results")
     parser.add_argument("--host-description", default="", help="optional collected toolchain/build details")
+    parser.add_argument("--scope", choices=("full", "udp"), default="full", help="require the complete full or UDP-only matrix")
     args = parser.parse_args()
     try:
-        reports, groups, failed = load_reports(args.reports)
-        rows, ratios = generate(reports, groups, failed, args.output_dir, args.raw_base, args.host_description)
+        reports, groups, failed = load_reports(args.reports, args.scope)
+        rows, ratios = generate(reports, groups, failed, args.output_dir, args.raw_base, args.host_description,
+                                ("udp",) if args.scope == "udp" else NAMES)
     except (ValueError, KeyError, TypeError) as error:
         parser.error(str(error))
     print(f"Generated {len(rows)} valid profiles, {len(failed)} failed profiles and {len(ratios)} matched ratios in {args.output_dir}")

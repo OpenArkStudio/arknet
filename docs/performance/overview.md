@@ -1,5 +1,7 @@
 # Local Performance Report
 
+This is the historical multi-protocol baseline from 2026-10-10. See the [2026-10-12 UDP retest](udp-update.md) for updated measurements, charts and buffer diagnosis. These cohorts use different source baselines.
+
 **1,620 local IPv4 measurements** compare throughput, p99 latency and IO models across the Asio backends.
 
 ## Test Conditions
@@ -47,18 +49,18 @@ The highest median applies only to the stated load; complete results appear belo
 | 1 context / several threads | Uneven connection activity, shared available workers | Use per-connection strands; shared scheduling has overhead |
 | Several contexts / 1 thread each | Partitioned sessions, tenants or stable assignment | A busy shard cannot borrow other shards' workers |
 
-[Coroutine IO and CPU workload comparisons](../threading.md).
+[Coroutine IO and CPU workload comparisons](../concepts/io-models.md).
 
 ## Detailed Results by Protocol
 
-- [TCP](./tcp.md)
-- [UDP](./udp.md)
-- [WebSocket](./websocket.md)
-- [TCP+TLS](./tcps.md)
-- [WSS](./wss.md)
-- [HTTP](./http.md)
-- [HTTPS](./https.md)
-- [Coroutine TCP](./coroutine.md)
+- [TCP](tcp.md)
+- [UDP](udp.md)
+- [WebSocket](websocket.md)
+- [TCP+TLS](tcps.md)
+- [WSS](wss.md)
+- [HTTP](http.md)
+- [HTTPS](https.md)
+- [Coroutine TCP](coroutine.md)
 
 Detailed pages retain all 64/1024/16384-byte and 1/16-client profiles. Bars show repeated-run medians; error bars show min/max, not confidence intervals.
 
@@ -74,13 +76,13 @@ The backends use different Beast versions, so differences between backends also 
 
 ## Metric Definitions
 
-[Throughput, RTT, CPU, RSS and error definitions](../testing.md).
+[Throughput, RTT, CPU, RSS and error definitions](../project/testing.md).
 
 ## Raw Data and Reproduction
 
 - Source SHA-256: `127a500ad7e2fbe4c831cc3ebacc63acac96013e2cb8bf3893d7997ca6ea7f56`
 - [Completed measurements]: 1620
-- [Commands and validation scope](../testing.md)
+- [Commands and validation scope](methodology.md)
 
 - [macmini-m4pro-20261010-boost-coroutine.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-coroutine.json): 180 measurements; 2026-10-10T06:22:06.443606+00:00; executable SHA-256 `14b22c5832f3d7731294a735d97ab5464cbf64c4efeb439f8f5f4b7576c70df4`
 - [macmini-m4pro-20261010-boost-http.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-http.json): 90 measurements; 2026-10-10T06:08:56.779694+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`

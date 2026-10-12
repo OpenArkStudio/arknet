@@ -1,5 +1,7 @@
 # UDP Datagram Size and Burst Loss
 
+Measurements and charts were updated after the fix on 2026-10-12. [Test machine and receive-buffer diagnosis](udp-update.md).
+
 Release IPv4 loopback on the Mac mini M4 Pro: 16 clients, one context/one
 thread, no extra computation, 1 s measurement and 0.25 s warmup. Each backend
 runs six payloads × three windows × three repetitions: **36 pass, 18 fail**.
@@ -39,8 +41,8 @@ payload sizing must use the actual path MTU.
 
 | Backend | Full socket buffers before → after | Increase | IPv4 fragmentation / reassembly increase |
 | --- | ---: | ---: | ---: |
-| Standalone Asio | 27,666 → 51,444 | 23,778 | 0 / 0 |
-| Boost.Asio | 51,444 → 75,222 | 23,778 | 0 / 0 |
+| Standalone Asio | 89,059 → 112,837 | 23,778 | 0 / 0 |
+| Boost.Asio | 126,672 → 150,450 | 23,778 | 0 / 0 |
 
 Each backend records 11,889 lost echoes in the measurement phase. The kernel
 counts cover the whole stage, including warmup, and are system-wide. They
@@ -56,7 +58,7 @@ window 64 overflows buffers: datagram validity and burst capacity are separate.
 
 ## Reproduce
 
-Compile using [UDP build instructions](../udp/performance.md#build-and-run),
+Compile using [UDP build instructions](../features/udp/performance.md#build-and-run),
 then run an independent C++ case:
 
 ```sh
@@ -65,13 +67,13 @@ build-perf/benchmarks/arknet_loopback_benchmark \
   --io-model shared --io-threads 1 --work 0 --warmup 0.25 --seconds 1
 ```
 
-The archived [Standalone command and kernel snapshots](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261010-udp-limits)
+The archived [Standalone command and kernel snapshots](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-udp/limits)
 also retain the complete shell matrix and the Boost command. The optional
-offline chart tool needs the [report environment](../testing.md#metrics-and-charts):
+offline chart tool needs the [report environment](methodology.md#metrics-and-charts):
 
 ```sh
 build/report-venv/bin/python scripts/udp_limits_report.py \
-  --input-dir benchmarks/results/macmini-m4pro-20261010-udp-limits \
+  --input-dir benchmarks/results/macmini-m4pro-20261012-udp/limits \
   --output docs/performance/assets/udp-limits-loss.svg
 ```
 
@@ -82,9 +84,11 @@ they do not launch network tests:
 python3 -m unittest discover -s scripts -p 'test_udp_limits_report.py' -v
 ```
 
-[Standalone raw JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-udp-limits/standalone.json) ·
-[Boost raw JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-udp-limits/boost.json) ·
+[Standalone raw JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261012-udp/limits/standalone.json) ·
+[Boost raw JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261012-udp/limits/boost.json) ·
 [Numeric chart data](assets/udp-limits-loss.json ':ignore') ·
-[Environment and measurement definitions](../testing.md)
+[Environment and measurement definitions](../project/testing.md)
 
-Source SHA-256: `fa69d6ce97745281290a263cb0f2515470ede0edb77f5132ce6e3ac7ae7cd9b4`.
+Source SHA-256: `0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`.
+
+See [Buffers and flow control](../guides/socket-buffers.md) for the overflow explanation and configuration.

@@ -142,8 +142,9 @@ DOCTEST_TEST_CASE("Stopped TCP clients release ownership after their external co
     auto drained = barrier.get_future();
     asio::post(context, [&] { barrier.set_value(); });
     await(drained);
-    context.stop();
+    work.reset();
     worker.join();
+    context.stop();
     client->stop();
     client.reset();
     check(weak.expired(), "stopped context must not retain a repeated stop task");
@@ -168,8 +169,10 @@ DOCTEST_TEST_CASE("Stopped TCP servers release ownership after their external co
     asio::post(context, [&] { barrier.set_value(); });
     await(drained);
     check(server->is_stopped(), "external server stopped");
-    context.stop();
+    // Drain cancellation completions before stopping the external context.
+    work.reset();
     worker.join();
+    context.stop();
     server->stop();
     server.reset();
     check(weak.expired(), "stopped listener must not retain a repeated stop task");

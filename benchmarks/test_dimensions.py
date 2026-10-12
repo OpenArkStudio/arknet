@@ -50,14 +50,14 @@ class DimensionsTests(unittest.TestCase):
     def setUp(self):
         self.values = matrix_reports()
 
-    def load(self, values=None):
+    def load(self, values=None, scope="full"):
         with tempfile.TemporaryDirectory() as folder:
             paths = []
             for index, value in enumerate(self.values if values is None else values):
                 path = Path(folder) / f"{index}.json"
                 path.write_text(json.dumps(value), encoding="utf-8")
                 paths.append(path)
-            return dimensions.load_reports(paths)
+            return dimensions.load_reports(paths, scope)
 
     def test_complete_requested_cartesian_matrix(self):
         reports, groups, failed = self.load()
@@ -65,6 +65,20 @@ class DimensionsTests(unittest.TestCase):
         self.assertEqual(len(groups), 792)
         self.assertEqual(failed, [])
         self.assertEqual(len(dimensions.paired_ratios(groups)), 144)
+
+    def test_udp_scope_still_requires_both_complete_backend_matrices(self):
+        values = [value for value in self.values if value["settings"]["protocols"] == ["udp"]]
+        reports, groups, failed = self.load(values, scope="udp")
+        self.assertEqual(sum(len(value["results"]) for _, value in reports), 216)
+        self.assertEqual(len(groups), 72)
+        self.assertEqual(failed, [])
+        with self.assertRaises(ValueError):
+            self.load(values)
+        with self.assertRaises(ValueError):
+            self.load(values[:1], scope="udp")
+        values[0]["results"].pop()
+        with self.assertRaises(ValueError):
+            self.load(values, scope="udp")
 
     def test_reject_missing_configuration_repetition_protocol_and_duplicate(self):
         for change in ("configuration", "repetition", "protocol", "duplicate", "repeated-file"):

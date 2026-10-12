@@ -1,5 +1,7 @@
 # 本地性能报告
 
+本页为 2026-10-10 的历史多协议基线。UDP 修复后的数据、图表与缓冲诊断见 [2026-10-12 复测](udp-update_CN.md)；不要将两轮测量当作同一源码基线。
+
 本机完成 **1,620 次 IPv4 测量**，比较 Asio 后端配置下的吞吐量、p99 延迟和 IO 模型。
 
 ## 测试条件
@@ -47,18 +49,18 @@ Release 构建；测量 1.0 s，预热 0.25 s，重复 3 次。
 | 1 个 io_context / 多线程 | 连接活跃程度不均衡、希望共享空闲线程 | 使用每连接 strand；共享调度有开销 |
 | 多个 io_context / 各 1 个线程 | 分区会话、租户或负载分配稳定的服务 | 繁忙分片无法借用其他分片线程 |
 
-[协程的 IO 与 CPU 负载比较](../threading_CN.md).
+[协程的 IO 与 CPU 负载比较](../concepts/io-models_CN.md).
 
 ## 各协议的详细结果
 
-- [TCP](./tcp_CN.md)
-- [UDP](./udp_CN.md)
-- [WebSocket](./websocket_CN.md)
-- [TCP+TLS](./tcps_CN.md)
-- [WSS](./wss_CN.md)
-- [HTTP](./http_CN.md)
-- [HTTPS](./https_CN.md)
-- [协程 TCP](./coroutine_CN.md)
+- [TCP](tcp_CN.md)
+- [UDP](udp_CN.md)
+- [WebSocket](websocket_CN.md)
+- [TCP+TLS](tcps_CN.md)
+- [WSS](wss_CN.md)
+- [HTTP](http_CN.md)
+- [HTTPS](https_CN.md)
+- [协程 TCP](coroutine_CN.md)
 
 详细页包含 64/1024/16384 字节、1/16 个客户端的全部数据。柱子为重复运行的中位数；误差线为最小／最大值，不是置信区间。
 
@@ -74,13 +76,13 @@ Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch 
 
 ## 指标定义
 
-[吞吐量、RTT、CPU、RSS 和错误定义](../testing_CN.md).
+[吞吐量、RTT、CPU、RSS 和错误定义](../project/testing_CN.md).
 
 ## 原始数据与复现
 
 - Source SHA-256: `127a500ad7e2fbe4c831cc3ebacc63acac96013e2cb8bf3893d7997ca6ea7f56`
 - [已完成测量]: 1620
-- [复现命令与检查范围](../testing_CN.md)
+- [复现命令与检查范围](methodology_CN.md)
 
 - [macmini-m4pro-20261010-boost-coroutine.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-coroutine.json): 180 measurements; 2026-10-10T06:22:06.443606+00:00; executable SHA-256 `14b22c5832f3d7731294a735d97ab5464cbf64c4efeb439f8f5f4b7576c70df4`
 - [macmini-m4pro-20261010-boost-http.json](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results/macmini-m4pro-20261010-boost-http.json): 90 measurements; 2026-10-10T06:08:56.779694+00:00; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`

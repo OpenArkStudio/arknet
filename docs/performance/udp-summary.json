@@ -1,0 +1,3242 @@
+[
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 47450.4420598,
+      "min": 45394.1800331,
+      "max": 48079.9225952
+    },
+    "payload_mib_per_second": {
+      "median": 5.7922902905,
+      "min": 5.54128174233,
+      "max": 5.86913117617
+    },
+    "rtt_p50_us": {
+      "median": 20,
+      "min": 19.792,
+      "max": 20.75
+    },
+    "rtt_p95_us": {
+      "median": 25.416,
+      "min": 25.125,
+      "max": 27.958
+    },
+    "rtt_p99_us": {
+      "median": 29.584,
+      "min": 27.792,
+      "max": 38.417
+    },
+    "peak_rss_bytes": {
+      "median": 7667712,
+      "min": 7618560,
+      "max": 7700480
+    },
+    "cpu_seconds": 0.769155,
+    "cpu_percent": {
+      "median": 76.52492002225306,
+      "min": 76.40961963262194,
+      "max": 76.72303295627289
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.466065715875218,
+      "min": 5.45782997375871,
+      "max": 5.4802166397337775
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 47570.5270772,
+      "min": 47357.5891984,
+      "max": 48883.7032811
+    },
+    "payload_mib_per_second": {
+      "median": 5.8069491061,
+      "min": 5.7809557127,
+      "max": 5.96724893568
+    },
+    "rtt_p50_us": {
+      "median": 20.458,
+      "min": 19.666,
+      "max": 20.458
+    },
+    "rtt_p95_us": {
+      "median": 25.042,
+      "min": 24.958,
+      "max": 25.209
+    },
+    "rtt_p99_us": {
+      "median": 28.042,
+      "min": 28,
+      "max": 29.416
+    },
+    "peak_rss_bytes": {
+      "median": 7733248,
+      "min": 7716864,
+      "max": 7749632
+    },
+    "cpu_seconds": 0.770048,
+    "cpu_percent": {
+      "median": 76.61535457577202,
+      "min": 75.27647519354005,
+      "max": 76.7133232852098
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.4725253268408585,
+      "min": 5.37689108525286,
+      "max": 5.4795230918007
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 47800.1733235,
+      "min": 47376.7198965,
+      "max": 48173.2341776
+    },
+    "payload_mib_per_second": {
+      "median": 5.83498209515,
+      "min": 5.78329100299,
+      "max": 5.8805217502
+    },
+    "rtt_p50_us": {
+      "median": 19.959,
+      "min": 19.75,
+      "max": 20.333
+    },
+    "rtt_p95_us": {
+      "median": 24.958,
+      "min": 24.875,
+      "max": 25.083
+    },
+    "rtt_p99_us": {
+      "median": 27.708,
+      "min": 27.375,
+      "max": 28.708
+    },
+    "peak_rss_bytes": {
+      "median": 7618560,
+      "min": 7618560,
+      "max": 7618560
+    },
+    "cpu_seconds": 0.769017,
+    "cpu_percent": {
+      "median": 76.51028295618154,
+      "min": 76.44735788630447,
+      "max": 76.57897621028825
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.465020211155824,
+      "min": 5.4605255633074625,
+      "max": 5.469926872163446
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 39195.6612515,
+      "min": 39115.9987655,
+      "max": 39504.4916736
+    },
+    "payload_mib_per_second": {
+      "median": 4.78462661762,
+      "min": 4.77490219305,
+      "max": 4.82232564375
+    },
+    "rtt_p50_us": {
+      "median": 25.292,
+      "min": 25.291,
+      "max": 25.334
+    },
+    "rtt_p95_us": {
+      "median": 27.958,
+      "min": 27.916,
+      "max": 28.042
+    },
+    "rtt_p99_us": {
+      "median": 30.916,
+      "min": 30.5,
+      "max": 31.333
+    },
+    "peak_rss_bytes": {
+      "median": 7634944,
+      "min": 7618560,
+      "max": 7634944
+    },
+    "cpu_seconds": 1.080902,
+    "cpu_percent": {
+      "median": 107.54843818619185,
+      "min": 107.41432727911153,
+      "max": 108.4076856922726
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 7.682031299013703,
+      "min": 7.672451948507967,
+      "max": 7.743406120876614
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 36335.8649883,
+      "min": 36284.5237409,
+      "max": 36459.0048161
+    },
+    "payload_mib_per_second": {
+      "median": 4.43553039408,
+      "min": 4.42926315196,
+      "max": 4.45056211134
+    },
+    "rtt_p50_us": {
+      "median": 26.917,
+      "min": 26.875,
+      "max": 26.958
+    },
+    "rtt_p95_us": {
+      "median": 30.75,
+      "min": 30.75,
+      "max": 30.875
+    },
+    "rtt_p99_us": {
+      "median": 35.25,
+      "min": 35.084,
+      "max": 36.458
+    },
+    "peak_rss_bytes": {
+      "median": 7700480,
+      "min": 7667712,
+      "max": 7700480
+    },
+    "cpu_seconds": 1.359795,
+    "cpu_percent": {
+      "median": 135.5750218486361,
+      "min": 135.29316898308187,
+      "max": 135.754262809691
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 9.683930132045436,
+      "min": 9.663797784505848,
+      "max": 9.696733057835072
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 89860.730743,
+      "min": 89688.4434863,
+      "max": 89979.4560605
+    },
+    "payload_mib_per_second": {
+      "median": 10.9693274833,
+      "min": 10.948296324,
+      "max": 10.9838203199
+    },
+    "rtt_p50_us": {
+      "median": 175.916,
+      "min": 175.417,
+      "max": 176
+    },
+    "rtt_p95_us": {
+      "median": 209.042,
+      "min": 208.875,
+      "max": 209.75
+    },
+    "rtt_p99_us": {
+      "median": 225.334,
+      "min": 224.208,
+      "max": 226.5
+    },
+    "peak_rss_bytes": {
+      "median": 10174464,
+      "min": 10174464,
+      "max": 10190848
+    },
+    "cpu_seconds": 1.296668,
+    "cpu_percent": {
+      "median": 129.62788939134114,
+      "min": 129.07462840575468,
+      "max": 129.62819775973273
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 9.259134956524367,
+      "min": 9.219616314696763,
+      "max": 9.259156982838052
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 80403.0331168,
+      "min": 79950.0589395,
+      "max": 80423.4354005
+    },
+    "payload_mib_per_second": {
+      "median": 9.81482337852,
+      "min": 9.75952867914,
+      "max": 9.81731389166
+    },
+    "rtt_p50_us": {
+      "median": 198.875,
+      "min": 197.625,
+      "max": 199.292
+    },
+    "rtt_p95_us": {
+      "median": 236.375,
+      "min": 236.042,
+      "max": 237.875
+    },
+    "rtt_p99_us": {
+      "median": 253.584,
+      "min": 251.042,
+      "max": 256.625
+    },
+    "peak_rss_bytes": {
+      "median": 10272768,
+      "min": 10256384,
+      "max": 10321920
+    },
+    "cpu_seconds": 1.437379,
+    "cpu_percent": {
+      "median": 143.69266684171222,
+      "min": 142.40220567984557,
+      "max": 144.11118829758215
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 10.263761917265159,
+      "min": 10.17158611998897,
+      "max": 10.293656306970153
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 96707.8599214,
+      "min": 96209.9394007,
+      "max": 97603.4503215
+    },
+    "payload_mib_per_second": {
+      "median": 11.8051586818,
+      "min": 11.7443773683,
+      "max": 11.9144836818
+    },
+    "rtt_p50_us": {
+      "median": 163.708,
+      "min": 162.708,
+      "max": 164.875
+    },
+    "rtt_p95_us": {
+      "median": 178.041,
+      "min": 177.5,
+      "max": 183.667
+    },
+    "rtt_p99_us": {
+      "median": 195.334,
+      "min": 189.875,
+      "max": 208.417
+    },
+    "peak_rss_bytes": {
+      "median": 10141696,
+      "min": 10141696,
+      "max": 10158080
+    },
+    "cpu_seconds": 0.998966,
+    "cpu_percent": {
+      "median": 99.79861861443192,
+      "min": 99.34206312418094,
+      "max": 99.91106076872637
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 7.128472758173708,
+      "min": 7.09586165172721,
+      "max": 7.136504340623312
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 98170.1672449,
+      "min": 96859.1716616,
+      "max": 98526.1803093
+    },
+    "payload_mib_per_second": {
+      "median": 11.9836629938,
+      "min": 11.8236293532,
+      "max": 12.0271216198
+    },
+    "rtt_p50_us": {
+      "median": 165.208,
+      "min": 164.209,
+      "max": 168.125
+    },
+    "rtt_p95_us": {
+      "median": 237.208,
+      "min": 235.542,
+      "max": 241.791
+    },
+    "rtt_p99_us": {
+      "median": 264.833,
+      "min": 264.375,
+      "max": 269.334
+    },
+    "peak_rss_bytes": {
+      "median": 10125312,
+      "min": 10092544,
+      "max": 10141696
+    },
+    "cpu_seconds": 1.561432,
+    "cpu_percent": {
+      "median": 155.98629076833973,
+      "min": 155.36132471321514,
+      "max": 156.09298856389836
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 11.141877912024267,
+      "min": 11.097237479515368,
+      "max": 11.149499183135598
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 80009.9433315,
+      "min": 76919.0330741,
+      "max": 80099.2480845
+    },
+    "payload_mib_per_second": {
+      "median": 9.76683878558,
+      "min": 9.38953040455,
+      "max": 9.77774024469
+    },
+    "rtt_p50_us": {
+      "median": 197.125,
+      "min": 196.791,
+      "max": 198.833
+    },
+    "rtt_p95_us": {
+      "median": 249.666,
+      "min": 244.833,
+      "max": 281.5
+    },
+    "rtt_p99_us": {
+      "median": 293.833,
+      "min": 290,
+      "max": 404.75
+    },
+    "peak_rss_bytes": {
+      "median": 10190848,
+      "min": 10190848,
+      "max": 10190848
+    },
+    "cpu_seconds": 2.51151,
+    "cpu_percent": {
+      "median": 250.22698481137118,
+      "min": 248.02073242075645,
+      "max": 251.05320683476643
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 17.873356057955085,
+      "min": 17.715766601482603,
+      "max": 17.932371916769032
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 46495.0970985,
+      "min": 46239.7010542,
+      "max": 47976.1482546
+    },
+    "payload_mib_per_second": {
+      "median": 90.8107365205,
+      "min": 90.3119161214,
+      "max": 93.7034145598
+    },
+    "rtt_p50_us": {
+      "median": 19.75,
+      "min": 19.541,
+      "max": 20.166
+    },
+    "rtt_p95_us": {
+      "median": 25.459,
+      "min": 24.625,
+      "max": 25.542
+    },
+    "rtt_p99_us": {
+      "median": 28.959,
+      "min": 28.5,
+      "max": 29.458
+    },
+    "peak_rss_bytes": {
+      "median": 7684096,
+      "min": 7602176,
+      "max": 7700480
+    },
+    "cpu_seconds": 0.773919,
+    "cpu_percent": {
+      "median": 77.00260371161049,
+      "min": 75.87066836247833,
+      "max": 77.25849620580229
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.500185979400749,
+      "min": 5.419333454462738,
+      "max": 5.518464014700164
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 46914.6551286,
+      "min": 45246.3769146,
+      "max": 47352.6766548
+    },
+    "payload_mib_per_second": {
+      "median": 91.6301857981,
+      "min": 88.3718299113,
+      "max": 92.4856965915
+    },
+    "rtt_p50_us": {
+      "median": 19.708,
+      "min": 19.583,
+      "max": 20.084
+    },
+    "rtt_p95_us": {
+      "median": 25.041,
+      "min": 25,
+      "max": 27
+    },
+    "rtt_p99_us": {
+      "median": 27.917,
+      "min": 27.583,
+      "max": 34.75
+    },
+    "peak_rss_bytes": {
+      "median": 7716864,
+      "min": 7700480,
+      "max": 7733248
+    },
+    "cpu_seconds": 0.775158,
+    "cpu_percent": {
+      "median": 77.12063064948555,
+      "min": 77.06862976060592,
+      "max": 77.32163497395022
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.508616474963254,
+      "min": 5.504902125757566,
+      "max": 5.522973926710731
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 46845.1120913,
+      "min": 46002.6940176,
+      "max": 48687.7573868
+    },
+    "payload_mib_per_second": {
+      "median": 91.4943595533,
+      "min": 89.8490117532,
+      "max": 95.0932761461
+    },
+    "rtt_p50_us": {
+      "median": 19.833,
+      "min": 19.541,
+      "max": 19.959
+    },
+    "rtt_p95_us": {
+      "median": 25.209,
+      "min": 23.417,
+      "max": 26.042
+    },
+    "rtt_p99_us": {
+      "median": 27.875,
+      "min": 27.458,
+      "max": 31.292
+    },
+    "peak_rss_bytes": {
+      "median": 7618560,
+      "min": 7585792,
+      "max": 7634944
+    },
+    "cpu_seconds": 0.777666,
+    "cpu_percent": {
+      "median": 77.53440488974303,
+      "min": 76.41423710788689,
+      "max": 77.53639769178179
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.538171777838788,
+      "min": 5.458159793420492,
+      "max": 5.538314120841556
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 37767.9703411,
+      "min": 37707.8198051,
+      "max": 38134.5687684
+    },
+    "payload_mib_per_second": {
+      "median": 73.7655670724,
+      "min": 73.6480855569,
+      "max": 74.4815796258
+    },
+    "rtt_p50_us": {
+      "median": 25.292,
+      "min": 24.875,
+      "max": 25.333
+    },
+    "rtt_p95_us": {
+      "median": 28.333,
+      "min": 28.25,
+      "max": 28.708
+    },
+    "rtt_p99_us": {
+      "median": 31.416,
+      "min": 31.375,
+      "max": 32.416
+    },
+    "peak_rss_bytes": {
+      "median": 7684096,
+      "min": 7667712,
+      "max": 7684096
+    },
+    "cpu_seconds": 1.091821,
+    "cpu_percent": {
+      "median": 108.62911436846174,
+      "min": 108.54571433547868,
+      "max": 109.26756705321515
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 7.759222454890124,
+      "min": 7.753265309677048,
+      "max": 7.804826218086796
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 33089.8209848,
+      "min": 32870.9469549,
+      "max": 34096.5540023
+    },
+    "payload_mib_per_second": {
+      "median": 64.628556611,
+      "min": 64.2010682713,
+      "max": 66.5948320358
+    },
+    "rtt_p50_us": {
+      "median": 28.292,
+      "min": 28.042,
+      "max": 28.375
+    },
+    "rtt_p95_us": {
+      "median": 35.25,
+      "min": 31.5,
+      "max": 36.5
+    },
+    "rtt_p99_us": {
+      "median": 50.334,
+      "min": 36.416,
+      "max": 56.084
+    },
+    "peak_rss_bytes": {
+      "median": 7716864,
+      "min": 7684096,
+      "max": 7733248
+    },
+    "cpu_seconds": 1.318706,
+    "cpu_percent": {
+      "median": 131.2042181344411,
+      "min": 129.77684137734607,
+      "max": 131.2071292394103
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 9.371729866745794,
+      "min": 9.269774384096149,
+      "max": 9.371937802815022
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 80294.7542818,
+      "min": 78801.4015672,
+      "max": 80888.7001841
+    },
+    "payload_mib_per_second": {
+      "median": 156.825691957,
+      "min": 153.908987436,
+      "max": 157.985742547
+    },
+    "rtt_p50_us": {
+      "median": 196.417,
+      "min": 195.416,
+      "max": 199.833
+    },
+    "rtt_p95_us": {
+      "median": 224.958,
+      "min": 221.209,
+      "max": 234.584
+    },
+    "rtt_p99_us": {
+      "median": 241.458,
+      "min": 232.875,
+      "max": 265.542
+    },
+    "peak_rss_bytes": {
+      "median": 10223616,
+      "min": 10174464,
+      "max": 10223616
+    },
+    "cpu_seconds": 1.248179,
+    "cpu_percent": {
+      "median": 124.27544291126094,
+      "min": 124.08502329861642,
+      "max": 124.63323448440387
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 8.876817350804354,
+      "min": 8.863215949901173,
+      "max": 8.902373891743133
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 75977.2153854,
+      "min": 75132.1260112,
+      "max": 76649.2444601
+    },
+    "payload_mib_per_second": {
+      "median": 148.3929988,
+      "min": 146.742433616,
+      "max": 149.705555586
+    },
+    "rtt_p50_us": {
+      "median": 209.208,
+      "min": 206.834,
+      "max": 210.417
+    },
+    "rtt_p95_us": {
+      "median": 239.417,
+      "min": 238.709,
+      "max": 247.583
+    },
+    "rtt_p99_us": {
+      "median": 254.417,
+      "min": 253.084,
+      "max": 280.125
+    },
+    "peak_rss_bytes": {
+      "median": 10338304,
+      "min": 10338304,
+      "max": 10371072
+    },
+    "cpu_seconds": 1.46103,
+    "cpu_percent": {
+      "median": 145.514364130106,
+      "min": 144.90604173637692,
+      "max": 145.81174119363166
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 10.393883152150428,
+      "min": 10.350431552598351,
+      "max": 10.41512437097369
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 90451.6873212,
+      "min": 89186.401687,
+      "max": 90467.2027906
+    },
+    "payload_mib_per_second": {
+      "median": 176.663451799,
+      "min": 174.192190795,
+      "max": 176.69375545
+    },
+    "rtt_p50_us": {
+      "median": 175.25,
+      "min": 175.25,
+      "max": 177.167
+    },
+    "rtt_p95_us": {
+      "median": 194.209,
+      "min": 193.167,
+      "max": 197.5
+    },
+    "rtt_p99_us": {
+      "median": 207.959,
+      "min": 207.667,
+      "max": 216.25
+    },
+    "peak_rss_bytes": {
+      "median": 10141696,
+      "min": 10125312,
+      "max": 10158080
+    },
+    "cpu_seconds": 0.997318,
+    "cpu_percent": {
+      "median": 99.70976832900955,
+      "min": 99.65538969908376,
+      "max": 99.76655974897525
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 7.122126309214968,
+      "min": 7.118242121363125,
+      "max": 7.126182839212518
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 95094.842883,
+      "min": 88322.6684156,
+      "max": 95632.3346312
+    },
+    "payload_mib_per_second": {
+      "median": 185.732115006,
+      "min": 172.505211749,
+      "max": 186.781903577
+    },
+    "rtt_p50_us": {
+      "median": 170.459,
+      "min": 168.667,
+      "max": 182.959
+    },
+    "rtt_p95_us": {
+      "median": 241.542,
+      "min": 240.667,
+      "max": 263.375
+    },
+    "rtt_p99_us": {
+      "median": 270.708,
+      "min": 268.792,
+      "max": 314.75
+    },
+    "peak_rss_bytes": {
+      "median": 10158080,
+      "min": 10158080,
+      "max": 10174464
+    },
+    "cpu_seconds": 1.582293,
+    "cpu_percent": {
+      "median": 157.42842225886358,
+      "min": 155.16600299296755,
+      "max": 159.49394852999743
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 11.244887304204541,
+      "min": 11.083285928069111,
+      "max": 11.392424894999817
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 78476.9648833,
+      "min": 78309.2069011,
+      "max": 79461.1985132
+    },
+    "payload_mib_per_second": {
+      "median": 153.275322038,
+      "min": 152.947669729,
+      "max": 155.197653346
+    },
+    "rtt_p50_us": {
+      "median": 199.5,
+      "min": 197.958,
+      "max": 200.084
+    },
+    "rtt_p95_us": {
+      "median": 253.042,
+      "min": 248,
+      "max": 259.458
+    },
+    "rtt_p99_us": {
+      "median": 305.708,
+      "min": 300.417,
+      "max": 309.917
+    },
+    "peak_rss_bytes": {
+      "median": 10272768,
+      "min": 10256384,
+      "max": 10305536
+    },
+    "cpu_seconds": 2.53142,
+    "cpu_percent": {
+      "median": 253.01868501838914,
+      "min": 251.56575930090273,
+      "max": 253.37204404134405
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 18.072763215599224,
+      "min": 17.968982807207336,
+      "max": 18.09800314581029
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 30250.5595495,
+      "min": 29612.5590069,
+      "max": 30544.5096881
+    },
+    "payload_mib_per_second": {
+      "median": 945.329985923,
+      "min": 925.392468964,
+      "max": 954.515927752
+    },
+    "rtt_p50_us": {
+      "median": 22,
+      "min": 21.916,
+      "max": 22.75
+    },
+    "rtt_p95_us": {
+      "median": 27.208,
+      "min": 26.584,
+      "max": 29.125
+    },
+    "rtt_p99_us": {
+      "median": 32.458,
+      "min": 31,
+      "max": 34.25
+    },
+    "peak_rss_bytes": {
+      "median": 7733248,
+      "min": 7716864,
+      "max": 7749632
+    },
+    "cpu_seconds": 0.856702,
+    "cpu_percent": {
+      "median": 85.23978172219378,
+      "min": 84.72862956165777,
+      "max": 85.41037728392922
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 6.088555837299556,
+      "min": 6.052044968689841,
+      "max": 6.100741234566373
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 30531.6336672,
+      "min": 30108.9925033,
+      "max": 30547.1235482
+    },
+    "payload_mib_per_second": {
+      "median": 954.1135521,
+      "min": 940.90601573,
+      "max": 954.597610881
+    },
+    "rtt_p50_us": {
+      "median": 21.667,
+      "min": 21.584,
+      "max": 22.958
+    },
+    "rtt_p95_us": {
+      "median": 26.833,
+      "min": 26.708,
+      "max": 27.167
+    },
+    "rtt_p99_us": {
+      "median": 31.25,
+      "min": 30.666,
+      "max": 31.375
+    },
+    "peak_rss_bytes": {
+      "median": 7798784,
+      "min": 7798784,
+      "max": 7831552
+    },
+    "cpu_seconds": 0.856929,
+    "cpu_percent": {
+      "median": 85.44753212982809,
+      "min": 84.74297446968859,
+      "max": 85.60992258253688
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 6.103395152130578,
+      "min": 6.053069604977757,
+      "max": 6.114994470181206
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 30478.2914683,
+      "min": 30387.3209396,
+      "max": 30678.435183
+    },
+    "payload_mib_per_second": {
+      "median": 952.446608384,
+      "min": 949.603779362,
+      "max": 958.70109947
+    },
+    "rtt_p50_us": {
+      "median": 21.542,
+      "min": 21.5,
+      "max": 21.792
+    },
+    "rtt_p95_us": {
+      "median": 26.958,
+      "min": 26.583,
+      "max": 27.209
+    },
+    "rtt_p99_us": {
+      "median": 31.625,
+      "min": 30.792,
+      "max": 31.833
+    },
+    "peak_rss_bytes": {
+      "median": 7700480,
+      "min": 7700480,
+      "max": 7700480
+    },
+    "cpu_seconds": 0.858953,
+    "cpu_percent": {
+      "median": 85.45820265795523,
+      "min": 85.3767772547213,
+      "max": 85.5096135130526
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 6.104157332711088,
+      "min": 6.098341232480093,
+      "max": 6.107829536646614
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 28199.2552871,
+      "min": 28114.2720222,
+      "max": 28383.8843751
+    },
+    "payload_mib_per_second": {
+      "median": 881.226727723,
+      "min": 878.571000694,
+      "max": 886.996386721
+    },
+    "rtt_p50_us": {
+      "median": 24.459,
+      "min": 24.417,
+      "max": 25.042
+    },
+    "rtt_p95_us": {
+      "median": 30.125,
+      "min": 29.833,
+      "max": 30.375
+    },
+    "rtt_p99_us": {
+      "median": 34.5,
+      "min": 34.208,
+      "max": 34.75
+    },
+    "peak_rss_bytes": {
+      "median": 7733248,
+      "min": 7716864,
+      "max": 7749632
+    },
+    "cpu_seconds": 1.12717,
+    "cpu_percent": {
+      "median": 112.15290364332195,
+      "min": 112.0581875697796,
+      "max": 112.3832296127451
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 8.010921688808711,
+      "min": 8.004156254984258,
+      "max": 8.027373543767506
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 26113.5758892,
+      "min": 24851.8512463,
+      "max": 26614.9910134
+    },
+    "payload_mib_per_second": {
+      "median": 816.049246539,
+      "min": 776.620351447,
+      "max": 831.718469168
+    },
+    "rtt_p50_us": {
+      "median": 26.833,
+      "min": 26.459,
+      "max": 28.292
+    },
+    "rtt_p95_us": {
+      "median": 33.042,
+      "min": 31.916,
+      "max": 39.042
+    },
+    "rtt_p99_us": {
+      "median": 38.333,
+      "min": 34.667,
+      "max": 52.916
+    },
+    "peak_rss_bytes": {
+      "median": 7798784,
+      "min": 7766016,
+      "max": 7864320
+    },
+    "cpu_seconds": 1.158755,
+    "cpu_percent": {
+      "median": 115.29016216232823,
+      "min": 114.57979271486074,
+      "max": 116.05397654592045
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 8.235011583023445,
+      "min": 8.184270908204338,
+      "max": 8.289569753280032
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 49358.6031978,
+      "min": 48426.2205802,
+      "max": 49404.0244051
+    },
+    "payload_mib_per_second": {
+      "median": 1542.45634993,
+      "min": 1513.31939313,
+      "max": 1543.87576266
+    },
+    "rtt_p50_us": {
+      "median": 313.125,
+      "min": 311.5,
+      "max": 314.459
+    },
+    "rtt_p95_us": {
+      "median": 335.834,
+      "min": 335.167,
+      "max": 358.791
+    },
+    "rtt_p99_us": {
+      "median": 355.084,
+      "min": 350.875,
+      "max": 471.917
+    },
+    "peak_rss_bytes": {
+      "median": 10911744,
+      "min": 10911744,
+      "max": 10944512
+    },
+    "cpu_seconds": 1.386693,
+    "cpu_percent": {
+      "median": 137.96053918068398,
+      "min": 137.74953793091115,
+      "max": 139.8392432973853
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 9.854324227191713,
+      "min": 9.839252709350797,
+      "max": 9.988517378384666
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 55782.7741144,
+      "min": 55408.641923,
+      "max": 56062.6490236
+    },
+    "payload_mib_per_second": {
+      "median": 1743.21169108,
+      "min": 1731.52006009,
+      "max": 1751.95778199
+    },
+    "rtt_p50_us": {
+      "median": 274.208,
+      "min": 272.417,
+      "max": 276.542
+    },
+    "rtt_p95_us": {
+      "median": 313.042,
+      "min": 312.167,
+      "max": 313.833
+    },
+    "rtt_p99_us": {
+      "median": 346.625,
+      "min": 336.167,
+      "max": 353.292
+    },
+    "peak_rss_bytes": {
+      "median": 11026432,
+      "min": 11010048,
+      "max": 11108352
+    },
+    "cpu_seconds": 1.781993,
+    "cpu_percent": {
+      "median": 178.1371524009561,
+      "min": 177.4698252460182,
+      "max": 178.17992726512335
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 12.724082314354007,
+      "min": 12.676416089001298,
+      "max": 12.727137661794526
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 39387.057541,
+      "min": 38996.1551773,
+      "max": 39458.4104589
+    },
+    "payload_mib_per_second": {
+      "median": 1230.84554816,
+      "min": 1218.62984929,
+      "max": 1233.07532684
+    },
+    "rtt_p50_us": {
+      "median": 395.667,
+      "min": 392.833,
+      "max": 396.25
+    },
+    "rtt_p95_us": {
+      "median": 414.625,
+      "min": 410.417,
+      "max": 426.042
+    },
+    "rtt_p99_us": {
+      "median": 435.541,
+      "min": 425.542,
+      "max": 443.708
+    },
+    "peak_rss_bytes": {
+      "median": 10944512,
+      "min": 10928128,
+      "max": 10944512
+    },
+    "cpu_seconds": 0.999976,
+    "cpu_percent": {
+      "median": 99.59449962869084,
+      "min": 99.46637101280517,
+      "max": 99.95477903006137
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 7.113892830620775,
+      "min": 7.10474078662894,
+      "max": 7.139627073575812
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 63013.2398536,
+      "min": 60732.7938348,
+      "max": 65185.3453543
+    },
+    "payload_mib_per_second": {
+      "median": 1969.16374542,
+      "min": 1897.89980734,
+      "max": 2037.04204232
+    },
+    "rtt_p50_us": {
+      "median": 243.5,
+      "min": 226.875,
+      "max": 255.375
+    },
+    "rtt_p95_us": {
+      "median": 310.166,
+      "min": 303.666,
+      "max": 311.416
+    },
+    "rtt_p99_us": {
+      "median": 374.417,
+      "min": 365.834,
+      "max": 383.584
+    },
+    "peak_rss_bytes": {
+      "median": 10977280,
+      "min": 10944512,
+      "max": 10977280
+    },
+    "cpu_seconds": 1.857981,
+    "cpu_percent": {
+      "median": 185.2246394529038,
+      "min": 184.92646774227538,
+      "max": 185.64520576450084
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 13.230331389493129,
+      "min": 13.209033410162528,
+      "max": 13.260371840321488
+    }
+  },
+  {
+    "backend": "boost",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 69132.1098263,
+      "min": 68933.5127699,
+      "max": 69797.1909967
+    },
+    "payload_mib_per_second": {
+      "median": 2160.37843207,
+      "min": 2154.17227406,
+      "max": 2181.16221865
+    },
+    "rtt_p50_us": {
+      "median": 215.625,
+      "min": 213.25,
+      "max": 216.583
+    },
+    "rtt_p95_us": {
+      "median": 264.25,
+      "min": 254.208,
+      "max": 265.75
+    },
+    "rtt_p99_us": {
+      "median": 312.333,
+      "min": 302.625,
+      "max": 319.333
+    },
+    "peak_rss_bytes": {
+      "median": 10993664,
+      "min": 10993664,
+      "max": 11010048
+    },
+    "cpu_seconds": 2.976945,
+    "cpu_percent": {
+      "median": 295.77161928651134,
+      "min": 295.40941793246157,
+      "max": 296.1664293079855
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 21.12654423475081,
+      "min": 21.10067270946154,
+      "max": 21.154744950570393
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 48209.6577511,
+      "min": 48209.0914506,
+      "max": 49779.3782493
+    },
+    "payload_mib_per_second": {
+      "median": 5.88496798719,
+      "min": 5.88489885872,
+      "max": 6.07658425895
+    },
+    "rtt_p50_us": {
+      "median": 19.667,
+      "min": 19.5,
+      "max": 19.708
+    },
+    "rtt_p95_us": {
+      "median": 24.875,
+      "min": 24.542,
+      "max": 24.917
+    },
+    "rtt_p99_us": {
+      "median": 27.583,
+      "min": 27.042,
+      "max": 28.375
+    },
+    "peak_rss_bytes": {
+      "median": 8142848,
+      "min": 8126464,
+      "max": 8159232
+    },
+    "cpu_seconds": 0.76819,
+    "cpu_percent": {
+      "median": 76.42859950373375,
+      "min": 74.95051185731795,
+      "max": 76.54206368603921
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.459185678838125,
+      "min": 5.353607989808425,
+      "max": 5.467290263288516
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 48184.0694117,
+      "min": 47947.9919885,
+      "max": 49389.2731477
+    },
+    "payload_mib_per_second": {
+      "median": 5.8818444106,
+      "min": 5.85302636579,
+      "max": 6.02896400729
+    },
+    "rtt_p50_us": {
+      "median": 19.792,
+      "min": 19.375,
+      "max": 19.917
+    },
+    "rtt_p95_us": {
+      "median": 24.875,
+      "min": 24.75,
+      "max": 25.25
+    },
+    "rtt_p99_us": {
+      "median": 27.083,
+      "min": 26.958,
+      "max": 29.167
+    },
+    "peak_rss_bytes": {
+      "median": 8208384,
+      "min": 8192000,
+      "max": 8257536
+    },
+    "cpu_seconds": 0.768397,
+    "cpu_percent": {
+      "median": 76.74503821864892,
+      "min": 76.28015024686873,
+      "max": 76.85442144946384
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.481788444189208,
+      "min": 5.4485821604906235,
+      "max": 5.48960153210456
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 48329.1713081,
+      "min": 47812.2605134,
+      "max": 48757.9003766
+    },
+    "payload_mib_per_second": {
+      "median": 5.89955704445,
+      "min": 5.8364575822,
+      "max": 5.95189213581
+    },
+    "rtt_p50_us": {
+      "median": 19.625,
+      "min": 19.583,
+      "max": 20.125
+    },
+    "rtt_p95_us": {
+      "median": 25.208,
+      "min": 24.833,
+      "max": 25.208
+    },
+    "rtt_p99_us": {
+      "median": 28.458,
+      "min": 27.125,
+      "max": 28.584
+    },
+    "peak_rss_bytes": {
+      "median": 8093696,
+      "min": 8093696,
+      "max": 8142848
+    },
+    "cpu_seconds": 0.768643,
+    "cpu_percent": {
+      "median": 76.7538000868903,
+      "min": 76.29674449668765,
+      "max": 76.97915380328145
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.482414291920735,
+      "min": 5.449767464049118,
+      "max": 5.498510985948675
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 38969.3997603,
+      "min": 38177.2573441,
+      "max": 39165.0731167
+    },
+    "payload_mib_per_second": {
+      "median": 4.75700680667,
+      "min": 4.66030973439,
+      "max": 4.78089271445
+    },
+    "rtt_p50_us": {
+      "median": 25.333,
+      "min": 25.166,
+      "max": 25.5
+    },
+    "rtt_p95_us": {
+      "median": 28.291,
+      "min": 28.125,
+      "max": 29.542
+    },
+    "rtt_p99_us": {
+      "median": 32.208,
+      "min": 31.417,
+      "max": 39.084
+    },
+    "peak_rss_bytes": {
+      "median": 8110080,
+      "min": 8110080,
+      "max": 8126464
+    },
+    "cpu_seconds": 1.079458,
+    "cpu_percent": {
+      "median": 107.59596967313473,
+      "min": 107.30589768171215,
+      "max": 108.04268114986166
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 7.685426405223909,
+      "min": 7.664706977265154,
+      "max": 7.717334367847262
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 36067.0663248,
+      "min": 34594.6942582,
+      "max": 36300.3580134
+    },
+    "payload_mib_per_second": {
+      "median": 4.40271805722,
+      "min": 4.22298513894,
+      "max": 4.43119604656
+    },
+    "rtt_p50_us": {
+      "median": 26.833,
+      "min": 26.625,
+      "max": 27
+    },
+    "rtt_p95_us": {
+      "median": 31.834,
+      "min": 31.208,
+      "max": 40.791
+    },
+    "rtt_p99_us": {
+      "median": 40.875,
+      "min": 35.459,
+      "max": 54.875
+    },
+    "peak_rss_bytes": {
+      "median": 8208384,
+      "min": 8192000,
+      "max": 8208384
+    },
+    "cpu_seconds": 1.356825,
+    "cpu_percent": {
+      "median": 134.99887689232406,
+      "min": 134.87625462242548,
+      "max": 136.0575809685969
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 9.64277692088029,
+      "min": 9.634018187316105,
+      "max": 9.718398640614065
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 90329.4932,
+      "min": 89824.8184403,
+      "max": 90936.8509456
+    },
+    "payload_mib_per_second": {
+      "median": 11.0265494629,
+      "min": 10.9649436573,
+      "max": 11.1006898127
+    },
+    "rtt_p50_us": {
+      "median": 174.75,
+      "min": 173.209,
+      "max": 176
+    },
+    "rtt_p95_us": {
+      "median": 207.791,
+      "min": 206.25,
+      "max": 209.791
+    },
+    "rtt_p99_us": {
+      "median": 223.875,
+      "min": 221.334,
+      "max": 226.667
+    },
+    "peak_rss_bytes": {
+      "median": 10665984,
+      "min": 10600448,
+      "max": 10682368
+    },
+    "cpu_seconds": 1.295799,
+    "cpu_percent": {
+      "median": 129.39298349985978,
+      "min": 129.35101338182088,
+      "max": 129.9145583532878
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 9.2423559642757,
+      "min": 9.23935809870149,
+      "max": 9.279611310949127
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 80668.9237899,
+      "min": 80461.7857993,
+      "max": 81222.8175011
+    },
+    "payload_mib_per_second": {
+      "median": 9.84728073607,
+      "min": 9.82199533682,
+      "max": 9.91489471448
+    },
+    "rtt_p50_us": {
+      "median": 197.875,
+      "min": 197.125,
+      "max": 198.5
+    },
+    "rtt_p95_us": {
+      "median": 235.583,
+      "min": 232.5,
+      "max": 236.375
+    },
+    "rtt_p99_us": {
+      "median": 253.291,
+      "min": 247.167,
+      "max": 254.75
+    },
+    "peak_rss_bytes": {
+      "median": 10764288,
+      "min": 10731520,
+      "max": 10780672
+    },
+    "cpu_seconds": 1.436012,
+    "cpu_percent": {
+      "median": 143.18380132117363,
+      "min": 140.6850690473856,
+      "max": 143.46217093614558
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 10.22741438008383,
+      "min": 10.048933503384687,
+      "max": 10.247297924010399
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 99324.2908854,
+      "min": 98086.93139,
+      "max": 99992.9766874
+    },
+    "payload_mib_per_second": {
+      "median": 12.1245472272,
+      "min": 11.9735023669,
+      "max": 12.206173912
+    },
+    "rtt_p50_us": {
+      "median": 158.708,
+      "min": 158.125,
+      "max": 159.459
+    },
+    "rtt_p95_us": {
+      "median": 177.208,
+      "min": 174.333,
+      "max": 180.875
+    },
+    "rtt_p99_us": {
+      "median": 190.25,
+      "min": 185.958,
+      "max": 201.583
+    },
+    "peak_rss_bytes": {
+      "median": 10616832,
+      "min": 10584064,
+      "max": 10682368
+    },
+    "cpu_seconds": 0.999123,
+    "cpu_percent": {
+      "median": 99.89124791950097,
+      "min": 99.59672080238776,
+      "max": 99.91677018323057
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 7.1350891371072125,
+      "min": 7.114051485884841,
+      "max": 7.136912155945041
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 92288.7498997,
+      "min": 92209.534196,
+      "max": 95205.2325308
+    },
+    "payload_mib_per_second": {
+      "median": 11.2657165405,
+      "min": 11.2560466548,
+      "max": 11.6217324867
+    },
+    "rtt_p50_us": {
+      "median": 172.333,
+      "min": 171.042,
+      "max": 172.791
+    },
+    "rtt_p95_us": {
+      "median": 182.583,
+      "min": 180.542,
+      "max": 187.417
+    },
+    "rtt_p99_us": {
+      "median": 193.541,
+      "min": 190.791,
+      "max": 242.708
+    },
+    "peak_rss_bytes": {
+      "median": 10665984,
+      "min": 10633216,
+      "max": 10665984
+    },
+    "cpu_seconds": 1.704508,
+    "cpu_percent": {
+      "median": 170.39938492539028,
+      "min": 169.41756413918557,
+      "max": 170.41656757198896
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 12.171384637527877,
+      "min": 12.101254581370398,
+      "max": 12.172611969427782
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 64,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 80783.2164594,
+      "min": 80344.6603975,
+      "max": 81158.8667972
+    },
+    "payload_mib_per_second": {
+      "median": 9.86123247795,
+      "min": 9.80769780243,
+      "max": 9.90708823207
+    },
+    "rtt_p50_us": {
+      "median": 195.167,
+      "min": 194.167,
+      "max": 196.084
+    },
+    "rtt_p95_us": {
+      "median": 230.833,
+      "min": 224.959,
+      "max": 232.417
+    },
+    "rtt_p99_us": {
+      "median": 279.042,
+      "min": 272.208,
+      "max": 280.5
+    },
+    "peak_rss_bytes": {
+      "median": 10698752,
+      "min": 10682368,
+      "max": 10731520
+    },
+    "cpu_seconds": 2.622222,
+    "cpu_percent": {
+      "median": 262.10578850085966,
+      "min": 260.96382055065106,
+      "max": 262.15979522018597
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 18.72184203577569,
+      "min": 18.640272896475075,
+      "max": 18.725699658584713
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 47119.4923104,
+      "min": 46674.0736284,
+      "max": 47533.325281
+    },
+    "payload_mib_per_second": {
+      "median": 92.0302584187,
+      "min": 91.1603000554,
+      "max": 92.8385259394
+    },
+    "rtt_p50_us": {
+      "median": 19.708,
+      "min": 19.583,
+      "max": 19.917
+    },
+    "rtt_p95_us": {
+      "median": 24.833,
+      "min": 24.833,
+      "max": 25.083
+    },
+    "rtt_p99_us": {
+      "median": 27.458,
+      "min": 27.292,
+      "max": 27.5
+    },
+    "peak_rss_bytes": {
+      "median": 8192000,
+      "min": 8142848,
+      "max": 8224768
+    },
+    "cpu_seconds": 0.775933,
+    "cpu_percent": {
+      "median": 77.20983239508847,
+      "min": 77.19881720921242,
+      "max": 77.3321110508416
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.514988028220605,
+      "min": 5.514201229229458,
+      "max": 5.523722217917258
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 46156.2761566,
+      "min": 45643.5293628,
+      "max": 47505.7858128
+    },
+    "payload_mib_per_second": {
+      "median": 90.1489768684,
+      "min": 89.1475182868,
+      "max": 92.7847379156
+    },
+    "rtt_p50_us": {
+      "median": 19.833,
+      "min": 19.583,
+      "max": 19.958
+    },
+    "rtt_p95_us": {
+      "median": 26,
+      "min": 24.875,
+      "max": 26.584
+    },
+    "rtt_p99_us": {
+      "median": 32.5,
+      "min": 26.958,
+      "max": 33.834
+    },
+    "peak_rss_bytes": {
+      "median": 8208384,
+      "min": 8192000,
+      "max": 8208384
+    },
+    "cpu_seconds": 0.774413,
+    "cpu_percent": {
+      "median": 77.05996604951437,
+      "min": 76.87152283124473,
+      "max": 77.39934955254252
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.504283289251027,
+      "min": 5.490823059374624,
+      "max": 5.528524968038751
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 48807.154672,
+      "min": 47521.7027101,
+      "max": 48885.2415778
+    },
+    "payload_mib_per_second": {
+      "median": 95.3264739688,
+      "min": 92.8158256057,
+      "max": 95.4789874566
+    },
+    "rtt_p50_us": {
+      "median": 19.459,
+      "min": 19.458,
+      "max": 19.625
+    },
+    "rtt_p95_us": {
+      "median": 23.542,
+      "min": 23.542,
+      "max": 24.708
+    },
+    "rtt_p99_us": {
+      "median": 26.875,
+      "min": 26.583,
+      "max": 27.375
+    },
+    "peak_rss_bytes": {
+      "median": 8126464,
+      "min": 8110080,
+      "max": 8142848
+    },
+    "cpu_seconds": 0.763435,
+    "cpu_percent": {
+      "median": 76.13087916833965,
+      "min": 75.94939545019453,
+      "max": 76.99258114290565
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 5.437919940595689,
+      "min": 5.4249568178710375,
+      "max": 5.499470081636118
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 37536.6961726,
+      "min": 37304.9555708,
+      "max": 38166.1927881
+    },
+    "payload_mib_per_second": {
+      "median": 73.3138597121,
+      "min": 72.8612413493,
+      "max": 74.5433452892
+    },
+    "rtt_p50_us": {
+      "median": 25.542,
+      "min": 25.041,
+      "max": 25.792
+    },
+    "rtt_p95_us": {
+      "median": 28.333,
+      "min": 28.125,
+      "max": 28.375
+    },
+    "rtt_p99_us": {
+      "median": 31.042,
+      "min": 30.291,
+      "max": 31.167
+    },
+    "peak_rss_bytes": {
+      "median": 8142848,
+      "min": 8126464,
+      "max": 8142848
+    },
+    "cpu_seconds": 1.091755,
+    "cpu_percent": {
+      "median": 108.62717262703066,
+      "min": 107.50304299771001,
+      "max": 109.04908711997918
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 7.759083759073619,
+      "min": 7.678788785550715,
+      "max": 7.789220508569941
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 34351.037757,
+      "min": 34196.0664524,
+      "max": 34387.7600739
+    },
+    "payload_mib_per_second": {
+      "median": 67.0918706192,
+      "min": 66.7891922898,
+      "max": 67.1635938943
+    },
+    "rtt_p50_us": {
+      "median": 28.042,
+      "min": 27.875,
+      "max": 28.084
+    },
+    "rtt_p95_us": {
+      "median": 31.208,
+      "min": 31,
+      "max": 31.708
+    },
+    "rtt_p99_us": {
+      "median": 34.292,
+      "min": 34.042,
+      "max": 38.833
+    },
+    "peak_rss_bytes": {
+      "median": 8208384,
+      "min": 8208384,
+      "max": 8241152
+    },
+    "cpu_seconds": 1.29933,
+    "cpu_percent": {
+      "median": 129.27761639365022,
+      "min": 128.2614525258081,
+      "max": 129.8295276464109
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 9.2341154566893,
+      "min": 9.161532323272008,
+      "max": 9.27353768902935
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 80871.738233,
+      "min": 78416.6383504,
+      "max": 81970.973652
+    },
+    "payload_mib_per_second": {
+      "median": 157.952613736,
+      "min": 153.157496778,
+      "max": 160.099557914
+    },
+    "rtt_p50_us": {
+      "median": 197.5,
+      "min": 193.583,
+      "max": 202.75
+    },
+    "rtt_p95_us": {
+      "median": 222.834,
+      "min": 222.667,
+      "max": 231.75
+    },
+    "rtt_p99_us": {
+      "median": 235.542,
+      "min": 234,
+      "max": 259.375
+    },
+    "peak_rss_bytes": {
+      "median": 10715136,
+      "min": 10715136,
+      "max": 10715136
+    },
+    "cpu_seconds": 1.241286,
+    "cpu_percent": {
+      "median": 124.09722412653241,
+      "min": 123.41546737125468,
+      "max": 124.90257892775503
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 8.864087437609458,
+      "min": 8.815390526518192,
+      "max": 8.92161278055393
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 76327.2826308,
+      "min": 75495.5981932,
+      "max": 76449.7968334
+    },
+    "payload_mib_per_second": {
+      "median": 149.076723888,
+      "min": 147.452340221,
+      "max": 149.31600944
+    },
+    "rtt_p50_us": {
+      "median": 208.25,
+      "min": 207.875,
+      "max": 210.916
+    },
+    "rtt_p95_us": {
+      "median": 240.333,
+      "min": 239.083,
+      "max": 243.625
+    },
+    "rtt_p99_us": {
+      "median": 255.917,
+      "min": 253.292,
+      "max": 265.083
+    },
+    "peak_rss_bytes": {
+      "median": 10878976,
+      "min": 10813440,
+      "max": 10911744
+    },
+    "cpu_seconds": 1.434751,
+    "cpu_percent": {
+      "median": 143.4226431682612,
+      "min": 142.74196196102582,
+      "max": 145.99479343377794
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 10.244474512018657,
+      "min": 10.195854425787559,
+      "max": 10.42819953098414
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 92515.4361321,
+      "min": 92463.1549833,
+      "max": 92686.7166116
+    },
+    "payload_mib_per_second": {
+      "median": 180.694211195,
+      "min": 180.592099577,
+      "max": 181.028743382
+    },
+    "rtt_p50_us": {
+      "median": 167.375,
+      "min": 167.292,
+      "max": 168.375
+    },
+    "rtt_p95_us": {
+      "median": 190.042,
+      "min": 188.875,
+      "max": 192.166
+    },
+    "rtt_p99_us": {
+      "median": 207.792,
+      "min": 199.5,
+      "max": 212.5
+    },
+    "peak_rss_bytes": {
+      "median": 10682368,
+      "min": 10665984,
+      "max": 10747904
+    },
+    "cpu_seconds": 0.997992,
+    "cpu_percent": {
+      "median": 99.41872860180875,
+      "min": 99.2868418117016,
+      "max": 99.82883603072167
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 7.101337757272054,
+      "min": 7.091917272264401,
+      "max": 7.130631145051548
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 86610.8663288,
+      "min": 84684.1329732,
+      "max": 87474.6655049
+    },
+    "payload_mib_per_second": {
+      "median": 169.161848298,
+      "min": 165.398697213,
+      "max": 170.848956064
+    },
+    "rtt_p50_us": {
+      "median": 181.958,
+      "min": 181.792,
+      "max": 183.375
+    },
+    "rtt_p95_us": {
+      "median": 199.25,
+      "min": 198.167,
+      "max": 241.625
+    },
+    "rtt_p99_us": {
+      "median": 211.584,
+      "min": 209.041,
+      "max": 348.917
+    },
+    "peak_rss_bytes": {
+      "median": 10682368,
+      "min": 10665984,
+      "max": 10780672
+    },
+    "cpu_seconds": 1.74199,
+    "cpu_percent": {
+      "median": 173.34159934982844,
+      "min": 172.81318823593614,
+      "max": 173.66391265689458
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 12.381542810702031,
+      "min": 12.343799159709723,
+      "max": 12.404565189778184
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 1024,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 79047.4420697,
+      "min": 78743.924357,
+      "max": 79978.7107098
+    },
+    "payload_mib_per_second": {
+      "median": 154.389535292,
+      "min": 153.79672726,
+      "max": 156.208419355
+    },
+    "rtt_p50_us": {
+      "median": 197.292,
+      "min": 196.583,
+      "max": 197.583
+    },
+    "rtt_p95_us": {
+      "median": 238.084,
+      "min": 232.375,
+      "max": 245.042
+    },
+    "rtt_p99_us": {
+      "median": 294.875,
+      "min": 285.417,
+      "max": 302.208
+    },
+    "peak_rss_bytes": {
+      "median": 10797056,
+      "min": 10764288,
+      "max": 10846208
+    },
+    "cpu_seconds": 2.657168,
+    "cpu_percent": {
+      "median": 265.66534938877993,
+      "min": 263.69997385782165,
+      "max": 265.84520870307813
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 18.976096384912854,
+      "min": 18.83571241841583,
+      "max": 18.988943478791295
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 30981.9263391,
+      "min": 30281.9223389,
+      "max": 31050.890258
+    },
+    "payload_mib_per_second": {
+      "median": 968.185198096,
+      "min": 946.31007309,
+      "max": 970.340320563
+    },
+    "rtt_p50_us": {
+      "median": 21.375,
+      "min": 21.291,
+      "max": 21.667
+    },
+    "rtt_p95_us": {
+      "median": 26.791,
+      "min": 26.75,
+      "max": 27.709
+    },
+    "rtt_p99_us": {
+      "median": 30.916,
+      "min": 30.833,
+      "max": 33
+    },
+    "peak_rss_bytes": {
+      "median": 8241152,
+      "min": 8192000,
+      "max": 8257536
+    },
+    "cpu_seconds": 0.85797,
+    "cpu_percent": {
+      "median": 85.36480159484697,
+      "min": 84.69547612412997,
+      "max": 85.42530483027454
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 6.097485828203355,
+      "min": 6.049676866009284,
+      "max": 6.101807487876753
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 1,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 30635.8596217,
+      "min": 30420.015197,
+      "max": 31030.5836882
+    },
+    "payload_mib_per_second": {
+      "median": 957.370613178,
+      "min": 950.625474906,
+      "max": 969.705740255
+    },
+    "rtt_p50_us": {
+      "median": 21.5,
+      "min": 21.292,
+      "max": 21.5
+    },
+    "rtt_p95_us": {
+      "median": 26.875,
+      "min": 26.542,
+      "max": 27.25
+    },
+    "rtt_p99_us": {
+      "median": 30.375,
+      "min": 30.209,
+      "max": 32.292
+    },
+    "peak_rss_bytes": {
+      "median": 8290304,
+      "min": 8273920,
+      "max": 8306688
+    },
+    "cpu_seconds": 0.858759,
+    "cpu_percent": {
+      "median": 85.43919183925867,
+      "min": 85.06683622717313,
+      "max": 85.58553034472214
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 6.102799417089905,
+      "min": 6.0762025876552235,
+      "max": 6.113252167480153
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 30759.1004126,
+      "min": 30620.5778842,
+      "max": 31212.9582727
+    },
+    "payload_mib_per_second": {
+      "median": 961.221887892,
+      "min": 956.893058882,
+      "max": 975.404946023
+    },
+    "rtt_p50_us": {
+      "median": 21.292,
+      "min": 21.167,
+      "max": 21.417
+    },
+    "rtt_p95_us": {
+      "median": 26.75,
+      "min": 25.667,
+      "max": 27
+    },
+    "rtt_p99_us": {
+      "median": 30.792,
+      "min": 29.708,
+      "max": 31.583
+    },
+    "peak_rss_bytes": {
+      "median": 8241152,
+      "min": 8224768,
+      "max": 8241152
+    },
+    "cpu_seconds": 0.85895,
+    "cpu_percent": {
+      "median": 85.45881113488622,
+      "min": 85.39038416429509,
+      "max": 85.55032656361209
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 6.104200795349016,
+      "min": 6.099313154592506,
+      "max": 6.110737611686578
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 28358.4245009,
+      "min": 28328.3889693,
+      "max": 28787.9113164
+    },
+    "payload_mib_per_second": {
+      "median": 886.200765652,
+      "min": 885.26215529,
+      "max": 899.622228636
+    },
+    "rtt_p50_us": {
+      "median": 24.792,
+      "min": 24.5,
+      "max": 24.917
+    },
+    "rtt_p95_us": {
+      "median": 30.166,
+      "min": 29.417,
+      "max": 30.333
+    },
+    "rtt_p99_us": {
+      "median": 33.667,
+      "min": 32.458,
+      "max": 34.834
+    },
+    "peak_rss_bytes": {
+      "median": 8290304,
+      "min": 8257536,
+      "max": 8323072
+    },
+    "cpu_seconds": 1.131371,
+    "cpu_percent": {
+      "median": 112.57049597786903,
+      "min": 112.56949645649223,
+      "max": 113.03928809837637
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 8.040749712704931,
+      "min": 8.040678318320873,
+      "max": 8.07423486416974
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 1,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 26102.7406758,
+      "min": 25863.9602454,
+      "max": 26946.2252863
+    },
+    "payload_mib_per_second": {
+      "median": 815.71064612,
+      "min": 808.248757669,
+      "max": 842.069540196
+    },
+    "rtt_p50_us": {
+      "median": 26.667,
+      "min": 26,
+      "max": 26.917
+    },
+    "rtt_p95_us": {
+      "median": 32.709,
+      "min": 31.625,
+      "max": 33.625
+    },
+    "rtt_p99_us": {
+      "median": 37.333,
+      "min": 34.75,
+      "max": 50.708
+    },
+    "peak_rss_bytes": {
+      "median": 8306688,
+      "min": 8273920,
+      "max": 8306688
+    },
+    "cpu_seconds": 1.160749,
+    "cpu_percent": {
+      "median": 115.49040275054614,
+      "min": 115.48903371754074,
+      "max": 115.62453241955106
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 8.249314482181868,
+      "min": 8.249216694110052,
+      "max": 8.258895172825076
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 48938.0476608,
+      "min": 48735.2521068,
+      "max": 48992.1201569
+    },
+    "payload_mib_per_second": {
+      "median": 1529.3139894,
+      "min": 1522.97662834,
+      "max": 1531.0037549
+    },
+    "rtt_p50_us": {
+      "median": 315.625,
+      "min": 315.042,
+      "max": 315.875
+    },
+    "rtt_p95_us": {
+      "median": 335.708,
+      "min": 333.875,
+      "max": 336.458
+    },
+    "rtt_p99_us": {
+      "median": 348.958,
+      "min": 347.125,
+      "max": 351.292
+    },
+    "peak_rss_bytes": {
+      "median": 11436032,
+      "min": 11419648,
+      "max": 11501568
+    },
+    "cpu_seconds": 1.393708,
+    "cpu_percent": {
+      "median": 139.1630063912358,
+      "min": 138.53091156537812,
+      "max": 140.24492662260295
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 9.940214742231129,
+      "min": 9.895065111812723,
+      "max": 10.017494758757353
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 16,
+    "window": 1,
+    "io_model": "sharded",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 55537.2669777,
+      "min": 55485.2278118,
+      "max": 55922.7300202
+    },
+    "payload_mib_per_second": {
+      "median": 1735.53959305,
+      "min": 1733.91336912,
+      "max": 1747.58531313
+    },
+    "rtt_p50_us": {
+      "median": 274.459,
+      "min": 272.917,
+      "max": 275.958
+    },
+    "rtt_p95_us": {
+      "median": 306.834,
+      "min": 304.708,
+      "max": 310.208
+    },
+    "rtt_p99_us": {
+      "median": 326.541,
+      "min": 320.916,
+      "max": 328.458
+    },
+    "peak_rss_bytes": {
+      "median": 11534336,
+      "min": 11517952,
+      "max": 11583488
+    },
+    "cpu_seconds": 1.790703,
+    "cpu_percent": {
+      "median": 178.1704944603516,
+      "min": 176.76492146728467,
+      "max": 179.1025628804005
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 12.726463890025114,
+      "min": 12.626065819091762,
+      "max": 12.793040205742894
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 1,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 40600.2204219,
+      "min": 40559.6843338,
+      "max": 41176.4508301
+    },
+    "payload_mib_per_second": {
+      "median": 1268.75688818,
+      "min": 1267.49013543,
+      "max": 1286.76408844
+    },
+    "rtt_p50_us": {
+      "median": 382.542,
+      "min": 373.5,
+      "max": 384.166
+    },
+    "rtt_p95_us": {
+      "median": 403.375,
+      "min": 397.25,
+      "max": 404.875
+    },
+    "rtt_p99_us": {
+      "median": 424.833,
+      "min": 423.875,
+      "max": 424.875
+    },
+    "peak_rss_bytes": {
+      "median": 11419648,
+      "min": 11386880,
+      "max": 11452416
+    },
+    "cpu_seconds": 1.000109,
+    "cpu_percent": {
+      "median": 99.98557459710094,
+      "min": 99.51860244820463,
+      "max": 99.98656167110425
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 7.141826756935781,
+      "min": 7.108471603443188,
+      "max": 7.1418972622217325
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 2,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 60676.5184724,
+      "min": 60419.1367658,
+      "max": 60719.5625215
+    },
+    "payload_mib_per_second": {
+      "median": 1896.14120226,
+      "min": 1888.09802393,
+      "max": 1897.4863288
+    },
+    "rtt_p50_us": {
+      "median": 255.75,
+      "min": 254.959,
+      "max": 256.625
+    },
+    "rtt_p95_us": {
+      "median": 264.625,
+      "min": 263.25,
+      "max": 265.125
+    },
+    "rtt_p99_us": {
+      "median": 276.166,
+      "min": 274.166,
+      "max": 276.333
+    },
+    "peak_rss_bytes": {
+      "median": 11452416,
+      "min": 11386880,
+      "max": 11485184
+    },
+    "cpu_seconds": 1.892925,
+    "cpu_percent": {
+      "median": 188.75401643162292,
+      "min": 188.33184281129994,
+      "max": 189.2242066974043
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 13.482429745115923,
+      "min": 13.452274486521423,
+      "max": 13.516014764100307
+    }
+  },
+  {
+    "backend": "standalone",
+    "implementation": "arknet-callback",
+    "protocol": "udp",
+    "payload_bytes": 16384,
+    "clients": 16,
+    "window": 1,
+    "io_model": "shared",
+    "io_threads": 4,
+    "handler_work": 0,
+    "repetitions": 3,
+    "roundtrips_per_second": {
+      "median": 71872.9866657,
+      "min": 71163.2810231,
+      "max": 72137.5149231
+    },
+    "payload_mib_per_second": {
+      "median": 2246.0308333,
+      "min": 2223.85253197,
+      "max": 2254.29734135
+    },
+    "rtt_p50_us": {
+      "median": 207,
+      "min": 206.417,
+      "max": 208.875
+    },
+    "rtt_p95_us": {
+      "median": 246.791,
+      "min": 246.542,
+      "max": 248.875
+    },
+    "rtt_p99_us": {
+      "median": 307.042,
+      "min": 300.792,
+      "max": 314.5
+    },
+    "peak_rss_bytes": {
+      "median": 11501568,
+      "min": 11468800,
+      "max": 11517952
+    },
+    "cpu_seconds": 3.107957,
+    "cpu_percent": {
+      "median": 309.82445208340204,
+      "min": 309.3239261635835,
+      "max": 310.9189571667328
+    },
+    "cpu_percent_estimated": false,
+    "cpu_machine_percent": {
+      "median": 22.13031800595729,
+      "min": 22.094566154541678,
+      "max": 22.208496940480916
+    }
+  }
+]
