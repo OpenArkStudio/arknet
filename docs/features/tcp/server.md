@@ -11,9 +11,10 @@ use `use_dgram` length framing; the client waits on its main thread, not in an I
 callback.
 
 ```cpp
-#include <arknet/tcp/tcp_server.hpp>
 #include <iostream>
 #include <string_view>
+
+#include <arknet/tcp/tcp_server.hpp>
 
 int main()
 {

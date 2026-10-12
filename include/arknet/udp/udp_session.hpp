@@ -2,8 +2,8 @@
 // Distributed under BSL-1.0. See LICENSE.
 #pragma once
 
-#include <arknet/base/session.hpp>
 #include <arknet/base/detail/linear_buffer.hpp>
+#include <arknet/base/session.hpp>
 #include <arknet/udp/impl/udp_send_op.hpp>
 
 namespace arknet::detail

@@ -1,8 +1,9 @@
+#include <atomic>
+#include <thread>
+
 #include <arknet/arknet.hpp>
 #include <arknet/http/router.hpp>
 #include "check.hpp"
-#include <atomic>
-#include <thread>
 
 namespace
 {

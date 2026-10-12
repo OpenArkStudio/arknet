@@ -3,10 +3,14 @@
 #pragma once
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
 #include <memory>
+
 #include <openssl/x509v3.h>
-#include <arknet/base/io_pool.hpp>
+
 #include <arknet/base/detail/allocator.hpp>
 #include <arknet/base/detail/ecs.hpp>
+#include <arknet/base/detail/util.hpp>
+#include <arknet/base/impl/event_queue_cp.hpp>
+#include <arknet/base/io_pool.hpp>
 
 namespace arknet::detail
 {

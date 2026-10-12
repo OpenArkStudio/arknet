@@ -11,7 +11,7 @@ Release 本机回环测试：1024 字节二进制消息、16 个客户端、窗�
 ![不同 IO 模型下的 WebSocket p99 RTT](../../performance/assets/websocket-work0-latency.svg)
 
 - 两种后端都以 4 个 io_context 各 1 个线程的吞吐量中位数最高。
-- standalone 的最低 p99 中位数出现在 4 个 io_context 各 1 个线程；Boost 则是 2 个 io_context 各 1 个线程，且运行范围与 4 个 io_context 各 1 个线程重叠。
+- Standalone Asio 的最低 p99 中位数出现在 4 个 io_context 各 1 个线程；Boost 则是 2 个 io_context 各 1 个线程，且运行范围与 4 个 io_context 各 1 个线程重叠。
 - 单客户端、窗口 1 时，两种后端使用 1 个 io_context、4 个线程的吞吐量中位数均低于 1 个 io_context、1 个线程。
 
 ### WSS

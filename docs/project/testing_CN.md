@@ -66,16 +66,16 @@ Sanitizer 构建关闭性能基准，避免混入测量。检查数是 `arknet_c
 
 | 后端 | 构建 | TLS | 检查 / 用例 | 结果与日志 |
 | --- | --- | --- | ---: | --- |
-| standalone | Release | ON | 40 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone.log) |
-| standalone | Release | OFF | 30 / 87 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-notls.log) |
-| standalone | Debug | ON | 40 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-tls.log) |
-| standalone | Debug | OFF | 30 / 87 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-notls.log) |
+| Standalone Asio | Release | ON | 40 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone.log) |
+| Standalone Asio | Release | OFF | 30 / 87 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-notls.log) |
+| Standalone Asio | Debug | ON | 40 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-tls.log) |
+| Standalone Asio | Debug | OFF | 30 / 87 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-notls.log) |
 | Boost | Release | ON | 40 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost.log) |
 | Boost | Release | OFF | 30 / 87 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-notls.log) |
 | Boost | Debug | ON | 40 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-debug-tls.log) |
 | Boost | Debug | OFF | 30 / 87 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-debug-notls.log) |
-| standalone | Debug + ASan/UBSan | ON | 15 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-asan.log) |
-| standalone | Debug + TSan | ON | 15 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-tsan.log) |
+| Standalone Asio | Debug + ASan/UBSan | ON | 15 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-asan.log) |
+| Standalone Asio | Debug + TSan | ON | 15 / 115 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-tsan.log) |
 
 加入 IPv6 后，两种后端的 Release + TLS 完整检查再次通过，各 **41 个检查、128 个用例**：
 [standalone 日志](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/final-standalone-tls.log)、

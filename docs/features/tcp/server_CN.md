@@ -7,9 +7,10 @@
 通过 `arknet::arknet` 接口目标，将本页服务端与[客户端](client_CN.md)分别构建为 C++20 可执行程序。先启动服务端，再在另一个终端运行客户端。在服务端终端按 Enter 停止服务端。两端均使用 `use_dgram` 长度拆包；客户端在主线程等待回显，不在 IO 回调中等待。
 
 ```cpp
-#include <arknet/tcp/tcp_server.hpp>
 #include <iostream>
 #include <string_view>
+
+#include <arknet/tcp/tcp_server.hpp>
 
 int main()
 {

@@ -5,11 +5,12 @@
 #include <memory>
 #include <queue>
 #include <utility>
-#include <arknet/base/io_pool.hpp>
+
+#include <arknet/base/detail/allocator.hpp>
 #include <arknet/base/detail/function.hpp>
 #include <arknet/base/detail/future.hpp>
-#include <arknet/base/detail/allocator.hpp>
 #include <arknet/base/detail/util.hpp>
+#include <arknet/base/io_pool.hpp>
 namespace arknet::detail
 {
 template <class, class> class event_queue_cp;

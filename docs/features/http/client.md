@@ -9,11 +9,12 @@ It waits up to five seconds on the main thread and returns a nonzero status
 if the exchange fails.
 
 ```cpp
-#include <arknet/http/http_client.hpp>
 #include <chrono>
 #include <future>
 #include <iostream>
 #include <utility>
+
+#include <arknet/http/http_client.hpp>
 
 int main()
 {

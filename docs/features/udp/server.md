@@ -10,9 +10,10 @@ target. Run the server first and the client in another terminal. Press Enter in
 the server terminal to stop it.
 
 ```cpp
-#include <arknet/udp/udp_server.hpp>
 #include <iostream>
 #include <string_view>
+
+#include <arknet/udp/udp_server.hpp>
 
 int main()
 {

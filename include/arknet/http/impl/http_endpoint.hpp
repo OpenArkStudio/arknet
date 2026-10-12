@@ -1,11 +1,17 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
 #pragma once
 
-#include <arknet/external/beast.hpp>
 #include <atomic>
 #include <deque>
 #include <limits>
 #include <optional>
+
+#include <arknet/base/define.hpp>
+#include <arknet/base/detail/allocator.hpp>
+#include <arknet/base/detail/ecs.hpp>
+#include <arknet/base/detail/util.hpp>
+#include <arknet/base/listener.hpp>
+#include <arknet/external/beast.hpp>
 
 namespace arknet::detail
 {

@@ -2,8 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0. See LICENSE.
 #pragma once
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
-#include <arknet/tcp/tcps_session.hpp>
 #include <arknet/http/ws_session.hpp>
+#include <arknet/tcp/tcps_session.hpp>
 namespace arknet::detail
 {
 struct template_args_wss_session : template_args_ws_session

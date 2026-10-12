@@ -8,10 +8,11 @@ and use the `arknet::arknet` CMake interface target. arknet is header-only;
 this target propagates build settings and dependencies without an arknet binary library.
 
 ```cpp
-#include <arknet/arknet.hpp>
 #include <chrono>
 #include <future>
 #include <string>
+
+#include <arknet/arknet.hpp>
 using namespace std::chrono_literals;
 
 int main()

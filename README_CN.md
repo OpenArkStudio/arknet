@@ -15,11 +15,11 @@ arknet 是 OpenArkStudio 维护的 C++20 header-only 网络库。
 
 - **C++20**：支持该标准的编译器和标准库。
 - **CMake** 3.21+：用于仓库提供的构建配置、示例和测试。
-- **standalone Asio** 1.38+：默认网络后端。
+- **Standalone Asio** 1.38+：默认网络后端。
 - **Boost** 1.90+：可替代 standalone Asio，提供 Asio 和 Beast。
 - **OpenSSL** 1.1.1+：仅在启用 TLS、HTTPS 或 WSS 时需要。
 
-standalone Asio 与 Boost 二选一。依赖安装和 CMake 选项见[安装与配置](docs/get-started/installation_CN.md)。
+Standalone Asio 与 Boost 二选一。依赖安装和 CMake 选项见[安装与配置](docs/get-started/installation_CN.md)。
 
 ## 快速开始
 

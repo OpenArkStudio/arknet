@@ -3,8 +3,9 @@
 #pragma once
 #include <chrono>
 #include <memory>
-#include <arknet/base/io_pool.hpp>
+
 #include <arknet/base/detail/util.hpp>
+#include <arknet/base/io_pool.hpp>
 namespace arknet::detail
 {
 template <class Derived, class Args> class silence_timer_cp

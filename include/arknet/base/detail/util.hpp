@@ -16,10 +16,11 @@
 #include <string>
 #include <string_view>
 #include <thread>
-#include <arknet/base/error.hpp>
+
 #include <arknet/base/detail/filesystem.hpp>
 #include <arknet/base/detail/shared_mutex.hpp>
 #include <arknet/base/detail/type_traits.hpp>
+#include <arknet/base/error.hpp>
 #include <arknet/util/string.hpp>
 #ifndef ARKNET_DEFAULT_SSL_METHOD
 #define ARKNET_DEFAULT_SSL_METHOD asio::ssl::context::sslv23

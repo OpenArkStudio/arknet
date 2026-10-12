@@ -22,8 +22,10 @@ arknet 作为独立的 header-only 项目开发。通过范围明确的修改和
 
 ## 代码风格
 
-`.clang-format` 定义 C++ 格式：4 空格缩进、Allman 括号、120 列上限，并保留原有
-include 顺序。`.editorconfig` 定义编辑器的 UTF-8 编码、LF 换行和缩进约定。
+`.clang-format` 定义 C++ 格式：4 空格缩进、Allman 括号、120 列上限。
+include 按系统库、第三方库、项目自身分组，组间空一行；组内按名称排序。
+项目公共头文件先于本地头文件，`windows.h` 先于依赖它的系统头文件。
+条件编译和配置宏的先后关系保持不变。`.editorconfig` 定义 UTF-8 编码、LF 换行和缩进约定。
 使用 clang-format 18，与 CI 保持一致。
 
 ```sh

@@ -4,9 +4,10 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
-#include <arknet/base/io_pool.hpp>
+
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/impl/event_queue_cp.hpp>
+#include <arknet/base/io_pool.hpp>
 namespace arknet::detail
 {
 template <class Derived, class Args> class shutdown_cp

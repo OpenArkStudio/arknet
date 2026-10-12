@@ -1,7 +1,8 @@
-#include <arknet/base/detail/keepalive_options.hpp>
-#include "check.hpp"
 #include <array>
 #include <limits>
+
+#include <arknet/base/detail/keepalive_options.hpp>
+#include "check.hpp"
 
 DOCTEST_TEST_CASE("TCP keepalive validates parameters before changing socket options")
 {

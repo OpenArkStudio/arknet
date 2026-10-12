@@ -1,10 +1,11 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
 #pragma once
-#include <arknet/external/asio.hpp>
 #include <memory>
 #include <string_view>
 #include <thread>
 #include <vector>
+
+#include <arknet/external/asio.hpp>
 
 class benchmark_runtime
 {

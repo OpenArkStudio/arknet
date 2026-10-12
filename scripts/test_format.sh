@@ -17,6 +17,14 @@ for directory in include/arknet/bho tests/vendor tests/results benchmarks/result
     cp original.hpp "$directory/ignored.hpp"
 done
 git add include/arknet/probe.hpp
+printf '%s\n' '#include "check.hpp"' '#include <arknet/probe.hpp>' '#include <openssl/ssl.h>' \
+    '#include <vector>' '#include <sys/socket.h>' '#include "vendor/doctest/doctest.h"' \
+    '#include <arknet/bho/beast.hpp>' '#include <asio.hpp>' '#include <cstdint>' \
+    '#include <psapi.h>' '#include <windows.h>' '#include <zlib.h>' > examples/probe.cpp
+printf '%s\n' '#include <windows.h>' '#include <cstdint>' '#include <psapi.h>' \
+    '#include <sys/socket.h>' '#include <vector>' '' '#include "vendor/doctest/doctest.h"' \
+    '#include <arknet/bho/beast.hpp>' '#include <asio.hpp>' '#include <openssl/ssl.h>' \
+    '#include <zlib.h>' '' '#include <arknet/probe.hpp>' '#include "check.hpp"' > expected-includes.cpp
 
 expect_failure() {
     local expected=$1
@@ -35,6 +43,7 @@ expect_failure 2 env CLANG_FORMAT=/missing/clang-format bash scripts/format.sh -
 expect_failure 2 env CLANG_FORMAT=true bash scripts/format.sh --check
 bash scripts/format.sh --fix
 bash scripts/format.sh --check
+cmp expected-includes.cpp examples/probe.cpp
 for directory in include/arknet/bho tests/vendor tests/results benchmarks/results; do
     cmp original.hpp "$directory/ignored.hpp"
     "${CLANG_FORMAT:-clang-format}" --dry-run --Werror "$directory/ignored.hpp"

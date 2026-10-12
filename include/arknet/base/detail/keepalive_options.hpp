@@ -1,9 +1,10 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
 #pragma once
-#include <arknet/base/error.hpp>
 #include <concepts>
 #include <limits>
 #include <type_traits>
+
+#include <arknet/base/error.hpp>
 #if defined(_WIN32)
 #include <Mstcpip.h>
 #else

@@ -7,12 +7,13 @@
 客户端发送一条消息，验证回显后退出。连接失败、发送未能入队，或五秒内未收到正确回显时，返回非零状态。
 
 ```cpp
-#include <arknet/tcp/tcp_client.hpp>
 #include <chrono>
 #include <future>
 #include <iostream>
 #include <string>
 #include <string_view>
+
+#include <arknet/tcp/tcp_client.hpp>
 
 int main()
 {

@@ -1,9 +1,10 @@
-#include <arknet/base/io_pool.hpp>
-#include "check.hpp"
-#include "../benchmarks/runtime.hpp"
 #include <atomic>
 #include <latch>
 #include <thread>
+
+#include <arknet/base/io_pool.hpp>
+#include "../benchmarks/runtime.hpp"
+#include "check.hpp"
 
 DOCTEST_TEST_CASE("Queued IO cancellation does not retain an unrun or stopped context")
 {

@@ -1,8 +1,8 @@
 // Copyright (c) 2026 OpenArkStudio.
 // Distributed under the Boost Software License, Version 1.0. See LICENSE.
 #pragma once
-#include <arknet/tcp/tcp_client.hpp>
 #include <arknet/http/impl/websocket_endpoint.hpp>
+#include <arknet/tcp/tcp_client.hpp>
 namespace arknet::detail
 {
 struct template_args_ws_client : template_args_tcp_client

@@ -12,6 +12,28 @@ ReferenceAlignment: Left
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
-SortIncludes: Never
-IncludeBlocks: Preserve
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+# Do not promote a matching project header ahead of system headers.
+IncludeIsMainRegex: 'a^'
+IncludeCategories:
+  - Regex: '^["<](arknet/bho/|vendor/|asio([/.]|>)|boost/|openssl/|spdlog/|doctest/)'
+    Priority: 2
+    SortPriority: 3
+  # Windows SDK headers such as psapi.h require windows.h first.
+  - Regex: '^<windows\.h>$'
+    Priority: 1
+    SortPriority: 1
+  - Regex: '^<([[:alnum:]_]+|(assert|ctype|errno|fenv|float|inttypes|iso646|limits|locale|math|setjmp|signal|std[a-z]+|string|tgmath|threads|time|uchar|wchar|wctype|unistd|fcntl|pthread|poll|windows|winsock2|ws2tcpip|mstcpip|psapi|targetconditionals)\.h|(arpa|net|netinet|sys|mach|mach-o|linux)/.*)>$'
+    Priority: 1
+    SortPriority: 2
+  - Regex: '^<arknet/'
+    Priority: 3
+    SortPriority: 4
+  - Regex: '^<'
+    Priority: 2
+    SortPriority: 3
+  - Regex: '.*'
+    Priority: 3
+    SortPriority: 5
 FixNamespaceComments: false

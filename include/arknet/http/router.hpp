@@ -1,8 +1,6 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
 #pragma once
 
-#include <arknet/external/beast.hpp>
-#include <arknet/base/detail/function.hpp>
 #include <algorithm>
 #include <exception>
 #include <memory>
@@ -12,6 +10,9 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#include <arknet/base/detail/function.hpp>
+#include <arknet/external/beast.hpp>
 
 namespace arknet
 {

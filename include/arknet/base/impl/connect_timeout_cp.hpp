@@ -3,9 +3,10 @@
 #pragma once
 #include <chrono>
 #include <memory>
-#include <arknet/base/io_pool.hpp>
-#include <arknet/base/detail/util.hpp>
+
 #include <arknet/base/detail/allocator.hpp>
+#include <arknet/base/detail/util.hpp>
+#include <arknet/base/io_pool.hpp>
 namespace arknet::detail
 {
 template <class Derived, class Args> class connect_timeout_cp

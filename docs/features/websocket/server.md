@@ -11,9 +11,10 @@ target. Run the server first, then the client in another terminal. Press Enter i
 the server terminal to stop it.
 
 ```cpp
-#include <arknet/websocket/ws_server.hpp>
 #include <iostream>
 #include <string_view>
+
+#include <arknet/websocket/ws_server.hpp>
 
 int main()
 {

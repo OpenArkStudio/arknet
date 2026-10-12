@@ -23,9 +23,13 @@ reproducible checks.
 
 ## Code Style
 
-`.clang-format` defines the C++ style: four spaces, Allman braces, a 120-column
-limit and the existing include order. `.editorconfig` defines UTF-8, LF line
-endings and indentation for editors. Use clang-format 18 to match CI.
+`.clang-format` defines the C++ style: four-space indentation, Allman braces
+and a 120-column limit. Group includes as system libraries, third-party libraries
+and project headers, with a blank line between groups and names sorted within each
+group. Public project headers precede local headers; `windows.h` precedes system
+headers that depend on it. Keep conditional compilation and configuration macros
+in their required order. `.editorconfig` defines UTF-8, LF line endings and editor
+indentation. Use clang-format 18 to match CI.
 
 ```sh
 # Check formatting; --fix applies it.

@@ -1,5 +1,6 @@
-#include <arknet/arknet.hpp>
 #include <iostream>
+
+#include <arknet/arknet.hpp>
 
 int main(int argc, char** argv)
 {

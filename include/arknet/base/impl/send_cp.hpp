@@ -9,11 +9,12 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <arknet/base/io_pool.hpp>
+
 #include <arknet/base/define.hpp>
 #include <arknet/base/detail/buffer_wrap.hpp>
 #include <arknet/base/impl/data_persistence_cp.hpp>
 #include <arknet/base/impl/send_queue_cp.hpp>
+#include <arknet/base/io_pool.hpp>
 namespace arknet::detail
 {
 ARKNET_CLASS_FORWARD_DECLARE_BASE;

@@ -3,9 +3,10 @@
 #pragma once
 #include <memory>
 #include <utility>
+
+#include <arknet/base/impl/event_queue_cp.hpp>
 #include <arknet/base/io_pool.hpp>
 #include <arknet/base/listener.hpp>
-#include <arknet/base/impl/event_queue_cp.hpp>
 namespace arknet::detail
 {
 template <class Derived, class Args> class close_cp

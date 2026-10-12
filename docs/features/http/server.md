@@ -10,9 +10,10 @@ executables. Start the server first, then run the client in another terminal.
 Press Enter in the server terminal to stop it. Plain HTTP does not require TLS.
 
 ```cpp
-#include <arknet/http/http_server.hpp>
 #include <iostream>
 #include <utility>
+
+#include <arknet/http/http_server.hpp>
 
 int main()
 {

@@ -1,13 +1,11 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
 #pragma once
 
-#include <arknet/base/error.hpp>
-#include <arknet/base/detail/future.hpp>
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <condition_variable>
 #include <concepts>
+#include <condition_variable>
 #include <functional>
 #include <future>
 #include <latch>
@@ -21,6 +19,9 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include <arknet/base/detail/future.hpp>
+#include <arknet/base/error.hpp>
 
 namespace arknet::detail
 {

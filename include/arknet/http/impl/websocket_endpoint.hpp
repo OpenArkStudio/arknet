@@ -1,8 +1,10 @@
 // Copyright (c) 2026 OpenArkStudio.
 // Distributed under the Boost Software License, Version 1.0. See LICENSE.
 #pragma once
-#include <arknet/http/impl/ws_stream_cp.hpp>
+#include <arknet/base/define.hpp>
+#include <arknet/base/listener.hpp>
 #include <arknet/http/impl/ws_send_op.hpp>
+#include <arknet/http/impl/ws_stream_cp.hpp>
 namespace arknet::detail
 {
 template <class Derived, class Transport, class Args>

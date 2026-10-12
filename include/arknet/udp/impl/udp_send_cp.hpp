@@ -7,10 +7,11 @@
 #include <memory>
 #include <optional>
 #include <string>
+
 #include <arknet/base/define.hpp>
-#include <arknet/base/io_pool.hpp>
 #include <arknet/base/impl/data_persistence_cp.hpp>
 #include <arknet/base/impl/send_queue_cp.hpp>
+#include <arknet/base/io_pool.hpp>
 
 namespace arknet::detail
 {

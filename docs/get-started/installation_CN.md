@@ -8,7 +8,7 @@ arknet 是 header-only 网络库，没有需要编译或链接的二进制库。
 
 - CMake 3.21 或更新版本。
 - 支持 C++20 的编译器和标准库。
-- standalone Asio 1.38 或更新版本，或包含 Asio 和 Beast 的 Boost 1.90 或更新版本。
+- Standalone Asio 1.38 或更新版本，或包含 Asio 和 Beast 的 Boost 1.90 或更新版本。
 - TLS、HTTPS 和 WSS 需要 OpenSSL 1.1.1 或更新版本。
 
 库配置的最低 TLS 版本为 1.2。已验证的依赖和编译器版本见[测试](../project/testing_CN.md)。
@@ -21,11 +21,11 @@ CMake 和直接包含头文件的构建都会拒绝较旧后端。修复记录�
 
 | 配置 | IO 实现 | HTTP 和 WebSocket 实现 |
 | --- | --- | --- |
-| `ARKNET_USE_BOOST_ASIO=OFF`（默认） | standalone Asio | 基于 Boost 1.84 适配的内置 BHO Beast |
+| `ARKNET_USE_BOOST_ASIO=OFF`（默认） | Standalone Asio | 基于 Boost 1.84 适配的内置 BHO Beast |
 | `ARKNET_USE_BOOST_ASIO=ON` | Boost.Asio | 官方 Boost.Beast |
 
 两种配置提供相同的 arknet API。配置 CMake 前，安装所选后端的依赖。
-standalone 模式会查找 `asio.hpp`；如果头文件不在搜索路径内，设置
+Standalone Asio 模式会查找 `asio.hpp`；如果头文件不在搜索路径内，设置
 `ARKNET_ASIO_INCLUDE_DIR`。Boost 或 OpenSSL 安装在自定义前缀时，使用
 `CMAKE_PREFIX_PATH`；OpenSSL 也支持 `OPENSSL_ROOT_DIR`。
 
@@ -47,7 +47,7 @@ Asio；Boost 模式使用官方 Boost.Beast。BHO 是内置兼容代码，不是
 在仓库根目录选择一种后端：
 
 ```sh
-# standalone Asio
+# Standalone Asio
 cmake -S . -B build -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 
 # Boost.Asio 和安全传输

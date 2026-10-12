@@ -7,8 +7,9 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
-#include <arknet/base/io_pool.hpp>
+
 #include <arknet/base/detail/util.hpp>
+#include <arknet/base/io_pool.hpp>
 namespace arknet::detail
 {
 template <class T> struct is_span : std::false_type

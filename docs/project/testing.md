@@ -72,16 +72,16 @@ Checks count programs invoked by `arknet_check`; cases count doctest cases.
 
 | Backend | Build | TLS | Checks / cases | Result and log |
 | --- | --- | --- | ---: | --- |
-| standalone | Release | ON | 40 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone.log) |
-| standalone | Release | OFF | 30 / 87 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-notls.log) |
-| standalone | Debug | ON | 40 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-tls.log) |
-| standalone | Debug | OFF | 30 / 87 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-notls.log) |
+| Standalone Asio | Release | ON | 40 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone.log) |
+| Standalone Asio | Release | OFF | 30 / 87 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-notls.log) |
+| Standalone Asio | Debug | ON | 40 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-tls.log) |
+| Standalone Asio | Debug | OFF | 30 / 87 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-standalone-debug-notls.log) |
 | Boost | Release | ON | 40 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost.log) |
 | Boost | Release | OFF | 30 / 87 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-notls.log) |
 | Boost | Debug | ON | 40 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-debug-tls.log) |
 | Boost | Debug | OFF | 30 / 87 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-boost-debug-notls.log) |
-| standalone | Debug + ASan/UBSan | ON | 15 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-asan.log) |
-| standalone | Debug + TSan | ON | 15 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-tsan.log) |
+| Standalone Asio | Debug + ASan/UBSan | ON | 15 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-asan.log) |
+| Standalone Asio | Debug + TSan | ON | 15 / 115 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/arknet-runtime-matrix-tsan.log) |
 
 After adding IPv6, Release + TLS complete checks passed again for both backends,
 each with **41 checks and 128 cases**:

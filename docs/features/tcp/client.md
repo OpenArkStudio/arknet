@@ -8,12 +8,13 @@ The client sends one message, verifies the reply and exits. It returns a nonzero
 status if connecting, queue admission or the five-second echo check fails.
 
 ```cpp
-#include <arknet/tcp/tcp_client.hpp>
 #include <chrono>
 #include <future>
 #include <iostream>
 #include <string>
 #include <string_view>
+
+#include <arknet/tcp/tcp_client.hpp>
 
 int main()
 {

@@ -7,9 +7,10 @@
 WebSocket 自行定义消息边界，不应传入 `use_dgram` 或 TCP 分隔符。服务端回复时保留接收到的文本或二进制类型。通过 `arknet::arknet` 接口目标，将本页服务端与[客户端](client_CN.md)分别构建为可执行程序。先启动服务端，再在另一个终端运行客户端。在服务端终端按 Enter 停止服务端。
 
 ```cpp
-#include <arknet/websocket/ws_server.hpp>
 #include <iostream>
 #include <string_view>
+
+#include <arknet/websocket/ws_server.hpp>
 
 int main()
 {

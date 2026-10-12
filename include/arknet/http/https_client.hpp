@@ -2,8 +2,8 @@
 #pragma once
 #include <arknet/config.hpp>
 #if defined(ARKNET_ENABLE_SSL)
-#include <arknet/tcp/tcps_client.hpp>
 #include <arknet/http/impl/http_endpoint.hpp>
+#include <arknet/tcp/tcps_client.hpp>
 
 namespace arknet
 {

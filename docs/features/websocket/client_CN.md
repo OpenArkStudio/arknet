@@ -7,13 +7,14 @@
 客户端使用 `/echo` 完成升级，发送一条二进制消息，并验证回复的内容和类型。主线程等待回显，IO 回调不阻塞等待。
 
 ```cpp
-#include <arknet/websocket/ws_client.hpp>
 #include <chrono>
 #include <future>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <utility>
+
+#include <arknet/websocket/ws_client.hpp>
 
 int main()
 {

@@ -3,8 +3,8 @@
 #pragma once
 #include <arknet/base/session.hpp>
 #include <arknet/tcp/impl/tcp_keepalive_cp.hpp>
-#include <arknet/tcp/impl/tcp_send_op.hpp>
 #include <arknet/tcp/impl/tcp_recv_op.hpp>
+#include <arknet/tcp/impl/tcp_send_op.hpp>
 
 namespace arknet::detail
 {

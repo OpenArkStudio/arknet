@@ -6,8 +6,9 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <arknet/base/error.hpp>
+
 #include <arknet/base/detail/buffer_wrap.hpp>
+#include <arknet/base/error.hpp>
 
 namespace arknet::detail
 {

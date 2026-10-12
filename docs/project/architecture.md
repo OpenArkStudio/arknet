@@ -16,7 +16,7 @@ Application callbacks / HTTP router / custom CRTP types
              io_pool / io_t lanes
           owned contexts or external strands
                      |
-        standalone Asio or Boost.Asio
+        Standalone Asio or Boost.Asio
             OS sockets; optional OpenSSL
 ```
 

@@ -13,7 +13,7 @@
 
 ## 支持状态
 
-- standalone Asio 与 Boost.Asio 提供相同的 arknet 回调 API。
+- Standalone Asio 与 Boost.Asio 提供相同的 arknet 回调 API。
 - TLS、HTTPS 和 WSS 需要启用 `ARKNET_ENABLE_SSL` 并提供 OpenSSL。
 - IPv4 和 IPv6 共用端点 API，监听策略需要显式配置。
 - HTTP 当前实现 HTTP/1.1。原生 UDP 不增加重传或自动切包。

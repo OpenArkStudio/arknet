@@ -7,10 +7,11 @@
 #include <memory>
 #include <optional>
 #include <set>
-#include <arknet/base/io_pool.hpp>
+
 #include <arknet/base/detail/allocator.hpp>
 #include <arknet/base/detail/future.hpp>
 #include <arknet/base/detail/util.hpp>
+#include <arknet/base/io_pool.hpp>
 namespace arknet::detail
 {
 class pending_operation

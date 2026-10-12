@@ -1,8 +1,8 @@
 // Copyright (c) 2026 OpenArkStudio.
 // Distributed under the Boost Software License, Version 1.0. See LICENSE.
 #pragma once
-#include <arknet/tcp/tcp_server.hpp>
 #include <arknet/http/ws_session.hpp>
+#include <arknet/tcp/tcp_server.hpp>
 namespace arknet::detail
 {
 template <class Derived, class Session>

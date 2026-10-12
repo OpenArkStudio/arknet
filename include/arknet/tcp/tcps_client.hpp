@@ -2,9 +2,9 @@
 // Distributed under the Boost Software License, Version 1.0. See LICENSE.
 #pragma once
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
-#include <arknet/tcp/tcp_client.hpp>
 #include <arknet/tcp/impl/ssl_context_cp.hpp>
 #include <arknet/tcp/impl/ssl_stream_cp.hpp>
+#include <arknet/tcp/tcp_client.hpp>
 namespace arknet::detail
 {
 template <class Derived, class Args = template_args_tcp_client>

@@ -4,6 +4,7 @@
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
 #include <string>
 #include <string_view>
+
 #include <arknet/base/error.hpp>
 
 namespace arknet::detail

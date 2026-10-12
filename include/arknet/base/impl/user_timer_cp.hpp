@@ -9,10 +9,11 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <arknet/base/io_pool.hpp>
-#include <arknet/base/detail/util.hpp>
+
 #include <arknet/base/detail/function_traits.hpp>
+#include <arknet/base/detail/util.hpp>
 #include <arknet/base/impl/post_cp.hpp>
+#include <arknet/base/io_pool.hpp>
 namespace arknet::detail
 {
 struct user_timer_handle

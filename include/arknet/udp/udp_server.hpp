@@ -2,9 +2,10 @@
 // Distributed under BSL-1.0. See LICENSE.
 #pragma once
 
+#include <vector>
+
 #include <arknet/base/server.hpp>
 #include <arknet/udp/udp_session.hpp>
-#include <vector>
 
 namespace arknet::detail
 {

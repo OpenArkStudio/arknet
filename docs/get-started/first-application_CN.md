@@ -7,10 +7,11 @@
 arknet 是 header-only 库；接口目标只传递构建配置和依赖，不生成 arknet 二进制库。
 
 ```cpp
-#include <arknet/arknet.hpp>
 #include <chrono>
 #include <future>
 #include <string>
+
+#include <arknet/arknet.hpp>
 using namespace std::chrono_literals;
 
 int main()

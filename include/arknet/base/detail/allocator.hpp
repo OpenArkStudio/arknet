@@ -8,8 +8,9 @@
 #include <new>
 #include <type_traits>
 #include <utility>
-#include <arknet/config.hpp>
+
 #include <arknet/base/detail/type_traits.hpp>
+#include <arknet/config.hpp>
 namespace arknet::detail
 {
 template <class ThreadLocal> constexpr std::size_t calc_allocator_storage_size() noexcept

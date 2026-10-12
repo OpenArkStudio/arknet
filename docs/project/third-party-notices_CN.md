@@ -13,7 +13,7 @@ BHO 指 Boost Header Only。各文件保留原作者和适用的 Boost Software 
 
 ## 外部运行时依赖
 
-standalone Asio 和官方 Boost 由构建配置选择，属于外部依赖，其分发包保留适用的
+Standalone Asio 和官方 Boost 由构建配置选择，属于外部依赖，其分发包保留适用的
 BSL-1.0 声明。OpenSSL 是可选的 TLS 依赖；3.x 使用 Apache-2.0，1.1.1 使用
 OpenSSL/SSLeay 许可证。以实际使用的分发包为准。
 

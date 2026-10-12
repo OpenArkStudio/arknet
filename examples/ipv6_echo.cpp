@@ -1,10 +1,11 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
-#include <arknet/arknet.hpp>
 #include <chrono>
 #include <future>
 #include <iostream>
 #include <string>
 #include <string_view>
+
+#include <arknet/arknet.hpp>
 
 int main()
 {

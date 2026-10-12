@@ -15,7 +15,7 @@ arknet is a C++20, header-only networking library maintained by OpenArkStudio.
 
 - **C++20:** a compatible compiler and standard library.
 - **CMake** 3.21+: for the provided builds, examples and tests.
-- **standalone Asio** 1.38+: the default networking backend.
+- **Standalone Asio** 1.38+: the default networking backend.
 - **Boost** 1.90+: an alternative to standalone Asio, providing Asio and Beast.
 - **OpenSSL** 1.1.1+: required only for TLS, HTTPS and WSS.
 

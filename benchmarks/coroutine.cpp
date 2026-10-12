@@ -1,8 +1,4 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
-#include "runtime.hpp"
-#include "resources.hpp"
-#include "work.hpp"
-#include <arknet/base/error.hpp>
 #include <algorithm>
 #include <atomic>
 #include <charconv>
@@ -14,6 +10,11 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+
+#include <arknet/base/error.hpp>
+#include "resources.hpp"
+#include "runtime.hpp"
+#include "work.hpp"
 
 namespace
 {

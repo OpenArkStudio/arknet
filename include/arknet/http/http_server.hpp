@@ -1,7 +1,7 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
 #pragma once
-#include <arknet/tcp/tcp_server.hpp>
 #include <arknet/http/http_session.hpp>
+#include <arknet/tcp/tcp_server.hpp>
 
 namespace arknet
 {

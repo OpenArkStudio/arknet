@@ -1,14 +1,14 @@
-#include <arknet/udp/udp_client.hpp>
-#include <arknet/udp/udp_server.hpp>
-#include <arknet/udp/udp_cast.hpp>
-#include "check.hpp"
-
 #include <array>
 #include <atomic>
 #include <barrier>
 #include <latch>
 #include <memory>
 #include <thread>
+
+#include <arknet/udp/udp_cast.hpp>
+#include <arknet/udp/udp_client.hpp>
+#include <arknet/udp/udp_server.hpp>
+#include "check.hpp"
 
 namespace
 {

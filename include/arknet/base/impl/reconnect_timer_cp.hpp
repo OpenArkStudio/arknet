@@ -3,10 +3,11 @@
 #pragma once
 #include <chrono>
 #include <memory>
-#include <arknet/base/io_pool.hpp>
+
 #include <arknet/base/detail/ecs.hpp>
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/impl/event_queue_cp.hpp>
+#include <arknet/base/io_pool.hpp>
 namespace arknet::detail
 {
 template <class Derived, class Args> class reconnect_timer_cp

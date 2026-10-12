@@ -5,8 +5,9 @@
 #include <memory>
 #include <string_view>
 #include <type_traits>
-#include <arknet/base/error.hpp>
+
 #include <arknet/base/detail/ecs.hpp>
+#include <arknet/base/error.hpp>
 
 namespace arknet::detail
 {

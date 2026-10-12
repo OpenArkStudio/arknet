@@ -9,12 +9,13 @@
 连接前加载 CA。客户端验证证书链，以及传给 `start` 的 `localhost` 身份；使用 DNS 名称连接时还会发送 SNI。证书不匹配时，应修正证书或连接名称，不应关闭对端校验。
 
 ```cpp
-#include <arknet/tcp/tcps_client.hpp>
 #include <chrono>
 #include <future>
 #include <iostream>
 #include <string>
 #include <string_view>
+
+#include <arknet/tcp/tcps_client.hpp>
 
 int main(int argc, char** argv)
 {

@@ -37,8 +37,9 @@ arknet 不对 UDP 自动切包、重传或限速。可靠传输由计划中的�
 ### TCP 或 UDP 客户端
 
 ```cpp
-#include <arknet/arknet.hpp>
 #include <iostream>
+
+#include <arknet/arknet.hpp>
 
 arknet::udp_client client; // TCP 可改为 arknet::tcp_client。
 client.bind_init([&] {

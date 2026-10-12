@@ -13,10 +13,11 @@ test keys are not deployment credentials. The test certificate covers
 another terminal. Press Enter in the server terminal to stop it.
 
 ```cpp
-#include <arknet/tcp/tcps_server.hpp>
 #include <iostream>
 #include <string>
 #include <string_view>
+
+#include <arknet/tcp/tcps_server.hpp>
 
 int main(int argc, char** argv)
 {

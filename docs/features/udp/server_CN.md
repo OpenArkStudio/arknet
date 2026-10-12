@@ -7,9 +7,10 @@
 服务端通过来源端点对应的 session 回复。通过 `arknet::arknet` 接口目标，将本页服务端与[客户端](client_CN.md)分别构建为可执行程序。先启动服务端，再在另一个终端运行客户端。在服务端终端按 Enter 停止服务端。
 
 ```cpp
-#include <arknet/udp/udp_server.hpp>
 #include <iostream>
 #include <string_view>
+
+#include <arknet/udp/udp_server.hpp>
 
 int main()
 {

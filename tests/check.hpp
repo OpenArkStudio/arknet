@@ -1,7 +1,5 @@
 #pragma once
 
-#include "vendor/doctest/doctest.h"
-
 #include <chrono>
 #include <condition_variable>
 #include <cstdlib>
@@ -12,6 +10,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include "vendor/doctest/doctest.h"
 
 using namespace std::chrono_literals;
 

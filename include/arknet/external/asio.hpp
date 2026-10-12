@@ -1,10 +1,11 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
 #pragma once
-#include <arknet/config.hpp>
 #include <concepts>
 #include <string_view>
 #include <system_error>
 #include <type_traits>
+
+#include <arknet/config.hpp>
 
 #if defined(ARKNET_USE_BOOST_ASIO) && ARKNET_USE_BOOST_ASIO
 #include <boost/asio.hpp>

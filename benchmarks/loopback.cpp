@@ -1,8 +1,3 @@
-#include <arknet/arknet.hpp>
-#include "runtime.hpp"
-#include "resources.hpp"
-#include "work.hpp"
-
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -27,6 +22,11 @@
 #include <string_view>
 #include <thread>
 #include <vector>
+
+#include <arknet/arknet.hpp>
+#include "resources.hpp"
+#include "runtime.hpp"
+#include "work.hpp"
 
 namespace
 {

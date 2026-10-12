@@ -8,13 +8,14 @@ The client upgrades at `/echo`, sends one binary message and checks both its
 content and type. Its main thread waits for the reply; IO callbacks do not block.
 
 ```cpp
-#include <arknet/websocket/ws_client.hpp>
 #include <chrono>
 #include <future>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <utility>
+
+#include <arknet/websocket/ws_client.hpp>
 
 int main()
 {

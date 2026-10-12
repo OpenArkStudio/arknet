@@ -2,8 +2,8 @@
 // Distributed under BSL-1.0. See LICENSE.
 #pragma once
 
-#include <arknet/base/error.hpp>
 #include <arknet/base/detail/allocator.hpp>
+#include <arknet/base/error.hpp>
 
 namespace arknet::detail
 {

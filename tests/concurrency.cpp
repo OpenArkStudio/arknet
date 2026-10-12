@@ -1,7 +1,3 @@
-#include <arknet/arknet.hpp>
-#include "check.hpp"
-#include "../benchmarks/runtime.hpp"
-
 #include <array>
 #include <atomic>
 #include <barrier>
@@ -9,8 +5,12 @@
 #include <latch>
 #include <memory>
 #include <optional>
-#include <thread>
 #include <set>
+#include <thread>
+
+#include <arknet/arknet.hpp>
+#include "../benchmarks/runtime.hpp"
+#include "check.hpp"
 
 namespace
 {

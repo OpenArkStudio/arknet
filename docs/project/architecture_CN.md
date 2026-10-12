@@ -16,7 +16,7 @@ Application callbacks / HTTP router / custom CRTP types
              io_pool / io_t lanes
           owned contexts or external strands
                      |
-        standalone Asio or Boost.Asio
+        Standalone Asio or Boost.Asio
             OS sockets; optional OpenSSL
 ```
 
@@ -24,7 +24,7 @@ CRTP 允许自定义客户端和 Session 扩展协议行为，不需要额外的
 服务端接受 Session 类型。组件分别负责生命周期、定时器、重连、消息匹配、
 事件顺序和发送配额／数据所有权。
 
-standalone 模式使用适配 standalone Asio 的内置 BHO Beast；
+Standalone Asio 模式使用适配 standalone Asio 的内置 BHO Beast；
 Boost 模式使用官方 Boost.Asio 和 Boost.Beast。它们是后端选项，
 同一程序中不能混用两种 socket 类型。HTTP/2 与 HTTP/3 需要不同的协议引擎，
 见[路线图](roadmap_CN.md)。

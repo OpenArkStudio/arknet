@@ -11,7 +11,7 @@
 ![不同 IO 模型下的原生 Asio 协程批次 p99 RTT](assets/coroutine-work0-latency.svg)
 
 - 两种后端都以 1 个 io_context、4 个线程的吞吐量中位数最高，1 个 io_context、2 个线程的批次 p99 中位数最低。
-- standalone 的 1 个 io_context、2 个线程与 1 个 io_context、4 个线程的批次 p99 运行范围重叠，不能据此确认稳定的尾延迟优势。
+- Standalone Asio 的 1 个 io_context、2 个线程与 1 个 io_context、4 个线程的批次 p99 运行范围重叠，不能据此确认稳定的尾延迟优势。
 
 ### 每次回显增加 10,000 次确定性运算
 

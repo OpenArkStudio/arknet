@@ -37,8 +37,9 @@ The **4 MiB below is an example, not a universal recommendation**. Check errors 
 ### TCP or UDP Client
 
 ```cpp
-#include <arknet/arknet.hpp>
 #include <iostream>
+
+#include <arknet/arknet.hpp>
 
 arknet::udp_client client; // Use arknet::tcp_client for TCP.
 client.bind_init([&] {

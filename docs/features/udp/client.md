@@ -10,12 +10,13 @@ not a UDP delivery guarantee. Additional datagrams cannot fulfill the same
 promise twice.
 
 ```cpp
-#include <arknet/udp/udp_client.hpp>
 #include <chrono>
 #include <future>
 #include <iostream>
 #include <string>
 #include <string_view>
+
+#include <arknet/udp/udp_client.hpp>
 
 int main()
 {

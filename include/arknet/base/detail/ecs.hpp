@@ -5,8 +5,9 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
-#include <arknet/base/detail/type_traits.hpp>
+
 #include <arknet/base/detail/match_condition.hpp>
+#include <arknet/base/detail/type_traits.hpp>
 namespace arknet::detail
 {
 struct component_tag

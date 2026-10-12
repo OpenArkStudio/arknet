@@ -1,8 +1,10 @@
 // Copyright (c) 2026 OpenArkStudio.
 // Distributed under the Boost Software License, Version 1.0. See LICENSE.
 #pragma once
-#include <arknet/external/beast.hpp>
+#include <arknet/base/detail/allocator.hpp>
+#include <arknet/base/detail/util.hpp>
 #include <arknet/base/error.hpp>
+#include <arknet/external/beast.hpp>
 
 namespace arknet::detail
 {

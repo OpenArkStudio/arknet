@@ -11,12 +11,13 @@ the `localhost` identity passed to `start`; DNS connections also send SNI.
 Do not disable peer verification to make a certificate mismatch succeed.
 
 ```cpp
-#include <arknet/tcp/tcps_client.hpp>
 #include <chrono>
 #include <future>
 #include <iostream>
 #include <string>
 #include <string_view>
+
+#include <arknet/tcp/tcps_client.hpp>
 
 int main(int argc, char** argv)
 {
