@@ -683,6 +683,11 @@ void benchmark(const options& settings, const std::shared_ptr<context>& owner)
             }();
             if (!connected)
                 throw std::runtime_error("client start failed: " + arknet::get_last_error().message());
+            if constexpr (!Framed && !WebSocket && !Http)
+                for (const auto& previous : clients)
+                    if (previous->get_local_port() == client->get_local_port())
+                        throw std::runtime_error("UDP clients share local endpoint " + std::string(host) + ':' +
+                                                 std::to_string(client->get_local_port()));
             clients.push_back(std::move(client));
             states.push_back(std::move(state));
         }

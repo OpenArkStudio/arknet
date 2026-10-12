@@ -126,6 +126,11 @@ Copy a sender endpoint before storing it beyond the receive callback.
 
 ## Socket Options and Session State
 
+UDP clients leave `SO_REUSEADDR` disabled by default so each client owns its
+local endpoint. On Linux, enabling it can let connected UDP sockets share a
+source port and misroute replies. Applications requiring reuse can explicitly
+call `client.set_reuse_address(true)` in `bind_init`.
+
 Configure native options in `bind_init`, when the socket has been opened. For
 broadcast sending, configure before start:
 

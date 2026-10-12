@@ -119,6 +119,13 @@ with **41 checks / 133 cases** per Release backend and **16 checks / 133 cases**
 per standalone sanitizer build. GCC/libstdc++ regression checks also passed.
 See the [portability check record](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/portability/README.md).
 
+After correcting the UDP client's implicit `SO_REUSEADDR` setting on 2026-10-12,
+both Release + TLS backends passed **41 checks / 134 cases**, and each passed
+30 independent executions of the previously failing UDP configuration.
+UDP ASan/UBSan and TSan checks also passed. See the
+[UDP endpoint regression record](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/udp-endpoints/README.md)
+for the Linux port-collision evidence and local logs.
+
 Shutdown regressions cover sessions/strands retained across contexts and cleanup
 after coroutine connection failures. Historical diagnostics remain under
 `benchmarks/results/diagnostics/`; published performance reports use only complete

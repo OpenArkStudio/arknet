@@ -111,6 +111,12 @@ IPv6 独立检查覆盖两后端及 TLS 开关；ASan/UBSan、TSan 和 30 次短
 **16 个检查、133 个用例**。GCC/libstdc++ 回归检查也通过，详见
 [可移植性测试记录](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/portability/README_CN.md)。
 
+2026-10-12 修正 UDP 客户端默认开启 `SO_REUSEADDR` 的行为后，两种 Release + TLS
+后端各通过 **41 项检查、134 个用例**，并各用独立进程重复执行原失败的 UDP
+配置 30 次，全部通过。UDP 的 ASan/UBSan 和 TSan 检查也通过。
+[UDP 端点回归记录](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/udp-endpoints/README_CN.md)
+保存了 Linux 端口冲突证据和本地日志。
+
 关闭流程的回归用例覆盖跨 context 保留的 Session/strand，以及协程连接后的异常
 清理。历史诊断数据保存在 `benchmarks/results/diagnostics/`；发布的性能报告
 只使用关闭修复后重新测量的完整数据。

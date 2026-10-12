@@ -212,7 +212,9 @@ protected:
                 object._handle_connect(error, std::move(owner), std::move(options), std::move(chain));
                 return;
             }
-            socket.set_option(asio::socket_base::reuse_address(true), ignored);
+            // UDP clients need exclusive source ports for unambiguous reply routing.
+            if constexpr (std::is_same_v<typename lowest_layer_t::protocol_type, asio::ip::tcp>)
+                socket.set_option(asio::socket_base::reuse_address(true), ignored);
             detail::set_keepalive_options(socket);
             clear_last_error();
             object._do_init(options);

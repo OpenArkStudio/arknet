@@ -87,6 +87,44 @@ struct udp_io_runner
     ~udp_io_runner() { finish(); }
 };
 
+DOCTEST_TEST_CASE("UDP clients reserve exclusive local endpoints by default")
+{
+    for (const auto* host : {"127.0.0.1", "::1"})
+    {
+        DOCTEST_INFO("host=", std::string(host));
+        asio::io_context context;
+        const asio::ip::udp::endpoint destination(asio::ip::make_address(host), 0);
+        asio::ip::udp::socket peer(context, destination.protocol());
+        peer.bind(destination);
+        arknet::udp_client client;
+        client.set_auto_reconnect(false);
+        bool reuse = true;
+        asio::ip::udp::endpoint local;
+        client.bind_init([&] { reuse = client.is_reuse_address(); });
+        client.bind_connect([&] { local = client.socket().local_endpoint(); });
+        check(client.start(host, peer.local_endpoint().port()), "UDP client connects");
+        DOCTEST_CHECK_MESSAGE(!reuse, "UDP clients do not enable SO_REUSEADDR implicitly");
+
+        asio::ip::udp::socket competing(context, destination.protocol());
+        competing.set_option(asio::socket_base::reuse_address(reuse));
+        arknet::error_code error;
+        competing.bind(local, error);
+        if (!error)
+            competing.connect(peer.local_endpoint(), error);
+        DOCTEST_CHECK_MESSAGE(error == asio::error::address_in_use,
+                              "another default client cannot share the local and remote endpoints");
+        client.stop();
+
+        arknet::udp_client opted_in;
+        opted_in.set_auto_reconnect(false);
+        opted_in.bind_init([&] { opted_in.set_reuse_address(true); });
+        opted_in.bind_connect([&] { reuse = opted_in.is_reuse_address(); });
+        check(opted_in.start(host, peer.local_endpoint().port()), "UDP client with explicit reuse connects");
+        check(reuse, "bind_init can still explicitly enable SO_REUSEADDR");
+        opted_in.stop();
+    }
+}
+
 DOCTEST_TEST_CASE("UDP sessions preserve first, empty and binary datagrams across restart")
 {
     messages received;

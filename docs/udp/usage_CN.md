@@ -111,6 +111,8 @@ Future 返回 `(error_code, bytes)`，不能在 IO 回调内等待。完成回�
 
 ## Socket 选项与 session 状态
 
+UDP 客户端默认不开启 `SO_REUSEADDR`，确保每个客户端独占本地端点。Linux 下开启该选项可能让已连接的 UDP socket 共用来源端口，导致回包被投递给其他客户端。需要复用时，可在 `bind_init` 中显式调用 `client.set_reuse_address(true)`。
+
 在 `bind_init` 中配置原生 socket 选项，此时 socket 已打开。需要发送广播时，在启动前配置：
 
 ```cpp
