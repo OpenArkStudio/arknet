@@ -90,7 +90,7 @@ DOCTEST_TEST_CASE("RUDP reassembles empty binary and fragmented messages on IPv4
     {
         DOCTEST_INFO(host);
         messages received;
-        std::atomic<unsigned> connects{}, handshakes{}, disconnects{};
+        std::atomic<unsigned> connects{}, handshakes{}, client_handshakes{}, disconnects{};
         arknet::rudp_server server;
         server.bind_handshake(
             [&](auto&, arknet::error_code error)
@@ -113,6 +113,12 @@ DOCTEST_TEST_CASE("RUDP reassembles empty binary and fragmented messages on IPv4
             });
         arknet::rudp_client client;
         client.set_auto_reconnect(false);
+        client.bind_handshake(
+            [&](arknet::error_code error)
+            {
+                check(!error, "client handshake callback receives success");
+                ++client_handshakes;
+            });
         client.bind_recv([&](std::string_view bytes) { received.push(bytes); });
         const std::vector<std::string> expected{"", std::string("a\0b", 3), std::string(4119, 'r'),
                                                 std::string(16384, 'k')};
@@ -132,7 +138,8 @@ DOCTEST_TEST_CASE("RUDP reassembles empty binary and fragmented messages on IPv4
             server.stop();
             check(server.get_session_count() == 0, "RUDP stop clears sessions");
         }
-        check(connects == 2 && handshakes == 2 && disconnects == 2, "one connect/handshake/disconnect per session");
+        check(connects == 2 && handshakes == 2 && client_handshakes == 2 && disconnects == 2,
+              "one connect/handshake/disconnect per session on both endpoints");
     }
 }
 

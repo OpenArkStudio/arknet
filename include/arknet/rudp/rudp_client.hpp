@@ -113,7 +113,7 @@ protected:
                 channel_->start();
             }
             set_last_error(error);
-            this->listener_.notify(detail::event_type::handshake, error);
+            this->listener_.notify(detail::event_type::handshake, error_code(error));
             if (!error && stop_connect_.load())
                 error = asio::error::operation_aborted;
             udp_base::_handle_connect(error, std::move(lifetime), std::move(condition), std::move(*completion));
