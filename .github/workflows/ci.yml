@@ -59,20 +59,19 @@ jobs:
           -DARKNET_BUILD_BENCHMARKS=${{ matrix.sanitize != 'OFF' && 'OFF' || 'ON' }}
           ${{ matrix.sanitize == 'ON' && '"-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"' || matrix.sanitize == 'THREAD' && '"-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=thread"' || '' }}
       - run: cmake --build build --target arknet_loopback_benchmark --parallel 2
-      - name: Reproduce UDP endpoint collisions before the fix
+      - name: Validate UDP endpoint collisions after the fix
         shell: bash
         run: |
+          mkdir -p build/tests/logs/Release
           for attempt in $(seq 1 50); do
             if build/benchmarks/arknet_loopback_benchmark --protocol udp --payload 1024 --clients 256 --window 1 --seconds 0.2 --warmup 0.1 --io-model sharded --io-threads 4 > /tmp/udp-result.json 2> /tmp/udp-endpoints.log; then
+              cat /tmp/udp-result.json | tee -a build/tests/logs/Release/udp-endpoints-after.log
               continue
             fi
             cat /tmp/udp-endpoints.log /tmp/udp-result.json
-            if rg 'COLLISION' /tmp/udp-endpoints.log; then
-              exit 0
-            fi
             exit 1
           done
-          exit 1
+          echo 'All 50 UDP runs passed with 256 clients and no duplicate endpoints or content errors.'
       - name: Test
         if: false
         run: cmake --build build --target arknet_check
