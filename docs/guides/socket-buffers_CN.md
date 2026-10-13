@@ -27,7 +27,7 @@ UDP 接收队列满后会丢弃数据报，本机回环也不例外。发送成�
 
 </Aside>
 
-arknet 不对原生 UDP 自动切包、重传或限速。需要在 UDP 上可靠、有序地传递消息时，使用实验性的 [RUDP 模块](../features/rudp/index_CN.md)。
+arknet 不对原生 UDP 自动切包、重传或限速。需要在 UDP 上可靠、有序地传递消息时，使用 [RUDP 模块](../features/rudp/index_CN.md)。
 
 ## 设置并读取实际大小
 

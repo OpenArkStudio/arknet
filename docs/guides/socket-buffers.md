@@ -27,7 +27,7 @@ A full UDP receive queue drops datagrams even on loopback. A successful send doe
 
 </Aside>
 
-arknet does not automatically fragment, retransmit or throttle native UDP. Use the experimental [RUDP module](../features/rudp/index.md) for reliable, ordered messages over UDP.
+arknet does not automatically fragment, retransmit or throttle native UDP. Use the [RUDP module](../features/rudp/index.md) for reliable, ordered messages over UDP.
 
 ## Set and Read Back the Effective Size
 

@@ -6,7 +6,7 @@ type Group = { en: string; zh: string; children: Entry[]; open?: boolean; badge?
 type Entry = Page | Group;
 const protocols: Page[] = [
   ["tcp", "TCP", "TCP"], ["udp", "UDP", "UDP"],
-  ["rudp", "RUDP", "RUDP", { en: "Experimental", zh: "实验性", variant: "warning" }],
+  ["rudp", "RUDP", "RUDP", { en: "Implemented", zh: "已实现", variant: "success" }],
   ["websocket", "WebSocket / WSS", "WebSocket / WSS"],
   ["http", "HTTP / HTTPS", "HTTP / HTTPS"], ["tls", "TLS / mTLS", "TLS / mTLS"],
 ];
@@ -78,6 +78,7 @@ const tree: Entry[] = [
   ] },
   { en: "Project", zh: "项目", children: [
     ["project", "Overview", "概览"],
+    ["project/releases", "Releases", "版本发布"],
     ["project/testing", "Testing and validation", "测试与验证"],
     ["project/production-readiness", "Production acceptance and ARK", "生产验收与 ARK 接入"],
     ["project/troubleshooting", "Troubleshooting", "故障排查"],

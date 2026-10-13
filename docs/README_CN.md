@@ -1,7 +1,7 @@
 # arknet
 
 arknet 是面向客户端与服务端的通用 C++20 header-only 网络库，提供 TCP、UDP、
-RUDP（实验性）、WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，
+RUDP、WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，
 支持 IPv4 和 IPv6，可选择 Standalone Asio 或 Boost.Asio 后端。
 
 ## 开始使用
@@ -16,7 +16,7 @@ RUDP（实验性）、WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组�
 | --- | --- | --- |
 | TCP | 有序字节流与应用自定义消息边界 | [TCP](features/tcp/index_CN.md) |
 | UDP | 原生数据报与来源端点 Session | [UDP](features/udp/index_CN.md) |
-| RUDP（实验性） | 基于 ARQ 核心的可靠、有序 UDP 消息 | [RUDP](features/rudp/index_CN.md) |
+| RUDP | 基于 ARQ 与可选 FEC 的可靠、有序 UDP 消息 | [RUDP](features/rudp/index_CN.md) |
 | WebSocket / WSS | 完整消息与 HTTP Upgrade | [WebSocket](features/websocket/index_CN.md) |
 | HTTP / HTTPS | HTTP/1.1 请求、响应、路由与中间件 | [HTTP](features/http/index_CN.md) |
 | TLS / mTLS | 加密传输与证书校验 | [TLS](features/tls/index_CN.md) |
@@ -38,7 +38,8 @@ RUDP（实验性）、WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组�
 
 [项目](project/index_CN.md)包含架构、贡献规范与路线图。HTTP/2、HTTP/3、
 named pipe、Unix domain socket 和 RPC 仍为 TODO。
-RUDP 处于实验阶段，不属于 `v0.1.0-rc.1`。
+[0.1.0 版本](project/releases_CN.md)包含 RUDP 及其三种恢复策略。
+部署容量与耐久验证见[生产验收](project/production-readiness_CN.md)。
 
 [源码](https://github.com/OpenArkStudio/arknet) ·
 [BSL-1.0](https://github.com/OpenArkStudio/arknet/blob/main/LICENSE) ·

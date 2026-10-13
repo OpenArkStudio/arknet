@@ -87,7 +87,7 @@ arknet 自有代码保留完整检测。性能数据见独立的 [RUDP 报告](.
 
 <Aside type="note" title="说明：发布版本范围">
 
-RUDP、ARQ 和 HTTP 单次请求仍为实验性能力，不包含在 `v0.1.0-rc.1` 中。
+RUDP、ARQ 和 HTTP 单次请求包含在 `v0.1.0` 中，已通过本机正确性检查；部署容量与耐久验证需另行验收。
 
 </Aside>
 

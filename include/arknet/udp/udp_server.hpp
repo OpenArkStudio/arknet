@@ -93,8 +93,8 @@ public:
         this->acceptor_.reset();
         base::destroy();
     }
-    bool is_started() const { return this->state_ == state_t::started && this->acceptor_->is_open(); }
-    bool is_stopped() const { return this->state_ == state_t::stopped; }
+    bool is_started() const noexcept { return base::is_started(); }
+    bool is_stopped() const noexcept { return base::is_stopped(); }
     asio::ip::udp::socket& acceptor() noexcept { return *acceptor_; }
     const asio::ip::udp::socket& acceptor() const noexcept { return *acceptor_; }
 

@@ -1,3 +1,8 @@
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <thread>
+
 #include <arknet/arknet.hpp>
 #include "check.hpp"
 
@@ -28,6 +33,98 @@ struct late_deadline_session : arknet::tcp_session_t<late_deadline_session>
         super::_post_close(error, std::move(lifetime), previous, std::move(chain));
     }
 };
+
+DOCTEST_TEST_CASE("Lifecycle status queries tolerate concurrent TCP and UDP transport changes")
+{
+    io_runner runner;
+    arknet::tcp_server tcp_server(runner.context);
+    arknet::tcp_client tcp_client(runner.context);
+    arknet::udp_server udp_server(runner.context);
+    arknet::udp_client udp_client(runner.context);
+    arknet::udp_cast udp_cast(runner.context);
+    tcp_client.set_auto_reconnect(false);
+    udp_client.set_auto_reconnect(false);
+    messages tcp_connections, udp_connections;
+    std::mutex sessions_mutex;
+    std::shared_ptr<arknet::tcp_session> tcp_session;
+    std::shared_ptr<arknet::udp_session> udp_session;
+    tcp_server.bind_connect(
+        [&](auto& session)
+        {
+            {
+                std::lock_guard lock(sessions_mutex);
+                tcp_session = session;
+            }
+            tcp_connections.push("connected");
+        });
+    udp_server.bind_connect(
+        [&](auto& session)
+        {
+            {
+                std::lock_guard lock(sessions_mutex);
+                udp_session = session;
+            }
+            udp_connections.push("connected");
+        });
+    std::atomic<std::size_t> samples{};
+    std::jthread status_reader(
+        [&](std::stop_token stop)
+        {
+            const auto poll = [](const auto& endpoint) {
+                return static_cast<std::size_t>(endpoint.is_started()) +
+                       static_cast<std::size_t>(endpoint.is_stopped());
+            };
+            while (!stop.stop_requested())
+            {
+                auto states =
+                    poll(tcp_server) + poll(tcp_client) + poll(udp_server) + poll(udp_client) + poll(udp_cast);
+                {
+                    std::lock_guard lock(sessions_mutex);
+                    if (tcp_session)
+                        states += poll(*tcp_session);
+                    if (udp_session)
+                        states += poll(*udp_session);
+                }
+                samples.fetch_add(1 + states);
+                std::this_thread::yield();
+            }
+        });
+    for (std::size_t round = 0; round < 16; ++round)
+    {
+        check(tcp_server.start("127.0.0.1", 0), "polled TCP server starts");
+        check(tcp_client.start("127.0.0.1", tcp_server.get_listen_port()), "polled TCP client connects");
+        tcp_connections.wait(round + 1);
+        check(udp_server.start("127.0.0.1", 0), "polled UDP server starts");
+        check(udp_client.start("127.0.0.1", udp_server.get_listen_port()), "polled UDP client starts");
+        check(udp_cast.start("127.0.0.1", 0), "polled UDP cast starts");
+        check(udp_client.async_send("probe"), "polled UDP session receives its first datagram");
+        udp_connections.wait(round + 1);
+        check(tcp_server.is_started() && tcp_client.is_started() && tcp_session->is_started(),
+              "connected TCP endpoints publish started state");
+        check(udp_server.is_started() && udp_client.is_started() && udp_cast.is_started() && udp_session->is_started(),
+              "connected UDP endpoints publish started state");
+        const auto previous_samples = samples.load();
+        while (samples.load() == previous_samples)
+            std::this_thread::yield();
+        tcp_server.stop();
+        tcp_client.stop();
+        udp_client.stop();
+        udp_server.stop();
+        udp_cast.stop();
+        check(tcp_server.is_stopped() && tcp_client.is_stopped() && tcp_session->is_stopped(),
+              "TCP stop completion publishes stopped state");
+        check(udp_server.is_stopped() && udp_client.is_stopped() && udp_cast.is_stopped() && udp_session->is_stopped(),
+              "UDP stop completion publishes stopped state");
+        check(!tcp_server.is_started() && !tcp_client.is_started() && !tcp_session->is_started() &&
+                  !udp_server.is_started() && !udp_client.is_started() && !udp_cast.is_started() &&
+                  !udp_session->is_started(),
+              "stopped endpoints no longer report started");
+    }
+    status_reader.request_stop();
+    status_reader.join();
+    check(samples > 0, "another thread queried lifecycle status during transport changes");
+    check(!runner.context.stopped(), "status polling preserves external IO ownership");
+}
 
 DOCTEST_TEST_CASE("A late stop deadline cannot retain a closing TCP session's IO worker")
 {

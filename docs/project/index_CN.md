@@ -2,6 +2,7 @@
 
 arknet 独立于 ARK 开发。应用集成前，修改应保持协议约定，并提供可复现的验证。
 
+- [版本发布](releases_CN.md)：版本范围与部署验收。
 - [测试与验证](testing_CN.md)：正确性覆盖、Sanitizer 检查与本地证据。
 - [生产验收与 ARK 接入](production-readiness_CN.md)：验收条件、直接替换与业务回归。
 - [故障排查](troubleshooting_CN.md)：现象、诊断步骤与处理方法。

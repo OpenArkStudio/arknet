@@ -10,6 +10,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  docs:
+    name: Documentation checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: docs/site/package-lock.json
+      - run: npm ci --prefix docs/site
+      - run: npm run check --prefix docs/site
   format:
     name: Style - clang-format 18
     runs-on: ubuntu-24.04
