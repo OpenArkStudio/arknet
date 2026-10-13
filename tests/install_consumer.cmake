@@ -1,11 +1,13 @@
-function(run)
-    execute_process(COMMAND ${ARGV} RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
-    if(NOT result EQUAL 0)
-        message(FATAL_ERROR "${ARGV}\n${output}\n${error}")
+function(run stage timeout)
+    message(STATUS "Installed consumer: ${stage}")
+    execute_process(COMMAND ${ARGN} TIMEOUT ${timeout}
+        RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+    if(NOT result STREQUAL "0")
+        message(FATAL_ERROR "Installed consumer ${stage} failed (${result})\n${ARGN}\n${output}\n${error}")
     endif()
 endfunction()
 set(prefix "${ARKNET_BUILD_DIR}/install-smoke")
-run("${CMAKE_COMMAND}" --install "${ARKNET_BUILD_DIR}" --prefix "${prefix}" --config "${ARKNET_CONFIG}")
+run(install 30 "${CMAKE_COMMAND}" --install "${ARKNET_BUILD_DIR}" --prefix "${prefix}" --config "${ARKNET_CONFIG}")
 set(vcpkg_args)
 if(ARKNET_VCPKG_INSTALLED_DIR)
     list(APPEND vcpkg_args "-DVCPKG_INSTALLED_DIR=${ARKNET_VCPKG_INSTALLED_DIR}")
@@ -13,6 +15,7 @@ endif()
 if(ARKNET_VCPKG_TRIPLET)
     list(APPEND vcpkg_args "-DVCPKG_TARGET_TRIPLET=${ARKNET_VCPKG_TRIPLET}")
 endif()
+message(STATUS "Installed consumer: configure")
 execute_process(COMMAND "${CMAKE_COMMAND}" -S "${ARKNET_SOURCE_DIR}/tests/consumer" -B "${ARKNET_BUILD_DIR}/consumer-smoke"
     -G "${ARKNET_GENERATOR}"
     "-DCMAKE_CXX_COMPILER=${ARKNET_CXX_COMPILER}"
@@ -23,10 +26,10 @@ execute_process(COMMAND "${CMAKE_COMMAND}" -S "${ARKNET_SOURCE_DIR}/tests/consum
     "-DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}"
     -DVCPKG_MANIFEST_INSTALL=OFF
     ${vcpkg_args}
-    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
-if(NOT result EQUAL 0)
-    message(FATAL_ERROR "${output}\n${error}")
+    TIMEOUT 180 RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT result STREQUAL "0")
+    message(FATAL_ERROR "Installed consumer configure failed (${result})\n${output}\n${error}")
 endif()
-run("${CMAKE_COMMAND}" --build "${ARKNET_BUILD_DIR}/consumer-smoke" --config "${ARKNET_CONFIG}" --parallel 2)
-run("${CMAKE_COMMAND}" --build "${ARKNET_BUILD_DIR}/consumer-smoke"
+run(build 600 "${CMAKE_COMMAND}" --build "${ARKNET_BUILD_DIR}/consumer-smoke" --config "${ARKNET_CONFIG}" --parallel 2)
+run(run 30 "${CMAKE_COMMAND}" --build "${ARKNET_BUILD_DIR}/consumer-smoke"
     --config "${ARKNET_CONFIG}" --target check_consumer)

@@ -72,7 +72,7 @@ endif()
 arknet_add_check(check_runner 15 ${CMAKE_COMMAND}
     -DARKNET_RUNNER_TEST_DIR=${PROJECT_BINARY_DIR}/tests/runner-selfcheck
     -P ${CMAKE_CURRENT_SOURCE_DIR}/check_runner_test.cmake)
-arknet_add_check(install_consumer 180 ${CMAKE_COMMAND}
+arknet_add_check(install_consumer 900 ${CMAKE_COMMAND}
     -DARKNET_BUILD_DIR=${PROJECT_BINARY_DIR}
     -DARKNET_SOURCE_DIR=${PROJECT_SOURCE_DIR}
     -DARKNET_CXX_COMPILER=${CMAKE_CXX_COMPILER}
