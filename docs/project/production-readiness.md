@@ -33,10 +33,10 @@ capacity on a deployment network. RUDP is implemented and locally validated in
 | Cross-platform CI | [All 13 jobs passed](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095): both Asio backends, Linux/macOS/Windows, builds without TLS, ASan/UBSan, TSan, installed consumers and formatting |
 | Real legacy peers | Both backends: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each |
 | Measured RUDP/FEC load | 96 configurations, 276 runs, 7,960,439 successful message round trips; six 120-second sustained runs |
-| ARK replacement | Capability mapping and migration rules defined; direct replacement and business regression pending |
+| ARK replacement | Direct replacement merged in [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38); business regression and deployment acceptance pending |
 | Production deployment | Target-network cross-host capacity, production-duration endurance and deployment access control pending |
 
-[Retained logs and commands](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec) identify exact coverage. Local completion is a gate for ARK integration, not a claim that deployment acceptance is complete.
+[Retained logs and commands](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec) identify exact coverage. The ARK replacement is merged; the remaining checks cover business behavior and deployment acceptance.
 
 ## Deployment capacity target
 
@@ -94,5 +94,5 @@ session ID in `user_data`; it is distinct from the RUDP conversation ID.
 - Set ARQ parameters explicitly for the first rollout: zephyr used MTU 1400 with congestion control disabled, while arknet defaults to 1200 with congestion control enabled.
 - Keep FEC opt-in. A FEC-capable server accepts legacy ARQ sessions; a FEC client requires negotiation support from its peer.
 
-Complete arknet acceptance first. Then perform the direct ARK replacement and its
-business regression tests before a production rollout.
+The direct ARK replacement is merged. Run the business regression, cross-host
+capacity and production-duration checks before a production rollout.

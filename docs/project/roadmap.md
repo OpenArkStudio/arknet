@@ -39,8 +39,8 @@ HTTP/1 transports remain independently usable.
 [FEC policies](../features/rudp/fec.md) describe the implemented fixed and adaptive
 presets, activation thresholds and resource limits.
 KCP message-mode interoperability, retry/queue limits and local measurement
-are implemented; ARK's full RDP workflow and production-duration validation
-remain to be verified for deployment adoption.
+are implemented. ARK's RDP workflow now uses arknet through [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38);
+production-duration validation remains to be verified for deployment adoption.
 
 MQTT, database protocols and proxies are not scheduled. Add them only when a
 concrete consumer and acceptance criteria exist. ARK integration proceeds through
