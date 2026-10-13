@@ -235,7 +235,9 @@ public:
         {
             const bool initial = fragment.transmissions == 0;
             const bool timeout = !initial && difference(current_, fragment.deadline) >= 0;
-            const bool fast = !initial && options_.fast_resend != 0 && fragment.fast_acks >= options_.fast_resend;
+            // Bound ACK-driven retries as KCP does; delayed recovery must still have time to arrive.
+            const bool fast = !initial && fragment.transmissions <= 5 && options_.fast_resend != 0 &&
+                              fragment.fast_acks >= options_.fast_resend;
             if (!initial && !timeout && !fast)
                 continue;
             if (fragment.transmissions > options_.max_retransmits)
@@ -254,6 +256,9 @@ public:
             else
                 fast_loss = true;
             ++fragment.transmissions;
+            ++transmissions_;
+            if (!initial)
+                ++retransmissions_;
             fragment.fast_acks = 0;
             fragment.deadline = current_ + fragment.timeout + (initial && !options_.nodelay ? fragment.timeout / 8 : 0);
             append(push_command, fragment.fragment, current_, fragment.sequence, fragment.data);
@@ -315,6 +320,9 @@ public:
     std::size_t pending_bytes() const { return pending_bytes_; }
     std::uint32_t conversation() const { return conversation_; }
     bool failed() const { return failed_; }
+    std::uint64_t transmissions() const noexcept { return transmissions_; }
+    std::uint64_t retransmissions() const noexcept { return retransmissions_; }
+    std::uint32_t smoothed_rtt_ms() const noexcept { return static_cast<std::uint32_t>(smoothed_rtt_); }
 
 private:
     static constexpr std::size_t header_size = 24;
@@ -486,6 +494,7 @@ private:
     std::size_t pending_bytes_ = 0;
     std::size_t receive_bytes_ = 0;
     std::uint64_t congestion_bytes_ = 0;
+    std::uint64_t transmissions_ = 0, retransmissions_ = 0;
     std::int64_t smoothed_rtt_ = 0;
     std::int64_t rtt_variance_ = 0;
     std::uint32_t current_ = 0;

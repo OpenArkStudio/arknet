@@ -1,91 +1,173 @@
 # RUDP Performance
 
-All 72 configurations and 216 measured rounds passed, completing 8,847,130 message round trips with no missing messages, payload errors, ordering errors or drain timeouts.
+All 96 configurations and 276 measured runs passed, completing 7,960,439 message round trips. Content, ordering, send completion and drain checks passed, with zero relay errors or queue overflows.
 
 ## Test Environment
 
-| Item | Recorded Value |
+| Item | Recorded Parameters |
 | --- | --- |
-| Time (UTC) | 2026-10-12T10:38:20Z / 2026-10-12T10:44:57Z |
-| Machine | Mac mini (Mac16,11), Apple M4 Pro, 14 logical CPUs, 48 GiB RAM |
-| OS | macOS 27.0.1 (26A434), arm64 |
-| Build | Apple clang version 21.0.0 (clang-2100.1.1.101); C++20 Release -O3 -DNDEBUG |
-| Backends | Standalone Asio 1.38.2, Boost.Asio 1.90.0 |
-| Traffic | 8 clients; IPv4 loopback; callback API |
-| Measurement | 3 rounds per case; 0.25 s warmup and 1 s measured per round |
-| Payload / request window | 64, 1024, 4096, 16384 B / 1, 4, 16 |
-| ARQ Settings | MTU 1200 B; send / receive windows 128 / 512 segments; timer 10 ms; congestion control on |
-| Receive buffers | Requested 4 MiB; effective server 4 MiB, clients 4 MiB |
+| Time (UTC) | 2026-10-13T03:20:31Z / 2026-10-13T04:00:27Z |
+| Machine | Mac mini (Mac16,11); Apple M4 Pro; 14 logical CPUs; 48 GiB RAM |
+| OS | macOS 27.0.1 (26A434); arm64 |
+| Build | Apple clang version 21.0.0 (clang-2100.1.1.101); C++20 Release `-O3 -DNDEBUG -std=gnu++20; no sanitizers`; CMake 4.3.3 |
+| Dependencies | Standalone Asio 1.38.2; Boost 1.90.0; OpenSSL 3.6.4 |
+| Endpoint Load | 4 clients; complete-message echo; no added business computation; callback API |
+| Main Comparison | 54 cases; 3 rounds per case; 2 s warmup; 3 s measured; 1,024 B; 16 in-flight/client |
+| Payload / Window | 36 cases; 64 / 4,096 / 16,384 B; windows 1 / 64; random loss; 1 io_context / 1 thread |
+| Sustained Runs | 6 cases; one 120 s measured run per case; 4,096 B; window 16; 1 io_context / 4 threads |
+| Repeated Seeds | Main and dimension runs use 42 / 43 / 44; separate streams per route and direction |
+| Socket Receive Buffers | Effective endpoint values: 4 MiB |
+| ARQ | UDP MTU 1200 B; send / receive windows 128 / 512 segments; update interval 10 ms; congestion control on |
+| FEC Groups | Up to 8 data shards; fixed parity 2; adaptive parity limit 4; configured group wait 2 ms |
+| FEC Budgets | Per-endpoint retention limit 1 MiB; parity datagram bytes limited to 50% of data datagram bytes |
+| Relay Capacity | Per route: 8 MiB / 8192 datagrams |
 
-All server sessions share one UDP socket and its strand; receive and ARQ processing remain serialized. The four-context configuration mainly distributes clients and does not demonstrate parallel server sharding.
+Source SHA-256: `15cb6ced6425d82086a083fd310f6d75016ac3a1018264856d41b460e4412d85`.
 
-Application messages are fragmented according to the ARQ MTU; 16 KiB is a message size, not the size of one UDP datagram.
+## Network Conditions and Metrics
 
-## Round-Trip Throughput
+| Condition | Injected Loss | One-Way Delay | Duplication / Reordering |
+| --- | --- | ---: | --- |
+| No injected loss | 0 | 0 ms | 0 |
+| Random loss | 5% per datagram | 10 ms | 1% duplicates; 5% delayed by an extra 15 ms |
+| Burst loss | 3 consecutive datagrams per 100, per direction | 10 ms | Same as above |
+| Sustained runs | Burst loss plus 2% random loss of remaining datagrams | 10 ms | Same as above |
 
-![RUDP round-trip throughput](assets/rudp-throughput.svg)
+![RUDP benchmark topology](assets/rudp-fec-topology.svg)
 
-## Round-Trip Latency
+These are network-condition simulations within one process on local IPv4 loopback, not WAN measurements. The relay always adds one io_context and one thread; statistics sampling uses another thread. Chart IO models describe endpoints only.
 
-![RUDP p99 RTT](assets/rudp-rtt.svg)
+Server sessions share a UDP socket and its strand. Four io_contexts with one thread each mainly distribute clients and do not establish parallel server sharding.
 
-## CPU Utilization
+RTT includes simulated delay, congestion control, FEC group wait and ARQ retransmission. Throughput counts completed message round trips and includes in-flight drain time. Bars are medians; whiskers are the actual minimum/maximum of three runs, not confidence intervals.
 
-![RUDP CPU utilization](assets/rudp-cpu.svg)
+## Throughput and p99 RTT
 
-CPU covers the client, server and every worker in one process. One logical CPU is 100%; divide by this host's 14 logical CPUs to obtain the machine share.
+![RUDP FEC throughput](assets/rudp-fec-throughput.svg)
 
-## 1024 B Results
+![RUDP FEC p99 RTT](assets/rudp-fec-rtt.svg)
 
-| Backend / IO Model | In-Flight per Client | Round Trips / s | Payload Mbit/s, Both Directions | p50 RTT / ms | p99 RTT / ms | CPU / % |
+## CPU and Wire Overhead
+
+![RUDP FEC process CPU](assets/rudp-fec-cpu.svg)
+
+CPU is average process utilization including clients, server, relay and sampling. One logical CPU is 100%; multiple threads can exceed 100%. Machine share is process CPU% / 14; the full summary includes both measures.
+
+![RUDP FEC wire overhead](assets/rudp-fec-wire-overhead.svg)
+
+Wire overhead = (endpoint UDP payload bytes sent / bidirectional application bytes − 1) × 100%. It includes ARQ control/retransmission, FEC headers, parity and padding; excludes IP/UDP headers and the relay's second forwarding hop. It is not the FEC parity ratio.
+
+## Recovery, Retransmission and Retained Memory
+
+![RUDP FEC recovered shards](assets/rudp-fec-recovery.svg)
+
+![RUDP ARQ retransmitted segments](assets/rudp-fec-retransmissions.svg)
+
+Recovery counts data shards restored by FEC; retransmissions count ARQ segments sent again. Both are normalized per 1,000 application round trips and are not complementary quantities.
+
+![RUDP FEC sampled retention](assets/rudp-fec-memory.svg)
+
+FEC retention sums endpoint statistics sampled every 100 ms and can miss shorter peaks; it excludes some temporary codec storage. Relay values sum independent route peaks that may occur at different times. RSS is the process high-water mark for a case, including warmup and all its rounds, not FEC-only memory.
+
+### Resource Values Under Random Loss
+
+1,024 B; window 16; one io_context / one endpoint thread. Sampled peaks are medians across three rounds.
+
+| Backend / Policy | Restored / 1,000 | Retransmitted / 1,000 | FEC Retained / KiB | Relay Route Peaks Sum / KiB | Process RSS / MiB | Max Observed Parity |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Standalone Asio / 1 context / 1 thread | 1 | 75,391 | 1,235.2 | 0.105 | 0.136 | 99.4 |
-| Standalone Asio / 1 context / 4 threads | 1 | 70,225 | 1,150.6 | 0.108 | 0.184 | 261.5 |
-| Standalone Asio / 4 contexts / 4 threads | 1 | 68,667 | 1,125.0 | 0.114 | 0.183 | 150.1 |
-| Standalone Asio / 1 context / 1 thread | 4 | 73,881 | 1,210.5 | 0.427 | 0.542 | 99.3 |
-| Standalone Asio / 1 context / 4 threads | 4 | 71,556 | 1,172.4 | 0.436 | 0.630 | 262.5 |
-| Standalone Asio / 4 contexts / 4 threads | 4 | 69,501 | 1,138.7 | 0.446 | 0.610 | 149.8 |
-| Standalone Asio / 1 context / 1 thread | 16 | 72,014 | 1,179.9 | 1.759 | 2.065 | 99.6 |
-| Standalone Asio / 1 context / 4 threads | 16 | 68,529 | 1,122.8 | 1.816 | 2.439 | 261.2 |
-| Standalone Asio / 4 contexts / 4 threads | 16 | 71,681 | 1,174.4 | 1.764 | 2.187 | 151.2 |
-| Boost.Asio / 1 context / 1 thread | 1 | 76,859 | 1,259.3 | 0.103 | 0.121 | 99.1 |
-| Boost.Asio / 1 context / 4 threads | 1 | 73,956 | 1,211.7 | 0.106 | 0.172 | 249.3 |
-| Boost.Asio / 4 contexts / 4 threads | 1 | 70,786 | 1,159.8 | 0.112 | 0.143 | 151.1 |
-| Boost.Asio / 1 context / 1 thread | 4 | 73,006 | 1,196.1 | 0.426 | 0.562 | 99.3 |
-| Boost.Asio / 1 context / 4 threads | 4 | 74,345 | 1,218.1 | 0.422 | 0.538 | 250.9 |
-| Boost.Asio / 4 contexts / 4 threads | 4 | 71,367 | 1,169.3 | 0.444 | 0.513 | 149.5 |
-| Boost.Asio / 1 context / 1 thread | 16 | 74,453 | 1,219.8 | 1.721 | 1.827 | 99.4 |
-| Boost.Asio / 1 context / 4 threads | 16 | 72,762 | 1,192.1 | 1.735 | 1.967 | 251.7 |
-| Boost.Asio / 4 contexts / 4 threads | 16 | 70,930 | 1,162.1 | 1.782 | 2.116 | 151.0 |
+| Standalone Asio / ARQ only | 0.0 | 331.7 | 0.0 | 50.5 | 6.8 | 0 |
+| Standalone Asio / Fixed FEC | 182.8 | 185.9 | 37.7 | 84.3 | 7.1 | 2 |
+| Standalone Asio / Adaptive FEC | 176.7 | 181.8 | 30.8 | 83.4 | 7.2 | 3 |
+| Boost.Asio / ARQ only | 0.0 | 327.3 | 0.0 | 52.4 | 7.0 | 0 |
+| Boost.Asio / Fixed FEC | 182.2 | 166.5 | 37.2 | 87.1 | 7.3 | 2 |
+| Boost.Asio / Adaptive FEC | 186.2 | 178.0 | 33.7 | 93.8 | 7.3 | 3 |
 
-## Findings and Scope
+## Payload Size and In-Flight Requests
 
-- Standalone Asio: highest 1024 B throughput was 75,391 round trips/s at 99.4% CPU (1 context / 1 thread, window 1); lowest p99 was 0.136 ms (1 context / 1 thread, window 1).
-- Boost.Asio: highest 1024 B throughput was 76,859 round trips/s at 99.1% CPU (1 context / 1 thread, window 1); lowest p99 was 0.121 ms (1 context / 1 thread, window 1).
+Random-loss condition; one io_context / one endpoint thread. Cells show round trips/s / p99 RTT in milliseconds, both three-run medians. Full JSON contains CPU, wire overhead and resource counters.
 
-Bars show the median across rounds; whiskers are the actual minimum/maximum, not confidence intervals. RTT summarizes each round's sampled percentile; throughput includes in-flight drain time, and payload bandwidth excludes protocol headers.
+### Standalone Asio
 
-These are 1 s local IPv4 loopback measurements, not WAN throughput, latency or loss-resilience results. No coroutine API was measured.
+| Message / B | In-Flight per Client | ARQ Only | Fixed FEC | Adaptive FEC |
+| ---: | ---: | ---: | ---: | ---: |
+| 64 | 1 | 139 / 80.8 | 116 / 91.4 | 140 / 79.6 |
+| 64 | 64 | 450 / 876.3 | 421 / 941.3 | 419 / 920.6 |
+| 4,096 | 1 | 74 / 139.4 | 114 / 93.5 | 113 / 88.5 |
+| 4,096 | 64 | 146 / 2,096.2 | 223 / 1,432.5 | 234 / 1,285.4 |
+| 16,384 | 1 | 20 / 344.9 | 29 / 240.2 | 31 / 228.5 |
+| 16,384 | 64 | 42 / 6,239.0 | 64 / 4,019.4 | 67 / 4,034.0 |
 
-## Reproduction and Raw Data
+### Boost.Asio
+
+| Message / B | In-Flight per Client | ARQ Only | Fixed FEC | Adaptive FEC |
+| ---: | ---: | ---: | ---: | ---: |
+| 64 | 1 | 138 / 81.9 | 117 / 96.8 | 142 / 78.4 |
+| 64 | 64 | 435 / 853.7 | 446 / 895.7 | 406 / 998.8 |
+| 4,096 | 1 | 75 / 141.5 | 119 / 93.5 | 115 / 95.5 |
+| 4,096 | 64 | 142 / 2,108.6 | 228 / 1,342.6 | 232 / 1,247.0 |
+| 16,384 | 1 | 21 / 383.5 | 30 / 235.1 | 31 / 264.8 |
+| 16,384 | 64 | 41 / 6,212.4 | 63 / 4,157.4 | 66 / 4,102.8 |
+
+Application messages are fragmented to the protocol MTU. 16 KiB denotes a message, not one UDP datagram. FEC subtracts 26 B from the 1,200 B UDP payload ceiling, leaving 1,174 B for an ARQ datagram.
+
+## 120-Second Sustained Runs
+
+Each case has one measured run, so no repeated-run whiskers are shown. All message checks passed. Memory uses the definitions above; peaks alone do not establish the absence of long-term leaks.
+
+| Backend / Policy | Message Round Trips | Round Trips/s | p99 / ms | CPU / % | Wire Overhead / % | FEC Sampled Peak / KiB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Standalone Asio / ARQ only | 20,734 | 172 | 599.6 | 48.6 | 24.2 | 0.0 |
+| Standalone Asio / Fixed FEC | 27,622 | 229 | 448.3 | 82.1 | 66.2 | 232.6 |
+| Standalone Asio / Adaptive FEC | 29,058 | 241 | 453.6 | 84.9 | 70.3 | 166.8 |
+| Boost.Asio / ARQ only | 20,870 | 173 | 606.4 | 50.3 | 23.9 | 0.0 |
+| Boost.Asio / Fixed FEC | 27,666 | 230 | 453.8 | 80.2 | 66.4 | 242.6 |
+| Boost.Asio / Adaptive FEC | 29,136 | 242 | 445.3 | 84.7 | 70.0 | 148.5 |
+
+## Results and Policy Selection
+
+The following compares main-matrix cases with one io_context / one endpoint thread, keeping IO models separate from policy ranking.
+
+| Backend | Network Condition | Highest Round-Trip Throughput | Lowest p99 RTT |
+| --- | --- | ---: | ---: |
+| Standalone Asio | No injected loss | ARQ only 62,827 round trips/s | ARQ only 1.1 ms |
+| Standalone Asio | Random loss | Fixed FEC 844 round trips/s | Adaptive FEC 142.5 ms |
+| Standalone Asio | Burst loss | Adaptive FEC 914 round trips/s | Adaptive FEC 139.5 ms |
+| Boost.Asio | No injected loss | ARQ only 61,705 round trips/s | ARQ only 1.1 ms |
+| Boost.Asio | Random loss | Fixed FEC 869 round trips/s | Fixed FEC 160.0 ms |
+| Boost.Asio | Burst loss | Adaptive FEC 878 round trips/s | Adaptive FEC 150.7 ms |
+
+The ranges below span the two backends' three-run medians:
+
+- No injected loss: ARQ only reached 61,705 - 62,827 round trips/s, with p99 1.06 - 1.09 ms. Both throughput and p99 favored ARQ-only over the measured FEC policies on both backends.
+- Random loss: FEC throughput was 835 - 869 round trips/s versus 560 - 572 for ARQ only. Process CPU increased from 25.4 - 26.6% to 52.7 - 56.2%, and wire-byte overhead from 21.7 - 21.9% to 55.1 - 60.1%.
+- Random loss, 64 B and one in-flight request per client: fixed FEC reached 116 - 117 round trips/s, below ARQ-only's 138 - 139. Small-message, low-concurrency workloads need separate evaluation.
+
+These results do not establish a universal winner. Select against p99, CPU, wire-byte and memory budgets together. Fixed FEC parity still depends on group density and byte budgets; adaptive FEC needs enough samples and adjustment time. Full values retain realized loss, observed parity and policy changes.
+
+This report has no cross-host, real-WAN, IPv6 stress or RUDP coroutine measurements. The public RUDP API currently uses callbacks; coroutine support is TODO. ARQ-only and both FEC policies use the same relay topology; compare them under the same network conditions and endpoint IO model.
+
+## Reproduction and Full Data
 
 ```sh
 cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release -DARKNET_BUILD_BENCHMARKS=ON \
   -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 cmake --build build-perf --target arknet_rudp_benchmark
-build-perf/benchmarks/arknet_rudp_benchmark --payload 1024 --clients 8 --window 16 \
-  --io-model shared --io-threads 4 --seconds 1 --warmup 0.25 --rounds 3
+build-perf/benchmarks/arknet_rudp_benchmark --payload 1024 --clients 4 --window 16 \
+  --io-model shared --io-threads 1 --fec adaptive --profile random \
+  --loss-percent 5 --delay-ms 10 --duplicate-percent 1 --reorder-percent 5 \
+  --seconds 3 --warmup 2 --rounds 3 --seed 42
 ```
 
-Maintainers collect the matrix with shell; the standalone C++ executable does not require jq, Python or Ruby.
+Configure Boost in a separate build directory with `-DARKNET_USE_BOOST_ASIO=ON`. Individual cases run directly as C++ executables; the maintainer batch entry is `bash benchmarks/run_rudp_fec.sh BUILD_DIR OUTPUT_DIR`, with no Python or Ruby dependency. Raw data retains every actual command, exit code and stderr file.
+
+The optional offline report tool needs Node only and does not launch network tests:
 
 ```sh
-bash scripts/rudp_matrix.sh --build-dir build-perf --backend standalone \
-  --backend-include /path/to/asio/include --output benchmarks/results/local-rudp
+node benchmarks/report_rudp_fec.mjs --self-check
+node benchmarks/report_rudp_fec.mjs \
+  --results benchmarks/results/macmini-m4pro-20261013/rudp-fec --output docs/performance
 ```
 
-Configure Boost in a separate build directory with `-DARKNET_USE_BOOST_ASIO=ON`; collect with `--backend boost --backend-include /path/to/boost/include` and identical measurement settings.
+[Full Metrics and Measurement Metadata](rudp-fec-summary.json)
 
-[Full values and measurement metadata](rudp-summary.json)
-
-[Project raw JSON, commands and host metadata](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-rudp)
+[Raw JSON, Actual Commands and Exit Codes](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261013/rudp-fec)

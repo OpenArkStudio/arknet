@@ -48,6 +48,7 @@ and `shasum` are not prerequisites for these C++ tests or single benchmarks.
 | HTTP / router | Raw-peer chunked/HEAD/Expect semantics, ordered pipelines, limits, method/path dispatch, middleware, errors and HTTP/HTTPS binding |
 | HTTP requests | Independent raw peers, HEAD/interim/chunked/EOF responses, cancellation, deadlines, limits and exactly-once completion |
 | ARQ / RUDP | Canonical protocol interop, loss/reordering, bounded memory, handshake retries, IPv4/IPv6, stale SYN handling and shutdown |
+| FEC / RUDP FEC | Independent Reed–Solomon interop, negotiation, CRC rejection, duplicate/replay handling, recovery, partial groups, memory budgets, fixed/adaptive policies and concurrent statistics |
 | Lifecycle / detail / IO pool | Timer/post cancellation, real completion before destruction, mutable listeners, executor serialization, queued work and restart |
 | Concurrency / keepalive | Send limits, callback completion accounting, concurrent shutdown, TCP keepalive options |
 | TLS | Trust/identity rejection, mTLS, deadlines, WSS and fresh stream on reconnect |
@@ -64,25 +65,31 @@ and teardown. Slow receivers test backpressure rather than throughput.
 
 ## Local Verification
 
-Verified on 2026-10-12 using a Mac mini `Mac16,11`, Apple M4 Pro,
+Verified on 2026-10-13 using a Mac mini `Mac16,11`, Apple M4 Pro,
 14 physical/logical cores (10 performance and 4 efficiency cores), 48 GiB RAM,
 macOS 27.0.1 (26A434), Apple Clang 21.0.0, CMake 4.3.3,
 Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
 
 | Backend | Build | TLS | Checks / doctest cases | Result |
 | --- | --- | --- | ---: | --- |
-| Standalone Asio | Release | ON | 48 / 174 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-standalone.log) |
-| Boost.Asio | Release | ON | 48 / 174 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-boost.log) |
+| Standalone Asio | Release | ON | 55 / 219 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-standalone.log) |
+| Boost.Asio | Release | ON | 55 / 219 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-boost.log) |
 
 Checks count programs invoked by `arknet_check`; cases count doctest cases.
 The complete checks include benchmark smoke cases and installed-package consumption.
 
 | Instrumentation | Scope | Cases | Result |
 | --- | --- | ---: | --- |
-| ASan/UBSan | Standalone Asio: ARQ, canonical protocol interop, RUDP, HTTP single requests | 40 | Passed |
-| TSan | Standalone Asio: RUDP and HTTP single requests | 18 | Passed |
+| ASan/UBSan | Standalone Asio: ARQ, reference ARQ/FEC interop, RUDP/FEC, lifecycle, detail and concurrency | 109 | Passed |
+| TSan | Standalone Asio: FEC, reference FEC interop, RUDP/FEC, lifecycle, detail and concurrency | 86 | Passed |
 
-[Logs and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/README.md)
+The RUDP FEC endpoint suite passed 11 cases and 2,564 assertions in both Release
+backends and the separate ASan/UBSan and TSan builds. Real zephyr/arknet process
+pairs passed all 12 scenarios per backend, including reconnect, ARK-style binary
+headers, 4096-byte bodies, ARQ packet loss and reordering. The relay preserves
+SYN/ACK/FIN; this does not establish reliable shutdown when FIN is lost.
+
+[Logs and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/README.md)
 record the source revision and exact scope. The test-only canonical KCP source
 disables `null,object-size` instrumentation; arknet's own code remains fully instrumented.
 RUDP performance has a [separate report](../performance/rudp.md).
@@ -118,9 +125,10 @@ Main pushes and PRs are separate triggers; outdated runs are canceled.
 CI uploads test logs and runs benchmark smoke checks, not a performance
 report matrix.
 
-Local loopback cannot predict cross-host capacity or WAN latency. Loss and
-delay injection, descriptor exhaustion and production-length endurance
-require separate validation.
+Local RUDP measurements cover random/burst loss, delay, duplication and
+reordering, with six 120-second sustained runs. They cannot predict cross-host
+capacity or WAN latency. Descriptor exhaustion, production-duration endurance
+and [ARK business acceptance](production-readiness.md) remain to be validated.
 
 All 14 independent client/server usage programs were also built with both
 backends. The seven protocol pairs per backend verified echo contents and all

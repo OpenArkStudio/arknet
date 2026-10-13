@@ -6,11 +6,11 @@ and execution mode; each report records its host, source, commands and scope.
 
 ## RUDP measurements
 
-[2026-10-12 RUDP report](rudp.md): 216 runs across both Asio backends,
-64/1024/4096/16384-byte messages, 1/4/16 in-flight requests and three IO models.
-Charts compare round trips per second, p99 RTT and process CPU utilization.
-The public RUDP API currently uses callbacks; coroutine and FEC comparisons
-are not included.
+[RUDP FEC report](rudp.md): 96 configurations and 276 measured runs across both
+Asio backends, three IO models, ARQ-only/fixed/adaptive policies, payloads,
+in-flight requests and injected loss. SVG charts compare throughput, p99 RTT,
+CPU, wire overhead, recovery, retransmissions and retained memory.
+The public RUDP API currently uses callbacks; RUDP coroutines remain TODO.
 
 ## UDP measurements
 

@@ -46,6 +46,7 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 | HTTP／router | 独立 raw 对端的 chunked／HEAD／Expect、有序流水线、上限、方法／路径、中间件、错误和 HTTP/HTTPS 绑定 |
 | HTTP 请求 | 独立 raw 对端、HEAD／临时／chunked／EOF 响应、取消、截止时间、上限与完成回调恰好执行一次 |
 | ARQ／RUDP | 原版协议互通、丢失／乱序、内存上限、握手重试、IPv4／IPv6、旧 SYN 处理和关闭 |
+| FEC／RUDP FEC | 独立 Reed–Solomon 实现互通、协商、CRC 拒绝、重复与重放、恢复、不完整分组、内存预算、固定／自适应策略和并发统计 |
 | lifecycle／detail／IO pool | timer／post 取消、实际完成后销毁、mutable 监听器、执行器串行化、排队任务和重启 |
 | concurrency／keepalive | 发送配额、回调完成计数、并发停止和 TCP keepalive |
 | TLS | 信任／身份拒绝、mTLS、截止时间、WSS 和重连时创建新 stream |
@@ -59,24 +60,28 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 
 ## 本机验证
 
-验证日期为 2026-10-12。机器为 Mac mini `Mac16,11`、Apple M4 Pro、14 个物理／逻辑核心
+验证日期为 2026-10-13。机器为 Mac mini `Mac16,11`、Apple M4 Pro、14 个物理／逻辑核心
 （10 个性能核心、4 个能效核心）、48 GiB 内存、macOS 27.0.1（26A434）、
 Apple Clang 21.0.0、CMake 4.3.3、Standalone Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。
 
 | 后端 | 构建 | TLS | 检查 / doctest 用例 | 结果 |
 | --- | --- | --- | ---: | --- |
-| Standalone Asio | Release | ON | 48 / 174 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-standalone.log) |
-| Boost.Asio | Release | ON | 48 / 174 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-boost.log) |
+| Standalone Asio | Release | ON | 55 / 219 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-standalone.log) |
+| Boost.Asio | Release | ON | 55 / 219 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-boost.log) |
 
 检查数是 `arknet_check` 执行的程序数，用例数是 doctest 用例总数。
 完整检查包含基准冒烟和安装包使用检查。
 
 | 检测工具 | 范围 | 用例 | 结果 |
 | --- | --- | ---: | --- |
-| ASan/UBSan | Standalone Asio：ARQ、原版协议互通、RUDP、HTTP 单次请求 | 40 | 通过 |
-| TSan | Standalone Asio：RUDP、HTTP 单次请求 | 18 | 通过 |
+| ASan/UBSan | Standalone Asio：ARQ、独立 ARQ/FEC 实现互通、RUDP/FEC、lifecycle、detail 与 concurrency | 109 | 通过 |
+| TSan | Standalone Asio：FEC、独立 FEC 实现互通、RUDP/FEC、lifecycle、detail 与 concurrency | 86 | 通过 |
 
-[日志与复现命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261012/rudp/README_CN.md)
+RUDP FEC 端点测试在两种 Release 后端及独立 ASan/UBSan、TSan 构建中均通过 11 个用例、
+2,564 项断言。真实 zephyr/arknet 混合进程测试每种后端均通过 12 组，覆盖重连、ARK 二进制
+消息头、4096 字节消息体、ARQ 报文丢失和乱序。中继保留 SYN/ACK/FIN，未验证 FIN 丢失后的可靠关闭。
+
+[日志与复现命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/README_CN.md)
 记录了源码版本和检查范围。仅用于测试的原版 KCP 源码关闭 `null,object-size` 检测，
 arknet 自有代码保留完整检测。性能数据见独立的 [RUDP 报告](../performance/rudp_CN.md)。
 
@@ -108,8 +113,9 @@ CI 在 Linux／macOS／Windows 检查两种后端，Linux 另运行 ASan/UBSan �
 Job 名称包含系统、后端、TLS 和检查模式。main push 与 PR 使用独立触发，
 过期运行会取消。CI 上传测试日志、执行基准冒烟，不生成性能报告矩阵。
 
-本机回环不能预测跨主机容量和广域网延迟。丢包／延迟注入、文件描述符耗尽
-和生产时长耐久仍需单独验证。
+本机 RUDP 测量覆盖随机／突发丢包、延迟、重复与乱序，并包含六组 120 秒持续运行。
+这些结果不能预测跨主机容量和广域网延迟。文件描述符耗尽、生产时长耐久及
+[ARK 业务验收](production-readiness_CN.md)仍需单独验证。
 
 文档中的 14 个独立客户端、服务端程序也在两种后端上编译、运行通过。每种后端
 的七组协议检查了回显内容，全部 28 个进程正常退出。

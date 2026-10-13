@@ -11,7 +11,16 @@ its original authors and applicable Boost Software License notice.
 - [Boost.Beast](https://github.com/boostorg/beast)
 - [Boost Software License 1.0](https://github.com/OpenArkStudio/arknet/blob/main/LICENSE)
 
-## External Runtime Dependencies
+## Bundled Reed–Solomon Engine
+
+`include/arknet/thirdparty/fecpp.hpp` adapts [fecpp](https://github.com/randombit/fecpp)
+at commit `d7e9b41eaaab3c605be36f282465210d17bc432f` as a portable C++20 header-only
+engine. Copyright (c) 1997–1998 Luigi Rizzo, 2009–2010 Jack Lloyd, and 2011 Billy
+Brumley is retained. The BSD-2-Clause license is installed alongside the header
+as `include/arknet/thirdparty/fecpp.LICENSE`. The unchanged pinned source in
+`tests/vendor/fecpp/` is an independent parity/recovery reference, with its license.
+
+## External Asio and TLS Dependencies
 
 Standalone Asio and official Boost are external dependencies, selected by the
 build configuration. Their distributions contain the applicable BSL-1.0

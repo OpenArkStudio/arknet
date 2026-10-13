@@ -11,7 +11,15 @@ BHO 指 Boost Header Only。各文件保留原作者和适用的 Boost Software 
 - [Boost.Beast](https://github.com/boostorg/beast)
 - [Boost Software License 1.0](https://github.com/OpenArkStudio/arknet/blob/main/LICENSE)
 
-## 外部运行时依赖
+## 内置 Reed–Solomon 编码引擎
+
+`include/arknet/thirdparty/fecpp.hpp` 将 [fecpp](https://github.com/randombit/fecpp)
+的固定提交 `d7e9b41eaaab3c605be36f282465210d17bc432f` 适配为 C++20 header-only 实现。
+保留 copyright (c) 1997–1998 Luigi Rizzo、2009–2010 Jack Lloyd 和 2011 Billy Brumley。
+BSD-2-Clause 许可证与头文件一起安装，路径为 `include/arknet/thirdparty/fecpp.LICENSE`。
+`tests/vendor/fecpp/` 保留相同提交的原始源码和许可证，用于独立校验编码与恢复结果。
+
+## 外部 Asio 与 TLS 依赖
 
 Standalone Asio 和官方 Boost 由构建配置选择，属于外部依赖，其分发包保留适用的
 BSL-1.0 声明。OpenSSL 是可选的 TLS 依赖；3.x 使用 Apache-2.0，1.1.1 使用

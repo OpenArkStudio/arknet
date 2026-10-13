@@ -7,8 +7,9 @@ client, server and session use arknet's CRTP and component architecture.
 <Aside type="note" title="Note: Experimental module">
 
 This module is experimental and is not included in `v0.1.0-rc.1`.
-[Optional FEC](../../project/roadmap.md) is planned as a component combined with
-ARQ; the current implementation and measurements do not include it.
+[Policies](fec.md) include ARQ-only, fixed FEC and adaptive FEC. ARQ-only is the
+default; peers negotiate FEC, while ARQ remains responsible for complete delivery.
+Production adoption requires deployment-link and ARK workflow acceptance.
 
 </Aside>
 
@@ -17,6 +18,7 @@ ARQ; the current implementation and measurements do not include it.
 - [Create a server](server.md): receive and echo complete messages.
 - [Create a client](client.md): complete the handshake and verify an echo.
 - [Configuration](configuration.md): MTU, windows, limits and compatibility.
+- [FEC policies](fec.md): coding parameters, adaptive thresholds and statistics.
 - [Performance](performance.md): local measurements and reproduction.
 
 | Capability | Behavior |
@@ -25,9 +27,10 @@ ARQ; the current implementation and measurements do not include it.
 | Addresses and backend | IPv4/IPv6; Standalone Asio or Boost.Asio |
 | Messages | Empty and binary messages; fragmentation and ordered reassembly |
 | Reliability | ACKs, timeout and fast retransmission, bounded retries |
+| Optional recovery | Fixed or adaptive Reed–Solomon FEC, with ARQ retransmission fallback |
 | Flow control | Send/receive windows and congestion control enabled by default |
 | Runtime | Handshake timeout, reconnect, timers, owned or external IO contexts |
-| Limits | Per-direction ARQ memory budget and bounded socket-send queue |
+| Limits | Bounds on ARQ, FEC, socket queues and server session admission |
 
 ## Choosing a transport
 

@@ -239,7 +239,7 @@
     overflow-x: auto;
   }
 
-  .docs-content img[src*="/performance/assets/"][src$=".svg"] {
+  .docs-content img[src*="/performance/assets/"][src$=".svg"]:not([src$="rudp-fec-topology.svg"]) {
     min-width: 48rem;
   }
 }

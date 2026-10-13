@@ -1,92 +1,135 @@
-# Optional FEC design
+# FEC Policies
 
-<Aside type="note" title="Note: Planned capability (TODO)">
+RUDP uses ARQ alone by default. Optional Reed–Solomon FEC adds parity shards to
+outgoing datagrams, allowing recovery before a retransmission arrives. ARQ still
+retransmits anything FEC cannot recover. The bundled header-only engine requires
+neither Python nor an additional linked library.
 
-This page records the agreed direction, not an available API.
-The current RUDP implementation uses ARQ only. Its benchmarks do not measure FEC.
-
-</Aside>
-
-arknet is a general-purpose networking library. Games are one workload, alongside
-control messages, service communication and bulk transfer. Presets should express
-delivery requirements and resource budgets rather than an industry label.
-
-## Composition
-
-```text
-Send:    application message -> ARQ datagrams -> optional FEC -> UDP
-Receive: UDP -> FEC recovery -> ARQ ordering/reassembly -> application message
+```mermaid
+flowchart LR
+    A[Application message] --> B[ARQ fragmentation and ACK]
+    B --> C[FEC data and parity]
+    C --> D[UDP]
+    D --> E[FEC recovery]
+    E --> F[ARQ ordering and reassembly]
+    F --> G[Complete message]
 ```
 
-ARQ supplies ACKs, retransmission and ordered delivery. FEC can recover some
-missing datagrams before retransmission. For example, ten data shards plus two
-parity shards can recover up to two erasures in that group, with approximately
-20% parity-payload overhead before headers and padding. Larger groups improve
-coding efficiency but may add waiting time. Unrecovered loss still uses ARQ.
+## Choose a Policy
 
-RUDP retains its reliable message contract. UDP with FEC alone can suit messages
-that may be discarded after a deadline, but it cannot provide that contract.
-
-## Candidate policies
-
-The overall policy and shipped presets remain open for discussion and measurement.
-
-| Candidate | Behavior | Suitable requirements |
+| Policy | Setting | Use when |
 | --- | --- | --- |
-| ARQ only | No parity traffic | Reliable delivery with minimal added bandwidth and low loss |
-| ARQ with adaptive FEC | Adjust parity using configured thresholds and budgets | Reliable delivery with a tight recovery-latency budget |
-| ARQ with fixed FEC | Predictable coding parameters | A measured link with a known redundancy allowance |
+| ARQ only, default | `fec::options{}` | Loss is low and extra CPU/bandwidth matters |
+| Fixed FEC | `fec::options::fixed()` | Measured link characteristics justify predictable redundancy |
+| Adaptive FEC | `fec::options::adaptive()` | Link conditions vary and preset thresholds should adjust redundancy |
 
-Applications should configure activation conditions in advance. Runtime adaptation
-must stay inside those limits and expose both the current parameters and the
-reason for each change. No numeric thresholds are established yet.
+Choose by recovery latency, observed loss, message density and resource budgets.
+The same policies work for games, control messages and service communication.
+Sparse groups do not emit parity when they cannot meet the minimum useful group size.
 
-## Configuration requirements
+```cpp
+#include <arknet/rudp/rudp_client.hpp>
+#include <arknet/rudp/rudp_server.hpp>
 
-| Parameter group | Planned controls |
-| --- | --- |
-| Activation | Minimum sample count, observation window, loss/retransmission thresholds, recovery-latency target |
-| Coding | Maximum data/parity shards, extra-byte budget, minimum useful group size |
-| Latency | Maximum group wait, reorder grace period, group decoding deadline |
-| Stability | Separate activation/deactivation thresholds, cooldown, stable windows before decreasing redundancy |
-| Overload | Send-queue limits, RTT/queue growth guard, optional application-supplied load limit |
-| Observability | Original datagrams, parity bytes, recovered/missing shards, ARQ retransmits, current parameters and transition reasons |
+arknet::rudp_server server;
+arknet::rudp_client client;
+auto settings = arknet::fec::options::adaptive();
+settings.max_redundancy_percent = 50;
+server.set_fec_options(settings);
+client.set_fec_options(settings);
+```
 
-Loss measurement must distinguish reordering from missing datagrams and distinguish
-FEC recovery from later ARQ retransmission. Insufficient samples retain the current
-policy. Small or sparse groups must respect latency and byte budgets; when useful
-coding cannot fit those budgets, send through ARQ without parity.
+Configure both endpoints while stopped. Fixed and adaptive senders interoperate:
+each group carries its actual parameters. An FEC-enabled server also accepts an
+ARQ-only client. Requesting FEC from an arknet server with FEC disabled fails with
+`operation_not_supported`. An older server that ignores the new handshake causes
+a connection timeout; the client does not silently downgrade.
 
-<Aside type="caution" title="Warning: Redundancy does not resolve overload">
+## Coding and Buffer Limits
 
-Increasing redundancy is not a remedy for overload. RTT inflation and growing
-queues require conservative rate control; neither signal proves the cause of
-packet loss. ARQ congestion control remains active. CPU and bandwidth limits
-must prevent adaptation from aggravating an already overloaded sender or receiver.
+| Parameter | Default | Behavior |
+| --- | ---: | --- |
+| `data_shards` | 8 | Maximum data datagrams per group; range 1–32 |
+| `parity_shards` | 2 | Requested parity count for fixed policy |
+| `max_parity_shards` | 4 | Adaptive upper bound; range 1–16 |
+| `min_data_shards` | 2 | Smaller groups emit no parity |
+| `group_wait_ms` | 2 ms | Maximum grouping wait; ACK/window-control datagrams bypass grouping |
+| `max_redundancy_percent` | 50% | Per-group parity wire bytes divided by data wire bytes, including framing and padding |
+| `group_lifetime_ms` | 1000 ms | Retention deadline for incomplete receive groups |
+| `max_groups` | 128 | Maximum incomplete receive groups |
+| `max_buffer_bytes` | 1 MiB | Combined retention budget for pending send data and receive groups |
+
+With 8 data and 2 parity shards, any 8 received shards reconstruct the data. This
+is a per-group count guarantee, not a guarantee for an arbitrary loss percentage.
+A burst removing more than 2 shards still needs ARQ. Byte budgets and the minimum
+group size can reduce the actual parity count below the configured value.
+
+Complete groups release immediately; incomplete groups expire. When retention is
+full, valid systematic data still reaches ARQ while additional FEC buffering is
+skipped. Duplicate filtering has a fixed 4096-group window. Coding scratch space
+is bounded by shard count and MTU, separately from the retention budget.
+
+`arq::options::mtu` remains the UDP payload limit. The handshake selects the smaller
+endpoint value and deducts **26 bytes** for FEC, so a 1200-byte wire MTU yields a
+1174-byte ARQ datagram. Messages still have a 256-fragment limit. A larger configured
+MTU does not prove path support; see [buffer configuration](../../guides/socket-buffers.md).
+
+## Adaptive Thresholds
+
+| Parameter | Default | Behavior |
+| --- | ---: | --- |
+| `sample_window_ms` | 1000 ms | Window for retransmission samples and peer feedback |
+| `min_samples` | 64 | Keep parameters unchanged below this sample count |
+| `enable_loss_percent` | 3% | Increase parity at or above this threshold |
+| `disable_loss_percent` | 1% | Count healthy windows at or below this threshold |
+| `stable_windows` | 3 | Healthy windows before reducing parity by one shard |
+| `cooldown_ms` | 2000 ms | Minimum interval between ordinary adjustments |
+| `overload_queue_percent` | 75% | Disable parity at this queue occupancy, bypassing cooldown |
+
+Adaptive mode starts with zero parity. It uses the larger observed local
+retransmission or peer missing-shard ratio, derives a parity count from that
+ratio, and applies both count and byte caps. RTT above twice the observed minimum
+with a growing queue also disables parity. ARQ congestion control remains active.
+
+<Aside type="caution" title="Redundancy cannot fix overload">
+
+Address growing send queues, receive-buffer overflow and slow application
+consumers before adding parity. Missing-at-recovery counters may include reordered
+late originals; feedback alone does not identify the cause of loss.
 
 </Aside>
 
-## Wire format and limits
+## Read Statistics
 
-Peers must select a FEC-capable wire mode at connection setup. Within that mode,
-zero parity means redundancy is inactive; it does not switch the connection back
-to bare KCP framing. Each group carries its actual coding parameters so the
-receiver can decode while the sender changes future groups.
+```cpp
+// Wait outside endpoint callbacks while its IO context is still running.
+auto pending = client.get_rudp_statistics();
+auto stats = pending.get();
+auto restored = stats.fec.recovered_shards;
+auto retries = stats.retransmissions;
+auto parity = stats.fec.current_parity_shards;
+auto reason = arknet::fec::reason_name(stats.fec.last_change);
+```
 
-The format needs versioning, conversation/group/shard identifiers, lengths and
-strict validation before allocation. FEC headers and padding count toward the
-UDP MTU and memory limits. Group count, retained bytes and decoding lifetime
-must be bounded. Control messages must not wait for a data group to fill.
-KCP-compatible ARQ-only mode remains independently usable.
+Client and Session provide an asynchronous snapshot while connected; querying
+an unconnected endpoint throws `std::logic_error`. Keep the IO context running;
+shutdown can cancel a pending query. Reconnect starts a new statistics period.
+`last_change` is `configured`, `loss`,
+`healthy` or `overload`; `policy_changes` counts adjustments.
 
-## Validation before defaults
+`missing_shards` counts originals absent when a group recovers or expires,
+including recovered shards and possibly originals that arrive later.
+`recovered_shards` counts originals reconstructed from parity.
+`retransmissions` counts ARQ segment retransmissions. These units differ; their
+difference is not a final-loss metric. Check application contents, order and completion.
 
-Compare ARQ alone, fixed FEC and adaptive FEC under random and burst loss,
-reordering, different RTTs, sparse and sustained traffic, and receive-queue
-overflow. Measure delivery correctness, p50/p99 RTT, extra transmitted bytes,
-CPU utilization and memory. Tests must also cover peer compatibility, malformed
-groups, parameter transitions and shutdown with incomplete groups.
+## Compatibility and Security
 
-The coding engine, preset names and values, adaptation algorithm and negotiation
-format are not selected. They will be decided after the current RUDP validation
-and the dedicated loss experiments.
+FEC uses version-1 negotiation and `AFEC` datagrams. ARQ-only retains the existing
+KCP message-mode segments and ARK RDP control envelope. FEC requires compatible
+arknet peers and cannot connect directly to bare KCP. CRC detects corruption;
+it does not authenticate or encrypt a peer. Applications on untrusted networks
+must provide identity verification and access control separately.
+
+See [configuration](configuration.md) for admission/failure behavior and
+[performance](performance.md) for measured scope.

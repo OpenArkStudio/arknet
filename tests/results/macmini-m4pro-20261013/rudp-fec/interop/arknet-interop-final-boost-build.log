@@ -1,0 +1,22 @@
+-- Configuring done (0.0s)
+-- Generating done (0.1s)
+-- Build files have been written to: /private/tmp/arknet-interop-final-boost
+[ 50%] Building CXX object tests/CMakeFiles/arknet_rudp_interop_peer.dir/interop/rudp_peer.cpp.o
+[100%] Linking CXX executable arknet_rudp_interop_peer
+[100%] Built target arknet_rudp_interop_peer
+[ 50%] Building CXX object tests/CMakeFiles/arknet_zephyr_rdp_peer.dir/interop/rudp_peer.cpp.o
+In file included from /Users/nick/work/opensource/arknet/tests/interop/rudp_peer.cpp:18:
+In file included from /private/tmp/arknet-interop-final-boost/tests/zephyr-interop-compat/zephyr/udp/udp_client.hpp:21:
+In file included from /Users/nick/work/opensource/ARK/3rdparty/zephyr/include/zephyr/udp/detail/kcp_util.hpp:30:
+/Users/nick/work/opensource/ARK/3rdparty/zephyr/include/zephyr/util/ikcp.h:537:2: warning: 'vsprintf' is deprecated: This function is provided for compatibility reasons only.  Due to security concerns inherent in the design of sprintf(3), it is highly recommended that you use vsnprintf(3) instead. [-Wdeprecated-declarations]
+  537 |         vsprintf(buffer, fmt, argptr);
+      |         ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h:298:1: note: 'vsprintf' has been explicitly marked deprecated here
+  298 | __deprecated_msg("This function is provided for compatibility reasons only.  Due to security concerns inherent in the design of sprintf(3), it is highly recommended that you use vsnprintf(3) instead.")
+      | ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h:227:48: note: expanded from macro '__deprecated_msg'
+  227 |         #define __deprecated_msg(_msg) __attribute__((__deprecated__(_msg)))
+      |                                                       ^
+1 warning generated.
+[100%] Linking CXX executable arknet_zephyr_rdp_peer
+[100%] Built target arknet_zephyr_rdp_peer

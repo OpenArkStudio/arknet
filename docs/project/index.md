@@ -4,6 +4,7 @@ arknet is developed independently from ARK. Changes should preserve protocol
 contracts and include reproducible verification before application integration.
 
 - [Testing and validation](testing.md): correctness coverage, sanitizer checks and local evidence.
+- [Production acceptance and ARK](production-readiness.md): acceptance criteria, direct replacement and business regression.
 - [Troubleshooting](troubleshooting.md): symptoms, diagnostic steps and recovery.
 - [Architecture and extension](architecture.md): CRTP, components and ownership boundaries.
 - [Contributing](contributing.md): code style, builds, documentation and commit conventions.

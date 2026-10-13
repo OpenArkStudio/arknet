@@ -2,7 +2,12 @@
 // Distributed under BSL-1.0. See LICENSE.
 #pragma once
 
+#include <cstdint>
+#include <future>
 #include <memory>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 #include <utility>
 
 #include <arknet/rudp/detail/transport.hpp>
@@ -20,12 +25,14 @@ template <class Derived> class rudp_session_impl_t : public udp_session_impl_t<D
     using base = udp_session_impl_t<Derived>;
 
 public:
-    rudp_session_impl_t(arq::options options, std::uint32_t sync, std::uint32_t conversation,
-                        session_mgr_t<Derived>& sessions, listener_t& listener, std::shared_ptr<io_t> io,
-                        std::size_t initial, std::size_t maximum, arknet::linear_buffer& buffer,
-                        std::shared_ptr<asio::ip::udp::socket> socket, asio::ip::udp::endpoint& endpoint)
+    rudp_session_impl_t(arq::options options, std::uint32_t sync, std::uint32_t conversation, fec::options fec_options,
+                        std::uint16_t requested_mtu, session_mgr_t<Derived>& sessions, listener_t& listener,
+                        std::shared_ptr<io_t> io, std::size_t initial, std::size_t maximum,
+                        arknet::linear_buffer& buffer, std::shared_ptr<asio::ip::udp::socket> socket,
+                        asio::ip::udp::endpoint& endpoint)
         : base(sessions, listener, std::move(io), initial, maximum, buffer, std::move(socket), endpoint),
-          options_(options), sync_(sync), conversation_(conversation)
+          options_(options), fec_options_(fec_options), requested_mtu_(requested_mtu), sync_(sync),
+          conversation_(conversation)
     {
     }
     ~rudp_session_impl_t()
@@ -34,6 +41,21 @@ public:
             channel_->stop();
     }
     std::uint32_t conversation() const noexcept { return conversation_; }
+    const arq::options& get_rudp_options() const noexcept { return options_; }
+    const fec::options& get_fec_options() const noexcept { return fec_options_; }
+    std::future<rudp::statistics> get_rudp_statistics()
+    {
+        if (!this->is_started())
+            throw std::logic_error("Read RUDP statistics while started");
+        return this->post(
+            [this]
+            {
+                if (!channel_)
+                    throw std::logic_error("RUDP disconnected before statistics snapshot");
+                return channel_->statistics();
+            },
+            asio::use_future);
+    }
 
 protected:
     template <class Condition>
@@ -52,8 +74,9 @@ protected:
             {
                 if (auto owner = weak.lock())
                     this->derived()._do_disconnect(error, std::move(owner));
-            });
-        channel_->raw_send(detail::rudp_control(2, sync_, conversation_));
+            },
+            fec_options_);
+        channel_->raw_send(acknowledgement());
         channel_->start();
         clear_last_error();
         this->listener_.notify(detail::event_type::handshake, lifetime, error_code{});
@@ -62,22 +85,44 @@ protected:
         base::_fire_connect(lifetime, condition);
     }
     template <class Condition>
+    void _receive_datagram(std::shared_ptr<Derived> lifetime, std::shared_ptr<detail::ecs_t<Condition>> condition,
+                           std::string_view bytes)
+    {
+        if (this->is_started() && !this->stop_requested_)
+            this->derived()._fire_recv(lifetime, condition, bytes);
+    }
+    template <class Condition>
     void _fire_recv(std::shared_ptr<Derived>& lifetime, std::shared_ptr<detail::ecs_t<Condition>>&,
                     std::string_view bytes)
     {
         auto channel = channel_;
         if (!channel)
             return;
-        if (detail::rudp_is_control(bytes, 1))
+        if (fec_options_.mode == fec::policy::disabled && detail::rudp_is_control(bytes, 1))
         {
             if (detail::rudp_read_id(bytes.data() + 1) == sync_)
-                channel->raw_send(detail::rudp_control(2, sync_, conversation_));
+            {
+                this->update_alive_time();
+                channel->raw_send(acknowledgement());
+            }
+        }
+        else if (fec_options_.mode != fec::policy::disabled && detail::rudp_is_fec_control(bytes, 4))
+        {
+            if (detail::rudp_read_id(bytes.data() + 1) == sync_ && static_cast<unsigned char>(bytes[5]) == 1 &&
+                detail::rudp_fec_mtu(bytes, 4) == requested_mtu_)
+            {
+                this->update_alive_time();
+                channel->raw_send(acknowledgement());
+            }
         }
         else if (detail::rudp_is_control(bytes, 3) && detail::rudp_read_id(bytes.data() + 1) == sync_ &&
                  detail::rudp_read_id(bytes.data() + 5) == conversation_)
+        {
+            this->update_alive_time();
             this->derived()._do_disconnect(asio::error::eof, lifetime);
-        else
-            channel->input(bytes);
+        }
+        else if (channel->input(bytes))
+            this->update_alive_time();
     }
     template <class Data, class Completion> bool _do_send(Data& data, Completion&& completion)
     {
@@ -105,6 +150,12 @@ protected:
     }
 
 private:
+    std::string acknowledgement() const
+    {
+        return fec_options_.mode == fec::policy::disabled
+                   ? detail::rudp_control(2, sync_, conversation_)
+                   : detail::rudp_fec_control(5, sync_, conversation_, static_cast<std::uint16_t>(options_.mtu));
+    }
     void close_channel()
     {
         if (!channel_)
@@ -117,6 +168,8 @@ private:
         channel_.reset();
     }
     arq::options options_;
+    fec::options fec_options_;
+    std::uint16_t requested_mtu_{};
     std::uint32_t sync_{};
     std::uint32_t conversation_{};
     std::shared_ptr<detail::rudp_channel> channel_;

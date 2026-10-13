@@ -31,7 +31,7 @@ const tree: Entry[] = [
       [`features/${slug}/server`, "Create a server", "创建服务端"],
       [`features/${slug}/client`, "Create a client", "创建客户端"],
       ...(slug === "http" ? [["features/http/requests", "Send a single request", "发送单次请求"] as Page] : []),
-      ...(slug === "rudp" ? [["features/rudp/fec", "Optional FEC design", "可选 FEC 设计", { en: "TODO", zh: "TODO", variant: "warning" }] as Page] : []),
+      ...(slug === "rudp" ? [["features/rudp/fec", "FEC policies", "FEC 策略"] as Page] : []),
       [`features/${slug}/configuration`, "Configuration and advanced usage", "配置与进阶使用"],
       [`features/${slug}/performance`, "Performance", "性能"],
     ] })),
@@ -79,6 +79,7 @@ const tree: Entry[] = [
   { en: "Project", zh: "项目", children: [
     ["project", "Overview", "概览"],
     ["project/testing", "Testing and validation", "测试与验证"],
+    ["project/production-readiness", "Production acceptance and ARK", "生产验收与 ARK 接入"],
     ["project/troubleshooting", "Troubleshooting", "故障排查"],
     ["project/architecture", "Architecture and extension", "架构与扩展"],
     ["project/contributing", "Contributing and code style", "贡献与代码规范"],

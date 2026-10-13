@@ -1,0 +1,55 @@
+[ 50%] Built target arknet_zephyr_rdp_peer
+[100%] Built target arknet_rudp_interop_peer
+-- Checking zephyr client -> arknet server, baseline, close initiated by client
+zephyr client: baseline, 1 sessions, 32 ordered messages/session, client close passed
+arknet server: baseline, 1 sessions, 32 ordered messages/session, client close passed
+
+-- Checking zephyr client -> arknet server, baseline, close initiated by server
+zephyr client: baseline, 1 sessions, 32 ordered messages/session, server close passed
+arknet server: baseline, 1 sessions, 32 ordered messages/session, server close passed
+
+-- Checking zephyr client -> arknet server, reconnect, close initiated by client
+zephyr client: reconnect, 2 sessions, 32 ordered messages/session, client close passed
+arknet server: reconnect, 2 sessions, 32 ordered messages/session, client close passed
+
+-- Checking zephyr client -> arknet server, reconnect, close initiated by server
+zephyr client: reconnect, 2 sessions, 32 ordered messages/session, server close passed
+arknet server: reconnect, 2 sessions, 32 ordered messages/session, server close passed
+
+-- Checking zephyr client -> arknet server, impaired, close initiated by client
+zephyr client: impaired, 1 sessions, 32 ordered messages/session, client close passed
+ARQ data impairment: drops=31 reordered=35 errors=0 fin_forwarded=1
+arknet server: impaired, 1 sessions, 32 ordered messages/session, client close passed
+
+-- Checking zephyr client -> arknet server, impaired, close initiated by server
+zephyr client: impaired, 1 sessions, 32 ordered messages/session, server close passed
+ARQ data impairment: drops=30 reordered=32 errors=0 fin_forwarded=1
+arknet server: impaired, 1 sessions, 32 ordered messages/session, server close passed
+
+-- Checking arknet client -> zephyr server, baseline, close initiated by client
+arknet client: baseline, 1 sessions, 32 ordered messages/session, client close passed
+zephyr server: baseline, 1 sessions, 32 ordered messages/session, client close passed
+
+-- Checking arknet client -> zephyr server, baseline, close initiated by server
+arknet client: baseline, 1 sessions, 32 ordered messages/session, server close passed
+zephyr server: baseline, 1 sessions, 32 ordered messages/session, server close passed
+
+-- Checking arknet client -> zephyr server, reconnect, close initiated by client
+arknet client: reconnect, 2 sessions, 32 ordered messages/session, client close passed
+zephyr server: reconnect, 2 sessions, 32 ordered messages/session, client close passed
+
+-- Checking arknet client -> zephyr server, reconnect, close initiated by server
+arknet client: reconnect, 2 sessions, 32 ordered messages/session, server close passed
+zephyr server: reconnect, 2 sessions, 32 ordered messages/session, server close passed
+
+-- Checking arknet client -> zephyr server, impaired, close initiated by client
+arknet client: impaired, 1 sessions, 32 ordered messages/session, client close passed
+ARQ data impairment: drops=31 reordered=34 errors=0 fin_forwarded=1
+zephyr server: impaired, 1 sessions, 32 ordered messages/session, client close passed
+
+-- Checking arknet client -> zephyr server, impaired, close initiated by server
+arknet client: impaired, 1 sessions, 32 ordered messages/session, server close passed
+zephyr server: impaired, 1 sessions, 32 ordered messages/session, server close passed
+ARQ data impairment: drops=32 reordered=34 errors=0 fin_forwarded=1
+
+[100%] Built target arknet_zephyr_interop_check

@@ -87,6 +87,8 @@ jobs:
           sudo apt-get install -y jq
           bash scripts/test_benchmark_matrix.sh
           bash scripts/test_rudp_matrix.sh
+          bash -n benchmarks/run_rudp_fec.sh
+          node benchmarks/report_rudp_fec.mjs --self-check
           python3 -m unittest discover -s benchmarks -p 'test_*.py' -v
           python3 -m unittest discover -s scripts -p 'test_udp_limits_report.py' -v
       - name: Upload test results

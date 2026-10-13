@@ -6,6 +6,7 @@ temporary=$(mktemp -d)
 trap 'rm -rf "$temporary"' EXIT
 cp "$root/.clang-format" "$root/.clang-format-ignore" "$temporary/"
 mkdir -p "$temporary/scripts" "$temporary/include/arknet/bho" "$temporary/tests/vendor" \
+    "$temporary/include/arknet/thirdparty" \
     "$temporary/tests/results" "$temporary/benchmarks/results" "$temporary/examples"
 cp "$root/scripts/format.sh" "$temporary/scripts/"
 cd "$temporary"
@@ -13,7 +14,7 @@ git init -q
 printf 'struct probe{int value;};\n' > original.hpp
 cp original.hpp include/arknet/probe.hpp
 cp original.hpp 'examples/path with spaces.cpp'
-for directory in include/arknet/bho tests/vendor tests/results benchmarks/results; do
+for directory in include/arknet/bho include/arknet/thirdparty tests/vendor tests/results benchmarks/results; do
     cp original.hpp "$directory/ignored.hpp"
 done
 git add include/arknet/probe.hpp
@@ -44,7 +45,7 @@ expect_failure 2 env CLANG_FORMAT=true bash scripts/format.sh --check
 bash scripts/format.sh --fix
 bash scripts/format.sh --check
 cmp expected-includes.cpp examples/probe.cpp
-for directory in include/arknet/bho tests/vendor tests/results benchmarks/results; do
+for directory in include/arknet/bho include/arknet/thirdparty tests/vendor tests/results benchmarks/results; do
     cmp original.hpp "$directory/ignored.hpp"
     "${CLANG_FORMAT:-clang-format}" --dry-run --Werror "$directory/ignored.hpp"
 done

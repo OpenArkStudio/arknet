@@ -2,8 +2,13 @@
 // Distributed under BSL-1.0. See LICENSE.
 #pragma once
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -28,10 +33,31 @@ public:
         if (!this->is_stopped())
             throw std::logic_error("Configure RUDP before start");
         arq::control_block validation(0, options);
+        validate_fec_mtu(options, fec_options_);
         options_ = options;
         return this->derived();
     }
     const arq::options& get_rudp_options() const noexcept { return options_; }
+    Derived& set_fec_options(const fec::options& options)
+    {
+        if (!this->is_stopped())
+            throw std::logic_error("Configure FEC before start");
+        options.validate();
+        validate_fec_mtu(options_, options);
+        fec_options_ = options;
+        return this->derived();
+    }
+    const fec::options& get_fec_options() const noexcept { return fec_options_; }
+    Derived& set_max_sessions(std::size_t maximum)
+    {
+        if (!this->is_stopped())
+            throw std::logic_error("Configure RUDP before start");
+        if (!maximum)
+            throw std::invalid_argument("RUDP session limit must be positive");
+        max_sessions_ = maximum;
+        return this->derived();
+    }
+    std::size_t get_max_sessions() const noexcept { return max_sessions_; }
     template <class Function, class... Object> Derived& bind_handshake(Function&& function, Object&&... object)
     {
         this->listener_.bind(detail::event_type::handshake,
@@ -90,7 +116,22 @@ protected:
     void _handle_accept(const error_code& error, std::string_view bytes, std::shared_ptr<Session> session,
                         std::shared_ptr<detail::ecs_t<Condition>>& condition)
     {
-        if (!detail::rudp_is_control(bytes, 1))
+        if (detail::rudp_is_fec_control(bytes, 4))
+        {
+            const auto mtu = detail::rudp_fec_mtu(bytes, 4);
+            if (fec_options_.mode == fec::policy::disabled || static_cast<unsigned char>(bytes[5]) != 1 ||
+                mtu <= fec::transport::overhead + 24 || mtu > 65507)
+            {
+                auto rejection =
+                    std::make_shared<std::string>(detail::rudp_fec_control(6, detail::rudp_read_id(bytes.data() + 1)));
+                this->acceptor_->async_send_to(asio::buffer(*rejection), this->remote_endpoint_,
+                                               [rejection](error_code, std::size_t) {});
+                return;
+            }
+        }
+        else if (!detail::rudp_is_control(bytes, 1))
+            return;
+        if (this->get_session_count() >= max_sessions_)
             return;
         base::_handle_accept(error, bytes, std::move(session), condition);
     }
@@ -98,11 +139,29 @@ protected:
     {
         const auto bytes = this->buffer_.data();
         const auto sync = detail::rudp_read_id(static_cast<const char*>(bytes.data()) + 1);
-        return base::_make_session(options_, sync, detail::rudp_next_id());
+        const std::string_view request(static_cast<const char*>(bytes.data()), this->buffer_.size());
+        auto negotiated_options = options_;
+        fec::options negotiated_fec;
+        std::uint16_t requested_mtu{};
+        if (detail::rudp_is_fec_control(request, 4))
+        {
+            requested_mtu = detail::rudp_fec_mtu(request, 4);
+            negotiated_options.mtu = std::min(options_.mtu, static_cast<std::size_t>(requested_mtu));
+            negotiated_fec = fec_options_;
+        }
+        return base::_make_session(negotiated_options, sync, detail::rudp_next_id(), negotiated_fec, requested_mtu);
     }
 
 private:
+    static void validate_fec_mtu(const arq::options& transport, const fec::options& settings)
+    {
+        if (settings.mode != fec::policy::disabled &&
+            (transport.mtu <= fec::transport::overhead + 24 || transport.mtu > 65507))
+            throw std::invalid_argument("FEC wire MTU must be between 51 and 65507 bytes");
+    }
     arq::options options_;
+    fec::options fec_options_;
+    std::size_t max_sessions_ = 1024;
     bool closing_{};
 };
 }

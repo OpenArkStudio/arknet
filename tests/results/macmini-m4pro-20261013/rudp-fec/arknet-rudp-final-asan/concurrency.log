@@ -1,0 +1,15 @@
+command: /private/tmp/arknet-macmini-asan/tests/arknet_concurrency_test
+result: 0
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+TCP external stop before write: 203 ms, peer watchdog=0
+TCP reconnect generation: 1 -> 2, old completion=Operation aborted./0, received=1
+TCP dgram owned: concurrent admission, recovery, and stop passed
+TCP dgram external: concurrent admission, recovery, and stop passed
+WebSocket owned: concurrent admission, recovery, and stop passed
+WebSocket external: concurrent admission, recovery, and stop passed
+WebSocket TLS owned/external: concurrent admission and recovery passed
+===============================================================================
+[doctest] test cases:     6 |     6 passed | 0 failed | 0 skipped
+[doctest] assertions: 44429 | 44429 passed | 0 failed |
+[doctest] Status: SUCCESS!

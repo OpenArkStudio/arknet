@@ -265,6 +265,8 @@ private:
     {
         if (pumping_)
             return;
+        // A synchronous completion can release the event's final session owner.
+        auto lifetime = static_cast<Derived&>(*this).selfptr();
         pumping_ = true;
         // A synchronous completion requests another iteration rather than recursing.
         while (std::exchange(advance_pending_, false) && !events_.empty())

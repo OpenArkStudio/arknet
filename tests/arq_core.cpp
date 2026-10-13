@@ -109,6 +109,26 @@ struct simulated_link
 };
 }
 
+DOCTEST_TEST_CASE("Duplicate ACK bursts cannot exhaust ARQ retries before a timeout")
+{
+    auto settings = uncongested(60);
+    arknet::arq::control_block sender(conversation, settings);
+    sender.set_output([](std::string_view) {});
+    for (unsigned i = 0; i < 128; ++i)
+        check(sender.send(std::string(16, 'x')) == 0, "message queues");
+    sender.update(0);
+    for (unsigned i = 0; i < 128 && !sender.failed(); ++i)
+    {
+        check(sender.input(packet(82, 127, {}, 512)) == 0, "late duplicate ACK is valid");
+        sender.flush();
+    }
+    check(!sender.failed(), "ACK-driven resends cannot consume the whole retry budget at time zero");
+    check(sender.transmissions() <= 128 * 6, "fast retransmission is bounded independently of timeout retries");
+    const auto before = sender.retransmissions();
+    sender.update(1000);
+    check(sender.retransmissions() > before, "timeout retransmission remains available");
+}
+
 DOCTEST_TEST_CASE("ARQ encodes the standard little endian PUSH header")
 {
     arknet::arq::control_block sender(conversation, uncongested());

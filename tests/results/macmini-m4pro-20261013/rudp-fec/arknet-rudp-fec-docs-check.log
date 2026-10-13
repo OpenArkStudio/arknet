@@ -1,0 +1,994 @@
+
+> arknet-docs@0.0.1 check
+> node --test scripts/*.test.mjs && npm run typecheck && npm run build && node scripts/check-site.mjs
+
+✔ bilingual routes and home aliases (0.338333ms)
+✔ convert parsed links while preserving code and labels (2.688ms)
+✔ source references point at GitHub; missing documents fail (0.861541ms)
+✔ native Nimbus components use MDX and retain nested Markdown links (0.981625ms)
+✔ component examples inside code blocks and inline code stay plain Markdown (0.478167ms)
+✔ legacy routes have matching English and Chinese destinations (0.794458ms)
+✔ split legacy pages retain deep links to the right content (0.055916ms)
+✔ published summaries contain only the final UDP measurements (12.265958ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.600333
+
+> arknet-docs@0.0.1 typecheck
+> npm run prepare:content && astro check
+
+
+> arknet-docs@0.0.1 prepare:content
+> node scripts/prepare-content.mjs
+
+Prepared 168 bilingual Markdown pages.
+12:25:54 [content] Syncing content
+12:25:55 [content] Synced content
+12:25:55 [types] Generated 718ms
+12:25:55 [check] Getting diagnostics for Astro files in /Users/nick/work/opensource/arknet/docs/site...
+Result (110 files): 
+- 0 errors
+- 0 warnings
+- 0 hints
+
+
+> arknet-docs@0.0.1 build
+> npm run prepare:content && astro build && node scripts/redirects.mjs
+
+
+> arknet-docs@0.0.1 prepare:content
+> node scripts/prepare-content.mjs
+
+Prepared 168 bilingual Markdown pages.
+12:25:59 [content] Syncing content
+12:26:00 [content] Synced content
+12:26:00 [types] Generated 712ms
+12:26:00 [build] output: "static"
+12:26:00 [build] mode: "static"
+12:26:00 [build] directory: /Users/nick/work/opensource/arknet/docs/site/dist/
+12:26:00 [build] Collecting build info...
+12:26:00 [build] ✓ Completed in 792ms.
+12:26:00 [build] Building static entrypoints...
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/docs/features/rudp/index.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/docs/features/rudp/index.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/docs/concepts/sending.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/docs/concepts/sending.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/zh/project/troubleshooting.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/zh/project/troubleshooting.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/docs/get-started/installation.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/docs/get-started/installation.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/zh/get-started/first-application.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/zh/get-started/first-application.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/docs/features/tls/server.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/docs/features/tls/server.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/zh/get-started/installation.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/zh/get-started/installation.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/docs/get-started/first-application.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/docs/get-started/first-application.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/docs/guides/socket-buffers.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/docs/guides/socket-buffers.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/docs/features/rudp/fec.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/docs/features/rudp/fec.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/docs/performance/udp-update.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/docs/performance/udp-update.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/zh/performance/udp-update.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/zh/performance/udp-update.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/zh/guides/socket-buffers.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/zh/guides/socket-buffers.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/zh/features/rudp/fec.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/zh/features/rudp/fec.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/docs/project/troubleshooting.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/docs/project/troubleshooting.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/docs/project/testing.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/docs/project/testing.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/zh/features/tls/server.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/zh/features/tls/server.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/zh/features/rudp/index.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/zh/features/rudp/index.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/zh/concepts/sending.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/zh/concepts/sending.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [WARN] [vite] [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use astro:head-inject" in "src/content/zh/project/testing.mdx?astroPropagatedAssets" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/content/zh/project/testing.mdx?astroPropagatedAssets:2:6 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m"use astro:head-inject";
+ [38;5;240m  │[0m               ────────────┬───────────  
+ [38;5;240m  │[0m                           ╰───────────── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+12:26:00 [vite] ✓ built in 421ms
+12:26:00 [vite] ✓ built in 41ms
+12:26:00 [build] Rearranging server assets...
+
+ generating static routes 
+12:26:00   ├─ /_nimbus/request-route-inventory.json (+6ms) 
+12:26:00   ├─ /.well-known/ai-catalog.json (+1ms) 
+12:26:00   ├─ /.well-known/ard.json (+0ms) 
+12:26:00   ├─ /404.html (+6ms) 
+12:26:00   ├─ /llms-full.txt (+2ms) 
+12:26:00   ├─ /llms.txt (+1ms) 
+12:26:00   ├─ /nimbus-api/coordinates.json (+1ms) 
+12:26:00   ├─ /og/concepts.png[astro-og-canvas] Loading ./public/fonts/Inter-Bold.ttf
+[astro-og-canvas] Loaded 1 font families:
+Inter
+ (+62ms) 
+12:26:00   ├─ /og/concepts/endpoints.png (+1ms) 
+12:26:00   ├─ /og/concepts/io-models.png (+1ms) 
+12:26:00   ├─ /og/concepts/lifecycle.png (+0ms) 
+12:26:00   ├─ /og/concepts/sending.png (+0ms) 
+12:26:00   ├─ /og/examples.png (+0ms) 
+12:26:00   ├─ /og/features.png (+0ms) 
+12:26:00   ├─ /og/features/http.png (+1ms) 
+12:26:00   ├─ /og/features/http/client.png (+0ms) 
+12:26:00   ├─ /og/features/http/configuration.png (+0ms) 
+12:26:00   ├─ /og/features/http/performance.png (+0ms) 
+12:26:00   ├─ /og/features/http/requests.png (+0ms) 
+12:26:00   ├─ /og/features/http/server.png (+0ms) 
+12:26:00   ├─ /og/features/rudp.png (+0ms) 
+12:26:00   ├─ /og/features/rudp/client.png (+0ms) 
+12:26:00   ├─ /og/features/rudp/configuration.png (+0ms) 
+12:26:00   ├─ /og/features/rudp/fec.png (+0ms) 
+12:26:00   ├─ /og/features/rudp/performance.png (+0ms) 
+12:26:00   ├─ /og/features/rudp/server.png (+0ms) 
+12:26:00   ├─ /og/features/tcp.png (+0ms) 
+12:26:00   ├─ /og/features/tcp/client.png (+0ms) 
+12:26:00   ├─ /og/features/tcp/configuration.png (+0ms) 
+12:26:00   ├─ /og/features/tcp/performance.png (+0ms) 
+12:26:00   ├─ /og/features/tcp/server.png (+0ms) 
+12:26:00   ├─ /og/features/tls.png (+0ms) 
+12:26:00   ├─ /og/features/tls/client.png (+0ms) 
+12:26:00   ├─ /og/features/tls/configuration.png (+0ms) 
+12:26:00   ├─ /og/features/tls/performance.png (+0ms) 
+12:26:00   ├─ /og/features/tls/server.png (+0ms) 
+12:26:00   ├─ /og/features/udp.png (+0ms) 
+12:26:00   ├─ /og/features/udp/client.png (+0ms) 
+12:26:00   ├─ /og/features/udp/configuration.png (+0ms) 
+12:26:00   ├─ /og/features/udp/performance.png (+0ms) 
+12:26:00   ├─ /og/features/udp/server.png (+0ms) 
+12:26:00   ├─ /og/features/websocket.png (+0ms) 
+12:26:00   ├─ /og/features/websocket/client.png (+0ms) 
+12:26:00   ├─ /og/features/websocket/configuration.png (+0ms) 
+12:26:00   ├─ /og/features/websocket/performance.png (+0ms) 
+12:26:00   ├─ /og/features/websocket/server.png (+0ms) 
+12:26:00   ├─ /og/get-started/first-application.png (+0ms) 
+12:26:00   ├─ /og/get-started/installation.png (+0ms) 
+12:26:00   ├─ /og/guides.png (+0ms) 
+12:26:00   ├─ /og/guides/external-io.png (+0ms) 
+12:26:00   ├─ /og/guides/http-routing.png (+0ms) 
+12:26:00   ├─ /og/guides/ipv4-ipv6.png (+0ms) 
+12:26:00   ├─ /og/guides/reconnect.png (+0ms) 
+12:26:00   ├─ /og/guides/socket-buffers.png (+0ms) 
+12:26:00   ├─ /og/guides/timers.png (+0ms) 
+12:26:00   ├─ /og/index.png (+0ms) 
+12:26:00   ├─ /og/performance.png (+0ms) 
+12:26:00   ├─ /og/performance/coroutine.png (+0ms) 
+12:26:00   ├─ /og/performance/dimensions.png (+0ms) 
+12:26:00   ├─ /og/performance/dimensions-http.png (+0ms) 
+12:26:00   ├─ /og/performance/dimensions-https.png (+0ms) 
+12:26:00   ├─ /og/performance/dimensions-native-tcp.png (+0ms) 
+12:26:00   ├─ /og/performance/dimensions-tcp.png (+0ms) 
+12:26:00   ├─ /og/performance/dimensions-tcps.png (+0ms) 
+12:26:00   ├─ /og/performance/dimensions-udp.png (+0ms) 
+12:26:00   ├─ /og/performance/dimensions-websocket.png (+0ms) 
+12:26:00   ├─ /og/performance/dimensions-wss.png (+0ms) 
+12:26:00   ├─ /og/performance/http.png (+0ms) 
+12:26:00   ├─ /og/performance/https.png (+0ms) 
+12:26:00   ├─ /og/performance/io-comparison.png (+0ms) 
+12:26:00   ├─ /og/performance/methodology.png (+0ms) 
+12:26:00   ├─ /og/performance/overview.png (+0ms) 
+12:26:00   ├─ /og/performance/rudp.png (+0ms) 
+12:26:00   ├─ /og/performance/tcp.png (+0ms) 
+12:26:00   ├─ /og/performance/tcps.png (+0ms) 
+12:26:00   ├─ /og/performance/udp.png (+0ms) 
+12:26:00   ├─ /og/performance/udp-limits.png (+0ms) 
+12:26:00   ├─ /og/performance/udp-update.png (+0ms) 
+12:26:00   ├─ /og/performance/websocket.png (+0ms) 
+12:26:00   ├─ /og/performance/wss.png (+0ms) 
+12:26:00   ├─ /og/project.png (+0ms) 
+12:26:00   ├─ /og/project/architecture.png (+0ms) 
+12:26:00   ├─ /og/project/contributing.png (+0ms) 
+12:26:00   ├─ /og/project/production-readiness.png (+0ms) 
+12:26:00   ├─ /og/project/roadmap.png (+0ms) 
+12:26:00   ├─ /og/project/testing.png (+0ms) 
+12:26:00   ├─ /og/project/third-party-notices.png (+0ms) 
+12:26:00   ├─ /og/project/troubleshooting.png (+0ms) 
+12:26:00   ├─ /og/reference/api.png (+0ms) 
+12:26:00   ├─ /og/reference/configuration.png (+0ms) 
+12:26:00   ├─ /og/reference/errors.png (+0ms) 
+12:26:01   ├─ /og/zh/concepts.png (+0ms) 
+12:26:01   ├─ /og/zh/concepts/endpoints.png (+0ms) 
+12:26:01   ├─ /og/zh/concepts/io-models.png (+0ms) 
+12:26:01   ├─ /og/zh/concepts/lifecycle.png (+0ms) 
+12:26:01   ├─ /og/zh/concepts/sending.png (+0ms) 
+12:26:01   ├─ /og/zh/examples.png (+0ms) 
+12:26:01   ├─ /og/zh/features.png (+0ms) 
+12:26:01   ├─ /og/zh/features/http.png (+0ms) 
+12:26:01   ├─ /og/zh/features/http/client.png (+0ms) 
+12:26:01   ├─ /og/zh/features/http/configuration.png (+0ms) 
+12:26:01   ├─ /og/zh/features/http/performance.png (+0ms) 
+12:26:01   ├─ /og/zh/features/http/requests.png (+0ms) 
+12:26:01   ├─ /og/zh/features/http/server.png (+0ms) 
+12:26:01   ├─ /og/zh/features/rudp.png (+0ms) 
+12:26:01   ├─ /og/zh/features/rudp/client.png (+0ms) 
+12:26:01   ├─ /og/zh/features/rudp/configuration.png (+0ms) 
+12:26:01   ├─ /og/zh/features/rudp/fec.png (+0ms) 
+12:26:01   ├─ /og/zh/features/rudp/performance.png (+0ms) 
+12:26:01   ├─ /og/zh/features/rudp/server.png (+0ms) 
+12:26:01   ├─ /og/zh/features/tcp.png (+0ms) 
+12:26:01   ├─ /og/zh/features/tcp/client.png (+0ms) 
+12:26:01   ├─ /og/zh/features/tcp/configuration.png (+0ms) 
+12:26:01   ├─ /og/zh/features/tcp/performance.png (+0ms) 
+12:26:01   ├─ /og/zh/features/tcp/server.png (+0ms) 
+12:26:01   ├─ /og/zh/features/tls.png (+0ms) 
+12:26:01   ├─ /og/zh/features/tls/client.png (+0ms) 
+12:26:01   ├─ /og/zh/features/tls/configuration.png (+0ms) 
+12:26:01   ├─ /og/zh/features/tls/performance.png (+0ms) 
+12:26:01   ├─ /og/zh/features/tls/server.png (+0ms) 
+12:26:01   ├─ /og/zh/features/udp.png (+0ms) 
+12:26:01   ├─ /og/zh/features/udp/client.png (+0ms) 
+12:26:01   ├─ /og/zh/features/udp/configuration.png (+0ms) 
+12:26:01   ├─ /og/zh/features/udp/performance.png (+0ms) 
+12:26:01   ├─ /og/zh/features/udp/server.png (+0ms) 
+12:26:01   ├─ /og/zh/features/websocket.png (+0ms) 
+12:26:01   ├─ /og/zh/features/websocket/client.png (+0ms) 
+12:26:01   ├─ /og/zh/features/websocket/configuration.png (+0ms) 
+12:26:01   ├─ /og/zh/features/websocket/performance.png (+0ms) 
+12:26:01   ├─ /og/zh/features/websocket/server.png (+0ms) 
+12:26:01   ├─ /og/zh/get-started/first-application.png (+0ms) 
+12:26:01   ├─ /og/zh/get-started/installation.png (+0ms) 
+12:26:01   ├─ /og/zh/guides.png (+0ms) 
+12:26:01   ├─ /og/zh/guides/external-io.png (+0ms) 
+12:26:01   ├─ /og/zh/guides/http-routing.png (+0ms) 
+12:26:01   ├─ /og/zh/guides/ipv4-ipv6.png (+0ms) 
+12:26:01   ├─ /og/zh/guides/reconnect.png (+0ms) 
+12:26:01   ├─ /og/zh/guides/socket-buffers.png (+0ms) 
+12:26:01   ├─ /og/zh/guides/timers.png (+0ms) 
+12:26:01   ├─ /og/zh.png (+0ms) 
+12:26:01   ├─ /og/zh/performance.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/coroutine.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/dimensions.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/dimensions-http.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/dimensions-https.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/dimensions-native-tcp.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/dimensions-tcp.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/dimensions-tcps.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/dimensions-udp.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/dimensions-websocket.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/dimensions-wss.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/http.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/https.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/io-comparison.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/methodology.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/overview.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/rudp.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/tcp.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/tcps.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/udp.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/udp-limits.png (+2ms) 
+12:26:01   ├─ /og/zh/performance/udp-update.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/websocket.png (+0ms) 
+12:26:01   ├─ /og/zh/performance/wss.png (+0ms) 
+12:26:01   ├─ /og/zh/project.png (+0ms) 
+12:26:01   ├─ /og/zh/project/architecture.png (+0ms) 
+12:26:01   ├─ /og/zh/project/contributing.png (+0ms) 
+12:26:01   ├─ /og/zh/project/production-readiness.png (+0ms) 
+12:26:01   ├─ /og/zh/project/roadmap.png (+0ms) 
+12:26:01   ├─ /og/zh/project/testing.png (+0ms) 
+12:26:01   ├─ /og/zh/project/third-party-notices.png (+0ms) 
+12:26:01   ├─ /og/zh/project/troubleshooting.png (+0ms) 
+12:26:01   ├─ /og/zh/reference/api.png (+0ms) 
+12:26:01   ├─ /og/zh/reference/configuration.png (+0ms) 
+12:26:01   ├─ /og/zh/reference/errors.png (+0ms) 
+12:26:01   ├─ /og.png (+1ms) 
+12:26:01   ├─ /robots.txt (+0ms) 
+12:26:01   ├─ /zh/concepts/index.html (+20ms) 
+12:26:01   ├─ /zh/concepts/endpoints/index.html (+2ms) 
+12:26:01   ├─ /zh/concepts/io-models/index.html (+2ms) 
+12:26:01   ├─ /zh/concepts/lifecycle/index.html (+2ms) 
+12:26:01   ├─ /zh/concepts/sending/index.html (+5ms) 
+12:26:01   ├─ /zh/examples/index.html (+2ms) 
+12:26:01   ├─ /zh/features/index.html (+2ms) 
+12:26:01   ├─ /zh/features/http/index.html (+1ms) 
+12:26:01   ├─ /zh/features/http/client/index.html (+2ms) 
+12:26:01   ├─ /zh/features/http/configuration/index.html (+2ms) 
+12:26:01   ├─ /zh/features/http/performance/index.html (+1ms) 
+12:26:01   ├─ /zh/features/http/requests/index.html (+1ms) 
+12:26:01   ├─ /zh/features/http/server/index.html (+1ms) 
+12:26:01   ├─ /zh/features/rudp/index.html (+2ms) 
+12:26:01   ├─ /zh/features/rudp/client/index.html (+1ms) 
+12:26:01   ├─ /zh/features/rudp/configuration/index.html (+1ms) 
+12:26:01   ├─ /zh/features/rudp/fec/index.html (+2ms) 
+12:26:01   ├─ /zh/features/rudp/performance/index.html (+1ms) 
+12:26:01   ├─ /zh/features/rudp/server/index.html (+1ms) 
+12:26:01   ├─ /zh/features/tcp/index.html (+1ms) 
+12:26:01   ├─ /zh/features/tcp/client/index.html (+3ms) 
+12:26:01   ├─ /zh/features/tcp/configuration/index.html (+1ms) 
+12:26:01   ├─ /zh/features/tcp/performance/index.html (+1ms) 
+12:26:01   ├─ /zh/features/tcp/server/index.html (+1ms) 
+12:26:01   ├─ /zh/features/tls/index.html (+1ms) 
+12:26:01   ├─ /zh/features/tls/client/index.html (+1ms) 
+12:26:01   ├─ /zh/features/tls/configuration/index.html (+1ms) 
+12:26:01   ├─ /zh/features/tls/performance/index.html (+1ms) 
+12:26:01   ├─ /zh/features/tls/server/index.html (+2ms) 
+12:26:01   ├─ /zh/features/udp/index.html (+1ms) 
+12:26:01   ├─ /zh/features/udp/client/index.html (+1ms) 
+12:26:01   ├─ /zh/features/udp/configuration/index.html (+1ms) 
+12:26:01   ├─ /zh/features/udp/performance/index.html (+1ms) 
+12:26:01   ├─ /zh/features/udp/server/index.html (+1ms) 
+12:26:01   ├─ /zh/features/websocket/index.html (+1ms) 
+12:26:01   ├─ /zh/features/websocket/client/index.html (+1ms) 
+12:26:01   ├─ /zh/features/websocket/configuration/index.html (+2ms) 
+12:26:01   ├─ /zh/features/websocket/performance/index.html (+1ms) 
+12:26:01   ├─ /zh/features/websocket/server/index.html (+1ms) 
+12:26:01   ├─ /zh/get-started/first-application/index.html (+2ms) 
+12:26:01   ├─ /zh/get-started/installation/index.html (+2ms) 
+12:26:01   ├─ /zh/guides/index.html (+1ms) 
+12:26:01   ├─ /zh/guides/external-io/index.html (+1ms) 
+12:26:01   ├─ /zh/guides/http-routing/index.html (+1ms) 
+12:26:01   ├─ /zh/guides/ipv4-ipv6/index.html (+1ms) 
+12:26:01   ├─ /zh/guides/reconnect/index.html (+1ms) 
+12:26:01   ├─ /zh/guides/socket-buffers/index.html (+2ms) 
+12:26:01   ├─ /zh/guides/timers/index.html (+1ms) 
+12:26:01   ├─ /zh/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/index.html[nimbus] lastUpdated: indexed 0 file(s) but 50+ lookups missed — likely a path mismatch between entry.filePath and git output. "Last updated" will be blank on those pages.
+ (+1ms) 
+12:26:01   ├─ /zh/performance/coroutine/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/dimensions/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/dimensions-http/index.html (+2ms) 
+12:26:01   ├─ /zh/performance/dimensions-https/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/dimensions-native-tcp/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/dimensions-tcp/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/dimensions-tcps/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/dimensions-udp/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/dimensions-websocket/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/dimensions-wss/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/http/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/https/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/io-comparison/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/methodology/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/overview/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/rudp/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/tcp/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/tcps/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/udp/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/udp-limits/index.html (+2ms) 
+12:26:01   ├─ /zh/performance/udp-update/index.html (+2ms) 
+12:26:01   ├─ /zh/performance/websocket/index.html (+1ms) 
+12:26:01   ├─ /zh/performance/wss/index.html (+1ms) 
+12:26:01   ├─ /zh/project/index.html (+1ms) 
+12:26:01   ├─ /zh/project/architecture/index.html (+1ms) 
+12:26:01   ├─ /zh/project/contributing/index.html (+1ms) 
+12:26:01   ├─ /zh/project/production-readiness/index.html (+1ms) 
+12:26:01   ├─ /zh/project/roadmap/index.html (+1ms) 
+12:26:01   ├─ /zh/project/testing/index.html (+2ms) 
+12:26:01   ├─ /zh/project/third-party-notices/index.html (+1ms) 
+12:26:01   ├─ /zh/project/troubleshooting/index.html (+2ms) 
+12:26:01   ├─ /zh/reference/api/index.html (+1ms) 
+12:26:01   ├─ /zh/reference/configuration/index.html (+1ms) 
+12:26:01   ├─ /zh/reference/errors/index.html (+1ms) 
+12:26:01   ├─ /concepts/llms.txt (+1ms) 
+12:26:01   ├─ /features/llms.txt (+0ms) 
+12:26:01   ├─ /get-started/llms.txt (+0ms) 
+12:26:01   ├─ /guides/llms.txt (+0ms) 
+12:26:01   ├─ /performance/llms.txt (+0ms) 
+12:26:01   ├─ /project/llms.txt (+0ms) 
+12:26:01   ├─ /reference/llms.txt (+0ms) 
+12:26:01   ├─ /zh/llms.txt (+0ms) 
+12:26:01   ├─ /concepts/index.md (+0ms) 
+12:26:01   ├─ /concepts/endpoints/index.md (+0ms) 
+12:26:01   ├─ /concepts/io-models/index.md (+0ms) 
+12:26:01   ├─ /concepts/lifecycle/index.md (+0ms) 
+12:26:01   ├─ /concepts/sending/index.md (+0ms) 
+12:26:01   ├─ /examples/index.md (+0ms) 
+12:26:01   ├─ /features/index.md (+0ms) 
+12:26:01   ├─ /features/http/index.md (+0ms) 
+12:26:01   ├─ /features/http/client/index.md (+0ms) 
+12:26:01   ├─ /features/http/configuration/index.md (+0ms) 
+12:26:01   ├─ /features/http/performance/index.md (+0ms) 
+12:26:01   ├─ /features/http/requests/index.md (+0ms) 
+12:26:01   ├─ /features/http/server/index.md (+0ms) 
+12:26:01   ├─ /features/rudp/index.md (+0ms) 
+12:26:01   ├─ /features/rudp/client/index.md (+1ms) 
+12:26:01   ├─ /features/rudp/configuration/index.md (+0ms) 
+12:26:01   ├─ /features/rudp/fec/index.md (+0ms) 
+12:26:01   ├─ /features/rudp/performance/index.md (+0ms) 
+12:26:01   ├─ /features/rudp/server/index.md (+0ms) 
+12:26:01   ├─ /features/tcp/index.md (+0ms) 
+12:26:01   ├─ /features/tcp/client/index.md (+0ms) 
+12:26:01   ├─ /features/tcp/configuration/index.md (+0ms) 
+12:26:01   ├─ /features/tcp/performance/index.md (+0ms) 
+12:26:01   ├─ /features/tcp/server/index.md (+0ms) 
+12:26:01   ├─ /features/tls/index.md (+0ms) 
+12:26:01   ├─ /features/tls/client/index.md (+0ms) 
+12:26:01   ├─ /features/tls/configuration/index.md (+0ms) 
+12:26:01   ├─ /features/tls/performance/index.md (+0ms) 
+12:26:01   ├─ /features/tls/server/index.md (+0ms) 
+12:26:01   ├─ /features/udp/index.md (+0ms) 
+12:26:01   ├─ /features/udp/client/index.md (+0ms) 
+12:26:01   ├─ /features/udp/configuration/index.md (+0ms) 
+12:26:01   ├─ /features/udp/performance/index.md (+0ms) 
+12:26:01   ├─ /features/udp/server/index.md (+0ms) 
+12:26:01   ├─ /features/websocket/index.md (+0ms) 
+12:26:01   ├─ /features/websocket/client/index.md (+0ms) 
+12:26:01   ├─ /features/websocket/configuration/index.md (+0ms) 
+12:26:01   ├─ /features/websocket/performance/index.md (+0ms) 
+12:26:01   ├─ /features/websocket/server/index.md (+0ms) 
+12:26:01   ├─ /get-started/first-application/index.md (+0ms) 
+12:26:01   ├─ /get-started/installation/index.md (+0ms) 
+12:26:01   ├─ /guides/index.md (+0ms) 
+12:26:01   ├─ /guides/external-io/index.md (+0ms) 
+12:26:01   ├─ /guides/http-routing/index.md (+0ms) 
+12:26:01   ├─ /guides/ipv4-ipv6/index.md (+0ms) 
+12:26:01   ├─ /guides/reconnect/index.md (+0ms) 
+12:26:01   ├─ /guides/socket-buffers/index.md (+0ms) 
+12:26:01   ├─ /guides/timers/index.md (+0ms) 
+12:26:01   ├─ /index.md (+0ms) 
+12:26:01   ├─ /performance/index.md (+0ms) 
+12:26:01   ├─ /performance/coroutine/index.md (+0ms) 
+12:26:01   ├─ /performance/dimensions/index.md (+0ms) 
+12:26:01   ├─ /performance/dimensions-http/index.md (+0ms) 
+12:26:01   ├─ /performance/dimensions-https/index.md (+0ms) 
+12:26:01   ├─ /performance/dimensions-native-tcp/index.md (+0ms) 
+12:26:01   ├─ /performance/dimensions-tcp/index.md (+0ms) 
+12:26:01   ├─ /performance/dimensions-tcps/index.md (+0ms) 
+12:26:01   ├─ /performance/dimensions-udp/index.md (+0ms) 
+12:26:01   ├─ /performance/dimensions-websocket/index.md (+0ms) 
+12:26:01   ├─ /performance/dimensions-wss/index.md (+0ms) 
+12:26:01   ├─ /performance/http/index.md (+0ms) 
+12:26:01   ├─ /performance/https/index.md (+0ms) 
+12:26:01   ├─ /performance/io-comparison/index.md (+0ms) 
+12:26:01   ├─ /performance/methodology/index.md (+0ms) 
+12:26:01   ├─ /performance/overview/index.md (+0ms) 
+12:26:01   ├─ /performance/rudp/index.md (+0ms) 
+12:26:01   ├─ /performance/tcp/index.md (+0ms) 
+12:26:01   ├─ /performance/tcps/index.md (+0ms) 
+12:26:01   ├─ /performance/udp/index.md (+0ms) 
+12:26:01   ├─ /performance/udp-limits/index.md (+0ms) 
+12:26:01   ├─ /performance/udp-update/index.md (+0ms) 
+12:26:01   ├─ /performance/websocket/index.md (+0ms) 
+12:26:01   ├─ /performance/wss/index.md (+0ms) 
+12:26:01   ├─ /project/index.md (+0ms) 
+12:26:01   ├─ /project/architecture/index.md (+0ms) 
+12:26:01   ├─ /project/contributing/index.md (+0ms) 
+12:26:01   ├─ /project/production-readiness/index.md (+0ms) 
+12:26:01   ├─ /project/roadmap/index.md (+0ms) 
+12:26:01   ├─ /project/testing/index.md (+0ms) 
+12:26:01   ├─ /project/third-party-notices/index.md (+0ms) 
+12:26:01   ├─ /project/troubleshooting/index.md (+0ms) 
+12:26:01   ├─ /reference/api/index.md (+0ms) 
+12:26:01   ├─ /reference/configuration/index.md (+0ms) 
+12:26:01   ├─ /reference/errors/index.md (+0ms) 
+12:26:01   ├─ /zh/concepts/index.md (+0ms) 
+12:26:01   ├─ /zh/concepts/endpoints/index.md (+0ms) 
+12:26:01   ├─ /zh/concepts/io-models/index.md (+0ms) 
+12:26:01   ├─ /zh/concepts/lifecycle/index.md (+0ms) 
+12:26:01   ├─ /zh/concepts/sending/index.md (+0ms) 
+12:26:01   ├─ /zh/examples/index.md (+0ms) 
+12:26:01   ├─ /zh/features/index.md (+0ms) 
+12:26:01   ├─ /zh/features/http/index.md (+0ms) 
+12:26:01   ├─ /zh/features/http/client/index.md (+0ms) 
+12:26:01   ├─ /zh/features/http/configuration/index.md (+0ms) 
+12:26:01   ├─ /zh/features/http/performance/index.md (+0ms) 
+12:26:01   ├─ /zh/features/http/requests/index.md (+0ms) 
+12:26:01   ├─ /zh/features/http/server/index.md (+0ms) 
+12:26:01   ├─ /zh/features/rudp/index.md (+0ms) 
+12:26:01   ├─ /zh/features/rudp/client/index.md (+0ms) 
+12:26:01   ├─ /zh/features/rudp/configuration/index.md (+0ms) 
+12:26:01   ├─ /zh/features/rudp/fec/index.md (+0ms) 
+12:26:01   ├─ /zh/features/rudp/performance/index.md (+0ms) 
+12:26:01   ├─ /zh/features/rudp/server/index.md (+0ms) 
+12:26:01   ├─ /zh/features/tcp/index.md (+0ms) 
+12:26:01   ├─ /zh/features/tcp/client/index.md (+0ms) 
+12:26:01   ├─ /zh/features/tcp/configuration/index.md (+0ms) 
+12:26:01   ├─ /zh/features/tcp/performance/index.md (+0ms) 
+12:26:01   ├─ /zh/features/tcp/server/index.md (+0ms) 
+12:26:01   ├─ /zh/features/tls/index.md (+0ms) 
+12:26:01   ├─ /zh/features/tls/client/index.md (+0ms) 
+12:26:01   ├─ /zh/features/tls/configuration/index.md (+0ms) 
+12:26:01   ├─ /zh/features/tls/performance/index.md (+0ms) 
+12:26:01   ├─ /zh/features/tls/server/index.md (+0ms) 
+12:26:01   ├─ /zh/features/udp/index.md (+0ms) 
+12:26:01   ├─ /zh/features/udp/client/index.md (+0ms) 
+12:26:01   ├─ /zh/features/udp/configuration/index.md (+0ms) 
+12:26:01   ├─ /zh/features/udp/performance/index.md (+0ms) 
+12:26:01   ├─ /zh/features/udp/server/index.md (+0ms) 
+12:26:01   ├─ /zh/features/websocket/index.md (+0ms) 
+12:26:01   ├─ /zh/features/websocket/client/index.md (+0ms) 
+12:26:01   ├─ /zh/features/websocket/configuration/index.md (+0ms) 
+12:26:01   ├─ /zh/features/websocket/performance/index.md (+0ms) 
+12:26:01   ├─ /zh/features/websocket/server/index.md (+0ms) 
+12:26:01   ├─ /zh/get-started/first-application/index.md (+0ms) 
+12:26:01   ├─ /zh/get-started/installation/index.md (+0ms) 
+12:26:01   ├─ /zh/guides/index.md (+0ms) 
+12:26:01   ├─ /zh/guides/external-io/index.md (+0ms) 
+12:26:01   ├─ /zh/guides/http-routing/index.md (+0ms) 
+12:26:01   ├─ /zh/guides/ipv4-ipv6/index.md (+0ms) 
+12:26:01   ├─ /zh/guides/reconnect/index.md (+0ms) 
+12:26:01   ├─ /zh/guides/socket-buffers/index.md (+0ms) 
+12:26:01   ├─ /zh/guides/timers/index.md (+0ms) 
+12:26:01   ├─ /zh/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/coroutine/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-http/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-https/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-native-tcp/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-tcp/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-tcps/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-udp/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-websocket/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-wss/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/http/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/https/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/io-comparison/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/methodology/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/overview/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/rudp/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/tcp/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/tcps/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/udp/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/udp-limits/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/udp-update/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/websocket/index.md (+0ms) 
+12:26:01   ├─ /zh/performance/wss/index.md (+0ms) 
+12:26:01   ├─ /zh/project/index.md (+0ms) 
+12:26:01   ├─ /zh/project/architecture/index.md (+0ms) 
+12:26:01   ├─ /zh/project/contributing/index.md (+0ms) 
+12:26:01   ├─ /zh/project/production-readiness/index.md (+0ms) 
+12:26:01   ├─ /zh/project/roadmap/index.md (+0ms) 
+12:26:01   ├─ /zh/project/testing/index.md (+0ms) 
+12:26:01   ├─ /zh/project/third-party-notices/index.md (+0ms) 
+12:26:01   ├─ /zh/project/troubleshooting/index.md (+0ms) 
+12:26:01   ├─ /zh/reference/api/index.md (+0ms) 
+12:26:01   ├─ /zh/reference/configuration/index.md (+0ms) 
+12:26:01   ├─ /zh/reference/errors/index.md (+0ms) 
+12:26:01   ├─ /concepts/index.mdx (+0ms) 
+12:26:01   ├─ /concepts/endpoints/index.mdx (+0ms) 
+12:26:01   ├─ /concepts/io-models/index.mdx (+0ms) 
+12:26:01   ├─ /concepts/lifecycle/index.mdx (+0ms) 
+12:26:01   ├─ /concepts/sending/index.mdx (+0ms) 
+12:26:01   ├─ /examples/index.mdx (+0ms) 
+12:26:01   ├─ /features/index.mdx (+0ms) 
+12:26:01   ├─ /features/http/index.mdx (+0ms) 
+12:26:01   ├─ /features/http/client/index.mdx (+0ms) 
+12:26:01   ├─ /features/http/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /features/http/performance/index.mdx (+0ms) 
+12:26:01   ├─ /features/http/requests/index.mdx (+0ms) 
+12:26:01   ├─ /features/http/server/index.mdx (+0ms) 
+12:26:01   ├─ /features/rudp/index.mdx (+0ms) 
+12:26:01   ├─ /features/rudp/client/index.mdx (+0ms) 
+12:26:01   ├─ /features/rudp/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /features/rudp/fec/index.mdx (+0ms) 
+12:26:01   ├─ /features/rudp/performance/index.mdx (+0ms) 
+12:26:01   ├─ /features/rudp/server/index.mdx (+0ms) 
+12:26:01   ├─ /features/tcp/index.mdx (+0ms) 
+12:26:01   ├─ /features/tcp/client/index.mdx (+0ms) 
+12:26:01   ├─ /features/tcp/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /features/tcp/performance/index.mdx (+0ms) 
+12:26:01   ├─ /features/tcp/server/index.mdx (+0ms) 
+12:26:01   ├─ /features/tls/index.mdx (+0ms) 
+12:26:01   ├─ /features/tls/client/index.mdx (+0ms) 
+12:26:01   ├─ /features/tls/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /features/tls/performance/index.mdx (+0ms) 
+12:26:01   ├─ /features/tls/server/index.mdx (+0ms) 
+12:26:01   ├─ /features/udp/index.mdx (+0ms) 
+12:26:01   ├─ /features/udp/client/index.mdx (+0ms) 
+12:26:01   ├─ /features/udp/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /features/udp/performance/index.mdx (+0ms) 
+12:26:01   ├─ /features/udp/server/index.mdx (+0ms) 
+12:26:01   ├─ /features/websocket/index.mdx (+0ms) 
+12:26:01   ├─ /features/websocket/client/index.mdx (+0ms) 
+12:26:01   ├─ /features/websocket/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /features/websocket/performance/index.mdx (+0ms) 
+12:26:01   ├─ /features/websocket/server/index.mdx (+0ms) 
+12:26:01   ├─ /get-started/first-application/index.mdx (+0ms) 
+12:26:01   ├─ /get-started/installation/index.mdx (+0ms) 
+12:26:01   ├─ /guides/index.mdx (+0ms) 
+12:26:01   ├─ /guides/external-io/index.mdx (+0ms) 
+12:26:01   ├─ /guides/http-routing/index.mdx (+0ms) 
+12:26:01   ├─ /guides/ipv4-ipv6/index.mdx (+0ms) 
+12:26:01   ├─ /guides/reconnect/index.mdx (+0ms) 
+12:26:01   ├─ /guides/socket-buffers/index.mdx (+0ms) 
+12:26:01   ├─ /guides/timers/index.mdx (+0ms) 
+12:26:01   ├─ /index.mdx (+0ms) 
+12:26:01   ├─ /performance/index.mdx (+0ms) 
+12:26:01   ├─ /performance/coroutine/index.mdx (+0ms) 
+12:26:01   ├─ /performance/dimensions/index.mdx (+0ms) 
+12:26:01   ├─ /performance/dimensions-http/index.mdx (+0ms) 
+12:26:01   ├─ /performance/dimensions-https/index.mdx (+0ms) 
+12:26:01   ├─ /performance/dimensions-native-tcp/index.mdx (+0ms) 
+12:26:01   ├─ /performance/dimensions-tcp/index.mdx (+0ms) 
+12:26:01   ├─ /performance/dimensions-tcps/index.mdx (+0ms) 
+12:26:01   ├─ /performance/dimensions-udp/index.mdx (+0ms) 
+12:26:01   ├─ /performance/dimensions-websocket/index.mdx (+0ms) 
+12:26:01   ├─ /performance/dimensions-wss/index.mdx (+0ms) 
+12:26:01   ├─ /performance/http/index.mdx (+0ms) 
+12:26:01   ├─ /performance/https/index.mdx (+0ms) 
+12:26:01   ├─ /performance/io-comparison/index.mdx (+0ms) 
+12:26:01   ├─ /performance/methodology/index.mdx (+0ms) 
+12:26:01   ├─ /performance/overview/index.mdx (+0ms) 
+12:26:01   ├─ /performance/rudp/index.mdx (+0ms) 
+12:26:01   ├─ /performance/tcp/index.mdx (+0ms) 
+12:26:01   ├─ /performance/tcps/index.mdx (+0ms) 
+12:26:01   ├─ /performance/udp/index.mdx (+0ms) 
+12:26:01   ├─ /performance/udp-limits/index.mdx (+0ms) 
+12:26:01   ├─ /performance/udp-update/index.mdx (+0ms) 
+12:26:01   ├─ /performance/websocket/index.mdx (+0ms) 
+12:26:01   ├─ /performance/wss/index.mdx (+0ms) 
+12:26:01   ├─ /project/index.mdx (+0ms) 
+12:26:01   ├─ /project/architecture/index.mdx (+0ms) 
+12:26:01   ├─ /project/contributing/index.mdx (+0ms) 
+12:26:01   ├─ /project/production-readiness/index.mdx (+0ms) 
+12:26:01   ├─ /project/roadmap/index.mdx (+0ms) 
+12:26:01   ├─ /project/testing/index.mdx (+0ms) 
+12:26:01   ├─ /project/third-party-notices/index.mdx (+0ms) 
+12:26:01   ├─ /project/troubleshooting/index.mdx (+0ms) 
+12:26:01   ├─ /reference/api/index.mdx (+0ms) 
+12:26:01   ├─ /reference/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /reference/errors/index.mdx (+0ms) 
+12:26:01   ├─ /zh/concepts/index.mdx (+0ms) 
+12:26:01   ├─ /zh/concepts/endpoints/index.mdx (+0ms) 
+12:26:01   ├─ /zh/concepts/io-models/index.mdx (+0ms) 
+12:26:01   ├─ /zh/concepts/lifecycle/index.mdx (+0ms) 
+12:26:01   ├─ /zh/concepts/sending/index.mdx (+0ms) 
+12:26:01   ├─ /zh/examples/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/http/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/http/client/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/http/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/http/performance/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/http/requests/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/http/server/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/rudp/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/rudp/client/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/rudp/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/rudp/fec/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/rudp/performance/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/rudp/server/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/tcp/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/tcp/client/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/tcp/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/tcp/performance/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/tcp/server/index.mdx (+1ms) 
+12:26:01   ├─ /zh/features/tls/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/tls/client/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/tls/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/tls/performance/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/tls/server/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/udp/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/udp/client/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/udp/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/udp/performance/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/udp/server/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/websocket/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/websocket/client/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/websocket/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/websocket/performance/index.mdx (+0ms) 
+12:26:01   ├─ /zh/features/websocket/server/index.mdx (+0ms) 
+12:26:01   ├─ /zh/get-started/first-application/index.mdx (+0ms) 
+12:26:01   ├─ /zh/get-started/installation/index.mdx (+0ms) 
+12:26:01   ├─ /zh/guides/index.mdx (+0ms) 
+12:26:01   ├─ /zh/guides/external-io/index.mdx (+0ms) 
+12:26:01   ├─ /zh/guides/http-routing/index.mdx (+0ms) 
+12:26:01   ├─ /zh/guides/ipv4-ipv6/index.mdx (+0ms) 
+12:26:01   ├─ /zh/guides/reconnect/index.mdx (+0ms) 
+12:26:01   ├─ /zh/guides/socket-buffers/index.mdx (+0ms) 
+12:26:01   ├─ /zh/guides/timers/index.mdx (+0ms) 
+12:26:01   ├─ /zh/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/coroutine/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-http/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-https/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-native-tcp/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-tcp/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-tcps/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-udp/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-websocket/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/dimensions-wss/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/http/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/https/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/io-comparison/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/methodology/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/overview/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/rudp/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/tcp/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/tcps/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/udp/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/udp-limits/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/udp-update/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/websocket/index.mdx (+0ms) 
+12:26:01   ├─ /zh/performance/wss/index.mdx (+0ms) 
+12:26:01   ├─ /zh/project/index.mdx (+0ms) 
+12:26:01   ├─ /zh/project/architecture/index.mdx (+0ms) 
+12:26:01   ├─ /zh/project/contributing/index.mdx (+0ms) 
+12:26:01   ├─ /zh/project/production-readiness/index.mdx (+0ms) 
+12:26:01   ├─ /zh/project/roadmap/index.mdx (+0ms) 
+12:26:01   ├─ /zh/project/testing/index.mdx (+0ms) 
+12:26:01   ├─ /zh/project/third-party-notices/index.mdx (+0ms) 
+12:26:01   ├─ /zh/project/troubleshooting/index.mdx (+0ms) 
+12:26:01   ├─ /zh/reference/api/index.mdx (+0ms) 
+12:26:01   ├─ /zh/reference/configuration/index.mdx (+0ms) 
+12:26:01   ├─ /zh/reference/errors/index.mdx (+0ms) 
+12:26:01   ├─ /concepts/index.html (+1ms) 
+12:26:01   ├─ /concepts/endpoints/index.html (+1ms) 
+12:26:01   ├─ /concepts/io-models/index.html (+1ms) 
+12:26:01   ├─ /concepts/lifecycle/index.html (+1ms) 
+12:26:01   ├─ /concepts/sending/index.html (+2ms) 
+12:26:01   ├─ /examples/index.html (+1ms) 
+12:26:01   ├─ /features/index.html (+1ms) 
+12:26:01   ├─ /features/http/index.html (+1ms) 
+12:26:01   ├─ /features/http/client/index.html (+1ms) 
+12:26:01   ├─ /features/http/configuration/index.html (+1ms) 
+12:26:01   ├─ /features/http/performance/index.html (+1ms) 
+12:26:01   ├─ /features/http/requests/index.html (+1ms) 
+12:26:01   ├─ /features/http/server/index.html (+2ms) 
+12:26:01   ├─ /features/rudp/index.html (+2ms) 
+12:26:01   ├─ /features/rudp/client/index.html (+1ms) 
+12:26:01   ├─ /features/rudp/configuration/index.html (+1ms) 
+12:26:01   ├─ /features/rudp/fec/index.html (+2ms) 
+12:26:01   ├─ /features/rudp/performance/index.html (+1ms) 
+12:26:01   ├─ /features/rudp/server/index.html (+1ms) 
+12:26:01   ├─ /features/tcp/index.html (+1ms) 
+12:26:01   ├─ /features/tcp/client/index.html (+1ms) 
+12:26:01   ├─ /features/tcp/configuration/index.html (+1ms) 
+12:26:01   ├─ /features/tcp/performance/index.html (+1ms) 
+12:26:01   ├─ /features/tcp/server/index.html (+1ms) 
+12:26:01   ├─ /features/tls/index.html (+1ms) 
+12:26:01   ├─ /features/tls/client/index.html (+1ms) 
+12:26:01   ├─ /features/tls/configuration/index.html (+1ms) 
+12:26:01   ├─ /features/tls/performance/index.html (+1ms) 
+12:26:01   ├─ /features/tls/server/index.html (+2ms) 
+12:26:01   ├─ /features/udp/index.html (+2ms) 
+12:26:01   ├─ /features/udp/client/index.html (+1ms) 
+12:26:01   ├─ /features/udp/configuration/index.html (+1ms) 
+12:26:01   ├─ /features/udp/performance/index.html (+1ms) 
+12:26:01   ├─ /features/udp/server/index.html (+1ms) 
+12:26:01   ├─ /features/websocket/index.html (+1ms) 
+12:26:01   ├─ /features/websocket/client/index.html (+1ms) 
+12:26:01   ├─ /features/websocket/configuration/index.html (+1ms) 
+12:26:01   ├─ /features/websocket/performance/index.html (+1ms) 
+12:26:01   ├─ /features/websocket/server/index.html (+1ms) 
+12:26:01   ├─ /get-started/first-application/index.html (+2ms) 
+12:26:01   ├─ /get-started/installation/index.html (+2ms) 
+12:26:01   ├─ /guides/index.html (+1ms) 
+12:26:01   ├─ /guides/external-io/index.html (+1ms) 
+12:26:01   ├─ /guides/http-routing/index.html (+1ms) 
+12:26:01   ├─ /guides/ipv4-ipv6/index.html (+1ms) 
+12:26:01   ├─ /guides/reconnect/index.html (+1ms) 
+12:26:01   ├─ /guides/socket-buffers/index.html (+2ms) 
+12:26:01   ├─ /guides/timers/index.html (+2ms) 
+12:26:01   ├─ /index.html (+1ms) 
+12:26:01   ├─ /performance/index.html (+1ms) 
+12:26:01   ├─ /performance/coroutine/index.html (+1ms) 
+12:26:01   ├─ /performance/dimensions/index.html (+1ms) 
+12:26:01   ├─ /performance/dimensions-http/index.html (+1ms) 
+12:26:01   ├─ /performance/dimensions-https/index.html (+1ms) 
+12:26:01   ├─ /performance/dimensions-native-tcp/index.html (+1ms) 
+12:26:01   ├─ /performance/dimensions-tcp/index.html (+1ms) 
+12:26:01   ├─ /performance/dimensions-tcps/index.html (+1ms) 
+12:26:01   ├─ /performance/dimensions-udp/index.html (+1ms) 
+12:26:01   ├─ /performance/dimensions-websocket/index.html (+1ms) 
+12:26:01   ├─ /performance/dimensions-wss/index.html (+1ms) 
+12:26:01   ├─ /performance/http/index.html (+1ms) 
+12:26:01   ├─ /performance/https/index.html (+1ms) 
+12:26:01   ├─ /performance/io-comparison/index.html (+1ms) 
+12:26:01   ├─ /performance/methodology/index.html (+1ms) 
+12:26:01   ├─ /performance/overview/index.html (+1ms) 
+12:26:01   ├─ /performance/rudp/index.html (+1ms) 
+12:26:01   ├─ /performance/tcp/index.html (+2ms) 
+12:26:01   ├─ /performance/tcps/index.html (+1ms) 
+12:26:01   ├─ /performance/udp/index.html (+1ms) 
+12:26:01   ├─ /performance/udp-limits/index.html (+1ms) 
+12:26:01   ├─ /performance/udp-update/index.html (+2ms) 
+12:26:01   ├─ /performance/websocket/index.html (+1ms) 
+12:26:01   ├─ /performance/wss/index.html (+1ms) 
+12:26:01   ├─ /project/index.html (+1ms) 
+12:26:01   ├─ /project/architecture/index.html (+1ms) 
+12:26:01   ├─ /project/contributing/index.html (+1ms) 
+12:26:01   ├─ /project/production-readiness/index.html (+1ms) 
+12:26:01   ├─ /project/roadmap/index.html (+1ms) 
+12:26:01   ├─ /project/testing/index.html (+2ms) 
+12:26:01   ├─ /project/third-party-notices/index.html (+1ms) 
+12:26:01   ├─ /project/troubleshooting/index.html (+1ms) 
+12:26:01   ├─ /reference/api/index.html (+1ms) 
+12:26:01   ├─ /reference/configuration/index.html (+1ms) 
+12:26:01   ├─ /reference/errors/index.html (+1ms) 
+12:26:01 ✓ Completed in 491ms.
+
+12:26:01 [build] ✓ Completed in 982ms.
+12:26:01 [@cloudflare/nimbus-docs] nimbus: output=static · adapter=none · docs prerendered=168/168 · custom prerendered routes=11 (/404, /llms-full.txt, /llms.txt, /nimbus-api/coordinates.json, /og/[...slug], /og.png, /robots.txt, /zh/[...slug], /[section]/llms.txt, /[...slug]/index.md, /[...slug]/index.mdx) · integration prerendered routes=0
+
+Running Pagefind v1.5.2 (Extended)
+Running from: "/Users/nick/work/opensource/arknet/docs/site"
+Source:       "dist"
+Output:       "dist/pagefind"
+
+[Walking source directory]
+Found 169 files matching **/*.{html}
+
+[Parsing files]
+Found a data-pagefind-body element on the site.
+↳ Ignoring pages without this tag.
+
+[Reading languages]
+Discovered 2 languages: zh-cn, en
+
+[Building search indexes]
+Total: 
+  Indexed 2 languages
+  Indexed 168 pages
+  Indexed 11528 words
+  Indexed 0 filters
+  Indexed 0 sorts
+
+Finished in 0.218 seconds
+Note: Pagefind doesn't support stemming for the language zh-cn. 
+Search will still work, but will not match across root words.
+Note: Pagefind doesn't support stemming for the language zh-cn. 
+Search will still work, but will not match across root words.
+12:26:01 [@cloudflare/nimbus-docs] Agent discovery uses origin-root /.well-known URLs. Mount the emitted .well-known directory at the origin root when deploying this site under a base.
+12:26:01 [@astrojs/sitemap] `sitemap-index.xml` created at `dist`
+12:26:01 [build] 169 page(s) built in 2.15s
+12:26:01 [build] Complete!
+Wrote 58 legacy route redirects.
+Checked 227 static HTML pages and 456 internal references, including AI Markdown endpoints.
+Checked bilingual Nimbus steps, callouts and plain Markdown exports.

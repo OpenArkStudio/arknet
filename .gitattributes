@@ -1,0 +1,5 @@
+# Preserve collected output and vendored references verbatim.
+benchmarks/results/** -whitespace
+tests/results/** -whitespace
+tests/vendor/fecpp/** -whitespace
+include/arknet/thirdparty/** -whitespace

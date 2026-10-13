@@ -1,0 +1,1 @@
+/private/tmp/arknet-macmini-standalone/benchmarks/arknet_rudp_benchmark --payload 4096 --clients 4 --window 16 --seconds 120 --warmup 2 --rounds 1 --seed 42 --io-model shared --io-threads 4 --fec fixed --profile burst --burst-count 3 --burst-period 100 --loss-percent 2 --delay-ms 10 --duplicate-percent 1 --reorder-percent 5 

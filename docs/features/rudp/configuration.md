@@ -2,6 +2,7 @@
 
 Configure both endpoints while stopped. Invalid settings throw
 `std::invalid_argument`; changing a running endpoint throws `std::logic_error`.
+See [FEC policies](fec.md) for optional coding and statistics.
 
 ```cpp
 arknet::arq::options settings;
@@ -26,6 +27,16 @@ client.set_rudp_options(settings);
 | `fast_resend` | 2 | Later ACKs required to trigger fast retransmission; zero disables it |
 | `max_retransmits` | 20 | Retries after the initial transmission |
 | `max_pending_bytes` | 4 MiB | Per-direction ARQ payload plus segment-header budget; also bounds queued raw sends |
+
+ACK-driven fast retransmission stops after six total transmissions; timeout
+retransmission remains available. This keeps a dense or duplicate ACK burst from
+exhausting the retry budget before the peer can respond.
+
+The server defaults to **1024 active sessions**, configured with
+`set_max_sessions(count)` before start. At capacity, it skips new admission;
+clients can retry, and existing sessions still receive valid handshake replies.
+Application-retained stopped sessions are outside the active-session count and
+remain the holder's memory responsibility.
 
 Each segment has a 24-byte header. A message uses at most 256 fragments; with
 the default MTU, the maximum payload is **301,056 bytes**. Both peers' receive
@@ -54,12 +65,16 @@ run through the endpoint's strand. External contexts must keep running until
 
 A server attempts FIN notices before closing its shared socket. FIN is
 best effort and can be lost. A client discovers a silent failed peer when
-outstanding data exhausts retries; there is no automatic idle heartbeat.
+outstanding data exhausts retries. ARQ-only has no automatic idle heartbeat.
+FEC mode sends feedback each sample window even without application messages,
+maintaining peer session liveness while the connection is idle.
 Server sessions also use their configurable silence timeout. Reconnect
 establishes a new conversation, without replaying the old queue.
 A SYN with a different sync identifier does not replace an active session.
 Reusing the same source endpoint requires closing the old session with a valid
 FIN or waiting for its silence timeout (60 seconds by default).
+Silence elapsed time uses a monotonic clock. Invalid data, wrong conversations and
+stale handshakes do not extend session liveness.
 
 ## Wire compatibility
 

@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.20)
 project(arknet_consumer LANGUAGES CXX)
 find_package(arknet CONFIG REQUIRED)
-add_executable(consumer main.cpp)
+add_executable(consumer main.cpp fec.cpp)
 target_link_libraries(consumer PRIVATE arknet::arknet)
 set(public_headers
     base/io_pool.hpp base/timer.hpp
     tcp/tcp_client.hpp tcp/tcp_server.hpp tcp/tcp_session.hpp tcp/tcp_stream.hpp
     udp/udp_client.hpp udp/udp_server.hpp udp/udp_session.hpp udp/udp_cast.hpp
+    arq/core.hpp fec/transport.hpp
+    rudp/rudp_client.hpp rudp/rudp_server.hpp rudp/rudp_session.hpp
     websocket/ws_client.hpp websocket/ws_server.hpp websocket/ws_session.hpp
     http/http_client.hpp http/http_server.hpp http/http_session.hpp http/router.hpp
     util/spin_lock.hpp util/string.hpp)

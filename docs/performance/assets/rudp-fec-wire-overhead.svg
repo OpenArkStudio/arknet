@@ -1,0 +1,239 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1140" height="1100" viewBox="0 0 1140 1100" role="img" aria-labelledby="title description">
+<title id="title">RUDP FEC: UDP-payload wire overhead</title>
+<desc id="description">All endpoint IO models and both backends. Bars are medians; whiskers are actual minimum and maximum repeated results.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<g font-family="Arial, Helvetica, sans-serif" fill="#20252b">
+<text x="570" y="28" font-size="20" text-anchor="middle">RUDP FEC: UDP-payload wire overhead</text>
+<text x="570" y="54" font-size="14" text-anchor="middle">1,024 B | 4 clients | 16 in-flight requests/client | 3 measured rounds</text>
+<rect x="325" y="73" width="18" height="12" fill="#68737d"/>
+<text x="351" y="84" font-size="14" text-anchor="start">ARQ only</text>
+<rect x="515" y="73" width="18" height="12" fill="#458f82"/>
+<text x="541" y="84" font-size="14" text-anchor="start">Fixed FEC</text>
+<rect x="705" y="73" width="18" height="12" fill="#206db0"/>
+<text x="731" y="84" font-size="14" text-anchor="start">Adaptive FEC</text>
+<text x="307" y="126" font-size="16" text-anchor="middle">Standalone Asio | No injected loss</text>
+<text x="72" y="143" font-size="12" text-anchor="start">Extra bytes / %</text>
+<line x1="72" y1="355" x2="542" y2="355" stroke="#e3e6e8"/>
+<text x="64" y="359" font-size="12" text-anchor="end">0.00</text>
+<line x1="72" y1="302.5" x2="542" y2="302.5" stroke="#e3e6e8"/>
+<text x="64" y="306.5" font-size="12" text-anchor="end">10.0</text>
+<line x1="72" y1="250" x2="542" y2="250" stroke="#e3e6e8"/>
+<text x="64" y="254" font-size="12" text-anchor="end">20.0</text>
+<line x1="72" y1="197.5" x2="542" y2="197.5" stroke="#e3e6e8"/>
+<text x="64" y="201.5" font-size="12" text-anchor="end">30.0</text>
+<line x1="72" y1="145" x2="542" y2="145" stroke="#e3e6e8"/>
+<text x="64" y="149" font-size="12" text-anchor="end">40.0</text>
+<rect x="104.83333333333331" y="330.390625" width="27" height="24.609375" fill="#68737d"><title>ARQ only; 1 io_context / 1 thread; median 4.688; range 4.688 to 4.688</title></rect>
+<path d="M 118.33333333333331 330.390625 V 330.390625 M 114.33333333333331 330.390625 H 122.33333333333331 M 114.33333333333331 330.390625 H 122.33333333333331" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="136.83333333333331" y="176.319347056375" width="27" height="178.680652943625" fill="#458f82"><title>Fixed FEC; 1 io_context / 1 thread; median 34.034; range 34.034 to 34.035</title></rect>
+<path d="M 150.33333333333331 176.319348664975 V 176.31688954817497 M 146.33333333333331 176.319348664975 H 154.33333333333331 M 146.33333333333331 176.31688954817497 H 154.33333333333331" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="168.83333333333331" y="317.05428415882" width="27" height="37.945715841180004" fill="#206db0"><title>Adaptive FEC; 1 io_context / 1 thread; median 7.228; range 7.228 to 7.228</title></rect>
+<path d="M 182.33333333333331 317.054397931255 V 317.0536209973 M 178.33333333333331 317.054397931255 H 186.33333333333331 M 178.33333333333331 317.0536209973 H 186.33333333333331" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="150.33333333333331" y="379" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="150.33333333333331" y="397" font-size="13" text-anchor="middle">1 thread</text>
+<rect x="261.5" y="330.390625" width="27" height="24.609375" fill="#68737d"><title>ARQ only; 1 io_context / 4 threads; median 4.688; range 4.688 to 4.688</title></rect>
+<path d="M 275 330.390625 V 330.390625 M 271 330.390625 H 279 M 271 330.390625 H 279" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="293.5" y="176.32034986727498" width="27" height="178.67965013272502" fill="#458f82"><title>Fixed FEC; 1 io_context / 4 threads; median 34.034; range 34.034 to 34.035</title></rect>
+<path d="M 307 176.32077628802503 V 176.318301252175 M 303 176.32077628802503 H 311 M 303 176.318301252175 H 311" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="325.5" y="317.0552751987475" width="27" height="37.944724801252505" fill="#206db0"><title>Adaptive FEC; 1 io_context / 4 threads; median 7.228; range 7.228 to 7.228</title></rect>
+<path d="M 339 317.055292789765 V 317.05466715724 M 335 317.055292789765 H 343 M 335 317.05466715724 H 343" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="307" y="379" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="307" y="397" font-size="13" text-anchor="middle">4 threads</text>
+<rect x="418.1666666666667" y="330.390625" width="27" height="24.609375" fill="#68737d"><title>ARQ only; 4 io_contexts / 4 threads; median 4.688; range 4.688 to 4.688</title></rect>
+<path d="M 431.6666666666667 330.390625 V 330.390625 M 427.6666666666667 330.390625 H 435.6666666666667 M 427.6666666666667 330.390625 H 435.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="450.1666666666667" y="176.319288368725" width="27" height="178.680711631275" fill="#458f82"><title>Fixed FEC; 4 io_contexts / 4 threads; median 34.034; range 34.034 to 34.035</title></rect>
+<path d="M 463.6666666666667 176.32050090924997 V 176.31494512510002 M 459.6666666666667 176.32050090924997 H 467.6666666666667 M 459.6666666666667 176.31494512510002 H 467.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="482.1666666666667" y="317.05553497447" width="27" height="37.94446502553001" fill="#206db0"><title>Adaptive FEC; 4 io_contexts / 4 threads; median 7.228; range 7.228 to 7.228</title></rect>
+<path d="M 495.6666666666667 317.0556200510875 V 317.055454155865 M 491.6666666666667 317.0556200510875 H 499.6666666666667 M 491.6666666666667 317.055454155865 H 499.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="463.6666666666667" y="379" font-size="13" text-anchor="middle">4 io_contexts</text>
+<text x="463.6666666666667" y="397" font-size="13" text-anchor="middle">4 threads</text>
+<path d="M 72 145 V 355 H 542" stroke="#7e878e" fill="none"/>
+<text x="867" y="126" font-size="16" text-anchor="middle">Boost.Asio | No injected loss</text>
+<text x="632" y="143" font-size="12" text-anchor="start">Extra bytes / %</text>
+<line x1="632" y1="355" x2="1102" y2="355" stroke="#e3e6e8"/>
+<text x="624" y="359" font-size="12" text-anchor="end">0.00</text>
+<line x1="632" y1="302.5" x2="1102" y2="302.5" stroke="#e3e6e8"/>
+<text x="624" y="306.5" font-size="12" text-anchor="end">10.0</text>
+<line x1="632" y1="250" x2="1102" y2="250" stroke="#e3e6e8"/>
+<text x="624" y="254" font-size="12" text-anchor="end">20.0</text>
+<line x1="632" y1="197.5" x2="1102" y2="197.5" stroke="#e3e6e8"/>
+<text x="624" y="201.5" font-size="12" text-anchor="end">30.0</text>
+<line x1="632" y1="145" x2="1102" y2="145" stroke="#e3e6e8"/>
+<text x="624" y="149" font-size="12" text-anchor="end">40.0</text>
+<rect x="664.8333333333334" y="330.390625" width="27" height="24.609375" fill="#68737d"><title>ARQ only; 1 io_context / 1 thread; median 4.688; range 4.688 to 4.688</title></rect>
+<path d="M 678.3333333333334 330.390625 V 330.390625 M 674.3333333333334 330.390625 H 682.3333333333334 M 674.3333333333334 330.390625 H 682.3333333333334" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="696.8333333333334" y="176.3169214918" width="27" height="178.6830785082" fill="#458f82"><title>Fixed FEC; 1 io_context / 1 thread; median 34.035; range 34.034 to 34.035</title></rect>
+<path d="M 710.3333333333334 176.31938067055 V 176.3139639631 M 706.3333333333334 176.31938067055 H 714.3333333333334 M 706.3333333333334 176.3139639631 H 714.3333333333334" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="728.8333333333334" y="317.05439728046497" width="27" height="37.94560271953503" fill="#206db0"><title>Adaptive FEC; 1 io_context / 1 thread; median 7.228; range 7.228 to 7.228</title></rect>
+<path d="M 742.3333333333334 317.0543993950075 V 317.054355452455 M 738.3333333333334 317.0543993950075 H 746.3333333333334 M 738.3333333333334 317.054355452455 H 746.3333333333334" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="710.3333333333334" y="379" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="710.3333333333334" y="397" font-size="13" text-anchor="middle">1 thread</text>
+<rect x="821.5" y="330.390625" width="27" height="24.609375" fill="#68737d"><title>ARQ only; 1 io_context / 4 threads; median 4.688; range 4.688 to 4.688</title></rect>
+<path d="M 835 330.390625 V 330.390625 M 831 330.390625 H 839 M 831 330.390625 H 839" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="853.5" y="176.3179520521" width="27" height="178.6820479479" fill="#458f82"><title>Fixed FEC; 1 io_context / 4 threads; median 34.035; range 34.034 to 34.035</title></rect>
+<path d="M 867 176.3190576769 V 176.3151808963 M 863 176.3190576769 H 871 M 863 176.3151808963 H 871" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="885.5" y="317.05535278057" width="27" height="37.94464721943001" fill="#206db0"><title>Adaptive FEC; 1 io_context / 4 threads; median 7.228; range 7.228 to 7.228</title></rect>
+<path d="M 899 317.05536821137 V 317.0551908408025 M 895 317.05536821137 H 903 M 895 317.0551908408025 H 903" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="867" y="379" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="867" y="397" font-size="13" text-anchor="middle">4 threads</text>
+<rect x="978.1666666666667" y="330.390625" width="27" height="24.609375" fill="#68737d"><title>ARQ only; 4 io_contexts / 4 threads; median 4.688; range 4.688 to 4.688</title></rect>
+<path d="M 991.6666666666667 330.390625 V 330.390625 M 987.6666666666667 330.390625 H 995.6666666666667 M 987.6666666666667 330.390625 H 995.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="1010.1666666666667" y="176.3192706232" width="27" height="178.6807293768" fill="#458f82"><title>Fixed FEC; 4 io_contexts / 4 threads; median 34.034; range 34.034 to 34.035</title></rect>
+<path d="M 1023.6666666666667 176.32050126782502 V 176.31737822972502 M 1019.6666666666667 176.32050126782502 H 1027.6666666666667 M 1019.6666666666667 176.31737822972502 H 1027.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="1042.1666666666667" y="317.0554692286675" width="27" height="37.944530771332495" fill="#206db0"><title>Adaptive FEC; 4 io_contexts / 4 threads; median 7.228; range 7.228 to 7.228</title></rect>
+<path d="M 1055.6666666666667 317.055499638505 V 317.0554197734575 M 1051.6666666666667 317.055499638505 H 1059.6666666666667 M 1051.6666666666667 317.0554197734575 H 1059.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="1023.6666666666667" y="379" font-size="13" text-anchor="middle">4 io_contexts</text>
+<text x="1023.6666666666667" y="397" font-size="13" text-anchor="middle">4 threads</text>
+<path d="M 632 145 V 355 H 1102" stroke="#7e878e" fill="none"/>
+<text x="307" y="421" font-size="16" text-anchor="middle">Standalone Asio | Random loss</text>
+<text x="72" y="438" font-size="12" text-anchor="start">Extra bytes / %</text>
+<line x1="72" y1="650" x2="542" y2="650" stroke="#e3e6e8"/>
+<text x="64" y="654" font-size="12" text-anchor="end">0.00</text>
+<line x1="72" y1="597.5" x2="542" y2="597.5" stroke="#e3e6e8"/>
+<text x="64" y="601.5" font-size="12" text-anchor="end">25.0</text>
+<line x1="72" y1="545" x2="542" y2="545" stroke="#e3e6e8"/>
+<text x="64" y="549" font-size="12" text-anchor="end">50.0</text>
+<line x1="72" y1="492.5" x2="542" y2="492.5" stroke="#e3e6e8"/>
+<text x="64" y="496.5" font-size="12" text-anchor="end">75.0</text>
+<line x1="72" y1="440" x2="542" y2="440" stroke="#e3e6e8"/>
+<text x="64" y="444" font-size="12" text-anchor="end">100</text>
+<rect x="104.83333333333331" y="603.91977896336" width="27" height="46.080221036639955" fill="#68737d"><title>ARQ only; 1 io_context / 1 thread; median 21.943; range 20.821 to 23.618</title></rect>
+<path d="M 118.33333333333331 606.27554606411 V 600.40260605726 M 114.33333333333331 606.27554606411 H 122.33333333333331 M 114.33333333333331 600.40260605726 H 122.33333333333331" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="136.83333333333331" y="529.70045509712" width="27" height="120.29954490288003" fill="#458f82"><title>Fixed FEC; 1 io_context / 1 thread; median 57.285; range 57.020 to 58.071</title></rect>
+<path d="M 150.33333333333331 530.2587816361699 V 528.05038260767 M 146.33333333333331 530.2587816361699 H 154.33333333333331 M 146.33333333333331 528.05038260767 H 154.33333333333331" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="168.83333333333331" y="523.70182845101" width="27" height="126.29817154899001" fill="#206db0"><title>Adaptive FEC; 1 io_context / 1 thread; median 60.142; range 59.374 to 60.497</title></rect>
+<path d="M 182.33333333333331 525.3143204543001 V 522.95691029423 M 178.33333333333331 525.3143204543001 H 186.33333333333331 M 178.33333333333331 522.95691029423 H 186.33333333333331" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="150.33333333333331" y="674" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="150.33333333333331" y="692" font-size="13" text-anchor="middle">1 thread</text>
+<rect x="261.5" y="601.70602176974" width="27" height="48.293978230259995" fill="#68737d"><title>ARQ only; 1 io_context / 4 threads; median 22.997; range 21.957 to 23.396</title></rect>
+<path d="M 275 603.89006059895 V 600.86943975221 M 271 603.89006059895 H 279 M 271 600.86943975221 H 279" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="293.5" y="531.30821989205" width="27" height="118.69178010794997" fill="#458f82"><title>Fixed FEC; 1 io_context / 4 threads; median 56.520; range 55.494 to 57.983</title></rect>
+<path d="M 307 533.46332473352 V 528.23670872975 M 303 533.46332473352 H 311 M 303 528.23670872975 H 311" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="325.5" y="525.19257258113" width="27" height="124.80742741887002" fill="#206db0"><title>Adaptive FEC; 1 io_context / 4 threads; median 59.432; range 58.400 to 60.568</title></rect>
+<path d="M 339 527.3592336554 V 522.80731871762 M 335 527.3592336554 H 343 M 335 522.80731871762 H 343" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="307" y="674" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="307" y="692" font-size="13" text-anchor="middle">4 threads</text>
+<rect x="418.1666666666667" y="605.66907598304" width="27" height="44.33092401696001" fill="#68737d"><title>ARQ only; 4 io_contexts / 4 threads; median 21.110; range 20.864 to 22.802</title></rect>
+<path d="M 431.6666666666667 606.1857667211 V 602.11651745828 M 427.6666666666667 606.1857667211 H 435.6666666666667 M 427.6666666666667 602.11651745828 H 435.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="450.1666666666667" y="530.89121829788" width="27" height="119.10878170212004" fill="#458f82"><title>Fixed FEC; 4 io_contexts / 4 threads; median 56.718; range 56.633 to 57.002</title></rect>
+<path d="M 463.6666666666667 531.0700825391 V 530.29604074316 M 459.6666666666667 531.0700825391 H 467.6666666666667 M 459.6666666666667 530.29604074316 H 467.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="482.1666666666667" y="525.83766265088" width="27" height="124.16233734911998" fill="#206db0"><title>Adaptive FEC; 4 io_contexts / 4 threads; median 59.125; range 59.015 to 59.884</title></rect>
+<path d="M 495.6666666666667 526.06897495133 V 524.24429606411 M 491.6666666666667 526.06897495133 H 499.6666666666667 M 491.6666666666667 524.24429606411 H 499.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="463.6666666666667" y="674" font-size="13" text-anchor="middle">4 io_contexts</text>
+<text x="463.6666666666667" y="692" font-size="13" text-anchor="middle">4 threads</text>
+<path d="M 72 440 V 650 H 542" stroke="#7e878e" fill="none"/>
+<text x="867" y="421" font-size="16" text-anchor="middle">Boost.Asio | Random loss</text>
+<text x="632" y="438" font-size="12" text-anchor="start">Extra bytes / %</text>
+<line x1="632" y1="650" x2="1102" y2="650" stroke="#e3e6e8"/>
+<text x="624" y="654" font-size="12" text-anchor="end">0.00</text>
+<line x1="632" y1="597.5" x2="1102" y2="597.5" stroke="#e3e6e8"/>
+<text x="624" y="601.5" font-size="12" text-anchor="end">25.0</text>
+<line x1="632" y1="545" x2="1102" y2="545" stroke="#e3e6e8"/>
+<text x="624" y="549" font-size="12" text-anchor="end">50.0</text>
+<line x1="632" y1="492.5" x2="1102" y2="492.5" stroke="#e3e6e8"/>
+<text x="624" y="496.5" font-size="12" text-anchor="end">75.0</text>
+<line x1="632" y1="440" x2="1102" y2="440" stroke="#e3e6e8"/>
+<text x="624" y="444" font-size="12" text-anchor="end">100</text>
+<rect x="664.8333333333334" y="604.41244567475" width="27" height="45.58755432525004" fill="#68737d"><title>ARQ only; 1 io_context / 1 thread; median 21.708; range 21.612 to 23.429</title></rect>
+<path d="M 678.3333333333334 604.61376404501 V 600.79841346149 M 674.3333333333334 604.61376404501 H 682.3333333333334 M 674.3333333333334 600.79841346149 H 682.3333333333334" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="696.8333333333334" y="534.32047134944" width="27" height="115.67952865055997" fill="#458f82"><title>Fixed FEC; 1 io_context / 1 thread; median 55.085; range 55.038 to 55.550</title></rect>
+<path d="M 710.3333333333334 534.42024404729 V 533.34462211739 M 706.3333333333334 534.42024404729 H 714.3333333333334 M 706.3333333333334 533.34462211739 H 714.3333333333334" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="728.8333333333334" y="525.51981615464" width="27" height="124.48018384535999" fill="#206db0"><title>Adaptive FEC; 1 io_context / 1 thread; median 59.276; range 57.543 to 59.853</title></rect>
+<path d="M 742.3333333333334 529.15906302821 V 524.30898132671 M 738.3333333333334 529.15906302821 H 746.3333333333334 M 738.3333333333334 524.30898132671 H 746.3333333333334" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="710.3333333333334" y="674" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="710.3333333333334" y="692" font-size="13" text-anchor="middle">1 thread</text>
+<rect x="821.5" y="603.86633831519" width="27" height="46.13366168481002" fill="#68737d"><title>ARQ only; 1 io_context / 4 threads; median 21.968; range 21.679 to 22.455</title></rect>
+<path d="M 835 604.47496309055 V 602.84383430756 M 831 604.47496309055 H 839 M 831 602.84383430756 H 839" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="853.5" y="530.63744897249" width="27" height="119.36255102751" fill="#458f82"><title>Fixed FEC; 1 io_context / 4 threads; median 56.839; range 56.823 to 57.222</title></rect>
+<path d="M 867 530.67225864956 V 529.83433046042 M 863 530.67225864956 H 871 M 863 529.83433046042 H 871" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="885.5" y="523.36580742602" width="27" height="126.63419257398004" fill="#206db0"><title>Adaptive FEC; 1 io_context / 4 threads; median 60.302; range 58.599 to 61.215</title></rect>
+<path d="M 899 526.94252929691 V 521.4486471974 M 895 526.94252929691 H 903 M 895 521.4486471974 H 903" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="867" y="674" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="867" y="692" font-size="13" text-anchor="middle">4 threads</text>
+<rect x="978.1666666666667" y="603.64259597798" width="27" height="46.35740402201998" fill="#68737d"><title>ARQ only; 4 io_contexts / 4 threads; median 22.075; range 20.960 to 22.578</title></rect>
+<path d="M 991.6666666666667 605.9843874206 V 602.58584047895 M 987.6666666666667 605.9843874206 H 995.6666666666667 M 987.6666666666667 602.58584047895 H 995.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="1010.1666666666667" y="530.53045948499" width="27" height="119.46954051500995" fill="#458f82"><title>Fixed FEC; 4 io_contexts / 4 threads; median 56.890; range 56.384 to 57.760</title></rect>
+<path d="M 1023.6666666666667 531.59310540191 V 528.70428119525 M 1019.6666666666667 531.59310540191 H 1027.6666666666667 M 1019.6666666666667 528.70428119525 H 1027.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="1042.1666666666667" y="525.21138399305" width="27" height="124.78861600694995" fill="#206db0"><title>Adaptive FEC; 4 io_contexts / 4 threads; median 59.423; range 57.951 to 59.624</title></rect>
+<path d="M 1055.6666666666667 528.30367838537 V 524.78899807679 M 1051.6666666666667 528.30367838537 H 1059.6666666666667 M 1051.6666666666667 524.78899807679 H 1059.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="1023.6666666666667" y="674" font-size="13" text-anchor="middle">4 io_contexts</text>
+<text x="1023.6666666666667" y="692" font-size="13" text-anchor="middle">4 threads</text>
+<path d="M 632 440 V 650 H 1102" stroke="#7e878e" fill="none"/>
+<text x="307" y="716" font-size="16" text-anchor="middle">Standalone Asio | Burst loss</text>
+<text x="72" y="733" font-size="12" text-anchor="start">Extra bytes / %</text>
+<line x1="72" y1="945" x2="542" y2="945" stroke="#e3e6e8"/>
+<text x="64" y="949" font-size="12" text-anchor="end">0.00</text>
+<line x1="72" y1="892.5" x2="542" y2="892.5" stroke="#e3e6e8"/>
+<text x="64" y="896.5" font-size="12" text-anchor="end">25.0</text>
+<line x1="72" y1="840" x2="542" y2="840" stroke="#e3e6e8"/>
+<text x="64" y="844" font-size="12" text-anchor="end">50.0</text>
+<line x1="72" y1="787.5" x2="542" y2="787.5" stroke="#e3e6e8"/>
+<text x="64" y="791.5" font-size="12" text-anchor="end">75.0</text>
+<line x1="72" y1="735" x2="542" y2="735" stroke="#e3e6e8"/>
+<text x="64" y="739" font-size="12" text-anchor="end">100</text>
+<rect x="104.83333333333331" y="903.38503884258" width="27" height="41.61496115742" fill="#68737d"><title>ARQ only; 1 io_context / 1 thread; median 19.817; range 18.863 to 19.867</title></rect>
+<path d="M 118.33333333333331 905.38855301706 V 903.27835708677 M 114.33333333333331 905.38855301706 H 122.33333333333331 M 114.33333333333331 903.27835708677 H 122.33333333333331" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="136.83333333333331" y="815.00521695642" width="27" height="129.99478304358001" fill="#458f82"><title>Fixed FEC; 1 io_context / 1 thread; median 61.902; range 60.230 to 62.876</title></rect>
+<path d="M 150.33333333333331 818.51639820027 V 812.95983910155 M 146.33333333333331 818.51639820027 H 154.33333333333331 M 146.33333333333331 812.95983910155 H 154.33333333333331" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="168.83333333333331" y="815.87713162536" width="27" height="129.12286837464" fill="#206db0"><title>Adaptive FEC; 1 io_context / 1 thread; median 61.487; range 59.390 to 62.590</title></rect>
+<path d="M 182.33333333333331 820.28152779048 V 813.56102899281 M 178.33333333333331 820.28152779048 H 186.33333333333331 M 178.33333333333331 813.56102899281 H 186.33333333333331" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="150.33333333333331" y="969" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="150.33333333333331" y="987" font-size="13" text-anchor="middle">1 thread</text>
+<rect x="261.5" y="903.71117130714" width="27" height="41.288828692859965" fill="#68737d"><title>ARQ only; 1 io_context / 4 threads; median 19.661; range 18.429 to 19.795</title></rect>
+<path d="M 275 906.29852347818 V 903.4303505883599 M 271 906.29852347818 H 279 M 271 903.4303505883599 H 279" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="293.5" y="812.30588942307" width="27" height="132.69411057693003" fill="#458f82"><title>Fixed FEC; 1 io_context / 4 threads; median 63.188; range 62.292 to 63.743</title></rect>
+<path d="M 307 814.18723775823 V 811.13967434493 M 303 814.18723775823 H 311 M 303 811.13967434493 H 311" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="325.5" y="814.10907702873" width="27" height="130.89092297127002" fill="#206db0"><title>Adaptive FEC; 1 io_context / 4 threads; median 62.329; range 61.612 to 63.283</title></rect>
+<path d="M 339 815.6141124285 V 812.10535104237 M 335 815.6141124285 H 343 M 335 812.10535104237 H 343" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="307" y="969" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="307" y="987" font-size="13" text-anchor="middle">4 threads</text>
+<rect x="418.1666666666667" y="903.58999399032" width="27" height="41.410006009680046" fill="#68737d"><title>ARQ only; 4 io_contexts / 4 threads; median 19.719; range 18.469 to 19.838</title></rect>
+<path d="M 431.6666666666667 906.2159815086 V 903.33960672018 M 427.6666666666667 906.2159815086 H 435.6666666666667 M 427.6666666666667 903.33960672018 H 435.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="450.1666666666667" y="817.4414855837999" width="27" height="127.55851441620007" fill="#458f82"><title>Fixed FEC; 4 io_contexts / 4 threads; median 60.742; range 60.089 to 61.155</title></rect>
+<path d="M 463.6666666666667 818.81318806539 V 816.57502600464 M 459.6666666666667 818.81318806539 H 467.6666666666667 M 459.6666666666667 816.57502600464 H 467.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="482.1666666666667" y="814.96874794545" width="27" height="130.03125205455" fill="#206db0"><title>Adaptive FEC; 4 io_contexts / 4 threads; median 61.920; range 61.825 to 66.776</title></rect>
+<path d="M 495.6666666666667 815.16733649064 V 804.77065316634 M 491.6666666666667 815.16733649064 H 499.6666666666667 M 491.6666666666667 804.77065316634 H 499.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="463.6666666666667" y="969" font-size="13" text-anchor="middle">4 io_contexts</text>
+<text x="463.6666666666667" y="987" font-size="13" text-anchor="middle">4 threads</text>
+<path d="M 72 735 V 945 H 542" stroke="#7e878e" fill="none"/>
+<text x="867" y="716" font-size="16" text-anchor="middle">Boost.Asio | Burst loss</text>
+<text x="632" y="733" font-size="12" text-anchor="start">Extra bytes / %</text>
+<line x1="632" y1="945" x2="1102" y2="945" stroke="#e3e6e8"/>
+<text x="624" y="949" font-size="12" text-anchor="end">0.00</text>
+<line x1="632" y1="892.5" x2="1102" y2="892.5" stroke="#e3e6e8"/>
+<text x="624" y="896.5" font-size="12" text-anchor="end">25.0</text>
+<line x1="632" y1="840" x2="1102" y2="840" stroke="#e3e6e8"/>
+<text x="624" y="844" font-size="12" text-anchor="end">50.0</text>
+<line x1="632" y1="787.5" x2="1102" y2="787.5" stroke="#e3e6e8"/>
+<text x="624" y="791.5" font-size="12" text-anchor="end">75.0</text>
+<line x1="632" y1="735" x2="1102" y2="735" stroke="#e3e6e8"/>
+<text x="624" y="739" font-size="12" text-anchor="end">100</text>
+<rect x="664.8333333333334" y="905.72805433425" width="27" height="39.27194566574997" fill="#68737d"><title>ARQ only; 1 io_context / 1 thread; median 18.701; range 18.448 to 20.067</title></rect>
+<path d="M 678.3333333333334 906.2595034605 V 902.85867248598 M 674.3333333333334 906.2595034605 H 682.3333333333334 M 674.3333333333334 902.85867248598 H 682.3333333333334" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="696.8333333333334" y="814.49054722266" width="27" height="130.50945277734002" fill="#458f82"><title>Fixed FEC; 1 io_context / 1 thread; median 62.147; range 61.915 to 62.512</title></rect>
+<path d="M 710.3333333333334 814.97814002409 V 813.7241067152399 M 706.3333333333334 814.97814002409 H 714.3333333333334 M 706.3333333333334 813.7241067152399 H 714.3333333333334" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="728.8333333333334" y="813.09919773936" width="27" height="131.90080226064003" fill="#206db0"><title>Adaptive FEC; 1 io_context / 1 thread; median 62.810; range 61.848 to 63.499</title></rect>
+<path d="M 742.3333333333334 815.11857365589 V 811.65175039557 M 738.3333333333334 815.11857365589 H 746.3333333333334 M 738.3333333333334 811.65175039557 H 746.3333333333334" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="710.3333333333334" y="969" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="710.3333333333334" y="987" font-size="13" text-anchor="middle">1 thread</text>
+<rect x="821.5" y="905.1897973960799" width="27" height="39.81020260392006" fill="#68737d"><title>ARQ only; 1 io_context / 4 threads; median 18.957; range 18.711 to 20.283</title></rect>
+<path d="M 835 905.70794198556 V 902.40477981402 M 831 905.70794198556 H 839 M 831 902.40477981402 H 839" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="853.5" y="817.03684443318" width="27" height="127.96315556681998" fill="#458f82"><title>Fixed FEC; 1 io_context / 4 threads; median 60.935; range 60.516 to 61.389</title></rect>
+<path d="M 867 817.91658345453 V 816.08360704983 M 863 817.91658345453 H 871 M 863 816.08360704983 H 871" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="885.5" y="814.58192624319" width="27" height="130.41807375681003" fill="#206db0"><title>Adaptive FEC; 1 io_context / 4 threads; median 62.104; range 61.564 to 64.480</title></rect>
+<path d="M 899 815.71493957142 V 809.59115394759 M 895 815.71493957142 H 903 M 895 809.59115394759 H 903" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="867" y="969" font-size="13" text-anchor="middle">1 io_context</text>
+<text x="867" y="987" font-size="13" text-anchor="middle">4 threads</text>
+<rect x="978.1666666666667" y="903.88884751872" width="27" height="41.11115248127999" fill="#68737d"><title>ARQ only; 4 io_contexts / 4 threads; median 19.577; range 19.406 to 19.709</title></rect>
+<path d="M 991.6666666666667 904.24750066203 V 903.61085207106 M 987.6666666666667 904.24750066203 H 995.6666666666667 M 987.6666666666667 903.61085207106 H 995.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="1010.1666666666667" y="815.32365615351" width="27" height="129.67634384649" fill="#458f82"><title>Fixed FEC; 4 io_contexts / 4 threads; median 61.751; range 59.375 to 62.385</title></rect>
+<path d="M 1023.6666666666667 820.31264321097 V 813.99053257935 M 1019.6666666666667 820.31264321097 H 1027.6666666666667 M 1019.6666666666667 813.99053257935 H 1027.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<rect x="1042.1666666666667" y="813.28243894716" width="27" height="131.71756105283998" fill="#206db0"><title>Adaptive FEC; 4 io_contexts / 4 threads; median 62.723; range 60.444 to 64.245</title></rect>
+<path d="M 1055.6666666666667 818.06787476505 V 810.08538709413 M 1051.6666666666667 818.06787476505 H 1059.6666666666667 M 1051.6666666666667 810.08538709413 H 1059.6666666666667" stroke="#20252b" stroke-width="1.4" fill="none"/>
+<text x="1023.6666666666667" y="969" font-size="13" text-anchor="middle">4 io_contexts</text>
+<text x="1023.6666666666667" y="987" font-size="13" text-anchor="middle">4 threads</text>
+<path d="M 632 735 V 945 H 1102" stroke="#7e878e" fill="none"/>
+<text x="570" y="1026" font-size="13" text-anchor="middle">Endpoint IO models shown above; relay always adds 1 io_context and 1 thread.</text>
+<text x="570" y="1050" font-size="14" text-anchor="middle">Bars: median. Whiskers: min/max of 3 rounds.</text>
+
+</g></svg>

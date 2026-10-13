@@ -93,6 +93,12 @@ if(ARKNET_BUILD_BENCHMARKS)
                 --protocol tcp --payload 1024 --clients 16 --window 1
                 --seconds 0.2 --warmup 0.1 --io-model ${model} --io-threads 4 --work 10000)
         endforeach()
+        foreach(policy off fixed adaptive)
+            arknet_add_check(benchmark_rudp_${policy}_loss 45 arknet_rudp_benchmark
+                --payload 1024 --clients 2 --window 8 --seconds 0.2 --warmup 0.1 --rounds 1
+                --io-model shared --io-threads 4 --fec ${policy} --profile random
+                --loss-percent 3 --delay-ms 2 --duplicate-percent 1 --reorder-percent 5 --seed 42)
+        endforeach()
     endif()
 endif()
 if(ARKNET_BUILD_TESTS)

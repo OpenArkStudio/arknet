@@ -6,7 +6,8 @@ RUDP 在 UDP 上提供可靠、有序的消息传输。C++20 ARQ 核心负责分
 <Aside type="note" title="说明：实验性模块">
 
 该模块处于实验阶段，不包含在 `v0.1.0-rc.1` 中。
-[可选 FEC](../../project/roadmap_CN.md)将作为组件与 ARQ 组合，当前实现与测量均不包含 FEC。
+提供仅 ARQ、固定 FEC 和自适应 FEC 三种[策略](fec_CN.md)。默认仅 ARQ；
+FEC 需要两端协商，仍由 ARQ 保证完整消息交付。生产采用须按部署链路和 ARK 业务验收。
 
 </Aside>
 
@@ -15,6 +16,7 @@ RUDP 在 UDP 上提供可靠、有序的消息传输。C++20 ARQ 核心负责分
 - [创建服务端](server_CN.md)：接收并回显完整消息。
 - [创建客户端](client_CN.md)：完成握手并验证回显。
 - [配置](configuration_CN.md)：MTU、窗口、限制和兼容范围。
+- [FEC 策略](fec_CN.md)：编码参数、动态阈值与统计。
 - [性能](performance_CN.md)：本地测量与复现。
 
 | 能力 | 行为 |
@@ -23,9 +25,10 @@ RUDP 在 UDP 上提供可靠、有序的消息传输。C++20 ARQ 核心负责分
 | 地址与后端 | IPv4/IPv6；Standalone Asio 或 Boost.Asio |
 | 消息 | 空消息、二进制消息、分片与有序重组 |
 | 可靠性 | ACK、超时重传、快速重传与有限重试 |
+| 可选恢复 | Reed–Solomon 固定或自适应 FEC；未恢复数据由 ARQ 重传 |
 | 流量控制 | 发送与接收窗口；默认启用拥塞控制 |
 | 运行机制 | 握手超时、重连、定时器、内置或外部 IO context |
-| 限额 | 每个方向的 ARQ 内存预算与有界 socket 发送队列 |
+| 限额 | ARQ、FEC、socket 队列与服务端会话数量均有上限 |
 
 ## 选择传输方式
 

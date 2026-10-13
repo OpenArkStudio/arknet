@@ -1,0 +1,63 @@
+# 生产验收与 ARK 接入
+
+arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
+回显示例只能验证基本功能。正式采用还需要资源上限、故障恢复、并发检查与调用方业务回归。
+
+## 验收条件
+
+| 范围 | 所需证据 |
+| --- | --- |
+| 协议正确性 | 二进制与空消息、分片、顺序、重复、无效输入及独立 ARQ/FEC 实现互通 |
+| 生命周期 | 并发发送与统计、回调内停止、重连、服务端重启，以及完成通知恰好执行一次 |
+| 资源限制 | ARQ、FEC、socket 队列与服务端会话数量均有上限；过载时明确返回错误 |
+| 执行模型 | 单 context 单线程、单 context 多线程、多 context 各一线程；端点状态经 strand 串行执行 |
+| 平台 | Standalone Asio 与 Boost.Asio；Linux、macOS、Windows 构建和测试；独立 ASan/UBSan 与 TSan 检查 |
+| 性能 | 本机 Release 构建，多轮测量、包体、在途请求、随机与突发丢包，吞吐量、p50/p99 RTT、CPU 占用和报文开销 |
+| 持续运行 | 持续流量下的交付与完成计数、断连及保留资源；短时检查必须写明时长 |
+| ARK 兼容 | 真实 zephyr/arknet 混合对端；替换后的 ARK 拆包、事件派发、Session 所有权、重连与关闭 |
+| 部署链路 | 目标网络上的跨主机传输、MTU 与 socket 缓冲配置、实际并发量和运行时长 |
+| 身份与访问控制 | RUDP 不提供认证与加密；按目标网络验收部署侧访问控制和应用身份验证 |
+
+[测试与验证](testing_CN.md)及 [RUDP 报告](../performance/rudp_CN.md)记录实际执行范围与结果。
+本机回环与模拟丢包不能确定部署网络上的生产容量。RUDP 不包含在 `v0.1.0-rc.1`
+中；稳定版本仍需补齐剩余验收证据。
+
+## 验收状态
+
+| 范围 | 截至 2026-10-13 的证据 |
+| --- | --- |
+| 本机完整检查 | 两种 Release + TLS 后端：每种 55 项检查、219 个 doctest 用例 |
+| 并发与内存检查 | 指定 ASan/UBSan 测试组：109 个用例；指定 TSan 测试组：86 个用例 |
+| 真实旧库对端 | 两种后端：每种 12 组进程场景、16 个会话、512 条消息及回显 |
+| RUDP/FEC 实测负载 | 96 组配置、276 次测量、7,960,439 次成功消息往返；六组 120 秒持续运行 |
+| ARK 替换 | 已明确能力对应及迁移规则；直接替换与业务回归待完成 |
+| 生产部署 | 目标网络跨主机容量、生产时长耐久及部署访问控制待完成 |
+
+[保留日志与命令](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec)记录实际检查范围。本机通过是进入 ARK 接入的条件，不代表已完成部署验收。
+
+## ARK 能力对应
+
+| 当前用途 | arknet 替换能力 | 需要保持的行为 |
+| --- | --- | --- |
+| TCP 客户端／服务端／Session | `tcp_client`、`tcp_server`、`tcp_session` | 原始字节流；保留 ARK 自己的 AFCS/AFSS 拆包 |
+| WebSocket 客户端／服务端／Session | `ws_client`、`ws_server`、`ws_session` | 二进制消息与升级回调 |
+| UDP 加 `use_kcp` 的 RDP | `rudp_client`、`rudp_server`、`rudp_session` | 与已有 zephyr 对端互通时使用旧 ARQ 报文模式 |
+| HTTP 客户端 | `http_request` | 由模块 `Update()` 派发完成通知，保持现有状态码处理 |
+| 可选 HTTP／Consul 模块 | HTTP 请求、服务端与路由 | 启用时更新方法与路由 API，并检查已注册路由 |
+
+ARK 的业务消息体上限为 4096 字节，并自行处理业务消息头。传输分片位于这一层之下。
+ARK 的业务 Session ID 存入 `user_data`，与 RUDP conversation ID 区分。
+
+## 替换规则
+
+- 将 ARK 最低标准提高到 C++20，暂不进行协程或新语言特性改造。
+- 直接替换端点和回调类型，移除 zephyr 头文件及构建兼容层。
+- 使用 `async_send()` 保持 ARK 的异步发送接纳语义。arknet `send()` 会等待，并返回字节数。
+- 同时处理接纳返回值和异步完成错误。RUDP 入队后仍可能因 ARQ 配额不足而失败；将错误转到 ARK 更新线程的事件路径，并定义重试或拒绝策略。
+- connect/disconnect/start/stop 回调不带错误参数，在回调入口读取 `get_last_error()`；RUDP handshake 回调仍带 `error_code` 参数。
+- 按含义迁移构造参数、静默超时、缓冲与重连设置，两者的位置参数不同。
+- 保留 ARK 事件队列与更新线程派发，业务回调不转到 IO 线程执行。
+- 首次接入明确设置 ARQ 参数：zephyr 使用 MTU 1400 且关闭拥塞控制；arknet 默认 MTU 1200 且启用拥塞控制。
+- FEC 保持可选。支持 FEC 的服务端可接受旧 ARQ 会话；FEC 客户端要求对端支持协商。
+
+先完成 arknet 验收，再执行 ARK 直接替换与业务回归，通过后进入生产部署。

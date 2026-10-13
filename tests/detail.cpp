@@ -216,19 +216,25 @@ DOCTEST_TEST_CASE("Listeners can replace and clear themselves during notificatio
     check(value == 3, "observer copies own independent mutable callback state");
 }
 
-struct queue_fixture : arknet::detail::event_queue_cp<queue_fixture>
+struct queue_fixture : arknet::detail::event_queue_cp<queue_fixture>, std::enable_shared_from_this<queue_fixture>
 {
     explicit queue_fixture(std::shared_ptr<asio::io_context> context)
         : io_(std::make_shared<arknet::detail::io_t>(std::move(context)))
     {
     }
-    std::shared_ptr<queue_fixture> selfptr() const { return {}; }
+    ~queue_fixture()
+    {
+        if (destroyed)
+            *destroyed = true;
+    }
+    std::shared_ptr<queue_fixture> selfptr() { return weak_from_this().lock(); }
     auto& wallocator() { return allocator_; }
     using event_queue_cp::next_event;
     using event_queue_cp::post_event;
     using event_queue_cp::push_event;
     std::shared_ptr<arknet::detail::io_t> io_;
     arknet::detail::handler_memory<> allocator_;
+    bool* destroyed = nullptr;
 };
 
 DOCTEST_TEST_CASE("Event queues drain long synchronous completion chains without recursion")
@@ -244,6 +250,29 @@ DOCTEST_TEST_CASE("Event queues drain long synchronous completion chains without
         });
     context->run();
     check(completed == 50000, "all synchronous queue entries complete");
+}
+
+DOCTEST_TEST_CASE("Event queues retain their owner through synchronous final-owner release")
+{
+    auto context = std::make_shared<asio::io_context>();
+    auto queue = std::make_shared<queue_fixture>(context);
+    auto* raw = queue.get();
+    bool destroyed = false;
+    queue->destroyed = &destroyed;
+    bool completed = false;
+    asio::post(queue->io_->executor(),
+               [raw, &queue, &completed]
+               {
+                   raw->push_event(
+                       [owner = queue, &queue, &completed](arknet::detail::event_queue_guard<queue_fixture>)
+                       {
+                           queue.reset();
+                           completed = static_cast<bool>(owner);
+                       });
+               });
+    context->run();
+    DOCTEST_CHECK(completed);
+    DOCTEST_CHECK(destroyed);
 }
 
 struct managed_session_fixture
