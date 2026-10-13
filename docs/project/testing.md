@@ -96,7 +96,8 @@ RUDP performance has a [separate report](../performance/rudp.md).
 
 <Aside type="note" title="Note: Release scope">
 
-RUDP, ARQ and single HTTP requests are experimental and are not part of `v0.1.0-rc.1`.
+RUDP, ARQ and single HTTP requests are included in `v0.1.0`. Their local correctness
+checks have passed; deployment capacity and endurance remain separate acceptance work.
 
 </Aside>
 

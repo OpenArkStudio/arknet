@@ -7,7 +7,7 @@ arknet is a general-purpose C++20, header-only networking library maintained by 
 ## Features
 
 - **Protocols:** TCP, UDP, WebSocket/WSS and HTTP/HTTPS with routing; optional TLS/mTLS.
-- **Reliable UDP:** experimental RUDP with a C++20 ARQ core, KCP-compatible messages and optional fixed/adaptive Reed–Solomon FEC.
+- **Reliable UDP:** RUDP with a C++20 ARQ core, KCP-compatible messages and optional fixed/adaptive Reed–Solomon FEC.
 - **Addresses:** IPv4 and IPv6 through the same client and server interfaces.
 - **Runtime:** reconnect, timers, post, bounded sends, and owned or external IO contexts.
 - **Extension:** CRTP inheritance, component composition and custom sessions.

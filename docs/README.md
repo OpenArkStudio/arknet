@@ -1,7 +1,7 @@
 # arknet
 
 arknet is a general-purpose C++20 header-only networking library for clients and
-servers using TCP, UDP, experimental RUDP, WebSocket, HTTP and TLS. It combines
+servers using TCP, UDP, RUDP, WebSocket, HTTP and TLS. It combines
 CRTP endpoints with reusable components, supports IPv4 and IPv6, and runs on
 Standalone Asio or Boost.Asio.
 
@@ -17,7 +17,7 @@ target supplies headers, compile settings and dependencies; arknet has no compil
 | --- | --- | --- |
 | TCP | Ordered streams with application-defined message boundaries | [TCP](features/tcp/index.md) |
 | UDP | Native datagrams and endpoint-based sessions | [UDP](features/udp/index.md) |
-| RUDP (experimental) | Reliable, ordered messages over UDP with an ARQ core | [RUDP](features/rudp/index.md) |
+| RUDP | Reliable, ordered messages over UDP with ARQ and optional FEC | [RUDP](features/rudp/index.md) |
 | WebSocket / WSS | Complete messages and HTTP Upgrade | [WebSocket](features/websocket/index.md) |
 | HTTP / HTTPS | HTTP/1.1 requests, responses, routing and middleware | [HTTP](features/http/index.md) |
 | TLS / mTLS | Encrypted transport and certificate verification | [TLS](features/tls/index.md) |
@@ -40,7 +40,8 @@ records correctness checks and their coverage.
 
 [Project](project/index.md) covers architecture, contribution guidelines and the
 roadmap. HTTP/2, HTTP/3, named pipes, Unix domain sockets and RPC remain TODO.
-RUDP is experimental and not part of `v0.1.0-rc.1`.
+[Version 0.1.0](project/releases.md) includes RUDP and its three recovery policies.
+Deployment capacity and endurance are covered by [production acceptance](project/production-readiness.md).
 
 [Source](https://github.com/OpenArkStudio/arknet) ·
 [BSL-1.0](https://github.com/OpenArkStudio/arknet/blob/main/LICENSE) ·

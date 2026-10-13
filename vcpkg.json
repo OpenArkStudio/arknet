@@ -1,7 +1,7 @@
 {
   "name": "arknet",
   "version": "0.1.0",
-  "description": "C++20 header-only TCP, UDP, HTTP, WebSocket and TLS networking",
+  "description": "C++20 header-only TCP, UDP, RUDP with ARQ/FEC, HTTP, WebSocket and TLS networking",
   "license": "BSL-1.0",
   "builtin-baseline": "0699a19d0c6386247ce50d4dedbb8217d484d536",
   "dependencies": ["asio"],

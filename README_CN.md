@@ -7,7 +7,7 @@ arknet 是 OpenArkStudio 维护的通用 C++20 header-only 网络库。
 ## 功能
 
 - **协议**：TCP、UDP、WebSocket/WSS、HTTP/HTTPS 与路由，以及可选的 TLS/mTLS。
-- **可靠 UDP**：实验性 RUDP，提供 C++20 ARQ 核心、兼容 KCP 的消息报文，以及可选的固定／自适应 Reed–Solomon FEC。
+- **可靠 UDP**：RUDP，提供 C++20 ARQ 核心、兼容 KCP 的消息报文，以及可选的固定／自适应 Reed–Solomon FEC。
 - **地址族**：IPv4 和 IPv6 使用同一套客户端、服务端接口。
 - **运行机制**：自动重连、定时器、post、发送队列限额，以及内置或外部 IO context。
 - **扩展方式**：CRTP 继承、组件组合和自定义 Session。

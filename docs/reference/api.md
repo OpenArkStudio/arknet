@@ -9,7 +9,7 @@ specific public header. Secure headers require `ARKNET_ENABLE_SSL`.
 | --- | --- | --- | --- |
 | TCP | `tcp_client`, `tcp_client_t<Derived>` | `tcp_server`, `tcp_server_t<Session>`, `tcp_session_t<Derived>` | [TCP](../features/tcp/index.md) |
 | UDP | `udp_client` | `udp_server`, `udp_session`; independent `udp_cast` | [UDP](../features/udp/index.md) |
-| RUDP (experimental) | `rudp_client`, `rudp_client_t<Derived>` | `rudp_server`, `rudp_server_t<Session>`, `rudp_session_t<Derived>` | [RUDP](../features/rudp/index.md) |
+| RUDP | `rudp_client`, `rudp_client_t<Derived>` | `rudp_server`, `rudp_server_t<Session>`, `rudp_session_t<Derived>` | [RUDP](../features/rudp/index.md) |
 | ARQ core | `arq::control_block`, `arq::options` | No Asio dependency; serialized calls required | [ARQ configuration](../features/rudp/configuration.md) |
 | Single HTTP request | `http_request`, `http_request_options` | Callback or future completion; cancel and deadlines | [Requests](../features/http/requests.md) |
 | WebSocket | `ws_client` | `ws_server`, `ws_session` | [WebSocket](../features/websocket/index.md) |

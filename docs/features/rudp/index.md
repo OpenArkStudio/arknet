@@ -4,12 +4,13 @@ RUDP provides reliable, ordered messages over UDP. Its C++20 ARQ core handles
 fragmentation, acknowledgements, retransmission and receive ordering. The public
 client, server and session use arknet's CRTP and component architecture.
 
-<Aside type="note" title="Note: Experimental module">
+<Aside type="note" title="Available in v0.1.0">
 
-This module is experimental and is not included in `v0.1.0-rc.1`.
+This module is implemented and locally validated, and is included in `v0.1.0`.
 [Policies](fec.md) include ARQ-only, fixed FEC and adaptive FEC. ARQ-only is the
 default; peers negotiate FEC, while ARQ remains responsible for complete delivery.
-Production adoption requires deployment-link and ARK workflow acceptance.
+Deployment capacity and endurance still require [production acceptance](../../project/production-readiness.md).
+ARK integration additionally requires its business regression tests.
 
 </Aside>
 
