@@ -203,25 +203,92 @@ DOCTEST_TEST_CASE("HTTP single request IO deadlines finish once and ignore late 
     check(calls == 1, "timeout and late cancellation complete once");
 }
 
-DOCTEST_TEST_CASE("HTTP single request connect deadline covers DNS and releases callback captures")
+DOCTEST_TEST_CASE("HTTP single request connect deadline covers DNS and "
+                  "releases callback captures")
 {
     io_runner runtime(4);
-    arknet::http_request operation(runtime.context);
     arknet::http_request_options options;
     options.connect_timeout = 1ns;
     options.io_timeout = 5s;
-    std::promise<arknet::error_code> completion;
-    auto future = completion.get_future();
-    auto captured = std::make_shared<int>(7);
-    std::weak_ptr<int> released = captured;
-    operation.async_request("127.0.0.1", "1", message(), options,
-                            [&, captured = std::move(captured)](arknet::error_code ec, response_type)
-                            { completion.set_value(ec); });
-    check(await(future) == asio::error::timed_out, "connect deadline applies before TCP connection");
-    const auto limit = std::chrono::steady_clock::now() + 1s;
-    while (!released.expired() && std::chrono::steady_clock::now() < limit)
-        std::this_thread::yield();
-    check(released.expired(), "completion releases callback captures while request handle remains alive");
+    for (const auto* host : {"127.0.0.1", "localhost"})
+        for (int repeat = 0; repeat < 32; ++repeat)
+        {
+            arknet::http_request operation(runtime.context);
+            std::promise<arknet::error_code> completion;
+            auto future = completion.get_future();
+            auto captured = std::make_shared<int>(7);
+            std::weak_ptr<int> released = captured;
+            operation.async_request(host, "1", message(), options,
+                                    [&, captured = std::move(captured)](arknet::error_code ec, response_type)
+                                    { completion.set_value(ec); });
+            const auto ec = await(future);
+            DOCTEST_INFO("host=", host, ", repeat=", repeat, ", error=", ec.message());
+            check(ec == asio::error::timed_out, "connect deadline applies before TCP connection");
+            const auto limit = std::chrono::steady_clock::now() + 1s;
+            while (!released.expired() && std::chrono::steady_clock::now() < limit)
+                std::this_thread::yield();
+            check(released.expired(), "completion releases callback captures while "
+                                      "request handle remains alive");
+        }
+}
+
+DOCTEST_TEST_CASE("HTTP single request deadline wins over queued response "
+                  "success and errors")
+{
+    for (bool truncated : {false, true})
+    {
+        arknet::tcp_server server;
+        std::promise<std::shared_ptr<arknet::tcp_session>> connected;
+        auto peer = connected.get_future();
+        server.bind_recv(
+            [&](auto& session, std::string_view)
+            {
+                if (session->template get_user_data<bool>())
+                    return;
+                session->set_user_data(true);
+                connected.set_value(session);
+            });
+        check(server.start("127.0.0.1", 0), "deadline peer starts");
+        asio::io_context context;
+        arknet::http_request operation(context);
+        arknet::http_request_options options;
+        options.connect_timeout = 5s;
+        options.io_timeout = 250ms;
+        std::atomic<int> calls{};
+        std::promise<arknet::error_code> completion;
+        auto result = completion.get_future();
+        operation.async_request("127.0.0.1", std::to_string(server.get_listen_port()), message(), options,
+                                [&](arknet::error_code ec, response_type)
+                                {
+                                    if (++calls == 1)
+                                        completion.set_value(ec);
+                                });
+        const auto setup_limit = std::chrono::steady_clock::now() + 2s;
+        while (peer.wait_for(0ms) != std::future_status::ready && std::chrono::steady_clock::now() < setup_limit)
+        {
+            context.poll_one();
+            std::this_thread::yield();
+        }
+        check(peer.wait_for(0ms) == std::future_status::ready, "request reaches the peer before pausing IO");
+        auto session = peer.get();
+        std::promise<void> sent;
+        auto response_ready = sent.get_future();
+        session->async_send(truncated ? "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhi"
+                                      : "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello",
+                            [&, session, truncated](arknet::error_code ec, std::size_t)
+                            {
+                                check(!ec, "peer response sends while request IO is paused");
+                                if (truncated)
+                                    session->stop();
+                                sent.set_value();
+                            });
+        await(response_ready);
+        std::this_thread::sleep_for(300ms);
+        context.run();
+        check(await(result) == asio::error::timed_out, "expired deadline applies to queued success and errors");
+        check(calls == 1, "timer and IO completion finish the request once");
+        server.stop();
+    }
 }
 
 DOCTEST_TEST_CASE("HTTP single requests cancel before start during response and on destruction")

@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "complete": true,
+  "source_commit": "5ba514e3648421be1e01b6bfa4bd924a5a1340c2",
   "source_sha256": "15cb6ced6425d82086a083fd310f6d75016ac3a1018264856d41b460e4412d85",
   "source_hash_method": "SHA256 of sorted SHA256 manifest for include and benchmarks C++ sources/headers (*.cpp, *.hpp, *.h) and benchmarks/run_rudp_fec.sh",
   "started_at_utc": "2026-10-13T03:20:31Z",

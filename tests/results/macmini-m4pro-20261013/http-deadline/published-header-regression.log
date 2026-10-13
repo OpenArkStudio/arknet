@@ -1,0 +1,17 @@
+source: e767cdf1d63fbc698cefd83f1fa658424f5776ff
+expected result: 1 (regression detected)
+result: 1
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+/Users/nick/work/opensource/arknet/tests/httprequest.cpp:236:
+TEST CASE:  HTTP single request deadline wins over queued response success and errors
+
+/Users/nick/work/opensource/arknet/tests/httprequest.cpp:288: FATAL ERROR: REQUIRE( (await(result) == asio::error::timed_out) ) is NOT correct!
+  values: REQUIRE( false )
+  logged: expired deadline applies to queued success and errors
+
+===============================================================================
+[doctest] test cases:   3 |   2 passed | 1 failed | 7 skipped
+[doctest] assertions: 203 | 202 passed | 1 failed |
+[doctest] Status: FAILURE!

@@ -204,6 +204,9 @@ private:
 
         bool fail(error_code ec)
         {
+            // Ready IO handlers may run before the timer handler after the deadline.
+            if (std::chrono::steady_clock::now() >= deadline.expiry())
+                ec = asio::error::timed_out;
             if (ec)
                 finish(ec);
             return bool(ec);

@@ -1,0 +1,8 @@
+command: /opt/homebrew/bin/cmake;-E;env;TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1;/private/tmp/arknet-macmini-tsan/tests/arknet_httprequest_test
+result: 0
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  10 |  10 passed | 0 failed | 0 skipped
+[doctest] assertions: 283 | 283 passed | 0 failed |
+[doctest] Status: SUCCESS!
