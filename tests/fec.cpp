@@ -48,11 +48,11 @@ arknet::fec::options fixed(unsigned k = 4, unsigned p = 2)
     return result;
 }
 
-struct link
+struct fec_pair
 {
     std::vector<std::string> wire, feedback, received;
     transport sender, receiver;
-    explicit link(const arknet::fec::options& settings = fixed())
+    explicit fec_pair(const arknet::fec::options& settings = fixed())
         : sender(
               conversation, mtu, settings, [&](auto value) { wire.emplace_back(value); }, [](auto) { return true; }),
           receiver(
@@ -94,7 +94,7 @@ std::string feedback(std::uint32_t sequence, std::uint64_t data, std::uint64_t m
 
 DOCTEST_TEST_CASE("Rejected FEC metadata cannot advance the receive replay window")
 {
-    link value(fixed());
+    fec_pair value(fixed());
     const auto expected = value.send(1);
     value.sender.update(2);
     auto invalid = value.wire.front();
@@ -214,7 +214,7 @@ DOCTEST_TEST_CASE("FEC options reject unbounded and inconsistent configurations"
 
 DOCTEST_TEST_CASE("FEC immediately delivers systematic datagrams and suppresses duplicate shards")
 {
-    link connection;
+    fec_pair connection;
     const auto original = connection.send(4);
     check(connection.wire.size() == 6, "four systematic and two parity shards");
     for (std::size_t i = 0; i < original.size(); ++i)
@@ -242,7 +242,7 @@ DOCTEST_TEST_CASE("FEC repairs every pair of lost shards despite reversal and du
         if (std::popcount(survivors) != 4)
             continue;
         DOCTEST_CAPTURE(survivors);
-        link connection;
+        fec_pair connection;
         auto original = connection.send(4);
         unsigned lost_data = 0;
         for (int index = 5; index >= 0; --index)
@@ -271,7 +271,7 @@ DOCTEST_TEST_CASE("FEC repairs every pair of lost shards despite reversal and du
 
 DOCTEST_TEST_CASE("FEC leaves unrecoverable loss for ARQ and expires incomplete groups")
 {
-    link connection;
+    fec_pair connection;
     const auto original = connection.send(4);
     check(connection.receiver.input(connection.wire[1], 0), "one original survives");
     check(connection.receiver.input(connection.wire[4], 0), "first parity survives");
@@ -288,7 +288,7 @@ DOCTEST_TEST_CASE("FEC leaves unrecoverable loss for ARQ and expires incomplete 
 
 DOCTEST_TEST_CASE("FEC rejects corrupted repair data and permits intact originals to reach ARQ")
 {
-    link connection;
+    fec_pair connection;
     const auto original = connection.send(4);
     check(connection.receiver.input(connection.wire[2], 0), "first intact data shard accepted");
     check(connection.receiver.input(connection.wire[3], 0), "second intact data shard accepted");
@@ -311,7 +311,7 @@ DOCTEST_TEST_CASE("FEC rejects corrupted repair data and permits intact original
 
 DOCTEST_TEST_CASE("FEC bounds group wait and bypasses control datagrams")
 {
-    link connection;
+    fec_pair connection;
     const auto original = connection.send(2);
     check(connection.wire.empty(), "partial data group waits briefly");
     const auto ack = message(10, 24);
@@ -339,7 +339,7 @@ DOCTEST_TEST_CASE("FEC emits independently valid frames when redundancy budget d
 {
     auto settings = fixed();
     settings.max_redundancy_percent = 0;
-    link connection(settings);
+    fec_pair connection(settings);
     const auto original = connection.send(4);
     check(connection.wire.size() == 4, "zero budget emits only data");
     for (const auto& bytes : connection.wire)
@@ -350,7 +350,7 @@ DOCTEST_TEST_CASE("FEC emits independently valid frames when redundancy budget d
 
 DOCTEST_TEST_CASE("FEC accepts exact MTU boundaries and rejects invalid ARQ datagram sizes")
 {
-    link connection;
+    fec_pair connection;
     check(!connection.sender.send({}, 0), "empty input rejected");
     check(!connection.sender.send(message(0, 23), 0), "shorter than ARQ header rejected");
     check(!connection.sender.send(message(0, mtu - transport::overhead + 1), 0), "oversized input rejected");
@@ -363,7 +363,7 @@ DOCTEST_TEST_CASE("FEC accepts exact MTU boundaries and rejects invalid ARQ data
 
 DOCTEST_TEST_CASE("FEC handles deadline and group-id wrap without duplicate delivery")
 {
-    link connection;
+    fec_pair connection;
     const auto start = std::numeric_limits<std::uint32_t>::max() - 1;
     const auto original = connection.send(2, start);
     connection.sender.update(start + 1);
@@ -376,7 +376,7 @@ DOCTEST_TEST_CASE("FEC handles deadline and group-id wrap without duplicate deli
     check(connection.received == original, "wrapped-time group delivers all data once");
     connection.receiver.update(18);
     check(connection.receiver.snapshot().retained_groups == 0, "wrapped-time group expires on time");
-    link ungrouped(arknet::fec::options{});
+    fec_pair ungrouped(arknet::fec::options{});
     check(ungrouped.sender.send(message(7), 0), "ungrouped datagram queued");
     const auto frame = ungrouped.wire[0];
     for (std::uint32_t id : {0xfffffffeU, 0xffffffffU, 0U, 1U})
@@ -394,7 +394,7 @@ DOCTEST_TEST_CASE("FEC applies receive group and aggregate byte limits")
     auto settings = fixed();
     settings.max_groups = 1;
     settings.max_buffer_bytes = 4096;
-    link connection(settings);
+    fec_pair connection(settings);
     connection.send(8);
     check(connection.receiver.input(connection.wire[0], 0), "first group retained");
     connection.receiver.input(connection.wire[6], 1);
@@ -407,14 +407,14 @@ DOCTEST_TEST_CASE("FEC applies receive group and aggregate byte limits")
     check(connection.received.size() == 5, "lack of recovery budget does not drop intact data");
     auto aggregate = fixed(32, 2);
     aggregate.max_buffer_bytes = 4096;
-    link bounded(aggregate);
+    fec_pair bounded(aggregate);
     for (unsigned i = 0; i < 31; ++i)
     {
         bounded.sender.send(message(i, 900), i);
         check(bounded.sender.snapshot().retained_bytes <= aggregate.max_buffer_bytes,
               "pending transmit data is also bounded");
     }
-    link incoming;
+    fec_pair incoming;
     incoming.send(4);
     bounded.sender.input(incoming.wire.front(), 32);
     check(bounded.sender.snapshot().retained_bytes <= aggregate.max_buffer_bytes,
@@ -426,7 +426,7 @@ DOCTEST_TEST_CASE("FEC applies receive group and aggregate byte limits")
 
 DOCTEST_TEST_CASE("FEC feedback is valid before and after recovery groups expire")
 {
-    link connection;
+    fec_pair connection;
     connection.send(4);
     for (std::size_t index : {std::size_t(2), std::size_t(3), std::size_t(4), std::size_t(5)})
         check(connection.receiver.input(connection.wire[index], 0), "loss pattern accepted");
@@ -450,7 +450,7 @@ DOCTEST_TEST_CASE("Adaptive FEC uses sample minimum, cooldown, hysteresis, and o
     settings.cooldown_ms = 20;
     settings.min_samples = 10;
     settings.stable_windows = 2;
-    link connection(settings);
+    fec_pair connection(settings);
     auto& controller = connection.sender;
     controller.adapt(0, 0, 0, 20, 0, 100);
     controller.adapt(10, 5, 2, 20, 0, 100);
@@ -487,7 +487,7 @@ DOCTEST_TEST_CASE("Adaptive FEC suppresses repair traffic when RTT and queued by
     settings.sample_window_ms = 10;
     settings.cooldown_ms = 0;
     settings.min_samples = 10;
-    link connection(settings);
+    fec_pair connection(settings);
     connection.sender.adapt(0, 0, 0, 20, 0, 1000);
     connection.sender.adapt(10, 100, 10, 20, 0, 1000);
     check(connection.sender.snapshot().current_parity_shards > 0, "loss enables repair traffic");
@@ -516,7 +516,7 @@ DOCTEST_TEST_CASE("FEC tolerates stop called synchronously from output or delive
     check(!emitting->send(message(0), 1), "stopped transport rejects future sends");
     emitting->update(1000);
     check(output_count == 1, "stopped transport emits no feedback");
-    link source;
+    fec_pair source;
     source.send(4);
     std::unique_ptr<transport> receiving;
     unsigned deliveries = 0;
@@ -555,9 +555,9 @@ DOCTEST_TEST_CASE("FEC tolerates stop called synchronously from output or delive
 
 DOCTEST_TEST_CASE("FEC validates malformed frames before allocation and survives deterministic mutation")
 {
-    link source;
+    fec_pair source;
     source.send(4);
-    link target;
+    fec_pair target;
     const auto valid = source.wire.front();
     for (std::size_t length = 0; length < valid.size(); ++length)
         check(!target.receiver.input(std::string_view(valid).substr(0, length), 0),
