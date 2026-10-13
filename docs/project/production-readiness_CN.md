@@ -31,10 +31,10 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 | 跨平台 CI | [13 项任务全部通过](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095)：两种 Asio 后端、Linux/macOS/Windows、无 TLS 构建、ASan/UBSan、TSan、安装后使用及格式检查 |
 | 真实旧库对端 | 两种后端：每种 12 组进程场景、16 个会话、512 条消息及回显 |
 | RUDP/FEC 实测负载 | 96 组配置、276 次测量、7,960,439 次成功消息往返；六组 120 秒持续运行 |
-| ARK 替换 | 已明确能力对应及迁移规则；直接替换与业务回归待完成 |
+| ARK 替换 | 已在 [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38) 合并直接替换；业务回归与部署验收待完成 |
 | 生产部署 | 目标网络跨主机容量、生产时长耐久及部署访问控制待完成 |
 
-[保留日志与命令](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec)记录实际检查范围。本机通过是进入 ARK 接入的条件，不代表已完成部署验收。
+[保留日志与命令](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec)记录实际检查范围。ARK 直接替换已合并，剩余检查覆盖业务行为与部署验收。
 
 ## 部署容量目标
 
@@ -86,4 +86,4 @@ ARK 的业务 Session ID 存入 `user_data`，与 RUDP conversation ID 区分。
 - 首次接入明确设置 ARQ 参数：zephyr 使用 MTU 1400 且关闭拥塞控制；arknet 默认 MTU 1200 且启用拥塞控制。
 - FEC 保持可选。支持 FEC 的服务端可接受旧 ARQ 会话；FEC 客户端要求对端支持协商。
 
-先完成 arknet 验收，再执行 ARK 直接替换与业务回归，通过后进入生产部署。
+ARK 直接替换已合并。生产部署前仍需完成业务回归、跨主机容量和生产时长耐久验证。

@@ -37,8 +37,9 @@ HTTP/3 需要 QUIC/QPACK 协议栈，具体引擎与依赖形式待定。现有 
 [RUDP](../features/rudp/index_CN.md) 与 C++20 ARQ 核心包含在 `v0.1.0` 中。
 [FEC 策略](../features/rudp/fec_CN.md)说明已实现的固定与自适应预设、
 启用阈值与资源限制。
-已实现 KCP 消息模式互通、重试与队列限额及本地测量，ARK 完整 RDP 流程与
-生产时长验证仍待完成。
+已实现 KCP 消息模式互通、重试与队列限额及本地测量。ARK 的 RDP 流程已通过
+[ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38) 使用 arknet；生产时长验证
+仍需在部署验收中完成。
 
 MQTT、数据库协议和 proxy 暂无开发计划，出现具体使用方与验收要求后再评估。
 ARK 接入采用直接替换调用方与业务回归；生产部署前完成[部署验收](production-readiness_CN.md)。
