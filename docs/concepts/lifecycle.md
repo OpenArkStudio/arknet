@@ -7,6 +7,10 @@ object. Keep the object and every resource captured by its callbacks alive
 until shutdown completes. A receive callback's data view is valid only for the
 duration of that callback; copy it to retain it.
 
+`is_started()` and `is_stopped()` read atomic lifecycle state and can be queried
+from another thread while the object is alive. Each result is a snapshot; it
+does not reserve the connection or make direct socket access safe across threads.
+
 Owned IO pools use one context and one worker per lane. External contexts can
 have one or multiple threads calling `run()`. Each external lane uses a strand
 that serializes its callbacks. A callback can run on a different host thread

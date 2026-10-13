@@ -143,8 +143,8 @@ public:
         this->derived().stop();
         return is_stopped();
     }
-    bool is_started() const { return state_ == state_t::started && this->socket().is_open(); }
-    bool is_stopped() const { return state_ == state_t::stopped; }
+    bool is_started() const noexcept { return state_.load() == state_t::started; }
+    bool is_stopped() const noexcept { return state_.load() == state_t::stopped; }
     void destroy()
     {
         this->socket_.reset();

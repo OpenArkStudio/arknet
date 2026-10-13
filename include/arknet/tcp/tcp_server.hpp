@@ -85,8 +85,8 @@ public:
         acceptor_.reset();
         super::destroy();
     }
-    bool is_started() const { return super::is_started() && acceptor_->is_open(); }
-    bool is_stopped() const { return this->state_ == state_t::stopped && !acceptor_->is_open(); }
+    bool is_started() const noexcept { return super::is_started(); }
+    bool is_stopped() const noexcept { return super::is_stopped(); }
     asio::ip::tcp::acceptor& acceptor() noexcept { return *acceptor_; }
     const asio::ip::tcp::acceptor& acceptor() const noexcept { return *acceptor_; }
 

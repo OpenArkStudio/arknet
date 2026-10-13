@@ -11,6 +11,10 @@ Negotiation, ordered delivery, recovery, bounded resources, reconnect and
 legacy zephyr interoperability have passed local checks. Single HTTP requests
 include deadlines and cancellation.
 
+Lifecycle status queries use atomic state, avoiding races with socket and
+acceptor shutdown. A permanent regression polls clients, servers and retained
+sessions while their IO thread starts and closes transports.
+
 The [testing record](testing.md) and [RUDP performance report](../performance/rudp.md)
 describe the verified workloads and source revisions. A library release does
 not establish a deployment's capacity: cross-host load, production-duration
