@@ -30,12 +30,43 @@ release requires the remaining acceptance evidence.
 | --- | --- |
 | Complete local checks | Both Release + TLS backends: 55 checks and 219 doctest cases each |
 | Concurrency and memory checks | Selected ASan/UBSan suites: 109 cases; selected TSan suites: 86 cases |
+| Cross-platform CI | [All 13 jobs passed](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095): both Asio backends, Linux/macOS/Windows, builds without TLS, ASan/UBSan, TSan, installed consumers and formatting |
 | Real legacy peers | Both backends: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each |
 | Measured RUDP/FEC load | 96 configurations, 276 runs, 7,960,439 successful message round trips; six 120-second sustained runs |
 | ARK replacement | Capability mapping and migration rules defined; direct replacement and business regression pending |
 | Production deployment | Target-network cross-host capacity, production-duration endurance and deployment access control pending |
 
 [Retained logs and commands](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec) identify exact coverage. Local completion is a gate for ARK integration, not a claim that deployment acceptance is complete.
+
+## Deployment capacity target
+
+ARK uses multiple processes, targeting **100,000-200,000 peak concurrent users
+(PCU) across the cluster**. PCU counts online users. Count TCP connections,
+WebSocket connections and RUDP sessions separately: one user may hold several
+connections, and service-to-service connections also consume resources.
+
+The following evenly distributed estimates are planning examples. They do not
+select a deployment size or report measured capacity.
+
+| Ingress processes | Users per process at 100,000 PCU | Users per process at 200,000 PCU |
+| --- | ---: | ---: |
+| 16 | 6,250 | 12,500 |
+| 32 | 3,125 | 6,250 |
+| 64 | Approximately 1,563 | 3,125 |
+
+Capacity acceptance needs these workload parameters before testing on the intended
+hosts and cross-host network:
+
+- Connection mix by protocol, connections per user, messages per connection and payload distribution.
+- CPU, memory, threads and admission limits per process, plus operating-system file descriptor limits and socket buffers.
+- Login and reconnect bursts, including the connections and traffic remaining processes must absorb after an ingress process fails.
+- Operating duration and acceptance thresholds for p99 RTT, throughput, CPU percentage, memory growth, errors and resource rejection.
+
+The RUDP server defaults to **1024 sessions** through `set_max_sessions()`. Set an
+explicit limit from measured per-process capacity, together with ARQ/FEC and send
+queue limits. Raising the session limit alone does not validate capacity. Current
+local reports cover message transport and recovery; they do not establish
+100,000-200,000 cluster PCU capacity.
 
 ## ARK capability mapping
 
