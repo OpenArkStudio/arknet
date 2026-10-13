@@ -2,6 +2,30 @@
 
 按[安装与配置](../../get-started/installation_CN.md)接入 C++20 应用。先启动[对应服务端](server_CN.md)，再在另一个终端运行本页客户端。
 
+## 域名与默认端口
+
+`http_client.start(host)` 和 `async_start(host)` 默认使用端口 **80**；
+`https_client` 的对应接口默认使用 **443**。显式传入端口时使用指定值。
+主机参数接受域名或不带方括号的 IPv4／IPv6 地址，不接受完整 URL。
+
+```cpp
+arknet::http_client client;
+client.start("example.com");          // HTTP, port 80
+// Or: client.start("example.com", 8080);
+```
+
+启用 TLS 后，HTTPS 使用独立的客户端类型。连接前配置可信 CA，证书链、域名校验和 SNI
+按 [TLS 配置](../tls/configuration_CN.md)处理：
+
+```cpp
+arknet::https_client client;
+client.load_verify_file("ca.pem");
+client.start("example.com");          // HTTPS, port 443
+```
+
+长连接客户端发送的请求仍需设置 `Host` 字段。默认端口使用 `example.com`，
+非默认端口使用 `example.com:8080`；IPv6 对应 `[::1]` 和 `[::1]:8080`。
+
 ## HTTP 回显客户端
 
 客户端发送 `POST /echo`，并验证 HTTP 状态码和回显内容。主线程最多等待五秒；请求或验证失败时，返回非零状态。

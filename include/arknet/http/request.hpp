@@ -38,6 +38,20 @@ public:
     http_request& operator=(const http_request&) = delete;
     ~http_request() { cancel(); }
 
+    template <class Completion>
+    decltype(auto) async_request(std::string host, request_type request, http_request_options options,
+                                 Completion&& completion)
+    {
+        return async_request(std::move(host), "80", std::move(request), options, std::forward<Completion>(completion));
+    }
+
+    template <class Completion>
+    decltype(auto) async_request(std::string host, request_type request, Completion&& completion)
+    {
+        return async_request(std::move(host), std::move(request), http_request_options{},
+                             std::forward<Completion>(completion));
+    }
+
     template <class Callback>
     void async_request(std::string host, std::string service, request_type request, http_request_options options,
                        Callback&& callback)

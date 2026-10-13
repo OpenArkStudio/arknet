@@ -24,6 +24,12 @@ if (!client.start("example.com", 9000))
     std::cerr << arknet::last_error_msg() << '\n';
 ```
 
+HTTP 客户端可以省略端口：`http_client.start("example.com")` 默认使用 **80**，
+`https_client.start("example.com")` 默认使用 **443**，异步接口 `async_start(host)`
+遵循相同规则。`http_request.async_request(host, request, completion)` 默认使用 **80**。
+显式端口优先；TCP、UDP、RUDP 等通用端点仍需指定端口。
+具体示例见 [HTTP 客户端](../features/http/client_CN.md)。
+
 客户端使用 Asio 异步 resolver，遵循操作系统的名称解析配置，包括 DNS 和
 hosts 文件。解析结果可以包含 IPv4 或 IPv6 地址。基于 TCP 的客户端在 socket
 连接失败后，按解析器返回的顺序尝试其他地址，未实现 IPv4／IPv6 并行连接的

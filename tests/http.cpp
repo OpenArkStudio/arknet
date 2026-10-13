@@ -70,6 +70,45 @@ struct raw_peer
         return value;
     }
 };
+
+// Redirect only resolver service lookup so default ports need no privileged listener.
+template <template <class> class Base> struct redirected_client : Base<redirected_client<Base>>
+{
+    std::string resolve_service;
+    template <class... T> std::string_view _get_real_port(T&&...) { return resolve_service; }
+};
+
+template <class Server, class Client>
+void default_port_echo(Server& server, Client& client, std::string host, std::string expected_port, bool async)
+{
+    bind_echo(server);
+    check(server.start(host == "::1" ? "::1" : "127.0.0.1", 0), "default-port server starts");
+    client.resolve_service = std::to_string(server.get_listen_port());
+    client.set_auto_reconnect(false);
+    messages received;
+    client.bind_recv([&](response& value) { received.push(value.body()); });
+    std::promise<arknet::error_code> connected;
+    auto completion = connected.get_future();
+    client.bind_connect([&] { connected.set_value(arknet::get_last_error()); });
+    check(async ? client.async_start(host) : client.start(host), "host-only connection starts");
+    check(!await(completion), "host-only connection completes");
+    check(client.get_host() == host && client.get_port() == expected_port, "protocol selects default port");
+    client.async_send(make_request(arknet::http::verb::post, "default port"));
+    check(received.wait(1).front() == "default port", "host-only connection carries HTTP messages");
+    client.stop();
+    server.stop();
+}
+}
+
+DOCTEST_TEST_CASE("HTTP host-only clients default to port 80 for names and IP literals")
+{
+    for (const auto* host : {"localhost", "127.0.0.1", "::1"})
+        for (bool async : {false, true})
+        {
+            arknet::http_server server;
+            redirected_client<arknet::http_client_t> client;
+            default_port_echo(server, client, host, "80", async);
+        }
 }
 
 DOCTEST_TEST_CASE("HTTP owns requests and preserves keep-alive pipeline order")
@@ -333,6 +372,19 @@ DOCTEST_TEST_CASE("HTTP bounded send rejects large bodies and recovers")
 }
 
 #ifdef ARKNET_ENABLE_SSL
+DOCTEST_TEST_CASE("HTTPS host-only clients default to port 443 and verify DNS identity")
+{
+    const std::string certs = ARKNET_TEST_CERT_DIR;
+    for (bool async : {false, true})
+    {
+        arknet::https_server server;
+        server.set_cert_file("", certs + "/server.pem", certs + "/server-key.pem", "");
+        redirected_client<arknet::https_client_t> client;
+        client.load_verify_file(certs + "/ca.pem");
+        default_port_echo(server, client, "localhost", "443", async);
+    }
+}
+
 DOCTEST_TEST_CASE("HTTPS verifies identity and preserves HTTP pipeline behavior")
 {
     const std::string certs = ARKNET_TEST_CERT_DIR;

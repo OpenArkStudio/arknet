@@ -113,6 +113,39 @@ DOCTEST_TEST_CASE("HTTP single requests own request data and expose arbitrary st
     server.stop();
 }
 
+DOCTEST_TEST_CASE("HTTP host-only single requests preserve completion options and validation")
+{
+    io_runner runtime;
+    arknet::http_request future_operation(runtime.context);
+    auto invalid_host = future_operation.async_request("invalid/host", message(), asio::use_future);
+    check(await(invalid_host).first == asio::error::invalid_argument, "host-only future validates host");
+
+    arknet::http_request options_operation(runtime.context);
+    arknet::http_request_options options;
+    options.header_limit = 0;
+    auto invalid_options = options_operation.async_request("localhost", message(), options, asio::use_future);
+    check(await(invalid_options).first == asio::error::invalid_argument, "host-only future preserves options");
+
+    for (bool explicit_options : {false, true})
+    {
+        arknet::http_request callback_operation(runtime.context);
+        callback_operation.cancel();
+        std::promise<arknet::error_code> completed;
+        auto future = completed.get_future();
+        auto callback = [&, owned = std::make_unique<int>(42)](arknet::error_code ec, response_type)
+        {
+            check(*owned == 42, "host-only callback retains move-only captures");
+            completed.set_value(ec);
+        };
+        if (explicit_options)
+            callback_operation.async_request("localhost", message(), arknet::http_request_options{},
+                                             std::move(callback));
+        else
+            callback_operation.async_request("localhost", message(), std::move(callback));
+        check(await(future) == asio::error::operation_aborted, "host-only callback preserves cancellation");
+    }
+}
+
 DOCTEST_TEST_CASE("HTTP single requests parse informational chunked close-delimited and HEAD responses")
 {
     auto [ec, response] = fetch("HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"

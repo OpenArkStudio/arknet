@@ -13,6 +13,17 @@ template <class Derived> class https_client_t : public https_client_impl_t<Deriv
 {
 public:
     using https_client_impl_t<Derived>::https_client_impl_t;
+    using https_client_impl_t<Derived>::start;
+    using https_client_impl_t<Derived>::async_start;
+
+    template <class Host> bool start(Host&& host)
+    {
+        return https_client_impl_t<Derived>::start(std::forward<Host>(host), 443);
+    }
+    template <class Host> bool async_start(Host&& host)
+    {
+        return https_client_impl_t<Derived>::async_start(std::forward<Host>(host), 443);
+    }
 };
 class https_client : public https_client_t<https_client>
 {

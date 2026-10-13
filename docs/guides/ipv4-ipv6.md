@@ -24,6 +24,12 @@ if (!client.start("example.com", 9000))
     std::cerr << arknet::last_error_msg() << '\n';
 ```
 
+HTTP clients may omit the port: `http_client.start("example.com")` defaults to **80**,
+and `https_client.start("example.com")` to **443**. The asynchronous `async_start(host)`
+overloads follow the same rule. `http_request.async_request(host, request, completion)`
+defaults to **80**. An explicit port takes precedence; protocol-neutral TCP, UDP and
+RUDP endpoints still require a port. See [HTTP clients](../features/http/client.md).
+
 The client uses Asio's asynchronous resolver and the operating system's name
 resolution settings, including DNS and the hosts file. Results may contain IPv4
 or IPv6 addresses. TCP-based clients try addresses in resolver order after a

@@ -32,7 +32,21 @@ int main()
 }
 ```
 
-The request is owned by the operation. A missing `Host` field is populated from the host and numeric port; payload framing is prepared automatically. Requests use `Connection: close`. Targets must already be percent encoded. Cookies and other fields use the normal Beast request API:
+The request is owned by the operation. A missing `Host` field is populated from the host and numeric port; payload framing is prepared automatically. Requests use `Connection: close`. Targets must already be percent encoded.
+
+Omitting the port selects **80**, with either a callback or future. An optional
+`http_request_options` argument goes before the completion parameter. The host is
+a domain name or an unbracketed IP literal; the path belongs in the request target:
+
+```cpp
+auto reply = operation.async_request("example.com", std::move(request), asio::use_future);
+```
+
+Explicit ports keep their existing syntax. The generated `Host` omits the default
+port, appends a non-default numeric port and brackets IPv6 literals. This interface
+handles plain HTTP only; use `https_client` for HTTPS.
+
+Cookies and other fields use the normal Beast request API:
 
 ```cpp
 arknet::http_request::request_type request(

@@ -32,7 +32,19 @@ int main()
 }
 ```
 
-操作对象持有请求数据。未提供 `Host` 字段时，接口根据主机名和数字端口补全；请求体长度等报文格式自动准备。请求使用 `Connection: close`。请求目标需要提前完成百分号编码。Cookie 等字段使用 Beast 的请求接口：
+操作对象持有请求数据。未提供 `Host` 字段时，接口根据主机名和数字端口补全；请求体长度等报文格式自动准备。请求使用 `Connection: close`。请求目标需要提前完成百分号编码。
+
+省略端口时默认使用 **80**，回调和 future 接口均支持，可在完成参数前传入
+`http_request_options`。主机参数只接受域名或不带方括号的 IP 地址，路径放在请求目标中：
+
+```cpp
+auto reply = operation.async_request("example.com", std::move(request), asio::use_future);
+```
+
+显式端口保持原有用法。自动生成的 `Host` 省略默认端口，非默认数字端口会追加到主机名后；
+IPv6 地址自动加方括号。此接口只处理普通 HTTP，HTTPS 使用 `https_client`。
+
+Cookie 等字段使用 Beast 的请求接口：
 
 ```cpp
 arknet::http_request::request_type request(

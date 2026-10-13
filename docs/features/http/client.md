@@ -2,6 +2,32 @@
 
 Configure a C++20 application using [Installation](../../get-started/installation.md). Start the [matching server](server.md), then run this client in another terminal.
 
+## Domain Names and Default Ports
+
+`http_client.start(host)` and `async_start(host)` default to port **80**;
+the same overloads on `https_client` default to **443**. An explicit port overrides
+the default. The host accepts a domain name or an unbracketed IPv4/IPv6 literal,
+not a full URL.
+
+```cpp
+arknet::http_client client;
+client.start("example.com");          // HTTP, port 80
+// Or: client.start("example.com", 8080);
+```
+
+With TLS enabled, use the separate HTTPS client type. Configure trusted CAs before
+connecting; certificate chains, DNS identity and SNI follow [TLS configuration](../tls/configuration.md):
+
+```cpp
+arknet::https_client client;
+client.load_verify_file("ca.pem");
+client.start("example.com");          // HTTPS, port 443
+```
+
+Requests sent by persistent clients still need a `Host` field. Use `example.com`
+for the default port and `example.com:8080` for a non-default port; IPv6 uses
+`[::1]` and `[::1]:8080`, respectively.
+
 ## HTTP Echo Client
 
 The client sends `POST /echo` and checks both the HTTP status and echoed body.
