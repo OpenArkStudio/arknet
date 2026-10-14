@@ -17,9 +17,11 @@
 #include "work.hpp"
 
 namespace {
+
 using clock_type = std::chrono::steady_clock;
 using socket_type = asio::ip::tcp::socket;
 using namespace std::chrono_literals;
+
 struct options
 {
     std::string model = "shared", execution = "coroutine";
@@ -136,10 +138,12 @@ struct phase_result
     double elapsed{};
     std::vector<double> samples;
 };
+
 struct client_result
 {
     phase_result warmup, measured;
 };
+
 struct shared_state
 {
     std::atomic<std::size_t> ready{}, errors{};
@@ -156,6 +160,7 @@ struct client_traffic
         , sent(this->settings.payload * this->settings.window, '\0')
         , received(sent.size(), '\0')
         , random(id) {}
+
     options settings;
     std::size_t id;
     shared_state& state;
@@ -240,6 +245,7 @@ struct callback_session : std::enable_shared_from_this<callback_session>
         , work(settings.work)
         , payload(settings.payload)
         , data(settings.payload * settings.window, '\0') {}
+
     std::shared_ptr<socket_type> socket;
     shared_state& state;
     std::size_t work, payload;
@@ -253,6 +259,7 @@ struct callback_session : std::enable_shared_from_this<callback_session>
         }
         completed.set_value();
     }
+
     void start() {
         arknet::error_code error;
         socket->set_option(asio::ip::tcp::no_delay(true), error);
@@ -265,6 +272,7 @@ struct callback_session : std::enable_shared_from_this<callback_session>
             read();
         }
     }
+
     void read() {
         asio::async_read(
             *socket, asio::buffer(data), [self = shared_from_this()](arknet::error_code error, std::size_t) {
@@ -300,6 +308,7 @@ struct callback_acceptor : std::enable_shared_from_this<callback_acceptor>
         , sessions(sessions)
         , sockets(sockets)
         , state(state) {}
+
     benchmark_runtime& runtime;
     asio::ip::tcp::acceptor& listener;
     options settings;
@@ -335,6 +344,7 @@ struct callback_client : std::enable_shared_from_this<callback_client>
         : socket(std::move(socket))
         , traffic(settings, id, state)
         , gate(this->socket->get_executor()) {}
+
     std::shared_ptr<socket_type> socket;
     client_traffic traffic;
     asio::steady_timer gate;
@@ -347,6 +357,7 @@ struct callback_client : std::enable_shared_from_this<callback_client>
         }
         completed.set_exception(std::make_exception_ptr(arknet::system_error(error)));
     }
+
     void start(asio::ip::tcp::endpoint endpoint) {
         socket->async_connect(endpoint, [self = shared_from_this()](arknet::error_code error) {
             if (!error)
@@ -364,6 +375,7 @@ struct callback_client : std::enable_shared_from_this<callback_client>
             }
         });
     }
+
     void wait() {
         if (traffic.state.stopping)
         {
@@ -387,6 +399,7 @@ struct callback_client : std::enable_shared_from_this<callback_client>
             }
         });
     }
+
     void next() {
         if (!traffic.next())
         {
@@ -502,6 +515,7 @@ void run(const options& settings, void (*after_connect)() = nullptr) {
     std::vector<std::shared_ptr<socket_type>> client_sockets;
     std::vector<std::future<client_result>> clients;
     std::future<void> accepting;
+
     struct runtime_cleanup
     {
         benchmark_runtime& runtime;
@@ -510,6 +524,7 @@ void run(const options& settings, void (*after_connect)() = nullptr) {
         std::future<void>& accepting;
         std::vector<std::shared_ptr<socket_type>>& sockets;
         std::vector<std::shared_ptr<socket_type>>& clients;
+
         ~runtime_cleanup() {
             state.stopping = true;
             for (auto& socket : clients)
@@ -538,6 +553,7 @@ void run(const options& settings, void (*after_connect)() = nullptr) {
             runtime.stop();
         }
     } cleanup{runtime, state, listener, accepting, sockets, client_sockets};
+
     if (settings.execution == "coroutine")
     {
         accepting = asio::co_spawn(

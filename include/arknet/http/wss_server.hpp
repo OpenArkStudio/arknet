@@ -4,7 +4,9 @@
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
 #include <arknet/http/wss_session.hpp>
 #include <arknet/tcp/tcps_server.hpp>
+
 namespace arknet::detail {
+
 template<class Derived, class Session>
 class wss_server_impl_t : public websocket_server_impl<Derived, tcps_server_impl_t<Derived, Session>, Session>
 {
@@ -15,15 +17,19 @@ public:
               std::forward<Construction>(construction)...) {}
 };
 } // namespace arknet::detail
+
 namespace arknet {
+
 template<class Derived, class Session>
 using wss_server_impl_t = detail::wss_server_impl_t<Derived, Session>;
+
 template<class Session>
 class wss_server_t : public detail::wss_server_impl_t<wss_server_t<Session>, Session>
 {
 public:
     using detail::wss_server_impl_t<wss_server_t<Session>, Session>::wss_server_impl_t;
 };
+
 using wss_server = wss_server_t<wss_session>;
 } // namespace arknet
 #endif

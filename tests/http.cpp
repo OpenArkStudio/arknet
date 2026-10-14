@@ -2,6 +2,7 @@
 #include "check.hpp"
 
 namespace {
+
 using request = arknet::http::request<arknet::http::string_body>;
 using response = arknet::http::response<arknet::http::string_body>;
 
@@ -52,16 +53,20 @@ struct raw_peer
     asio::io_context io;
     asio::ip::tcp::socket socket{io};
     asio::streambuf buffer;
+
     explicit raw_peer(std::uint16_t port) {
         socket.connect({asio::ip::make_address("127.0.0.1"), port});
     }
+
     void write(std::string_view value) {
         asio::write(socket, asio::buffer(value));
     }
+
     void close() {
         arknet::error_code ec;
         socket.close(ec);
     }
+
     response read() {
         response value;
         arknet::http::read(socket, buffer, value);
@@ -74,6 +79,7 @@ template<template<class> class Base>
 struct redirected_client : Base<redirected_client<Base>>
 {
     std::string resolve_service;
+
     template<class... T>
     std::string_view _get_real_port(T&&...) {
         return resolve_service;
@@ -124,18 +130,22 @@ DOCTEST_TEST_CASE("HTTP works with an external io_context and a custom session")
     {
         using http_session_t::http_session_t;
     };
+
     asio::io_context io;
     auto work = asio::make_work_guard(io);
     std::thread worker([&] { io.run(); });
+
     struct joiner
     {
         asio::io_context& io;
         std::thread& worker;
+
         ~joiner() {
             io.stop();
             worker.join();
         }
     } cleanup{io, worker};
+
     arknet::http_server_t<custom_session> server(io);
     arknet::http_client client(io);
     pipeline_echo(server, client);

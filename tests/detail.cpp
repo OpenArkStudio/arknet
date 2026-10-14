@@ -138,10 +138,12 @@ DOCTEST_TEST_CASE("Handler allocators use reusable storage and aligned heap fall
     void* reused = memory.allocate(1, 1);
     check(reused == first, "local storage reused after release");
     memory.deallocate(reused, 1);
+
     struct alignas(64) aligned_value
     {
         std::array<std::byte, 64> bytes{};
     };
+
     arknet::detail::handler_allocator<aligned_value, std::false_type, arknet::detail::allocator_fixed_size_op<64>>
         allocator(memory);
     auto* aligned = allocator.allocate(2);
@@ -170,13 +172,16 @@ DOCTEST_TEST_CASE("Listeners can replace and clear themselves during notificatio
     listener.notify(event_type::start);
     listener.notify(event_type::start);
     check(value == 11, "listener replacement and removal remain valid");
+
     struct receiver
     {
         int value = 0;
+
         void receive(int increment) {
             value += increment;
         }
     } target;
+
     observer_t<int> observer(&receiver::receive, std::ref(target));
     observer(3);
     check(target.value == 3, "member binding supports explicit reference ownership");
@@ -197,18 +202,22 @@ struct queue_fixture
 {
     explicit queue_fixture(std::shared_ptr<asio::io_context> context)
         : io_(std::make_shared<arknet::detail::io_t>(std::move(context))) {}
+
     ~queue_fixture() {
         if (destroyed)
         {
             *destroyed = true;
         }
     }
+
     std::shared_ptr<queue_fixture> selfptr() {
         return weak_from_this().lock();
     }
+
     auto& wallocator() {
         return allocator_;
     }
+
     using event_queue_cp::next_event;
     using event_queue_cp::post_event;
     using event_queue_cp::push_event;
@@ -253,11 +262,14 @@ struct managed_session_fixture
 {
     using args_type = void;
     using key_type = int;
+
     explicit managed_session_fixture(int key)
         : key(key) {}
+
     int hash_key() const {
         return key;
     }
+
     int key;
 };
 

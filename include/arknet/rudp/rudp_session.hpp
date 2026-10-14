@@ -14,6 +14,7 @@
 #include <arknet/udp/udp_session.hpp>
 
 namespace arknet::detail {
+
 template<class Derived>
 class rudp_session_impl_t : public udp_session_impl_t<Derived>
 {
@@ -36,21 +37,26 @@ public:
         , requested_mtu_(requested_mtu)
         , sync_(sync)
         , conversation_(conversation) {}
+
     ~rudp_session_impl_t() {
         if (channel_)
         {
             channel_->stop();
         }
     }
+
     std::uint32_t conversation() const noexcept {
         return conversation_;
     }
+
     const arq::options& get_rudp_options() const noexcept {
         return options_;
     }
+
     const fec::options& get_fec_options() const noexcept {
         return fec_options_;
     }
+
     std::future<rudp::statistics> get_rudp_statistics() {
         if (!this->is_started())
         {
@@ -97,6 +103,7 @@ protected:
         }
         base::_fire_connect(lifetime, condition);
     }
+
     template<class Condition>
     void _receive_datagram(std::shared_ptr<Derived> lifetime, std::shared_ptr<detail::ecs_t<Condition>> condition,
         std::string_view bytes) {
@@ -105,6 +112,7 @@ protected:
             this->derived()._fire_recv(lifetime, condition, bytes);
         }
     }
+
     template<class Condition>
     void _fire_recv(
         std::shared_ptr<Derived>& lifetime, std::shared_ptr<detail::ecs_t<Condition>>&, std::string_view bytes) {
@@ -141,6 +149,7 @@ protected:
             this->update_alive_time();
         }
     }
+
     template<class Data, class Completion>
     bool _do_send(Data& data, Completion&& completion) {
         const auto buffer = asio::buffer(data);
@@ -157,10 +166,12 @@ protected:
         completion(error, error ? 0 : buffer.size());
         return !error;
     }
+
     void _fire_disconnect(std::shared_ptr<Derived>& lifetime) {
         close_channel();
         base::_fire_disconnect(lifetime);
     }
+
     template<class Chain>
     void _do_stop(const error_code& error, std::shared_ptr<Derived> lifetime, Chain chain) {
         close_channel();
@@ -173,6 +184,7 @@ private:
                    ? detail::rudp_control(2, sync_, conversation_)
                    : detail::rudp_fec_control(5, sync_, conversation_, static_cast<std::uint16_t>(options_.mtu));
     }
+
     void close_channel() {
         if (!channel_)
         {
@@ -187,6 +199,7 @@ private:
         channel_->stop();
         channel_.reset();
     }
+
     arq::options options_;
     fec::options fec_options_;
     std::uint16_t requested_mtu_{};
@@ -195,9 +208,12 @@ private:
     std::shared_ptr<detail::rudp_channel> channel_;
 };
 } // namespace arknet::detail
+
 namespace arknet {
+
 template<class Derived>
 using rudp_session_t = detail::rudp_session_impl_t<Derived>;
+
 class rudp_session : public rudp_session_t<rudp_session>
 {
 public:

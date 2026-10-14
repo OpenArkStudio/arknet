@@ -16,6 +16,7 @@
 #include <arknet/udp/udp_server.hpp>
 
 namespace arknet::detail {
+
 template<class Derived, class Session = rudp_session>
 class rudp_server_impl_t : public udp_server_impl_t<Derived, Session>
 {
@@ -26,9 +27,11 @@ class rudp_server_impl_t : public udp_server_impl_t<Derived, Session>
 
 public:
     using base::base;
+
     ~rudp_server_impl_t() {
         this->stop();
     }
+
     Derived& set_rudp_options(const arq::options& options) {
         if (!this->is_stopped())
         {
@@ -39,9 +42,11 @@ public:
         options_ = options;
         return this->derived();
     }
+
     const arq::options& get_rudp_options() const noexcept {
         return options_;
     }
+
     Derived& set_fec_options(const fec::options& options) {
         if (!this->is_stopped())
         {
@@ -52,9 +57,11 @@ public:
         fec_options_ = options;
         return this->derived();
     }
+
     const fec::options& get_fec_options() const noexcept {
         return fec_options_;
     }
+
     Derived& set_max_sessions(std::size_t maximum) {
         if (!this->is_stopped())
         {
@@ -67,9 +74,11 @@ public:
         max_sessions_ = maximum;
         return this->derived();
     }
+
     std::size_t get_max_sessions() const noexcept {
         return max_sessions_;
     }
+
     template<class Function, class... Object>
     Derived& bind_handshake(Function&& function, Object&&... object) {
         this->listener_.bind(
@@ -86,6 +95,7 @@ protected:
             base::_post_recv(std::move(lifetime), std::move(condition));
         }
     }
+
     template<class Condition>
     void _handle_recv(const error_code& error, std::size_t count, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<detail::ecs_t<Condition>> condition) {
@@ -95,6 +105,7 @@ protected:
             base::_handle_recv(error, count, std::move(lifetime), std::move(condition));
         }
     }
+
     void _do_stop(const error_code& error, std::shared_ptr<Derived> lifetime) {
         if (closing_ || this->state_ == state_t::stopped || this->state_ == state_t::stopping)
         {
@@ -125,6 +136,7 @@ protected:
                 });
         }
     }
+
     template<class Condition>
     void _handle_accept(const error_code& error, std::string_view bytes, std::shared_ptr<Session> session,
         std::shared_ptr<detail::ecs_t<Condition>>& condition) {
@@ -151,6 +163,7 @@ protected:
         }
         base::_handle_accept(error, bytes, std::move(session), condition);
     }
+
     std::shared_ptr<Session> _make_session() {
         const auto bytes = this->buffer_.data();
         const auto sync = detail::rudp_read_id(static_cast<const char*>(bytes.data()) + 1);
@@ -175,20 +188,25 @@ private:
             throw std::invalid_argument("FEC wire MTU must be between 51 and 65507 bytes");
         }
     }
+
     arq::options options_;
     fec::options fec_options_;
     std::size_t max_sessions_ = 1024;
     bool closing_{};
 };
 } // namespace arknet::detail
+
 namespace arknet {
+
 template<class Derived, class Session = rudp_session>
 using rudp_server_impl_t = detail::rudp_server_impl_t<Derived, Session>;
+
 template<class Session = rudp_session>
 class rudp_server_t : public rudp_server_impl_t<rudp_server_t<Session>, Session>
 {
 public:
     using rudp_server_impl_t<rudp_server_t<Session>, Session>::rudp_server_impl_t;
 };
+
 using rudp_server = rudp_server_t<>;
 } // namespace arknet

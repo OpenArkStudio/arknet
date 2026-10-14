@@ -17,6 +17,7 @@
 #include "check.hpp"
 
 namespace {
+
 class fec_relay
 {
 public:
@@ -28,18 +29,22 @@ public:
         receive();
         thread_ = std::thread([this] { context_.run(); });
     }
+
     ~fec_relay() {
         context_.stop();
         thread_.join();
     }
+
     unsigned short port() const {
         return socket_.local_endpoint().port();
     }
+
     int receive_buffer_size() const {
         asio::socket_base::receive_buffer_size size;
         socket_.get_option(size);
         return size.value();
     }
+
     std::atomic<unsigned> dropped{}, duplicated{}, reordered{};
     std::atomic<std::size_t> largest{};
 
@@ -47,6 +52,7 @@ private:
     void send(std::shared_ptr<std::string> bytes, asio::ip::udp::endpoint target) {
         socket_.async_send_to(asio::buffer(*bytes), target, [bytes](arknet::error_code, std::size_t) {});
     }
+
     void receive() {
         socket_.async_receive_from(asio::buffer(buffer_), sender_, [this](arknet::error_code error, std::size_t count) {
             if (error)
@@ -88,6 +94,7 @@ private:
             receive();
         });
     }
+
     asio::io_context context_;
     asio::executor_work_guard<asio::io_context::executor_type> work_;
     asio::ip::udp::socket socket_;
@@ -372,12 +379,14 @@ DOCTEST_TEST_CASE("RUDP FEC safely stops client session and server with pending 
                 server_fec.group_wait_ms = 100;
                 auto client_fec = server_fec;
                 client_fec.mode = mode;
+
                 struct shutdown_result
                 {
                     arknet::error_code error;
                     std::size_t bytes;
                     std::future<arknet::rudp::statistics> snapshot;
                 };
+
                 std::promise<shutdown_result> stopped;
                 auto completion = stopped.get_future();
                 messages disconnected;

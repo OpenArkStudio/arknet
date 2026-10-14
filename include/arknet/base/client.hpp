@@ -28,22 +28,28 @@
 #include <arknet/base/impl/user_timer_cp.hpp>
 #include <arknet/base/io_pool.hpp>
 #include <arknet/base/listener.hpp>
+
 namespace arknet {
+
 class client
 {
 public:
     static constexpr bool is_client() noexcept {
         return true;
     }
+
     static constexpr bool is_session() noexcept {
         return false;
     }
+
     static constexpr bool is_server() noexcept {
         return false;
     }
 };
 } // namespace arknet
+
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class client_impl_t
     : public arknet::client
@@ -78,19 +84,23 @@ public:
     using send_cp<Derived, Args>::async_send;
     using key_type = std::size_t;
     using iopoolcp = iopool_cp<Derived, Args>;
+
     template<class Scheduler>
     client_impl_t(std::size_t initial, std::size_t maximum, Scheduler&& scheduler)
         : iopoolcp(std::forward<Scheduler>(scheduler))
         , io_context_cp<Derived, Args>(iopoolcp::_get_io(0))
         , socket_cp<Derived, Args>(this->io_->executor())
         , buffer_(initial, maximum) {}
+
     bool start() noexcept {
         stopped_.store(false);
         return true;
     }
+
     bool async_start() noexcept {
         return start();
     }
+
     void stop() {
         this->derived().dispatch([this] {
             this->_stop_reconnect_timer();
@@ -105,24 +115,29 @@ public:
             stopped_.store(true);
         });
     }
+
     void destroy() {
         this->socket_.reset();
         this->io_.reset();
         listener_.clear();
         this->destroy_iopool();
     }
+
     bool is_started() const noexcept {
         return state_.load() == state_t::started;
     }
+
     bool is_stopped() const noexcept {
         return state_.load() == state_t::stopped && stopped_.load();
     }
+
     void request_stop() {
         if (!this->derived().is_stopped())
         {
             this->post([this] { this->derived().stop(); });
         }
     }
+
     bool wait_stopped() {
         if (this->iopool().running_in_threads() || this->io_->context().get_executor().running_in_this_thread())
         {
@@ -132,9 +147,11 @@ public:
         this->derived().stop();
         return this->derived().is_stopped();
     }
+
     key_type hash_key() const noexcept {
         return reinterpret_cast<key_type>(this);
     }
+
     buffer_wrap<buffer_type>& buffer() noexcept {
         return buffer_;
     }
@@ -143,21 +160,27 @@ protected:
     auto& rallocator() noexcept {
         return rallocator_;
     }
+
     auto& wallocator() noexcept {
         return wallocator_;
     }
+
     listener_t& listener() noexcept {
         return listener_;
     }
+
     std::atomic<state_t>& state() noexcept {
         return state_;
     }
+
     std::uint64_t life_id() const noexcept {
         return life_id_.load();
     }
+
     void reset_life_id() noexcept {
         life_id_.fetch_add(1);
     }
+
     handler_memory<std::true_type, assizer<Args>> rallocator_;
     handler_memory<std::false_type, assizer<Args>> wallocator_;
     listener_t listener_;

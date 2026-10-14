@@ -4,6 +4,7 @@
 
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
+
 #define ARKNET_OS_MACOS TARGET_OS_OSX
 #define ARKNET_OS_IOS TARGET_OS_IPHONE
 #else

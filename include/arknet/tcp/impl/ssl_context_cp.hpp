@@ -8,6 +8,7 @@
 #include <arknet/base/error.hpp>
 
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class ssl_context_cp : public asio::ssl::context
 {
@@ -25,6 +26,7 @@ public:
             set_default_verify_paths();
         }
     }
+
     Derived& set_cert_buffer(
         std::string_view ca, std::string_view certificate, std::string_view key, std::string_view password) noexcept {
         return load_identity(password, [&, this](error_code& ec) {
@@ -44,6 +46,7 @@ public:
             }
         });
     }
+
     Derived& set_cert_file(const std::string& ca, const std::string& certificate, const std::string& key,
         const std::string& password) noexcept {
         return load_identity(password, [&, this](error_code& ec) {
@@ -63,6 +66,7 @@ public:
             }
         });
     }
+
     Derived& set_dh_buffer(std::string_view parameters) noexcept {
         error_code ec;
         if (!parameters.empty())
@@ -72,6 +76,7 @@ public:
         set_last_error(ec);
         return static_cast<Derived&>(*this);
     }
+
     Derived& set_dh_file(const std::string& path) noexcept {
         error_code ec;
         if (!path.empty())
@@ -97,6 +102,7 @@ protected:
         const int native = static_cast<int>(ERR_get_error());
         return native ? error_code{native, asio::error::get_ssl_category()} : error_code{asio::error::invalid_argument};
     }
+
     error_code identity_error_;
 
 private:

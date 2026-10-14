@@ -11,6 +11,7 @@ struct io_runner
     asio::io_context context;
     asio::executor_work_guard<asio::io_context::executor_type> work{context.get_executor()};
     std::thread thread{[this] { context.run(); }};
+
     ~io_runner() {
         work.reset();
         context.stop();
@@ -290,16 +291,20 @@ DOCTEST_TEST_CASE("Send completions accept generic move-only and overloaded call
         "generic move-only completion accepted");
     const auto result = await(completion);
     check(!result.first && result.second == 5, "generic callback reports send result");
+
     struct overloaded_completion
     {
         std::promise<std::size_t>& promise;
+
         void operator()(std::size_t bytes) {
             promise.set_value(bytes);
         }
+
         void operator()() {
             promise.set_value(0);
         }
     };
+
     std::promise<std::size_t> overloaded;
     auto overloaded_result = overloaded.get_future();
     check(client.async_send("second", overloaded_completion{overloaded}), "overloaded completion accepted");
@@ -493,7 +498,9 @@ struct callback_lifetime_probe
 {
     explicit callback_lifetime_probe(std::promise<void>& result)
         : released(result) {}
+
     std::promise<void>& released;
+
     ~callback_lifetime_probe() {
         released.set_value();
     }

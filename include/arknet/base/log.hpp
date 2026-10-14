@@ -4,6 +4,7 @@
 
 #if defined(ARKNET_ENABLE_LOG) && __has_include(<spdlog/spdlog.h>)
 #include <spdlog/spdlog.h>
+
 #define ARKNET_LOG(...) spdlog::log(__VA_ARGS__)
 #define ARKNET_LOG_TRACE(...) spdlog::trace(__VA_ARGS__)
 #define ARKNET_LOG_DEBUG(...) spdlog::debug(__VA_ARGS__)
@@ -22,6 +23,7 @@
 #endif
 
 namespace arknet::detail {
+
 inline bool& has_unexpected_behavior() noexcept {
     thread_local bool detected = false;
     return detected;

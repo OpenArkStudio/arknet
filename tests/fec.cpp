@@ -13,6 +13,7 @@
 #include "check.hpp"
 
 namespace {
+
 constexpr std::uint32_t conversation = 0x12345678;
 constexpr std::size_t mtu = 1200;
 using arknet::fec::transport;
@@ -51,6 +52,7 @@ struct fec_pair
 {
     std::vector<std::string> wire, feedback, received;
     transport sender, receiver;
+
     explicit fec_pair(const arknet::fec::options& settings = fixed())
         : sender(
               conversation, mtu, settings, [&](auto value) { wire.emplace_back(value); }, [](auto) { return true; })
@@ -60,6 +62,7 @@ struct fec_pair
                   received.emplace_back(value);
                   return true;
               }) {}
+
     std::vector<std::string> send(unsigned count, std::uint32_t now = 0) {
         std::vector<std::string> original;
         for (unsigned i = 0; i < count; ++i)

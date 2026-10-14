@@ -15,10 +15,12 @@
 #include <arknet/base/error.hpp>
 
 namespace arknet_interop {
+
 class data_impairment
 {
     using udp = asio::ip::udp;
     using clock = std::chrono::steady_clock;
+
     struct pending_packet
     {
         std::string bytes;
@@ -31,6 +33,7 @@ public:
     {
         std::uint64_t dropped{}, reordered{}, errors{}, fin_forwarded{};
     };
+
     explicit data_impairment(unsigned short server_port)
         : sockets_{udp::socket(context_), udp::socket(context_)}
         , server_(asio::ip::make_address("127.0.0.1"), server_port) {
@@ -44,21 +47,27 @@ public:
         port_ = sockets_[0].local_endpoint().port();
         worker_ = std::thread([this] { run(); });
     }
+
     ~data_impairment() {
         stop();
     }
+
     data_impairment(const data_impairment&) = delete;
     data_impairment& operator=(const data_impairment&) = delete;
+
     unsigned short port() const noexcept {
         return port_;
     }
+
     statistics snapshot() const {
         return {dropped_.load(), reordered_.load(), errors_.load(), fin_forwarded_.load()};
     }
+
     bool wait_fin(std::chrono::seconds timeout) {
         std::unique_lock lock(fin_mutex_);
         return fin_ready_.wait_for(lock, timeout, [this] { return fin_forwarded_ != 0; });
     }
+
     void stop() noexcept {
         stopped_ = true;
         if (worker_.joinable())
@@ -82,11 +91,13 @@ private:
             fin_ready_.notify_all();
         }
     }
+
     void release(unsigned direction) {
         auto packet = std::move(*pending_[direction]);
         pending_[direction].reset();
         forward(direction, packet.bytes, packet.destination);
     }
+
     void receive(unsigned direction) {
         while (!stopped_)
         {
@@ -139,6 +150,7 @@ private:
             }
         }
     }
+
     void run() noexcept {
         try
         {
@@ -158,6 +170,7 @@ private:
         catch (...)
         { ++errors_; }
     }
+
     asio::io_context context_;
     unsigned short port_{};
     std::array<udp::socket, 2> sockets_;

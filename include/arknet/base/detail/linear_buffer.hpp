@@ -8,7 +8,9 @@
 #include <vector>
 
 #include <arknet/external/asio.hpp>
+
 namespace arknet {
+
 template<class Container>
 class basic_linear_buffer
 {
@@ -18,20 +20,26 @@ public:
     using const_buffers_type = asio::const_buffer;
     using mutable_buffers_type = asio::mutable_buffer;
     basic_linear_buffer() = default;
+
     explicit basic_linear_buffer(size_type maximum) noexcept
         : limit_(maximum) {}
+
     size_type size() const noexcept {
         return committed_ - consumed_;
     }
+
     size_type max_size() const noexcept {
         return limit_;
     }
+
     size_type capacity() const noexcept {
         return bytes_.capacity();
     }
+
     const_buffers_type data() const noexcept {
         return {bytes_.empty() ? nullptr : bytes_.data() + consumed_, size()};
     }
+
     mutable_buffers_type prepare(size_type count) {
         const auto available = size();
         if (count > limit_ - available)
@@ -47,9 +55,11 @@ public:
         bytes_.resize(committed_ + count);
         return {bytes_.empty() ? nullptr : bytes_.data() + committed_, count};
     }
+
     void commit(size_type count) noexcept {
         committed_ += std::min(count, bytes_.size() - committed_);
     }
+
     void consume(size_type count) noexcept {
         consumed_ += std::min(count, size());
         if (consumed_ == committed_)
@@ -58,6 +68,7 @@ public:
             bytes_.clear();
         }
     }
+
     void shrink_to_fit() {
         const auto remaining = size();
         if (consumed_)
@@ -76,5 +87,6 @@ private:
     size_type committed_ = 0;
     size_type limit_ = std::numeric_limits<size_type>::max();
 };
+
 using linear_buffer = basic_linear_buffer<std::vector<char>>;
 } // namespace arknet

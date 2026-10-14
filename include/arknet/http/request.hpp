@@ -16,6 +16,7 @@
 #include <arknet/external/beast.hpp>
 
 namespace arknet {
+
 struct http_request_options
 {
     std::chrono::steady_clock::duration connect_timeout = std::chrono::seconds(5);
@@ -34,8 +35,10 @@ public:
 
     explicit http_request(asio::io_context& context)
         : state_(std::make_shared<state>(context)) {}
+
     http_request(const http_request&) = delete;
     http_request& operator=(const http_request&) = delete;
+
     ~http_request() {
         cancel();
     }
@@ -88,6 +91,7 @@ public:
     void cancel() {
         asio::post(state_->strand, [operation = state_] { operation->cancel(); });
     }
+
     void stop() {
         cancel();
     }
@@ -248,10 +252,12 @@ private:
             return std::all_of(
                 value.begin(), value.end(), [](unsigned char c) { return (c >= 32 && c != 127) || c == '\t'; });
         }
+
         static bool token_character(unsigned char c) {
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
                    std::string_view("!#$%&'*+-.^_`|~").find(c) != std::string_view::npos;
         }
+
         bool valid_request(std::string_view host, std::string_view service) const {
             if (host.empty() || host.find_first_of(" \t\r\n/@?#\\[]") != std::string_view::npos ||
                 !valid_header_value(host) || host.find('\0') != std::string_view::npos || service.empty() ||
@@ -293,6 +299,7 @@ private:
         bool canceled = false;
         bool done = false;
     };
+
     std::shared_ptr<state> state_;
 };
 } // namespace arknet

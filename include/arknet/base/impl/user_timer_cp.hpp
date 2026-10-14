@@ -14,7 +14,9 @@
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/impl/post_cp.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 struct user_timer_handle
 {
     template<class T>
@@ -22,15 +24,19 @@ struct user_timer_handle
     user_timer_handle(T&& value) {
         bind(std::forward<T>(value));
     }
+
     user_timer_handle(const user_timer_handle&) = default;
     user_timer_handle(user_timer_handle&&) = default;
     user_timer_handle& operator=(const user_timer_handle&) = default;
     user_timer_handle& operator=(user_timer_handle&&) = default;
+
     template<class T>
     void operator=(T&& value) {
         bind(std::forward<T>(value));
     }
+
     bool operator==(const user_timer_handle&) const = default;
+
     template<class T>
     void bind(T&& value) {
         using Type = std::remove_cvref_t<T>;
@@ -62,25 +68,30 @@ struct user_timer_handle
             static_assert(always_false_v<T>, "Timer keys require a scalar, pointer, string or string view");
         }
     }
+
     std::string handle;
 };
+
 struct user_timer_handle_hash
 {
     std::size_t operator()(const user_timer_handle& key) const noexcept {
         return std::hash<std::string>{}(key.handle);
     }
 };
+
 struct user_timer_handle_equal
 {
     bool operator()(const user_timer_handle& left, const user_timer_handle& right) const noexcept {
         return left == right;
     }
 };
+
 struct user_timer_obj
 {
     user_timer_obj(user_timer_handle key, asio::any_io_executor executor)
         : id(std::move(key))
         , timer(executor) {}
+
     user_timer_handle id;
     asio::steady_timer timer;
     std::function<void()> callback;
@@ -88,6 +99,7 @@ struct user_timer_obj
     std::size_t repeat = std::numeric_limits<std::size_t>::max();
     bool exited = false;
 };
+
 template<class Derived, class Args = void>
 class user_timer_cp
 {
@@ -102,30 +114,35 @@ private:
         std::shared_ptr<std::atomic_size_t> pending = std::make_shared<std::atomic_size_t>(0);
         user_timer_map timers;
     };
+
     std::shared_ptr<operation_state> timers_ = std::make_shared<operation_state>();
 
 public:
     ~user_timer_cp() {
         timers_->alive.store(false, std::memory_order_release);
     }
+
     template<class Key, class Milliseconds, class Function, class... Bound>
         requires(std::is_integral_v<Milliseconds> && is_callable_v<Function>)
     void start_timer(Key&& key, Milliseconds interval, Function&& function, Bound&&... bound) {
         start_timer(std::forward<Key>(key), std::chrono::milliseconds(interval), std::forward<Function>(function),
             std::forward<Bound>(bound)...);
     }
+
     template<class Key, class Milliseconds, class Repeat, class Function, class... Bound>
         requires(std::is_integral_v<Milliseconds> && std::is_integral_v<Repeat> && is_callable_v<Function>)
     void start_timer(Key&& key, Milliseconds interval, Repeat repeat, Function&& function, Bound&&... bound) {
         start_timer(std::forward<Key>(key), std::chrono::milliseconds(interval), repeat,
             std::forward<Function>(function), std::forward<Bound>(bound)...);
     }
+
     template<class Key, class Rep, class Period, class Function, class... Bound>
         requires is_callable_v<Function>
     void start_timer(Key&& key, std::chrono::duration<Rep, Period> interval, Function&& function, Bound&&... bound) {
         start_timer(std::forward<Key>(key), interval, std::size_t(-1), interval, std::forward<Function>(function),
             std::forward<Bound>(bound)...);
     }
+
     template<class Key, class Rep, class Period, class Repeat, class Function, class... Bound>
         requires(std::is_integral_v<Repeat> && is_callable_v<Function>)
     void start_timer(
@@ -133,6 +150,7 @@ public:
         start_timer(std::forward<Key>(key), interval, repeat, interval, std::forward<Function>(function),
             std::forward<Bound>(bound)...);
     }
+
     template<class Key, class R1, class P1, class R2, class P2, class Function, class... Bound>
         requires is_callable_v<Function>
     void start_timer(Key&& key, std::chrono::duration<R1, P1> interval, std::chrono::duration<R2, P2> first,
@@ -140,6 +158,7 @@ public:
         start_timer(std::forward<Key>(key), interval, std::size_t(-1), first, std::forward<Function>(function),
             std::forward<Bound>(bound)...);
     }
+
     template<class Key, class R1, class P1, class Repeat, class R2, class P2, class Function, class... Bound>
         requires(std::is_integral_v<Repeat> && is_callable_v<Function>)
     void start_timer(Key&& key, std::chrono::duration<R1, P1> interval, Repeat repeat,
@@ -165,6 +184,7 @@ public:
                 arm(state, lane, std::move(owner), std::move(timer), first);
             });
     }
+
     template<class Key>
     void stop_timer(Key&& key) {
         auto& object = static_cast<Derived&>(*this);
@@ -172,14 +192,17 @@ public:
             [state = timers_, owner = object.selfptr(), pending = pending_operation(timers_->pending),
                 key = user_timer_handle(std::forward<Key>(key))] { cancel(state, key); });
     }
+
     void stop_all_timers() {
         cancel_all<false>();
     }
+
     template<class Key>
     bool is_timer_exists(Key&& key) {
         return query(
             [state = timers_, key = user_timer_handle(std::forward<Key>(key))] { return state->timers.contains(key); });
     }
+
     template<class Key>
     auto get_timer_interval(Key&& key) {
         return query([state = timers_, key = user_timer_handle(std::forward<Key>(key))] {
@@ -187,6 +210,7 @@ public:
             return found == state->timers.end() ? asio::steady_timer::duration{} : found->second->interval;
         });
     }
+
     template<class Key, class Rep, class Period>
     void set_timer_interval(Key&& key, std::chrono::duration<Rep, Period> duration) {
         static_cast<Derived&>(*this).dispatch([state = timers_, key = user_timer_handle(std::forward<Key>(key)),
@@ -197,11 +221,13 @@ public:
             }
         });
     }
+
     template<class Key, class Integer>
         requires std::is_integral_v<Integer>
     void set_timer_interval(Key&& key, Integer milliseconds) {
         set_timer_interval(std::forward<Key>(key), std::chrono::milliseconds(milliseconds));
     }
+
     template<class Key, class Duration>
     void reset_timer_interval(Key&& key, Duration duration) {
         set_timer_interval(std::forward<Key>(key), duration);
@@ -211,9 +237,11 @@ protected:
     void _dispatch_stop_all_timers() {
         cancel_all<true>();
     }
+
     void _wait_user_timer_operations() {
         wait_pending_operations(timers_->pending);
     }
+
     template<class Rep, class Period>
     void _post_user_timers(std::shared_ptr<Derived> owner, std::shared_ptr<user_timer_obj> timer,
         std::chrono::duration<Rep, Period> delay) {
@@ -241,6 +269,7 @@ private:
             asio::post(object.io_->executor(), std::move(handler));
         }
     }
+
     static void arm(std::shared_ptr<operation_state> state, std::shared_ptr<io_t> lane, std::shared_ptr<Derived> owner,
         std::shared_ptr<user_timer_obj> timer, asio::steady_timer::duration delay) {
         timer->timer.expires_after(delay);
@@ -275,6 +304,7 @@ private:
                 arm(state, lane, std::move(owner), timer, timer->interval);
         });
     }
+
     static void cancel(const std::shared_ptr<operation_state>& state, const user_timer_handle& key) {
         if (auto found = state->timers.find(key); found != state->timers.end())
         {
@@ -283,6 +313,7 @@ private:
             state->timers.erase(found);
         }
     }
+
     template<class Function>
     auto query(Function&& function) {
         auto& object = static_cast<Derived&>(*this);

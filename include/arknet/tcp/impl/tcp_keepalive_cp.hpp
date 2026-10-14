@@ -4,6 +4,7 @@
 #include <arknet/base/detail/keepalive_options.hpp>
 
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class tcp_keepalive_cp
 {

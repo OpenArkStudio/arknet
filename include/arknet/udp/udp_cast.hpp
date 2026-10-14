@@ -20,6 +20,7 @@
 #include <arknet/udp/impl/udp_send_op.hpp>
 
 namespace arknet::detail {
+
 struct template_args_udp_cast : udp_tag
 {
     using socket_t = asio::ip::udp::socket;
@@ -81,6 +82,7 @@ public:
         requires(!std::is_integral_v<remove_cvref_t<Scheduler>>)
     explicit udp_cast_impl_t(Scheduler&& scheduler)
         : udp_cast_impl_t(udp_frame_size, max_buffer_size, std::forward<Scheduler>(scheduler)) {}
+
     ~udp_cast_impl_t() {
         stop();
     }
@@ -90,6 +92,7 @@ public:
         return this->derived().template _do_start<false>(std::forward<Host>(host), std::forward<Service>(service),
             ecs_helper::make_ecs('0', std::forward<Options>(options)...));
     }
+
     template<class Host, class Service, class... Options>
     bool async_start(Host&& host, Service&& service, Options&&... options) {
         return this->derived().template _do_start<true>(std::forward<Host>(host), std::forward<Service>(service),
@@ -126,6 +129,7 @@ public:
         }
         this->stop_iopool();
     }
+
     void request_stop() {
         if (this->derived().is_stopped())
         {
@@ -133,6 +137,7 @@ public:
         }
         this->derived().post([this, lifetime = this->selfptr()] { this->derived().stop(); });
     }
+
     bool wait_stopped() {
         if (this->iopool().running_in_threads())
         {
@@ -142,12 +147,15 @@ public:
         this->derived().stop();
         return is_stopped();
     }
+
     bool is_started() const noexcept {
         return state_.load() == state_t::started;
     }
+
     bool is_stopped() const noexcept {
         return state_.load() == state_t::stopped;
     }
+
     void destroy() {
         this->socket_.reset();
         this->io_.reset();
@@ -161,18 +169,22 @@ public:
                                              std::forward<Function>(function), std::forward<Object>(object)...));
         return this->derived();
     }
+
     template<class Function, class... Object>
     Derived& bind_init(Function&& function, Object&&... object) {
         return bind_notification(event_type::init, std::forward<Function>(function), std::forward<Object>(object)...);
     }
+
     template<class Function, class... Object>
     Derived& bind_start(Function&& function, Object&&... object) {
         return bind_notification(event_type::start, std::forward<Function>(function), std::forward<Object>(object)...);
     }
+
     template<class Function, class... Object>
     Derived& bind_stop(Function&& function, Object&&... object) {
         return bind_notification(event_type::stop, std::forward<Function>(function), std::forward<Object>(object)...);
     }
+
     buffer_wrap<buffer_type>& buffer() noexcept {
         return buffer_;
     }
@@ -246,6 +258,7 @@ protected:
         set_last_error(completion.get());
         return !get_last_error();
     }
+
     template<class Condition>
     void _handle_start(
         const error_code& error, std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition) {
@@ -265,12 +278,14 @@ protected:
             this->derived()._post_recv(std::move(lifetime), std::move(condition));
         }
     }
+
     template<class Chain = defer_event<void, Derived>>
     void _do_disconnect(const error_code& error, std::shared_ptr<Derived> lifetime, Chain chain = {}) {
         this->derived().dispatch([this, error, lifetime = std::move(lifetime), chain = std::move(chain)]() mutable {
             this->derived()._do_stop(error, std::move(lifetime));
         });
     }
+
     void _do_stop(const error_code& error, std::shared_ptr<Derived> lifetime) {
         if (state_ == state_t::stopping || state_ == state_t::stopped)
         {
@@ -289,6 +304,7 @@ protected:
             this->derived()._handle_stop(error, std::move(lifetime));
         }
     }
+
     void _handle_stop(const error_code& error, std::shared_ptr<Derived>) {
         auto queued_stop = std::move(stop_guard_);
         stop_guard_.reset();
@@ -310,6 +326,7 @@ protected:
     bool _do_send(const asio::ip::udp::endpoint& target, Data& data, Completion&& completion) {
         return this->derived()._udp_send_to(target, data, std::forward<Completion>(completion));
     }
+
     template<class Condition>
     void _post_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition) {
         if (!is_started())
@@ -324,6 +341,7 @@ protected:
                 this->derived()._handle_recv(error, count, std::move(lifetime), std::move(condition));
             }));
     }
+
     template<class Condition>
     void _handle_recv(const error_code& error, std::size_t count, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> condition) {
@@ -353,29 +371,37 @@ protected:
         }
         this->derived()._post_recv(std::move(lifetime), std::move(condition));
     }
+
     template<class Condition>
     void _fire_recv(std::shared_ptr<Derived>&, std::shared_ptr<ecs_t<Condition>>&, std::string_view bytes) {
         listener_.notify(
             event_type::recv, remote_endpoint_, detail::call_data_filter_before_recv(this->derived(), bytes));
     }
+
     void _fire_init() {
         listener_.notify(event_type::init);
     }
+
     void _fire_start() {
         listener_.notify(event_type::start);
     }
+
     void _fire_stop() {
         listener_.notify(event_type::stop);
     }
+
     auto& rallocator() noexcept {
         return read_memory_;
     }
+
     auto& wallocator() noexcept {
         return write_memory_;
     }
+
     std::uint64_t life_id() const noexcept {
         return life_id_.load();
     }
+
     void reset_life_id() noexcept {
         ++life_id_;
     }
@@ -403,15 +429,18 @@ private:
 } // namespace arknet::detail
 
 namespace arknet {
+
 using udp_cast_args = detail::template_args_udp_cast;
 template<class Derived, class Args>
 using udp_cast_impl_t = detail::udp_cast_impl_t<Derived, Args>;
+
 template<class Derived>
 class udp_cast_t : public detail::udp_cast_impl_t<Derived>
 {
 public:
     using detail::udp_cast_impl_t<Derived>::udp_cast_impl_t;
 };
+
 class udp_cast : public udp_cast_t<udp_cast>
 {
 public:

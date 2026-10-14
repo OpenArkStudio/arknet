@@ -7,7 +7,9 @@
 #include <arknet/base/detail/allocator.hpp>
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class connect_timeout_cp
 {
@@ -15,6 +17,7 @@ public:
     auto get_connect_timeout() const noexcept {
         return connect_timeout_;
     }
+
     template<class Rep, class Period>
     Derived& set_connect_timeout(std::chrono::duration<Rep, Period> value) noexcept {
         connect_timeout_ = to_steady_duration(value);
@@ -34,6 +37,7 @@ protected:
             _post_connect_timeout_timer(std::move(owner), connect_timeout_timer_, duration);
         });
     }
+
     template<class Rep, class Period>
     void _post_connect_timeout_timer(std::shared_ptr<Derived> owner, std::shared_ptr<safe_timer> timer,
         std::chrono::duration<Rep, Period> duration) {
@@ -48,6 +52,7 @@ protected:
                 _handle_connect_timeout_timer(error, std::move(owner), std::move(timer));
             });
     }
+
     template<class Object = Derived>
     void _handle_connect_timeout_timer(
         const error_code& error, std::shared_ptr<Object> owner, std::shared_ptr<safe_timer> timer) {
@@ -73,6 +78,7 @@ protected:
             object.socket().close(ignored);
         }
     }
+
     void _stop_connect_timeout_timer() {
         static_cast<Derived&>(*this).dispatch([this] {
 #ifndef NDEBUG
@@ -82,6 +88,7 @@ protected:
                 connect_timeout_timer_->cancel();
         });
     }
+
     std::shared_ptr<safe_timer> connect_timeout_timer_;
     std::chrono::steady_clock::duration connect_timeout_ = std::chrono::seconds(30);
 #ifndef NDEBUG

@@ -10,6 +10,7 @@
 #include "check.hpp"
 
 namespace {
+
 constexpr std::uint32_t conversation = 0x12345678;
 
 void put32(std::string& data, std::size_t offset, std::uint32_t value) {
@@ -60,6 +61,7 @@ struct simulated_link
         bool to_right;
         std::string data;
     };
+
     arknet::arq::control_block left;
     arknet::arq::control_block right;
     std::vector<delivery> pending;
@@ -68,6 +70,7 @@ struct simulated_link
     std::size_t dropped = 0;
     std::size_t duplicated = 0;
     bool impair;
+
     explicit simulated_link(const arknet::arq::options& settings = {}, bool impairments = false)
         : left(conversation, settings)
         , right(conversation, settings)
@@ -75,6 +78,7 @@ struct simulated_link
         left.set_output([&](auto data) { transmit(true, data); });
         right.set_output([&](auto data) { transmit(false, data); });
     }
+
     void transmit(bool to_right, std::string_view data) {
         ++transmissions;
         if (impair && transmissions % 7 == 0)
@@ -90,6 +94,7 @@ struct simulated_link
             pending.push_back({now + delay + 15, to_right, std::string(data)});
         }
     }
+
     void step() {
         left.update(now);
         right.update(now);

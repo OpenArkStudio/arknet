@@ -7,6 +7,7 @@
 #include <arknet/external/beast.hpp>
 
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class ws_send_op
 {

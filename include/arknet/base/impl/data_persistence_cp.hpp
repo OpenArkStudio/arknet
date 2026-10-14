@@ -10,15 +10,19 @@
 
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 template<class T>
 struct is_span : std::false_type
 {
 };
+
 template<class T, std::size_t Extent>
 struct is_span<std::span<T, Extent>> : std::true_type
 {
 };
+
 template<class Derived, class Args>
 class data_persistence_cp
 {
@@ -63,6 +67,7 @@ protected:
             return std::forward<Data>(data);
         }
     }
+
     template<class Data>
     auto _data_persistence(Data&& data) {
         auto source = _own_send_data(std::forward<Data>(data));
@@ -70,6 +75,7 @@ protected:
         // A filter can return a view into source, which must be copied while source lives.
         return _own_send_data(std::move(transformed));
     }
+
     template<class Character, class Count>
     auto _data_persistence(Character* data, Count count) {
         using Type = std::remove_cv_t<Character>;

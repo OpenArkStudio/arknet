@@ -6,6 +6,7 @@
 #endif
 
 namespace {
+
 const std::string certs = ARKNET_TEST_CERT_DIR;
 
 template<class Server>

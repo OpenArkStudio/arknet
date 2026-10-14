@@ -24,6 +24,7 @@
 #include <arknet/base/error.hpp>
 
 namespace arknet::detail {
+
 using io_context_work_guard = asio::executor_work_guard<asio::io_context::executor_type>;
 
 class io_t
@@ -42,6 +43,7 @@ class io_t
             }
             executor = strand ? asio::any_io_executor(*strand) : this->context->get_executor();
         }
+
         std::shared_ptr<asio::io_context> context;
         std::optional<asio::strand<asio::io_context::executor_type>> strand;
         asio::any_io_executor executor;
@@ -51,35 +53,44 @@ class io_t
         std::mutex identity_mutex;
         std::thread::id worker;
     };
+
     std::shared_ptr<lane_state> lane_;
 
 public:
     explicit io_t(std::shared_ptr<asio::io_context> context, bool serialize = true)
         : lane_(std::make_shared<lane_state>(std::move(context), serialize)) {}
+
     io_t(const io_t&) = delete;
     io_t& operator=(const io_t&) = delete;
 
     asio::io_context& context() noexcept {
         return *lane_->context;
     }
+
     const asio::io_context& context() const noexcept {
         return *lane_->context;
     }
+
     asio::any_io_executor executor() const noexcept {
         return lane_->executor;
     }
+
     std::shared_ptr<asio::io_context> context_ptr() const noexcept {
         return lane_->context;
     }
+
     std::atomic<std::size_t>& pending() noexcept {
         return lane_->pending;
     }
+
     const std::atomic<std::size_t>& pending() const noexcept {
         return lane_->pending;
     }
+
     auto& timers() noexcept {
         return lane_->timers;
     }
+
     const auto& timers() const noexcept {
         return lane_->timers;
     }
@@ -88,14 +99,17 @@ public:
         return lane_->strand ? lane_->strand->running_in_this_thread()
                              : lane_->context->get_executor().running_in_this_thread();
     }
+
     void init_thread_id() noexcept {
         std::lock_guard lock(lane_->identity_mutex);
         lane_->worker = std::this_thread::get_id();
     }
+
     void fini_thread_id() noexcept {
         std::lock_guard lock(lane_->identity_mutex);
         lane_->worker = {};
     }
+
     std::thread::id get_thread_id() const noexcept {
         if (lane_->context->get_executor().running_in_this_thread())
         {
@@ -117,6 +131,7 @@ public:
                 object, [object, owner = std::move(owner), work = std::move(work)] { object->stop(); });
         });
     }
+
     template<class Object>
     void unregobj(Object* object) {
         if (!object)
@@ -126,6 +141,7 @@ public:
         asio::post(
             executor(), [lane = lane_, object, owner = object->derived().selfptr()] { lane->owners.erase(object); });
     }
+
     void cancel() {
         // A stopped context may never run this callback; do not retain its owner.
         asio::post(executor(), [weak = std::weak_ptr(lane_)] {
@@ -160,9 +176,11 @@ public:
     virtual bool start() = 0;
     virtual void stop() = 0;
     virtual bool started() const noexcept = 0;
+
     virtual bool stopped() const noexcept {
         return !started();
     }
+
     virtual void destroy() noexcept = 0;
     virtual std::shared_ptr<io_t> get(std::size_t index) noexcept = 0;
     virtual std::size_t size() const noexcept = 0;
@@ -244,8 +262,10 @@ public:
             lanes_.push_back(std::make_shared<io_t>(std::make_shared<asio::io_context>(1), false));
         }
     }
+
     io_pool(const io_pool&) = delete;
     io_pool& operator=(const io_pool&) = delete;
+
     ~io_pool() override {
         if (running_in_threads())
         {
@@ -303,6 +323,7 @@ public:
             throw;
         }
     }
+
     void stop() override {
         if (running_in_threads())
         {
@@ -349,39 +370,50 @@ public:
         }
         lifecycle_changed_.notify_all();
     }
+
     bool started() const noexcept override {
         std::lock_guard lock(lifecycle_mutex_);
         return phase_ == phase::running;
     }
+
     bool stopped() const noexcept override {
         std::lock_guard lock(lifecycle_mutex_);
         return phase_ == phase::idle;
     }
+
     std::size_t size() const noexcept override {
         return lanes_.size();
     }
+
     std::size_t next(std::size_t index = std::size_t(-1)) noexcept {
         return (index == std::size_t(-1) ? cursor_.fetch_add(1) : index) % size();
     }
+
     std::shared_ptr<io_t> get(std::size_t index = std::size_t(-1)) noexcept override {
         return lanes_[next(index)];
     }
+
     asio::io_context& get_context(std::size_t index = std::size_t(-1)) noexcept {
         return get(index)->context();
     }
+
     std::shared_ptr<asio::io_context> get_context_ptr(std::size_t index = std::size_t(-1)) noexcept {
         return get(index)->context_ptr();
     }
+
     bool running_in_threads() const noexcept override {
         return std::ranges::any_of(
             lanes_, [](const auto& lane) { return lane->context().get_executor().running_in_this_thread(); });
     }
+
     bool running_in_thread(std::size_t index) const noexcept {
         return index < size() && lanes_[index]->running_in_this_thread();
     }
+
     std::thread::id get_thread_id(std::size_t index) const noexcept {
         return lanes_[index % size()]->get_thread_id();
     }
+
     std::thread::native_handle_type get_thread_handle(std::size_t index) {
         std::lock_guard lock(lifecycle_mutex_);
         if (workers_.empty())
@@ -390,9 +422,11 @@ public:
         }
         return workers_[index % workers_.size()].native_handle();
     }
+
     bool owns_context() const noexcept override {
         return true;
     }
+
     void cancel() {
         for (auto& lane : lanes_)
         {
@@ -402,13 +436,16 @@ public:
             }
         }
     }
+
     void wait_for_io_context_stopped() {
         stop();
     }
+
     void destroy() noexcept override {
         stop();
         lanes_.clear();
     }
+
     template<class F, class... A>
         requires std::invocable<F, A...>
     auto post(F&& function, A&&... arguments) {
@@ -416,10 +453,12 @@ public:
         return submit(static_cast<std::size_t>(least_busy - lanes_.begin()), std::forward<F>(function),
             std::forward<A>(arguments)...);
     }
+
     template<std::integral I, class F, class... A>
     auto post(I index, F&& function, A&&... arguments) {
         return submit(static_cast<std::size_t>(index), std::forward<F>(function), std::forward<A>(arguments)...);
     }
+
     template<class Rep, class Period>
     void wait_for(std::chrono::duration<Rep, Period> duration) {
         if (running_in_threads())
@@ -430,10 +469,12 @@ public:
         clear_last_error();
         std::this_thread::sleep_for(duration);
     }
+
     template<class Clock, class Duration>
     void wait_until(std::chrono::time_point<Clock, Duration> deadline) {
         wait_for(deadline - Clock::now());
     }
+
     template<std::integral... I>
     int wait_signal(I... numbers) {
         if (running_in_threads())
@@ -453,6 +494,7 @@ public:
         return delivered;
     }
 };
+
 using iopool = io_pool;
 using default_iopool = io_pool;
 
@@ -471,11 +513,13 @@ public:
             throw std::invalid_argument("empty IO scheduler");
         }
     }
+
     bool start() override {
         clear_last_error();
         active_ = true;
         return true;
     }
+
     void stop() override {
         if (running_in_threads())
         {
@@ -502,25 +546,32 @@ public:
             ready.get();
         }
     }
+
     bool started() const noexcept override {
         return active_.load();
     }
+
     std::size_t size() const noexcept override {
         return lanes_.size();
     }
+
     std::size_t next(std::size_t index) noexcept {
         return (index == std::size_t(-1) ? cursor_.fetch_add(1) : index) % size();
     }
+
     std::shared_ptr<io_t> get(std::size_t index) noexcept override {
         return lanes_[next(index)];
     }
+
     bool running_in_threads() const noexcept override {
         return std::ranges::any_of(
             lanes_, [](const auto& lane) { return lane->context().get_executor().running_in_this_thread(); });
     }
+
     bool owns_context() const noexcept override {
         return false;
     }
+
     void destroy() noexcept override {
         stop();
         lanes_.clear();
@@ -606,15 +657,19 @@ protected:
     std::shared_ptr<io_t> _get_io(std::size_t index = std::size_t(-1)) noexcept {
         return iots_[(index == std::size_t(-1) ? cursor_.fetch_add(1) : index) % iots_.size()];
     }
+
     bool is_iopool_started() const noexcept {
         return iopool_->started();
     }
+
     bool is_iopool_stopped() const noexcept {
         return iopool_->stopped();
     }
+
     bool is_external_iopool() const noexcept {
         return !iopool_->owns_context();
     }
+
     bool start_iopool() {
         {
             std::lock_guard lock(wait_mutex_);
@@ -630,6 +685,7 @@ protected:
         }
         return true;
     }
+
     void stop_iopool() {
         {
             std::lock_guard lock(wait_mutex_);
@@ -638,6 +694,7 @@ protected:
         wait_changed_.notify_all();
         iopool_->stop();
     }
+
     void destroy_iopool() noexcept {
         iopool_->destroy();
         iots_.clear();
@@ -659,12 +716,15 @@ public:
             iots_.push_back(iopool_->get(index));
         }
     }
+
     iopool_base& iopool() noexcept {
         return *iopool_;
     }
+
     const iopool_base& iopool() const noexcept {
         return *iopool_;
     }
+
     void wait_stop() {
         if (iopool_->running_in_threads())
         {
@@ -675,6 +735,7 @@ public:
         std::unique_lock lock(wait_mutex_);
         wait_changed_.wait(lock, [&] { return stop_requested_; });
     }
+
     template<class Rep, class Period>
     void wait_for(std::chrono::duration<Rep, Period> duration) {
         if (iopool_->running_in_threads())
@@ -685,10 +746,12 @@ public:
         clear_last_error();
         std::this_thread::sleep_for(duration);
     }
+
     template<class Clock, class Duration>
     void wait_until(std::chrono::time_point<Clock, Duration> deadline) {
         wait_for(deadline - Clock::now());
     }
+
     template<std::integral... I>
     int wait_signal(I... numbers) {
         if (iopool_->running_in_threads())
@@ -711,6 +774,7 @@ public:
 } // namespace arknet::detail
 
 namespace arknet {
+
 using io_t = detail::io_t;
 using io_pool = detail::io_pool;
 using iopool = io_pool;

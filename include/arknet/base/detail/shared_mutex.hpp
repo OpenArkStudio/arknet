@@ -4,6 +4,7 @@
 #include <shared_mutex>
 
 namespace arknet {
+
 class shared_mutexer : public std::shared_mutex
 {
 public:
@@ -11,6 +12,7 @@ public:
         return *this;
     }
 };
+
 using shared_locker = std::shared_lock<shared_mutexer>;
 using unique_locker = std::unique_lock<shared_mutexer>;
 } // namespace arknet

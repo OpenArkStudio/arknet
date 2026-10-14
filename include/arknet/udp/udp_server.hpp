@@ -8,6 +8,7 @@
 #include <arknet/udp/udp_session.hpp>
 
 namespace arknet::detail {
+
 ARKNET_CLASS_FORWARD_DECLARE_BASE;
 ARKNET_CLASS_FORWARD_DECLARE_UDP_BASE;
 ARKNET_CLASS_FORWARD_DECLARE_UDP_SERVER;
@@ -94,15 +95,19 @@ public:
         this->acceptor_.reset();
         base::destroy();
     }
+
     bool is_started() const noexcept {
         return base::is_started();
     }
+
     bool is_stopped() const noexcept {
         return base::is_stopped();
     }
+
     asio::ip::udp::socket& acceptor() noexcept {
         return *acceptor_;
     }
+
     const asio::ip::udp::socket& acceptor() const noexcept {
         return *acceptor_;
     }
@@ -113,24 +118,29 @@ public:
                                                    std::forward<Function>(function), std::forward<Object>(object)...));
         return this->derived();
     }
+
     template<class Function, class... Object>
     Derived& bind_connect(Function&& function, Object&&... object) {
         return bind_session_notification(
             event_type::connect, std::forward<Function>(function), std::forward<Object>(object)...);
     }
+
     template<class Function, class... Object>
     Derived& bind_disconnect(Function&& function, Object&&... object) {
         return bind_session_notification(
             event_type::disconnect, std::forward<Function>(function), std::forward<Object>(object)...);
     }
+
     template<class Function, class... Object>
     Derived& bind_init(Function&& function, Object&&... object) {
         return bind_notification(event_type::init, std::forward<Function>(function), std::forward<Object>(object)...);
     }
+
     template<class Function, class... Object>
     Derived& bind_start(Function&& function, Object&&... object) {
         return bind_notification(event_type::start, std::forward<Function>(function), std::forward<Object>(object)...);
     }
+
     template<class Function, class... Object>
     Derived& bind_stop(Function&& function, Object&&... object) {
         return bind_notification(event_type::stop, std::forward<Function>(function), std::forward<Object>(object)...);
@@ -242,6 +252,7 @@ protected:
             this->derived()._handle_stop(error, std::move(lifetime));
         });
     }
+
     void _handle_stop(const error_code& error, std::shared_ptr<Derived>) {
         base::stop();
         set_last_error(error);
@@ -266,6 +277,7 @@ protected:
                     this->derived()._handle_recv(error, count, std::move(lifetime), std::move(condition));
                 }));
     }
+
     template<class Condition>
     void _handle_recv(const error_code& error, std::size_t count, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> condition) {
@@ -303,6 +315,7 @@ protected:
         return std::make_shared<Session>(std::forward<Prefix>(prefix)..., this->sessions_, this->listener_, this->io_,
             buffer_.pre_size(), buffer_.max_size(), buffer_, acceptor_, remote_endpoint_);
     }
+
     template<class Condition>
     void _handle_accept(const error_code&, std::string_view bytes, std::shared_ptr<Session>,
         std::shared_ptr<ecs_t<Condition>>& condition) {
@@ -315,9 +328,11 @@ protected:
     void _fire_init() {
         this->listener_.notify(event_type::init);
     }
+
     void _fire_start() {
         this->listener_.notify(event_type::start);
     }
+
     void _fire_stop() {
         this->listener_.notify(event_type::stop);
     }
@@ -334,6 +349,7 @@ private:
         this->listener_.bind(event, observer_t<>(std::forward<Function>(function), std::forward<Object>(object)...));
         return this->derived();
     }
+
     template<class Function, class... Object>
     Derived& bind_session_notification(event_type event, Function&& function, Object&&... object) {
         this->listener_.bind(event,
@@ -344,13 +360,16 @@ private:
 } // namespace arknet::detail
 
 namespace arknet {
+
 template<class Derived, class Session>
 using udp_server_impl_t = detail::udp_server_impl_t<Derived, Session>;
+
 template<class Session>
 class udp_server_t : public detail::udp_server_impl_t<udp_server_t<Session>, Session>
 {
 public:
     using detail::udp_server_impl_t<udp_server_t<Session>, Session>::udp_server_impl_t;
 };
+
 using udp_server = udp_server_t<udp_session>;
 } // namespace arknet

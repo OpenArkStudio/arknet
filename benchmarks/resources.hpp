@@ -2,11 +2,14 @@
 #pragma once
 #include <cstdint>
 #include <optional>
+
 #ifdef _WIN32
 #include <windows.h>
 #include <psapi.h>
+
 #else
 #include <sys/resource.h>
+
 #endif
 
 inline std::optional<double> process_cpu() {

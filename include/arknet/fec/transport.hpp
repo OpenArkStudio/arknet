@@ -18,12 +18,14 @@
 #include <arknet/thirdparty/fecpp.hpp>
 
 namespace arknet::fec {
+
 enum class policy
 {
     disabled,
     fixed,
     adaptive
 };
+
 enum class change_reason
 {
     configured,
@@ -31,6 +33,7 @@ enum class change_reason
     healthy,
     overload
 };
+
 inline const char* reason_name(change_reason reason) noexcept {
     switch (reason)
     {
@@ -44,6 +47,7 @@ inline const char* reason_name(change_reason reason) noexcept {
         return "configured";
     }
 }
+
 struct options
 {
     policy mode = policy::disabled;
@@ -63,16 +67,19 @@ struct options
     unsigned disable_loss_percent = 1;
     unsigned stable_windows = 3;
     unsigned overload_queue_percent = 75;
+
     static options fixed() {
         options value;
         value.mode = policy::fixed;
         return value;
     }
+
     static options adaptive() {
         options value;
         value.mode = policy::adaptive;
         return value;
     }
+
     void validate() const {
         if ((mode != policy::disabled && mode != policy::fixed && mode != policy::adaptive) || !data_shards ||
             data_shards > 32 || !max_parity_shards || max_parity_shards > 16 || parity_shards > max_parity_shards ||
@@ -87,6 +94,7 @@ struct options
         }
     }
 };
+
 struct statistics
 {
     std::uint64_t data_packets_tx{}, parity_packets_tx{}, wire_bytes_tx{}, parity_bytes_tx{}, wire_bytes_rx{};
@@ -96,7 +104,9 @@ struct statistics
     std::uint8_t current_parity_shards{};
     change_reason last_change = change_reason::configured;
 };
+
 namespace detail {
+
 inline std::uint64_t read(std::string_view bytes, std::size_t offset, unsigned count) noexcept {
     std::uint64_t value{};
     for (unsigned i = 0; i < count; ++i)
@@ -105,15 +115,18 @@ inline std::uint64_t read(std::string_view bytes, std::size_t offset, unsigned c
     }
     return value;
 }
+
 inline void write(std::string& bytes, std::size_t offset, std::uint64_t value, unsigned count) noexcept {
     for (unsigned i = 0; i < count; ++i)
     {
         bytes[offset + i] = static_cast<char>(value >> (8 * i));
     }
 }
+
 inline std::int32_t difference(std::uint32_t a, std::uint32_t b) noexcept {
     return std::bit_cast<std::int32_t>(a - b);
 }
+
 inline std::uint32_t checksum(std::string_view bytes) noexcept {
     static constexpr auto table = [] {
         std::array<std::uint32_t, 256> values{};
@@ -144,6 +157,7 @@ public:
     static constexpr std::size_t header_size = 20, payload_prefix = 6, overhead = header_size + payload_prefix;
     using output = std::function<void(std::string_view)>;
     using delivery = std::function<bool(std::string_view)>;
+
     transport(std::uint32_t conversation, std::size_t mtu, options settings, output emit, delivery deliver)
         : conversation_(conversation)
         , mtu_(mtu)
@@ -157,6 +171,7 @@ public:
         }
         stats_.current_parity_shards = options_.mode == policy::fixed ? options_.parity_shards : 0;
     }
+
     bool send(std::string_view bytes, std::uint32_t now, bool control = false) {
         if (stopped_ || bytes.size() < 24 || bytes.size() > mtu_ - overhead)
         {
@@ -189,6 +204,7 @@ public:
         }
         return !stopped_;
     }
+
     void update(std::uint32_t now) {
         if (stopped_)
         {
@@ -230,6 +246,7 @@ public:
             emit_wire(bytes, false, false);
         }
     }
+
     void adapt(std::uint32_t now, std::uint64_t transmissions, std::uint64_t retransmissions, std::uint32_t rtt_ms,
         std::size_t queued_bytes, std::size_t queue_limit) {
         if (stopped_ || options_.mode != policy::adaptive)
@@ -305,6 +322,7 @@ public:
             stable_ = 0;
         }
     }
+
     bool input(std::string_view bytes, std::uint32_t now) {
         if (stopped_)
         {
@@ -509,12 +527,14 @@ public:
         }
         return true;
     }
+
     statistics snapshot() const noexcept {
         auto value = stats_;
         value.retained_bytes = retained_bytes_ + pending_bytes_;
         value.retained_groups = groups_.size();
         return value;
     }
+
     void stop() {
         stopped_ = true;
         pending_.clear();
@@ -527,6 +547,7 @@ private:
     bool deliver_packet(std::string_view bytes) {
         return !stopped_ && deliver_(bytes) && !stopped_;
     }
+
     struct group
     {
         unsigned k{}, p{}, count{}, recovered{};
@@ -537,7 +558,9 @@ private:
         std::array<bool, 48> present{};
         std::array<bool, 32> delivered{};
     };
+
     static constexpr std::size_t group_cost = sizeof(group) + 64;
+
     static std::string_view unpack(std::string_view bytes) {
         if (bytes.size() < payload_prefix)
         {
@@ -551,6 +574,7 @@ private:
         const auto message = bytes.substr(payload_prefix, length);
         return detail::checksum(message) == detail::read(bytes, 2, 4) ? message : std::string_view{};
     }
+
     std::string header(
         unsigned kind, unsigned k, unsigned p, unsigned index, std::size_t size, std::uint32_t group_id) const {
         std::string bytes(header_size, '\0');
@@ -565,6 +589,7 @@ private:
         detail::write(bytes, 16, group_id, 4);
         return bytes;
     }
+
     void emit_wire(std::string_view bytes, bool data, bool parity) {
         if (stopped_)
         {
@@ -582,6 +607,7 @@ private:
         }
         emit_(bytes);
     }
+
     void emit_group(const std::vector<std::string>& messages, unsigned parity, unsigned kind = 0) {
         if (stopped_ || messages.empty())
         {
@@ -648,6 +674,7 @@ private:
                 emit_wire(bytes, false, true);
             });
     }
+
     void flush() {
         if (stopped_ || pending_.empty())
         {
@@ -658,6 +685,7 @@ private:
         pending_bytes_ = 0;
         emit_group(messages, stats_.current_parity_shards);
     }
+
     void finalize(const group& value) {
         stats_.data_shards_rx += value.k;
         for (unsigned i = 0; i < value.k; ++i)
@@ -673,10 +701,12 @@ private:
             ++stats_.expired_groups;
         }
     }
+
     void retire(std::uint32_t id) {
         retired_[id % retired_.size()] = id;
         retired_valid_[id % retired_.size()] = true;
     }
+
     void change(std::uint8_t parity, change_reason reason, std::uint32_t now) {
         if (parity == stats_.current_parity_shards)
         {
@@ -693,6 +723,7 @@ private:
         changed_ = true;
         changed_at_ = now;
     }
+
     std::uint32_t conversation_;
     std::size_t mtu_;
     options options_;

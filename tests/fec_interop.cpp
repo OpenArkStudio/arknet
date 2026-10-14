@@ -15,6 +15,7 @@
 #include "check.hpp"
 
 namespace {
+
 using shards = std::vector<std::vector<std::uint8_t>>;
 
 std::vector<std::uint8_t> data(std::size_t k, std::size_t size) {

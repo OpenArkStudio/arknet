@@ -14,6 +14,7 @@
 #include <arknet/external/beast.hpp>
 
 namespace arknet::detail {
+
 template<class Derived>
 class http_limits_cp
 {
@@ -31,6 +32,7 @@ public:
     std::uint64_t get_http_body_limit() const noexcept {
         return body_limit_.load();
     }
+
     std::uint32_t get_http_header_limit() const noexcept {
         return header_limit_.load();
     }
@@ -45,6 +47,7 @@ struct http_send_data
     std::string wire;
     http::verb method = http::verb::unknown;
     bool close = false;
+
     operator asio::const_buffer() const noexcept {
         return asio::buffer(wire);
     }
@@ -69,6 +72,7 @@ public:
     template<class... T>
     explicit http_endpoint_impl_t(T&&... args)
         : super(std::forward<T>(args)...) {}
+
     http_endpoint_impl_t(const http_endpoint_impl_t&) = delete;
     http_endpoint_impl_t& operator=(const http_endpoint_impl_t&) = delete;
     using recv_message_type = http::message<request_side, http::string_body>;
@@ -337,6 +341,7 @@ class http_server_impl_t
 
 public:
     using super::super;
+
     ~http_server_impl_t() {
         this->stop();
     }

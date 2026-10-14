@@ -20,6 +20,7 @@
 #include <arknet/fec/transport.hpp>
 
 namespace arknet::rudp {
+
 struct statistics
 {
     std::uint64_t transmissions{}, retransmissions{}, wire_bytes_tx{}, wire_bytes_rx{};
@@ -30,11 +31,13 @@ struct statistics
 } // namespace arknet::rudp
 
 namespace arknet::detail {
+
 inline std::uint32_t rudp_clock() noexcept {
     return static_cast<std::uint32_t>(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
             .count());
 }
+
 inline std::uint32_t rudp_next_id() noexcept {
     static std::atomic<std::uint32_t> next{rudp_clock() | 1U};
     auto value = next.fetch_add(1, std::memory_order_relaxed);
@@ -44,12 +47,14 @@ inline std::uint32_t rudp_next_id() noexcept {
     }
     return value;
 }
+
 inline void rudp_put_id(char* destination, std::uint32_t value) noexcept {
     for (unsigned i = 0; i < 4; ++i)
     {
         destination[i] = static_cast<char>(value >> (8 * i));
     }
 }
+
 inline std::uint32_t rudp_read_id(const char* source) noexcept {
     std::uint32_t value{};
     for (unsigned i = 0; i < 4; ++i)
@@ -58,6 +63,7 @@ inline std::uint32_t rudp_read_id(const char* source) noexcept {
     }
     return value;
 }
+
 // The control envelope is separate from the KCP-compatible ARQ segment format.
 inline std::string rudp_control(unsigned char type, std::uint32_t sync, std::uint32_t conversation = 0) {
     std::string bytes(type == 1 ? 5 : 9, '\0');
@@ -69,9 +75,11 @@ inline std::string rudp_control(unsigned char type, std::uint32_t sync, std::uin
     }
     return bytes;
 }
+
 inline bool rudp_is_control(std::string_view bytes, unsigned char type) noexcept {
     return bytes.size() == (type == 1 ? 5U : 9U) && static_cast<unsigned char>(bytes[0]) == type;
 }
+
 inline std::string rudp_fec_control(
     unsigned char type, std::uint32_t sync, std::uint32_t conversation = 0, std::size_t mtu = 1200) {
     std::string bytes(type == 4 ? 8 : type == 5 ? 12 : 5, '\0');
@@ -90,6 +98,7 @@ inline std::string rudp_fec_control(
     }
     return bytes;
 }
+
 inline bool rudp_is_fec_control(std::string_view bytes, unsigned char type) noexcept {
     return (type == 4 || type == 5 || type == 6) &&
            bytes.size() == (type == 4      ? 8U
@@ -97,10 +106,12 @@ inline bool rudp_is_fec_control(std::string_view bytes, unsigned char type) noex
                                            : 5U) &&
            static_cast<unsigned char>(bytes[0]) == type;
 }
+
 inline std::size_t rudp_fec_mtu(std::string_view bytes, unsigned char type) noexcept {
     const auto offset = type == 4 ? 6U : 10U;
     return static_cast<unsigned char>(bytes[offset]) | std::size_t(static_cast<unsigned char>(bytes[offset + 1])) << 8;
 }
+
 inline arq::options rudp_arq_options(arq::options options, const fec::options& fec_options) {
     if (fec_options.mode != fec::policy::disabled)
     {
@@ -112,6 +123,7 @@ inline arq::options rudp_arq_options(arq::options options, const fec::options& f
     }
     return options;
 }
+
 inline bool rudp_ack_only(std::string_view bytes) noexcept {
     while (bytes.size() >= 24)
     {
@@ -134,6 +146,7 @@ class rudp_channel : public std::enable_shared_from_this<rudp_channel>
 public:
     using delivery = std::function<void(std::string_view)>;
     using failure = std::function<void(error_code)>;
+
     rudp_channel(std::shared_ptr<asio::ip::udp::socket> socket, asio::ip::udp::endpoint remote, bool connected,
         std::uint32_t conversation, const arq::options& options, delivery deliver, failure fail,
         const fec::options& fec_options = {})
@@ -171,10 +184,12 @@ public:
             }
         });
     }
+
     void start() {
         core_.update(rudp_clock());
         arm();
     }
+
     void stop() {
         if (stopped_)
         {
@@ -191,9 +206,11 @@ public:
         queue_.clear();
         queued_bytes_ = 0;
     }
+
     std::uint32_t conversation() const noexcept {
         return core_.conversation();
     }
+
     arknet::rudp::statistics statistics() const noexcept {
         arknet::rudp::statistics value;
         value.transmissions = core_.transmissions();
@@ -209,6 +226,7 @@ public:
         }
         return value;
     }
+
     int send(std::string_view bytes) {
         if (stopped_)
         {
@@ -222,6 +240,7 @@ public:
         }
         return stopped_ ? -3 : result;
     }
+
     bool input(std::string_view bytes) {
         if (stopped_)
         {
@@ -230,6 +249,7 @@ public:
         wire_bytes_rx_ += bytes.size();
         return fec_ ? fec_->input(bytes, rudp_clock()) : accept_arq(bytes);
     }
+
     bool accept_arq(std::string_view bytes) {
         if (stopped_)
         {
@@ -258,6 +278,7 @@ public:
         }
         return !stopped_;
     }
+
     void raw_send(std::string_view bytes) {
         if (stopped_)
         {
@@ -287,6 +308,7 @@ private:
         stop();
         callback(error);
     }
+
     void arm() {
         if (stopped_)
         {
@@ -317,6 +339,7 @@ private:
             }
         });
     }
+
     void write() {
         if (stopped_ || queue_.empty())
         {
@@ -350,6 +373,7 @@ private:
             socket_->async_send_to(asio::buffer(*bytes), remote_, std::move(completion));
         }
     }
+
     std::shared_ptr<asio::ip::udp::socket> socket_;
     asio::ip::udp::endpoint remote_;
     bool connected_{};

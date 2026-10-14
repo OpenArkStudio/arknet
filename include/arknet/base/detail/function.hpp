@@ -9,6 +9,7 @@
 #include <utility>
 
 namespace arknet::detail {
+
 template<class Args>
 struct function_size_traits
 {
@@ -48,14 +49,17 @@ public:
     explicit operator bool() const noexcept {
         return static_cast<bool>(handler_);
     }
+
     R operator()(Args... args) const {
         // A queued handler can remove its own function while it runs.
         auto active = handler_;
         return active(std::forward<Args>(args)...);
     }
+
     void reset() noexcept {
         handler_ = nullptr;
     }
+
     void swap(function& other) noexcept {
         handler_.swap(other.handler_);
     }

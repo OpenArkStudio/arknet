@@ -29,6 +29,7 @@
 #include "work.hpp"
 
 namespace {
+
 using clock_type = std::chrono::steady_clock;
 constexpr std::size_t sample_limit = 8192;
 constexpr auto drain_time = std::chrono::seconds(2);
@@ -191,6 +192,7 @@ struct metrics
         : tag(tag_value) {
         samples.reserve(sample_limit);
     }
+
     unsigned tag;
     clock_type::time_point started{}, deadline{};
     double elapsed{};
@@ -304,6 +306,7 @@ struct send_completion
         , expected(expected) {
         ++this->state->pending_completions;
     }
+
     std::shared_ptr<metrics> state;
     bool server_side;
     bool wire_bytes;
@@ -330,12 +333,14 @@ struct send_completion
             state->notify();
         }
     }
+
     void acceptance(bool value) noexcept {
         std::lock_guard lock(mutex);
         known = true;
         accepted = value;
         account();
     }
+
     void completion(const arknet::error_code& error, std::size_t bytes) noexcept {
         std::lock_guard lock(mutex);
         if (completed)
@@ -425,12 +430,14 @@ struct client_state
         clock_type::time_point sent;
         std::uint64_t sequence{};
     };
+
     client_state(Client& client, std::shared_ptr<context> owner, const options& settings, std::uint32_t id)
         : client(client)
         , owner(std::move(owner))
         , settings(settings)
         , id(id)
         , slots(settings.window) {}
+
     Client& client;
     std::shared_ptr<context> owner;
     const options& settings;

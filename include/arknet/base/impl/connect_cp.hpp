@@ -10,18 +10,22 @@
 #include <arknet/base/impl/event_queue_cp.hpp>
 #include <arknet/base/io_pool.hpp>
 #include <arknet/base/listener.hpp>
+
 namespace arknet::detail {
+
 template<class Socket>
 class run_connect_op
 {
 public:
     using resolver_type = asio::ip::basic_resolver<typename std::remove_cvref_t<Socket>::protocol_type>;
     using endpoints_type = typename resolver_type::results_type;
+
     run_connect_op(std::string host, std::string service, Socket& socket)
         : host_(std::move(host))
         , service_(std::move(service))
         , socket_(socket)
         , resolver_(std::make_unique<resolver_type>(socket.get_executor())) {}
+
     template<class Operation>
     void operator()(Operation& operation, error_code error = {}, endpoints_type endpoints = {}) {
         if (phase_ == phase::initial)
@@ -75,18 +79,23 @@ private:
     typename endpoints_type::iterator position_;
 };
 } // namespace arknet::detail
+
 namespace arknet {
+
 template<class Socket, class Token>
 auto async_connect(std::string host, std::string service, Socket& socket, Token&& token) {
     return asio::async_compose<Token, void(error_code)>(
         detail::run_connect_op<Socket>(std::move(host), std::move(service), socket), token, socket);
 }
 } // namespace arknet
+
 namespace arknet::detail {
+
 template<class Derived, class Args, bool Session>
 class connect_cp_member_variables
 {
 };
+
 template<class Derived, class Args>
 class connect_cp_member_variables<Derived, Args, false>
 {
@@ -96,14 +105,17 @@ public:
         host_ = to_string(std::forward<Host>(host));
         return static_cast<Derived&>(*this);
     }
+
     template<class Service>
     Derived& set_port(Service&& service) {
         port_ = to_string(std::forward<Service>(service));
         return static_cast<Derived&>(*this);
     }
+
     const std::string& get_host() const noexcept {
         return host_;
     }
+
     const std::string& get_port() const noexcept {
         return port_;
     }
@@ -111,6 +123,7 @@ public:
 protected:
     std::string host_, port_;
 };
+
 template<class Derived, class Args>
 class connect_cp : public connect_cp_member_variables<Derived, Args, Args::is_session>
 {
@@ -144,14 +157,17 @@ protected:
         object._make_connect_timeout_timer(owner, object.get_connect_timeout());
         object._post_resolve(std::move(owner), std::move(options), std::move(chain));
     }
+
     template<class Match>
     std::string_view _get_real_host(std::shared_ptr<Derived>&, std::shared_ptr<ecs_t<Match>>&) {
         return this->host_;
     }
+
     template<class Match>
     std::string_view _get_real_port(std::shared_ptr<Derived>&, std::shared_ptr<ecs_t<Match>>&) {
         return this->port_;
     }
+
     template<class Match, class Chain>
         requires(!Args::is_session)
     void _post_resolve(std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options, Chain chain) {
@@ -180,6 +196,7 @@ protected:
                 }
             });
     }
+
     template<class Match, class Chain>
         requires(!Args::is_session)
     void _post_connect(error_code error, std::unique_ptr<endpoints_type> endpoints, endpoints_iterator position,
@@ -242,6 +259,7 @@ protected:
                     }
                 }));
     }
+
     template<class Match, class Chain>
     void _finish_socket_connect(
         const error_code& error, std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options, Chain chain) {
@@ -256,12 +274,14 @@ protected:
             object.state_.load() == state_t::starting ? error : error_code(asio::error::operation_aborted),
             std::move(owner), std::move(options), std::move(chain));
     }
+
     template<class Match, class Chain>
     void _handle_connect(
         const error_code& error, std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options, Chain chain) {
         set_last_error(error);
         static_cast<Derived&>(*this)._done_connect(error, std::move(owner), std::move(options), std::move(chain));
     }
+
     template<class Match, class Chain>
     void _done_connect(
         error_code error, std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options, Chain chain) {
