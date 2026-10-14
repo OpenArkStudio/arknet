@@ -8,29 +8,27 @@
 
 #include <arknet/external/asio.hpp>
 #include <arknet/external/assert.hpp>
-namespace arknet
-{
-inline error_code& get_last_error() noexcept
-{
+namespace arknet {
+inline error_code& get_last_error() noexcept {
     thread_local error_code value;
     return value;
 }
-inline void set_last_error(const error_code& error) noexcept
-{
+inline void set_last_error(const error_code& error) noexcept {
     get_last_error() = error;
 }
-inline void set_last_error(const system_error& error) noexcept
-{
+inline void set_last_error(const system_error& error) noexcept {
     set_last_error(error.code());
 }
-template <class Category> void set_last_error(int value, const Category& category) noexcept
-{
+template<class Category>
+void set_last_error(int value, const Category& category) noexcept {
     get_last_error().assign(value, category);
 }
-template <class Error> void set_last_error(Error value) noexcept
-{
+template<class Error>
+void set_last_error(Error value) noexcept {
     if constexpr (std::is_integral_v<Error>)
+    {
         get_last_error().assign(static_cast<int>(value), asio::error::get_system_category());
+    }
     else if constexpr (std::is_same_v<Error, std::errc> || std::is_same_v<Error, std::io_errc> ||
                        std::is_same_v<Error, std::future_errc>)
     {
@@ -41,26 +39,23 @@ template <class Error> void set_last_error(Error value) noexcept
 #endif
     }
     else
+    {
         get_last_error() = value;
+    }
 }
-inline void clear_last_error() noexcept
-{
+inline void clear_last_error() noexcept {
     get_last_error().clear();
 }
-inline int get_last_error_val() noexcept
-{
+inline int get_last_error_val() noexcept {
     return get_last_error().value();
 }
-inline int last_error_val() noexcept
-{
+inline int last_error_val() noexcept {
     return get_last_error_val();
 }
-inline std::string get_last_error_msg()
-{
+inline std::string get_last_error_msg() {
     return get_last_error().message();
 }
-inline std::string last_error_msg()
-{
+inline std::string last_error_msg() {
     return get_last_error_msg();
 }
-}
+} // namespace arknet

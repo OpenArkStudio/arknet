@@ -23,8 +23,7 @@
 #include "impairment.hpp"
 #endif
 
-namespace
-{
+namespace {
 using namespace std::chrono_literals;
 #if defined(ARKNET_INTEROP_LEGACY)
 namespace network = zephyr;
@@ -44,22 +43,21 @@ enum class scenario
     reconnect,
     impaired
 };
-const char* scenario_name(scenario value)
-{
+const char* scenario_name(scenario value) {
     return value == scenario::baseline ? "baseline" : value == scenario::reconnect ? "reconnect" : "impaired";
 }
 
-void require(bool condition, const std::string& reason)
-{
+void require(bool condition, const std::string& reason) {
     if (!condition)
+    {
         throw std::runtime_error(reason);
+    }
 }
-template <class Integer> void append_native(std::string& bytes, Integer value)
-{
+template<class Integer>
+void append_native(std::string& bytes, Integer value) {
     bytes.append(reinterpret_cast<const char*>(&value), sizeof value);
 }
-std::vector<std::string> application_messages()
-{
+std::vector<std::string> application_messages() {
     constexpr std::array<std::uint32_t, 8> body_sizes{0, 1, 23, 1024, 4096, 4096, 511, 4096};
     std::vector<std::string> result;
     for (std::uint16_t sequence = 0; sequence < 32; ++sequence)
@@ -77,14 +75,17 @@ std::vector<std::string> application_messages()
             append_native(bytes, std::int32_t{0x76543210});
         }
         for (std::uint32_t i = 0; i < body_size; ++i)
+        {
             bytes.push_back(static_cast<char>((i + sequence * 17) % 256));
+        }
         result.push_back(std::move(bytes));
     }
     return result;
 }
 struct peer_state
 {
-    explicit peer_state(const std::vector<std::string>& messages) : expected(messages) {}
+    explicit peer_state(const std::vector<std::string>& messages)
+        : expected(messages) {}
     const std::vector<std::string>& expected;
     std::mutex mutex;
     std::condition_variable ready;
@@ -95,11 +96,12 @@ struct peer_state
     std::function<void()> close_session;
     std::string failure;
 
-    bool accept(std::string_view bytes)
-    {
+    bool accept(std::string_view bytes) {
         std::lock_guard lock(mutex);
         if (received >= expected.size() || bytes != expected[received])
+        {
             failure = "message content/order mismatch at index " + std::to_string(received);
+        }
         else
         {
             ++received;
@@ -108,19 +110,19 @@ struct peer_state
         ready.notify_all();
         return failure.empty();
     }
-    void fail(std::string reason)
-    {
+    void fail(std::string reason) {
         std::lock_guard lock(mutex);
         failure = std::move(reason);
         ready.notify_all();
     }
-    void disconnect(network::error_code error, bool reset_received = false)
-    {
+    void disconnect(network::error_code error, bool reset_received = false) {
         std::lock_guard lock(mutex);
         if (reset_received)
         {
             if (received != expected.size())
+            {
                 failure = "server disconnected before receiving every message exactly once";
+            }
             received = 0;
             server_close_requested = false;
         }
@@ -128,8 +130,8 @@ struct peer_state
         disconnect_errors.push_back(error);
         ready.notify_all();
     }
-    template <class Predicate> void wait(Predicate predicate, const char* reason, std::chrono::seconds timeout = 5s)
-    {
+    template<class Predicate>
+    void wait(Predicate predicate, const char* reason, std::chrono::seconds timeout = 5s) {
         std::unique_lock lock(mutex);
         const auto arrived = ready.wait_for(lock, timeout, [&] { return !failure.empty() || predicate(); });
         require(arrived, std::string(reason) + ": received=" + std::to_string(received) +
@@ -137,16 +139,16 @@ struct peer_state
         require(failure.empty(), failure);
     }
 };
-template <class Endpoint> bool send_async(Endpoint& endpoint, std::string_view bytes)
-{
+template<class Endpoint>
+bool send_async(Endpoint& endpoint, std::string_view bytes) {
 #if defined(ARKNET_INTEROP_LEGACY)
     return endpoint.send(bytes);
 #else
     return endpoint.async_send(bytes);
 #endif
 }
-template <class Endpoint> bool start(Endpoint& endpoint, unsigned short port)
-{
+template<class Endpoint>
+bool start(Endpoint& endpoint, unsigned short port) {
 #if defined(ARKNET_INTEROP_LEGACY)
     return endpoint.start("127.0.0.1", port, zephyr::use_kcp);
 #else
@@ -154,28 +156,28 @@ template <class Endpoint> bool start(Endpoint& endpoint, unsigned short port)
 #endif
 }
 #if !defined(ARKNET_INTEROP_LEGACY)
-template <class Endpoint> void configure_arq(Endpoint& endpoint)
-{
+template<class Endpoint>
+void configure_arq(Endpoint& endpoint) {
     arknet::arq::options options;
     options.congestion_control = false;
     endpoint.set_rudp_options(options);
 }
-void verify_impairment(std::unique_ptr<arknet_interop::data_impairment>& relay)
-{
+void verify_impairment(std::unique_ptr<arknet_interop::data_impairment>& relay) {
     if (!relay)
+    {
         return;
+    }
     require(relay->wait_fin(5s), "relay did not forward FIN before shutdown");
     relay->stop();
     const auto stats = relay->snapshot();
     std::cerr << "ARQ data impairment: drops=" << stats.dropped << " reordered=" << stats.reordered
               << " errors=" << stats.errors << " fin_forwarded=" << stats.fin_forwarded << '\n';
     require(stats.dropped != 0 && stats.reordered != 0 && stats.errors == 0,
-            "relay did not inject loss/reorder without socket errors");
+        "relay did not inject loss/reorder without socket errors");
 }
 #endif
 
-void run_client(bool server_closes, scenario test)
-{
+void run_client(bool server_closes, scenario test) {
     unsigned port{};
     require(static_cast<bool>(std::cin >> port) && port > 0 && port <= 65535, "server did not publish a valid port");
     const auto expected = application_messages();
@@ -206,7 +208,9 @@ void run_client(bool server_closes, scenario test)
         {
             const auto end = std::min(offset + 4, expected.size());
             for (auto i = offset; i < end; ++i)
+            {
                 require(send_async(client, expected[i]), "client rejected an application message");
+            }
             state.wait([&] { return state.received >= end; }, "echo deadline exceeded", 10s);
         }
         if (server_closes)
@@ -220,11 +224,15 @@ void run_client(bool server_closes, scenario test)
         require(state.received == expected.size(), "client did not receive every echo exactly once");
         require(state.disconnects == cycle + 1, "client must disconnect exactly once per session");
         if (server_closes)
+        {
             require(state.disconnect_errors.back() == asio::error::eof,
-                    "client did not observe the server FIN: " + state.disconnect_errors.back().message());
+                "client did not observe the server FIN: " + state.disconnect_errors.back().message());
+        }
         require(client.is_stopped(), "client did not finish shutdown");
         if (cycle + 1 < cycles)
+        {
             state.received = 0;
+        }
     }
     require(state.total_received == expected.size() * cycles, "client session message total mismatch");
 #if !defined(ARKNET_INTEROP_LEGACY)
@@ -235,8 +243,7 @@ void run_client(bool server_closes, scenario test)
               << " close passed\n";
 }
 
-void run_server(bool server_closes, scenario test)
-{
+void run_server(bool server_closes, scenario test) {
     const auto expected = application_messages();
     peer_state state(expected);
     std::atomic<unsigned> connections{};
@@ -248,40 +255,45 @@ void run_server(bool server_closes, scenario test)
     configure_arq(server);
 #endif
     server.bind_init([&] { server.acceptor().set_option(asio::socket_base::receive_buffer_size(1024 * 1024)); });
-    server.bind_connect(
-        [&](auto& session)
-        {
-            ++connections;
-            std::lock_guard lock(state.mutex);
-            state.close_session = [weak = std::weak_ptr{session}]
+    server.bind_connect([&](auto& session) {
+        ++connections;
+        std::lock_guard lock(state.mutex);
+        state.close_session = [weak = std::weak_ptr{session}] {
+            if (auto current = weak.lock())
             {
-                if (auto current = weak.lock())
-                    current->stop();
-            };
-        });
-    server.bind_disconnect([&](auto&) { state.disconnect(network::get_last_error(), true); });
-    server.bind_recv(
-        [&](auto& session, std::string_view bytes)
-        {
-            if (bytes == close_request)
-            {
-                std::lock_guard lock(state.mutex);
-                if (!server_closes || state.received != expected.size() || state.server_close_requested)
-                    state.failure = "unexpected server-close request";
-                else
-                    state.server_close_requested = true;
-                state.ready.notify_all();
+                current->stop();
             }
-            else if (state.accept(bytes) && !send_async(*session, bytes))
-                state.fail("server rejected an echo");
-        });
+        };
+    });
+    server.bind_disconnect([&](auto&) { state.disconnect(network::get_last_error(), true); });
+    server.bind_recv([&](auto& session, std::string_view bytes) {
+        if (bytes == close_request)
+        {
+            std::lock_guard lock(state.mutex);
+            if (!server_closes || state.received != expected.size() || state.server_close_requested)
+            {
+                state.failure = "unexpected server-close request";
+            }
+            else
+            {
+                state.server_close_requested = true;
+            }
+            state.ready.notify_all();
+        }
+        else if (state.accept(bytes) && !send_async(*session, bytes))
+        {
+            state.fail("server rejected an echo");
+        }
+    });
     const auto started = start(server, 0);
     require(started, std::string("server start failed: ") + network::get_last_error().message());
     const auto port = server.acceptor().local_endpoint().port();
 #if !defined(ARKNET_INTEROP_LEGACY)
     std::unique_ptr<arknet_interop::data_impairment> relay;
     if (test == scenario::impaired)
+    {
         relay = std::make_unique<arknet_interop::data_impairment>(port);
+    }
     std::cout << (relay ? relay->port() : port) << std::endl;
 #else
     std::cout << port << std::endl;
@@ -289,26 +301,34 @@ void run_server(bool server_closes, scenario test)
     for (unsigned cycle = 0; cycle < cycles; ++cycle)
     {
         state.wait([&] { return state.disconnects >= cycle + 1 || state.server_close_requested; },
-                   "server deadline exceeded", 30s);
+            "server deadline exceeded", 30s);
         std::function<void()> close;
         {
             std::lock_guard lock(state.mutex);
             if (state.server_close_requested)
+            {
                 close = state.close_session;
+            }
         }
         if (close)
+        {
             close();
+        }
         state.wait([&] { return state.disconnects >= cycle + 1; }, "server session shutdown deadline exceeded");
     }
     server.stop();
     {
         std::lock_guard lock(state.mutex);
         require(state.received == 0 && state.total_received == expected.size() * cycles,
-                "server did not receive every message exactly once in each session");
+            "server did not receive every message exactly once in each session");
         require(state.disconnects == cycles, "server must disconnect exactly once per session");
         if (!server_closes)
+        {
             for (const auto& error : state.disconnect_errors)
+            {
                 require(error == asio::error::eof, "server did not observe the client FIN");
+            }
+        }
         state.close_session = {};
     }
     require(server.is_stopped() && connections == cycles, "server did not close every complete session");
@@ -322,14 +342,13 @@ void run_server(bool server_closes, scenario test)
               << " sessions, 32 ordered messages/session, " << (server_closes ? "server" : "client")
               << " close passed\n";
 }
-}
+} // namespace
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     try
     {
         require(argc == 3 || argc == 4,
-                "usage: rudp_peer <client|server> <client|server close initiator> [baseline|reconnect|impaired]");
+            "usage: rudp_peer <client|server> <client|server close initiator> [baseline|reconnect|impaired]");
         const std::string_view role(argv[1]), closer(argv[2]);
         require(closer == "client" || closer == "server", "close initiator must be client or server");
         const std::string_view name = argc == 4 ? argv[3] : "baseline";
@@ -338,7 +357,9 @@ int main(int argc, char** argv)
                           : name == "reconnect" ? scenario::reconnect
                                                 : scenario::impaired;
         if (role == "client")
+        {
             run_client(closer == "server", test);
+        }
         else
         {
             require(role == "server", "role must be client or server");

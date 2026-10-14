@@ -10,26 +10,29 @@
 
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/io_pool.hpp>
-namespace arknet::detail
-{
-template <class T> struct is_span : std::false_type
-{
-};
-template <class T, std::size_t Extent> struct is_span<std::span<T, Extent>> : std::true_type
+namespace arknet::detail {
+template<class T>
+struct is_span : std::false_type
 {
 };
-template <class Derived, class Args> class data_persistence_cp
+template<class T, std::size_t Extent>
+struct is_span<std::span<T, Extent>> : std::true_type
 {
-    static std::string copy_bytes(asio::const_buffer bytes)
-    {
+};
+template<class Derived, class Args>
+class data_persistence_cp
+{
+    static std::string copy_bytes(asio::const_buffer bytes) {
         if (!bytes.size())
+        {
             return {};
+        }
         return {static_cast<const char*>(bytes.data()), bytes.size()};
     }
 
 protected:
-    template <class Data> static auto _own_send_data(Data&& data)
-    {
+    template<class Data>
+    static auto _own_send_data(Data&& data) {
         using Type = std::remove_cvref_t<Data>;
         if constexpr (is_string_view_v<Type>)
         {
@@ -56,20 +59,22 @@ protected:
             return copy_bytes(asio::buffer(data));
         }
         else
+        {
             return std::forward<Data>(data);
+        }
     }
-    template <class Data> auto _data_persistence(Data&& data)
-    {
+    template<class Data>
+    auto _data_persistence(Data&& data) {
         auto source = _own_send_data(std::forward<Data>(data));
         auto transformed = call_data_filter_before_send(static_cast<Derived&>(*this), std::move(source));
         // A filter can return a view into source, which must be copied while source lives.
         return _own_send_data(std::move(transformed));
     }
-    template <class Character, class Count> auto _data_persistence(Character* data, Count count)
-    {
+    template<class Character, class Count>
+    auto _data_persistence(Character* data, Count count) {
         using Type = std::remove_cv_t<Character>;
         return _data_persistence(data ? std::basic_string_view<Type>(data, static_cast<std::size_t>(count))
                                       : std::basic_string_view<Type>{});
     }
 };
-}
+} // namespace arknet::detail

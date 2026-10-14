@@ -11,7 +11,7 @@ RUDP 与 ARQ／可选 FEC、定时器／重连，以及可选的 TLS/HTTPS/WSS/m
 
 | 能力 | 状态 | 实现范围与验收 |
 | --- | --- | --- |
-| RUDP FEC | 0.1.0 已提供，本机验证通过 | 仅 ARQ、固定与自适应 Reed–Solomon 策略，带版本的协商、MTU 预算、有界解码与分组过期。FEC 需要兼容对端；仍支持旧 ARQ 会话。见 [FEC 策略](../features/rudp/fec_CN.md)与[生产验收](production-readiness_CN.md)。 |
+| RUDP FEC | 包含在 v0.1.0 | 仅 ARQ、固定与自适应 Reed–Solomon 策略，带版本的协商、MTU 预算、有界解码与分组过期。FEC 需要兼容对端；仍支持旧 ARQ 会话。见 [FEC 策略](../features/rudp/fec_CN.md)与[生产验收](production-readiness_CN.md)。 |
 | HTTP/2 | TODO，依赖选型待定 | client/server/session、TLS ALPN `h2`、h2c prior knowledge、HPACK、多路复用、流与连接流控、有界头部／body、取消和 GOAWAY；独立对端互通及慢消费者测试。 |
 | HTTP/3 | TODO，调研阶段 | 选择 QUIC 传输和 QPACK 实现；TLS 1.3、流上限、拥塞／丢包处理、连接迁移策略和独立对端互通。 |
 | Named pipe | TODO | Windows 本地 client/server、消息／字节语义、overlapped IO、访问权限、取消与重启。 |
@@ -35,9 +35,8 @@ HTTP/3 需要 QUIC/QPACK 协议栈，具体引擎与依赖形式待定。现有 
 ## 后续范围
 
 [RUDP](../features/rudp/index_CN.md) 与 C++20 ARQ 核心包含在 `v0.1.0` 中。
-[FEC 策略](../features/rudp/fec_CN.md)说明已实现的固定与自适应预设、
-启用阈值与资源限制。
-已实现 KCP 消息模式互通、重试与队列限额及本地测量。ARK 的 RDP 流程已通过
+[FEC 策略](../features/rudp/fec_CN.md)说明固定与自适应预设、启用阈值与资源限制。
+版本中包含 KCP 消息模式互通、重试与队列限额及本地测量。ARK 的 RDP 流程已通过
 [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38) 使用 arknet；生产时长验证
 仍需在部署验收中完成。
 

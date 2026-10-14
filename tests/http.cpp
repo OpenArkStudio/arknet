@@ -1,13 +1,11 @@
 #include <arknet/arknet.hpp>
 #include "check.hpp"
 
-namespace
-{
+namespace {
 using request = arknet::http::request<arknet::http::string_body>;
 using response = arknet::http::response<arknet::http::string_body>;
 
-request make_request(arknet::http::verb method, std::string body = {})
-{
+request make_request(arknet::http::verb method, std::string body = {}) {
     request value(method, "/echo", 11);
     value.set(arknet::http::field::host, "localhost");
     value.body() = std::move(body);
@@ -15,21 +13,19 @@ request make_request(arknet::http::verb method, std::string body = {})
     return value;
 }
 
-template <class Server> void bind_echo(Server& server)
-{
-    server.bind_recv(
-        [](auto& session, request& incoming)
-        {
-            response outgoing(arknet::http::status::ok, incoming.version());
-            outgoing.keep_alive(incoming.keep_alive());
-            outgoing.body() = incoming.body();
-            outgoing.prepare_payload();
-            session->async_send(std::move(outgoing));
-        });
+template<class Server>
+void bind_echo(Server& server) {
+    server.bind_recv([](auto& session, request& incoming) {
+        response outgoing(arknet::http::status::ok, incoming.version());
+        outgoing.keep_alive(incoming.keep_alive());
+        outgoing.body() = incoming.body();
+        outgoing.prepare_payload();
+        session->async_send(std::move(outgoing));
+    });
 }
 
-template <class Server, class Client> void pipeline_echo(Server& server, Client& client)
-{
+template<class Server, class Client>
+void pipeline_echo(Server& server, Client& client) {
     messages received;
     bind_echo(server);
     check(server.start("127.0.0.1", 0), "HTTP server start");
@@ -56,15 +52,17 @@ struct raw_peer
     asio::io_context io;
     asio::ip::tcp::socket socket{io};
     asio::streambuf buffer;
-    explicit raw_peer(std::uint16_t port) { socket.connect({asio::ip::make_address("127.0.0.1"), port}); }
-    void write(std::string_view value) { asio::write(socket, asio::buffer(value)); }
-    void close()
-    {
+    explicit raw_peer(std::uint16_t port) {
+        socket.connect({asio::ip::make_address("127.0.0.1"), port});
+    }
+    void write(std::string_view value) {
+        asio::write(socket, asio::buffer(value));
+    }
+    void close() {
         arknet::error_code ec;
         socket.close(ec);
     }
-    response read()
-    {
+    response read() {
         response value;
         arknet::http::read(socket, buffer, value);
         return value;
@@ -72,15 +70,18 @@ struct raw_peer
 };
 
 // Redirect only resolver service lookup so default ports need no privileged listener.
-template <template <class> class Base> struct redirected_client : Base<redirected_client<Base>>
+template<template<class> class Base>
+struct redirected_client : Base<redirected_client<Base>>
 {
     std::string resolve_service;
-    template <class... T> std::string_view _get_real_port(T&&...) { return resolve_service; }
+    template<class... T>
+    std::string_view _get_real_port(T&&...) {
+        return resolve_service;
+    }
 };
 
-template <class Server, class Client>
-void default_port_echo(Server& server, Client& client, std::string host, std::string expected_port, bool async)
-{
+template<class Server, class Client>
+void default_port_echo(Server& server, Client& client, std::string host, std::string expected_port, bool async) {
     bind_echo(server);
     check(server.start(host == "::1" ? "::1" : "127.0.0.1", 0), "default-port server starts");
     client.resolve_service = std::to_string(server.get_listen_port());
@@ -98,28 +99,27 @@ void default_port_echo(Server& server, Client& client, std::string host, std::st
     client.stop();
     server.stop();
 }
-}
+} // namespace
 
-DOCTEST_TEST_CASE("HTTP host-only clients default to port 80 for names and IP literals")
-{
+DOCTEST_TEST_CASE("HTTP host-only clients default to port 80 for names and IP literals") {
     for (const auto* host : {"localhost", "127.0.0.1", "::1"})
+    {
         for (bool async : {false, true})
         {
             arknet::http_server server;
             redirected_client<arknet::http_client_t> client;
             default_port_echo(server, client, host, "80", async);
         }
+    }
 }
 
-DOCTEST_TEST_CASE("HTTP owns requests and preserves keep-alive pipeline order")
-{
+DOCTEST_TEST_CASE("HTTP owns requests and preserves keep-alive pipeline order") {
     arknet::http_server server;
     arknet::http_client client;
     pipeline_echo(server, client);
 }
 
-DOCTEST_TEST_CASE("HTTP works with an external io_context and a custom session")
-{
+DOCTEST_TEST_CASE("HTTP works with an external io_context and a custom session") {
     struct custom_session : arknet::http_session_t<custom_session>
     {
         using http_session_t::http_session_t;
@@ -131,8 +131,7 @@ DOCTEST_TEST_CASE("HTTP works with an external io_context and a custom session")
     {
         asio::io_context& io;
         std::thread& worker;
-        ~joiner()
-        {
+        ~joiner() {
             io.stop();
             worker.join();
         }
@@ -142,17 +141,14 @@ DOCTEST_TEST_CASE("HTTP works with an external io_context and a custom session")
     pipeline_echo(server, client);
 }
 
-DOCTEST_TEST_CASE("HTTP parses chunked requests and responses")
-{
+DOCTEST_TEST_CASE("HTTP parses chunked requests and responses") {
     arknet::http_server server;
-    server.bind_recv(
-        [](auto& session, request& incoming)
-        {
-            response outgoing(arknet::http::status::ok, 11);
-            outgoing.body() = incoming.body();
-            outgoing.chunked(true);
-            session->async_send(std::move(outgoing));
-        });
+    server.bind_recv([](auto& session, request& incoming) {
+        response outgoing(arknet::http::status::ok, 11);
+        outgoing.body() = incoming.body();
+        outgoing.chunked(true);
+        session->async_send(std::move(outgoing));
+    });
     check(server.start("127.0.0.1", 0), "chunked server start");
     raw_peer peer(server.get_listen_port());
     peer.write("POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n"
@@ -162,19 +158,18 @@ DOCTEST_TEST_CASE("HTTP parses chunked requests and responses")
     server.stop();
 }
 
-DOCTEST_TEST_CASE("HTTP client skips HEAD bodies while keeping the following response")
-{
+DOCTEST_TEST_CASE("HTTP client skips HEAD bodies while keeping the following response") {
     messages received;
     arknet::tcp_server server;
     std::atomic<unsigned> writes{};
-    server.bind_recv(
-        [&](auto& session, std::string_view)
+    server.bind_recv([&](auto& session, std::string_view) {
+        if (writes.fetch_add(1) == 0)
         {
-            if (writes.fetch_add(1) == 0)
-                session->async_send(
-                    std::string("HTTP/1.1 200 OK\r\nContent-Length: 999\r\n\r\n"
-                                "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nget\r\n0\r\n\r\n"));
-        });
+            session->async_send(
+                std::string("HTTP/1.1 200 OK\r\nContent-Length: 999\r\n\r\n"
+                            "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nget\r\n0\r\n\r\n"));
+        }
+    });
     check(server.start("127.0.0.1", 0), "HEAD raw server start");
     arknet::http_client client;
     client.set_auto_reconnect(false);
@@ -188,26 +183,21 @@ DOCTEST_TEST_CASE("HTTP client skips HEAD bodies while keeping the following res
     server.stop();
 }
 
-DOCTEST_TEST_CASE("HTTP server sends an empty HEAD response with representation length")
-{
+DOCTEST_TEST_CASE("HTTP server sends an empty HEAD response with representation length") {
     messages received;
     arknet::http_server server;
-    server.bind_recv(
-        [](auto& session, request&)
-        {
-            arknet::http::response<arknet::http::empty_body> outgoing(arknet::http::status::ok, 11);
-            outgoing.content_length(1234);
-            session->async_send(std::move(outgoing));
-        });
+    server.bind_recv([](auto& session, request&) {
+        arknet::http::response<arknet::http::empty_body> outgoing(arknet::http::status::ok, 11);
+        outgoing.content_length(1234);
+        session->async_send(std::move(outgoing));
+    });
     check(server.start("127.0.0.1", 0), "HEAD server start");
     arknet::http_client client;
     client.set_auto_reconnect(false);
-    client.bind_recv(
-        [&](response& value)
-        {
-            check(value[arknet::http::field::content_length] == "1234", "HEAD representation length");
-            received.push(value.body());
-        });
+    client.bind_recv([&](response& value) {
+        check(value[arknet::http::field::content_length] == "1234", "HEAD representation length");
+        received.push(value.body());
+    });
     check(client.start("127.0.0.1", server.get_listen_port()), "HEAD connect");
     client.async_send(make_request(arknet::http::verb::head));
     check(received.wait(1).front().empty(), "HEAD response contains no wire body");
@@ -215,8 +205,7 @@ DOCTEST_TEST_CASE("HTTP server sends an empty HEAD response with representation 
     server.stop();
 }
 
-DOCTEST_TEST_CASE("HTTP sends 100 Continue before waiting for a request body")
-{
+DOCTEST_TEST_CASE("HTTP sends 100 Continue before waiting for a request body") {
     arknet::http_server server;
     bind_echo(server);
     check(server.start("127.0.0.1", 0), "Expect server start");
@@ -229,8 +218,7 @@ DOCTEST_TEST_CASE("HTTP sends 100 Continue before waiting for a request body")
     server.stop();
 }
 
-DOCTEST_TEST_CASE("HTTP rejects missing or duplicate Host and unsupported expectations")
-{
+DOCTEST_TEST_CASE("HTTP rejects missing or duplicate Host and unsupported expectations") {
     for (const auto& [headers, expected] : std::vector<std::pair<std::string, unsigned>>{
              {"", 400}, {"Host: a\r\nHost: b\r\n", 400}, {"Host: localhost\r\nExpect: unsupported\r\n", 417}})
     {
@@ -247,16 +235,16 @@ DOCTEST_TEST_CASE("HTTP rejects missing or duplicate Host and unsupported expect
     }
 }
 
-DOCTEST_TEST_CASE("HTTP parser rejects ambiguous framing and configured limits")
-{
+DOCTEST_TEST_CASE("HTTP parser rejects ambiguous framing and configured limits") {
     for (const auto& wire :
-         {"POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 1\r\nContent-Length: 2\r\n\r\nxx",
-          "POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 1\r\nTransfer-Encoding: chunked\r\n\r\n",
-          "POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 33\r\n\r\n",
-          "GET / HTTP/1.1\r\nHost: localhost\r\nX-Long: "
-          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\r\n\r"
-          "\n"})
+        {"POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 1\r\nContent-Length: 2\r\n\r\nxx",
+            "POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 1\r\nTransfer-Encoding: chunked\r\n\r\n",
+            "POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 33\r\n\r\n",
+            "GET / HTTP/1.1\r\nHost: localhost\r\nX-Long: "
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            "aa"
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\r\n\r"
+            "\n"})
     {
         arknet::http_server server;
         server.set_http_body_limit(32).set_http_header_limit(128);
@@ -274,11 +262,11 @@ DOCTEST_TEST_CASE("HTTP parser rejects ambiguous framing and configured limits")
     }
 }
 
-DOCTEST_TEST_CASE("HTTP client applies response limits")
-{
+DOCTEST_TEST_CASE("HTTP client applies response limits") {
     arknet::tcp_server server;
-    server.bind_recv([](auto& session, std::string_view)
-                     { session->async_send(std::string("HTTP/1.1 200 OK\r\nContent-Length: 33\r\n\r\n")); });
+    server.bind_recv([](auto& session, std::string_view) {
+        session->async_send(std::string("HTTP/1.1 200 OK\r\nContent-Length: 33\r\n\r\n"));
+    });
     check(server.start("127.0.0.1", 0), "response limit raw server start");
     arknet::http_client client;
     client.set_auto_reconnect(false);
@@ -292,15 +280,12 @@ DOCTEST_TEST_CASE("HTTP client applies response limits")
     server.stop();
 }
 
-DOCTEST_TEST_CASE("HTTP informational responses preserve HEAD association")
-{
+DOCTEST_TEST_CASE("HTTP informational responses preserve HEAD association") {
     arknet::tcp_server server;
-    server.bind_recv(
-        [](auto& session, std::string_view)
-        {
-            session->async_send(std::string("HTTP/1.1 103 Early Hints\r\n\r\n"
-                                            "HTTP/1.1 200 OK\r\nContent-Length: 55\r\n\r\n"));
-        });
+    server.bind_recv([](auto& session, std::string_view) {
+        session->async_send(std::string("HTTP/1.1 103 Early Hints\r\n\r\n"
+                                        "HTTP/1.1 200 OK\r\nContent-Length: 55\r\n\r\n"));
+    });
     check(server.start("127.0.0.1", 0), "informational raw server start");
     messages received;
     arknet::http_client client;
@@ -314,24 +299,23 @@ DOCTEST_TEST_CASE("HTTP informational responses preserve HEAD association")
     server.stop();
 }
 
-DOCTEST_TEST_CASE("HTTP close completes its response and rejects later queued writes")
-{
+DOCTEST_TEST_CASE("HTTP close completes its response and rejects later queued writes") {
     messages completions;
     messages received;
     messages disconnected;
     arknet::http_server server;
-    server.bind_recv(
-        [&](auto& session, request& incoming)
-        {
-            response outgoing(arknet::http::status::ok, incoming.version());
-            outgoing.body() = "last";
-            outgoing.keep_alive(false);
-            outgoing.prepare_payload();
-            session->async_send(outgoing, [&](const arknet::error_code& ec, std::size_t bytes)
-                                { completions.push(!ec && bytes > 4 ? "closed" : "failed"); });
-            session->async_send(outgoing, [&](const arknet::error_code& ec, std::size_t bytes)
-                                { completions.push(ec && bytes == 0 ? "rejected" : "unexpected"); });
+    server.bind_recv([&](auto& session, request& incoming) {
+        response outgoing(arknet::http::status::ok, incoming.version());
+        outgoing.body() = "last";
+        outgoing.keep_alive(false);
+        outgoing.prepare_payload();
+        session->async_send(outgoing, [&](const arknet::error_code& ec, std::size_t bytes) {
+            completions.push(!ec && bytes > 4 ? "closed" : "failed");
         });
+        session->async_send(outgoing, [&](const arknet::error_code& ec, std::size_t bytes) {
+            completions.push(ec && bytes == 0 ? "rejected" : "unexpected");
+        });
+    });
     check(server.start("127.0.0.1", 0), "close server start");
     arknet::http_client client;
     client.set_auto_reconnect(false);
@@ -345,14 +329,13 @@ DOCTEST_TEST_CASE("HTTP close completes its response and rejects later queued wr
     auto completed = completions.wait(2);
     check(std::count(completed.begin(), completed.end(), "closed") == 1 &&
               std::count(completed.begin(), completed.end(), "rejected") == 1,
-          "each send completes exactly once");
+        "each send completes exactly once");
     disconnected.wait(1);
     client.stop();
     server.stop();
 }
 
-DOCTEST_TEST_CASE("HTTP bounded send rejects large bodies and recovers")
-{
+DOCTEST_TEST_CASE("HTTP bounded send rejects large bodies and recovers") {
     arknet::http_server server;
     bind_echo(server);
     check(server.start("127.0.0.1", 0), "bounded server start");
@@ -372,8 +355,7 @@ DOCTEST_TEST_CASE("HTTP bounded send rejects large bodies and recovers")
 }
 
 #ifdef ARKNET_ENABLE_SSL
-DOCTEST_TEST_CASE("HTTPS host-only clients default to port 443 and verify DNS identity")
-{
+DOCTEST_TEST_CASE("HTTPS host-only clients default to port 443 and verify DNS identity") {
     const std::string certs = ARKNET_TEST_CERT_DIR;
     for (bool async : {false, true})
     {
@@ -385,8 +367,7 @@ DOCTEST_TEST_CASE("HTTPS host-only clients default to port 443 and verify DNS id
     }
 }
 
-DOCTEST_TEST_CASE("HTTPS verifies identity and preserves HTTP pipeline behavior")
-{
+DOCTEST_TEST_CASE("HTTPS verifies identity and preserves HTTP pipeline behavior") {
     const std::string certs = ARKNET_TEST_CERT_DIR;
     arknet::https_server server;
     server.set_cert_file("", certs + "/server.pem", certs + "/server-key.pem", "");
@@ -395,8 +376,7 @@ DOCTEST_TEST_CASE("HTTPS verifies identity and preserves HTTP pipeline behavior"
     pipeline_echo(server, client);
 }
 
-DOCTEST_TEST_CASE("HTTPS rejects untrusted and mismatched server certificates")
-{
+DOCTEST_TEST_CASE("HTTPS rejects untrusted and mismatched server certificates") {
     const std::string certs = ARKNET_TEST_CERT_DIR;
     for (const auto* certificate : {"server.pem", "wrong.pem"})
     {
@@ -406,7 +386,9 @@ DOCTEST_TEST_CASE("HTTPS rejects untrusted and mismatched server certificates")
         arknet::https_client client;
         client.set_auto_reconnect(false);
         if (std::string_view(certificate) == "wrong.pem")
+        {
             client.load_verify_file(certs + "/ca.pem");
+        }
         check(!client.start("localhost", server.get_listen_port()), "HTTPS certificate rejection");
         check(arknet::get_last_error() != asio::error::timed_out, "certificate rejection is immediate");
         client.stop();
@@ -414,8 +396,7 @@ DOCTEST_TEST_CASE("HTTPS rejects untrusted and mismatched server certificates")
     }
 }
 
-DOCTEST_TEST_CASE("HTTPS supports mutual TLS")
-{
+DOCTEST_TEST_CASE("HTTPS supports mutual TLS") {
     const std::string certs = ARKNET_TEST_CERT_DIR;
     arknet::https_server server;
     server.set_cert_file("", certs + "/server.pem", certs + "/server-key.pem", "");

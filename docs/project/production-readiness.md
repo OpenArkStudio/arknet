@@ -21,8 +21,8 @@ resources, failure recovery, concurrency checks and regression tests of the cons
 
 [Testing](testing.md) and the [RUDP report](../performance/rudp.md) record measured
 scope and results. Local loopback and simulated loss do not establish production
-capacity on a deployment network. RUDP is implemented and locally validated in
-`v0.1.0`; deployment acceptance requires the remaining evidence below.
+capacity on a deployment network. RUDP is included in `v0.1.0`; deployment
+acceptance requires the remaining evidence below.
 
 ## Recorded acceptance status
 

@@ -10,8 +10,7 @@
 class benchmark_runtime
 {
 public:
-    benchmark_runtime(std::string_view model, std::size_t threads)
-    {
+    benchmark_runtime(std::string_view model, std::size_t threads) {
         const auto count = model == "shared" ? 1 : threads;
         for (std::size_t i = 0; i < count; ++i)
         {
@@ -21,7 +20,9 @@ public:
         try
         {
             for (std::size_t i = 0; i < threads; ++i)
+            {
                 workers_.emplace_back([context = contexts_[i % count]] { context->run(); });
+            }
         }
         catch (...)
         {
@@ -29,25 +30,35 @@ public:
             throw;
         }
     }
-    ~benchmark_runtime() { stop(); }
+    ~benchmark_runtime() {
+        stop();
+    }
     benchmark_runtime(const benchmark_runtime&) = delete;
     benchmark_runtime& operator=(const benchmark_runtime&) = delete;
-    asio::io_context& context_at(std::size_t index = 0) { return *contexts_[index % contexts_.size()]; }
-    std::vector<asio::io_context*> server_lanes(std::size_t clients)
-    {
+    asio::io_context& context_at(std::size_t index = 0) {
+        return *contexts_[index % contexts_.size()];
+    }
+    std::vector<asio::io_context*> server_lanes(std::size_t clients) {
         std::vector<asio::io_context*> result;
         for (std::size_t i = 0; i <= clients; ++i)
+        {
             result.push_back(&context_at(i));
+        }
         return result;
     }
-    void stop()
-    {
+    void stop() {
         // Drain cross-context captures before any context can destroy its services.
         for (auto& guard : guards_)
+        {
             guard.reset();
+        }
         for (auto& worker : workers_)
+        {
             if (worker.joinable())
+            {
                 worker.join();
+            }
+        }
         workers_.clear();
     }
 

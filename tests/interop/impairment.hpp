@@ -14,8 +14,7 @@
 
 #include <arknet/base/error.hpp>
 
-namespace arknet_interop
-{
+namespace arknet_interop {
 class data_impairment
 {
     using udp = asio::ip::udp;
@@ -33,9 +32,8 @@ public:
         std::uint64_t dropped{}, reordered{}, errors{}, fin_forwarded{};
     };
     explicit data_impairment(unsigned short server_port)
-        : sockets_{udp::socket(context_), udp::socket(context_)},
-          server_(asio::ip::make_address("127.0.0.1"), server_port)
-    {
+        : sockets_{udp::socket(context_), udp::socket(context_)}
+        , server_(asio::ip::make_address("127.0.0.1"), server_port) {
         for (auto& socket : sockets_)
         {
             socket.open(udp::v4());
@@ -46,30 +44,37 @@ public:
         port_ = sockets_[0].local_endpoint().port();
         worker_ = std::thread([this] { run(); });
     }
-    ~data_impairment() { stop(); }
+    ~data_impairment() {
+        stop();
+    }
     data_impairment(const data_impairment&) = delete;
     data_impairment& operator=(const data_impairment&) = delete;
-    unsigned short port() const noexcept { return port_; }
-    statistics snapshot() const { return {dropped_.load(), reordered_.load(), errors_.load(), fin_forwarded_.load()}; }
-    bool wait_fin(std::chrono::seconds timeout)
-    {
+    unsigned short port() const noexcept {
+        return port_;
+    }
+    statistics snapshot() const {
+        return {dropped_.load(), reordered_.load(), errors_.load(), fin_forwarded_.load()};
+    }
+    bool wait_fin(std::chrono::seconds timeout) {
         std::unique_lock lock(fin_mutex_);
         return fin_ready_.wait_for(lock, timeout, [this] { return fin_forwarded_ != 0; });
     }
-    void stop() noexcept
-    {
+    void stop() noexcept {
         stopped_ = true;
         if (worker_.joinable())
+        {
             worker_.join();
+        }
     }
 
 private:
-    void forward(unsigned direction, const std::string& bytes, const udp::endpoint& destination)
-    {
+    void forward(unsigned direction, const std::string& bytes, const udp::endpoint& destination) {
         arknet::error_code error;
         const auto written = sockets_[1 - direction].send_to(asio::buffer(bytes), destination, 0, error);
         if (error || written != bytes.size())
+        {
             ++errors_;
+        }
         else if (bytes.size() == 9 && bytes[0] == 3)
         {
             std::lock_guard lock(fin_mutex_);
@@ -77,28 +82,30 @@ private:
             fin_ready_.notify_all();
         }
     }
-    void release(unsigned direction)
-    {
+    void release(unsigned direction) {
         auto packet = std::move(*pending_[direction]);
         pending_[direction].reset();
         forward(direction, packet.bytes, packet.destination);
     }
-    void receive(unsigned direction)
-    {
+    void receive(unsigned direction) {
         while (!stopped_)
         {
             udp::endpoint sender;
             arknet::error_code error;
             const auto size = sockets_[direction].receive_from(asio::buffer(buffer_), sender, 0, error);
             if (error == asio::error::would_block || error == asio::error::try_again)
+            {
                 return;
+            }
             if (error)
             {
                 ++errors_;
                 return;
             }
             if (direction == 0 && !client_)
+            {
                 client_ = sender;
+            }
             if ((direction == 0 && sender != *client_) || (direction == 1 && (sender != server_ || !client_)))
             {
                 ++errors_;
@@ -132,8 +139,7 @@ private:
             }
         }
     }
-    void run() noexcept
-    {
+    void run() noexcept {
         try
         {
             while (!stopped_)
@@ -142,15 +148,15 @@ private:
                 {
                     receive(direction);
                     if (pending_[direction] && pending_[direction]->deadline <= clock::now())
+                    {
                         release(direction);
+                    }
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         }
         catch (...)
-        {
-            ++errors_;
-        }
+        { ++errors_; }
     }
     asio::io_context context_;
     unsigned short port_{};
@@ -167,4 +173,4 @@ private:
     std::atomic<bool> stopped_{};
     std::thread worker_;
 };
-}
+} // namespace arknet_interop

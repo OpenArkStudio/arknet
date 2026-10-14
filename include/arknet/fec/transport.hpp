@@ -17,8 +17,7 @@
 
 #include <arknet/thirdparty/fecpp.hpp>
 
-namespace arknet::fec
-{
+namespace arknet::fec {
 enum class policy
 {
     disabled,
@@ -32,8 +31,7 @@ enum class change_reason
     healthy,
     overload
 };
-inline const char* reason_name(change_reason reason) noexcept
-{
+inline const char* reason_name(change_reason reason) noexcept {
     switch (reason)
     {
     case change_reason::loss:
@@ -65,20 +63,17 @@ struct options
     unsigned disable_loss_percent = 1;
     unsigned stable_windows = 3;
     unsigned overload_queue_percent = 75;
-    static options fixed()
-    {
+    static options fixed() {
         options value;
         value.mode = policy::fixed;
         return value;
     }
-    static options adaptive()
-    {
+    static options adaptive() {
         options value;
         value.mode = policy::adaptive;
         return value;
     }
-    void validate() const
-    {
+    void validate() const {
         if ((mode != policy::disabled && mode != policy::fixed && mode != policy::adaptive) || !data_shards ||
             data_shards > 32 || !max_parity_shards || max_parity_shards > 16 || parity_shards > max_parity_shards ||
             !min_data_shards || min_data_shards > data_shards || !group_wait_ms || group_wait_ms > 1000 ||
@@ -87,7 +82,9 @@ struct options
             !sample_window_ms || sample_window_ms > 60000 || cooldown_ms > 60000 || !min_samples ||
             !enable_loss_percent || enable_loss_percent > 100 || disable_loss_percent >= enable_loss_percent ||
             !stable_windows || !overload_queue_percent || overload_queue_percent > 100)
+        {
             throw std::invalid_argument("invalid FEC options");
+        }
     }
 };
 struct statistics
@@ -99,44 +96,46 @@ struct statistics
     std::uint8_t current_parity_shards{};
     change_reason last_change = change_reason::configured;
 };
-namespace detail
-{
-inline std::uint64_t read(std::string_view bytes, std::size_t offset, unsigned count) noexcept
-{
+namespace detail {
+inline std::uint64_t read(std::string_view bytes, std::size_t offset, unsigned count) noexcept {
     std::uint64_t value{};
     for (unsigned i = 0; i < count; ++i)
+    {
         value |= std::uint64_t(static_cast<unsigned char>(bytes[offset + i])) << (8 * i);
+    }
     return value;
 }
-inline void write(std::string& bytes, std::size_t offset, std::uint64_t value, unsigned count) noexcept
-{
+inline void write(std::string& bytes, std::size_t offset, std::uint64_t value, unsigned count) noexcept {
     for (unsigned i = 0; i < count; ++i)
+    {
         bytes[offset + i] = static_cast<char>(value >> (8 * i));
+    }
 }
-inline std::int32_t difference(std::uint32_t a, std::uint32_t b) noexcept
-{
+inline std::int32_t difference(std::uint32_t a, std::uint32_t b) noexcept {
     return std::bit_cast<std::int32_t>(a - b);
 }
-inline std::uint32_t checksum(std::string_view bytes) noexcept
-{
-    static constexpr auto table = []
-    {
+inline std::uint32_t checksum(std::string_view bytes) noexcept {
+    static constexpr auto table = [] {
         std::array<std::uint32_t, 256> values{};
         for (std::uint32_t i = 0; i < 256; ++i)
         {
             auto value = i;
             for (unsigned bit = 0; bit < 8; ++bit)
+            {
                 value = (value >> 1) ^ ((value & 1) ? 0xedb88320U : 0U);
+            }
             values[i] = value;
         }
         return values;
     }();
     std::uint32_t value = 0xffffffffU;
     for (unsigned char c : bytes)
+    {
         value = table[(value ^ c) & 255] ^ (value >> 8);
+    }
     return value ^ 0xffffffffU;
 }
-}
+} // namespace detail
 
 // Serialize calls. CRC detects corruption; it does not authenticate a peer.
 class transport
@@ -146,18 +145,23 @@ public:
     using output = std::function<void(std::string_view)>;
     using delivery = std::function<bool(std::string_view)>;
     transport(std::uint32_t conversation, std::size_t mtu, options settings, output emit, delivery deliver)
-        : conversation_(conversation), mtu_(mtu), options_(settings), emit_(std::move(emit)),
-          deliver_(std::move(deliver))
-    {
+        : conversation_(conversation)
+        , mtu_(mtu)
+        , options_(settings)
+        , emit_(std::move(emit))
+        , deliver_(std::move(deliver)) {
         options_.validate();
         if (mtu <= overhead + 24 || mtu > 65507 || !emit_ || !deliver_)
+        {
             throw std::invalid_argument("invalid FEC transport");
+        }
         stats_.current_parity_shards = options_.mode == policy::fixed ? options_.parity_shards : 0;
     }
-    bool send(std::string_view bytes, std::uint32_t now, bool control = false)
-    {
+    bool send(std::string_view bytes, std::uint32_t now, bool control = false) {
         if (stopped_ || bytes.size() < 24 || bytes.size() > mtu_ - overhead)
+        {
             return false;
+        }
         if (control || !stats_.current_parity_shards)
         {
             emit_group({std::string(bytes)}, 0, control ? 3 : 0);
@@ -167,27 +171,38 @@ public:
         {
             flush();
             if (stopped_)
+            {
                 return false;
+            }
             emit_group({std::string(bytes)}, 0);
             return !stopped_;
         }
         if (pending_.empty())
+        {
             pending_since_ = now;
+        }
         pending_.emplace_back(bytes);
         pending_bytes_ += bytes.size() + payload_prefix;
         if (pending_.size() >= options_.data_shards)
+        {
             flush();
+        }
         return !stopped_;
     }
-    void update(std::uint32_t now)
-    {
+    void update(std::uint32_t now) {
         if (stopped_)
+        {
             return;
+        }
         if (!pending_.empty() &&
             detail::difference(now, pending_since_) >= static_cast<std::int32_t>(options_.group_wait_ms))
+        {
             flush();
+        }
         if (stopped_)
+        {
             return;
+        }
         for (auto it = groups_.begin(); it != groups_.end();)
         {
             if (detail::difference(now, it->second.created) >= static_cast<std::int32_t>(options_.group_lifetime_ms))
@@ -198,7 +213,9 @@ public:
                 it = groups_.erase(it);
             }
             else
+            {
                 ++it;
+            }
         }
         if (!feedback_started_ ||
             detail::difference(now, feedback_at_) >= static_cast<std::int32_t>(options_.sample_window_ms))
@@ -214,10 +231,11 @@ public:
         }
     }
     void adapt(std::uint32_t now, std::uint64_t transmissions, std::uint64_t retransmissions, std::uint32_t rtt_ms,
-               std::size_t queued_bytes, std::size_t queue_limit)
-    {
+        std::size_t queued_bytes, std::size_t queue_limit) {
         if (stopped_ || options_.mode != policy::adaptive)
+        {
             return;
+        }
         if (!sampling_)
         {
             sampling_ = true;
@@ -227,7 +245,9 @@ public:
             return;
         }
         if (detail::difference(now, sample_at_) < static_cast<std::int32_t>(options_.sample_window_ms))
+        {
             return;
+        }
         sample_at_ = now;
         const auto local_samples = transmissions >= last_transmissions_ ? transmissions - last_transmissions_ : 0;
         const auto local_lost = retransmissions >= last_retransmissions_ ? retransmissions - last_retransmissions_ : 0;
@@ -238,7 +258,9 @@ public:
         last_peer_data_ = peer_data_;
         last_peer_missing_ = peer_missing_;
         if (rtt_ms && (!minimum_rtt_ || rtt_ms < minimum_rtt_))
+        {
             minimum_rtt_ = rtt_ms;
+        }
         const bool overloaded =
             (queue_limit && static_cast<double>(queued_bytes) / queue_limit * 100 >= options_.overload_queue_percent) ||
             (minimum_rtt_ && rtt_ms > std::uint64_t(minimum_rtt_) * 2 && queued_bytes > previous_queued_bytes_);
@@ -251,9 +273,10 @@ public:
         }
         if ((local_samples < options_.min_samples && peer_samples < options_.min_samples) ||
             (changed_ && detail::difference(now, changed_at_) < static_cast<std::int32_t>(options_.cooldown_ms)))
-            return;
-        const auto ratio = [&](std::uint64_t lost, std::uint64_t samples)
         {
+            return;
+        }
+        const auto ratio = [&](std::uint64_t lost, std::uint64_t samples) {
             return samples < options_.min_samples
                        ? 0.0
                        : std::min(100.0, 100.0 * static_cast<double>(lost) / static_cast<double>(samples));
@@ -262,9 +285,8 @@ public:
         if (percent >= options_.enable_loss_percent)
         {
             stable_ = 0;
-            const auto desired =
-                static_cast<std::uint8_t>(std::clamp(std::ceil(percent * options_.data_shards / 50.0), 1.0,
-                                                     static_cast<double>(options_.max_parity_shards)));
+            const auto desired = static_cast<std::uint8_t>(std::clamp(std::ceil(percent * options_.data_shards / 50.0),
+                1.0, static_cast<double>(options_.max_parity_shards)));
             change(std::max(stats_.current_parity_shards, desired), change_reason::loss, now);
         }
         else if (percent <= options_.disable_loss_percent)
@@ -272,26 +294,32 @@ public:
             if (++stable_ >= options_.stable_windows)
             {
                 if (stats_.current_parity_shards)
+                {
                     change(stats_.current_parity_shards - 1, change_reason::healthy, now);
+                }
                 stable_ = 0;
             }
         }
         else
-            stable_ = 0;
-    }
-    bool input(std::string_view bytes, std::uint32_t now)
-    {
-        if (stopped_)
-            return false;
-        stats_.wire_bytes_rx += bytes.size();
-        const auto invalid = [&]
         {
+            stable_ = 0;
+        }
+    }
+    bool input(std::string_view bytes, std::uint32_t now) {
+        if (stopped_)
+        {
+            return false;
+        }
+        stats_.wire_bytes_rx += bytes.size();
+        const auto invalid = [&] {
             ++stats_.invalid_packets;
             return false;
         };
         if (bytes.size() < header_size || bytes.size() > mtu_ || bytes.substr(0, 4) != "AFEC" ||
             static_cast<unsigned char>(bytes[4]) != 1 || bytes[9] != 0 || detail::read(bytes, 12, 4) != conversation_)
+        {
             return invalid();
+        }
         const auto kind = static_cast<unsigned char>(bytes[5]);
         const auto k = static_cast<unsigned char>(bytes[6]), p = static_cast<unsigned char>(bytes[7]),
                    index = static_cast<unsigned char>(bytes[8]);
@@ -300,13 +328,17 @@ public:
         if (kind == 2)
         {
             if (k || p || index || size != 24 || bytes.size() != header_size + 24)
+            {
                 return invalid();
+            }
             const auto data = detail::read(bytes, header_size, 8), missing = detail::read(bytes, header_size + 8, 8),
                        recovered = detail::read(bytes, header_size + 16, 8);
             if (missing > data || recovered > missing || data > stats_.data_packets_tx ||
                 (have_peer_ && (detail::difference(id, peer_sequence_) <= 0 || data < peer_data_ ||
-                                missing < peer_missing_ || recovered < peer_recovered_)))
+                                   missing < peer_missing_ || recovered < peer_recovered_)))
+            {
                 return false;
+            }
             have_peer_ = true;
             peer_sequence_ = id;
             peer_data_ = data;
@@ -317,24 +349,36 @@ public:
         if (kind > 3 || !k || k > 32 || p > 16 || index >= k + p || size < payload_prefix + 24 ||
             size > mtu_ - header_size || ((kind == 0 || kind == 3) && index >= k) || (kind == 1 && index < k) ||
             (kind == 3 && (k != 1 || p || index)) || (!p && (k != 1 || index || kind == 1)))
+        {
             return invalid();
+        }
         const auto payload = bytes.substr(header_size);
         if (kind == 1 && payload.size() != size)
+        {
             return invalid();
+        }
         std::string_view original;
         if (kind != 1)
         {
             if (payload.size() < payload_prefix || payload.size() > size)
+            {
                 return invalid();
+            }
             original = unpack(payload);
             if (original.empty() || payload.size() != payload_prefix + original.size())
+            {
                 return invalid();
+            }
         }
         auto it = groups_.find(id);
         if (it != groups_.end() && (it->second.k != k || it->second.p != p || it->second.size != size))
+        {
             return invalid();
+        }
         if (have_highest_ && detail::difference(id, highest_) < -4095)
+        {
             return invalid();
+        }
         if (retired_valid_[id % retired_.size()] && retired_[id % retired_.size()] == id)
         {
             ++stats_.duplicates;
@@ -401,24 +445,31 @@ public:
         {
             std::map<std::size_t, const std::uint8_t*> shares;
             for (unsigned i = 0; i < k + p; ++i)
+            {
                 if (value.present[i])
+                {
                     shares.emplace(i, reinterpret_cast<const std::uint8_t*>(value.shards[i].data()));
+                }
+            }
             std::vector<std::pair<unsigned, std::string>> recovered;
             try
             {
                 if (std::count(value.delivered.begin(), value.delivered.begin() + k, true) != k)
                 {
                     arknet::detail::fecpp::fec_code code(k, k + p);
-                    code.decode(shares, size,
-                                [&](std::size_t i, std::size_t, const std::uint8_t* data, std::size_t count)
-                                {
-                                    if (value.delivered[i])
-                                        return;
-                                    const auto message = unpack({reinterpret_cast<const char*>(data), count});
-                                    if (message.empty())
-                                        throw std::invalid_argument("corrupt recovered FEC shard");
-                                    recovered.emplace_back(static_cast<unsigned>(i), message);
-                                });
+                    code.decode(
+                        shares, size, [&](std::size_t i, std::size_t, const std::uint8_t* data, std::size_t count) {
+                            if (value.delivered[i])
+                            {
+                                return;
+                            }
+                            const auto message = unpack({reinterpret_cast<const char*>(data), count});
+                            if (message.empty())
+                            {
+                                throw std::invalid_argument("corrupt recovered FEC shard");
+                            }
+                            recovered.emplace_back(static_cast<unsigned>(i), message);
+                        });
                 }
             }
             catch (const std::exception&)
@@ -427,8 +478,12 @@ public:
                 groups_.erase(it);
                 ++stats_.invalid_packets;
                 for (const auto& message : deliveries)
+                {
                     if (!deliver_packet(message))
+                    {
                         return false;
+                    }
+                }
                 return !deliveries.empty();
             }
             for (const auto& [i, message] : recovered)
@@ -446,19 +501,21 @@ public:
         }
         // All group references are released before callbacks can stop the channel.
         for (const auto& message : deliveries)
+        {
             if (!deliver_packet(message))
+            {
                 return false;
+            }
+        }
         return true;
     }
-    statistics snapshot() const noexcept
-    {
+    statistics snapshot() const noexcept {
         auto value = stats_;
         value.retained_bytes = retained_bytes_ + pending_bytes_;
         value.retained_groups = groups_.size();
         return value;
     }
-    void stop()
-    {
+    void stop() {
         stopped_ = true;
         pending_.clear();
         groups_.clear();
@@ -467,7 +524,9 @@ public:
     }
 
 private:
-    bool deliver_packet(std::string_view bytes) { return !stopped_ && deliver_(bytes) && !stopped_; }
+    bool deliver_packet(std::string_view bytes) {
+        return !stopped_ && deliver_(bytes) && !stopped_;
+    }
     struct group
     {
         unsigned k{}, p{}, count{}, recovered{};
@@ -479,19 +538,21 @@ private:
         std::array<bool, 32> delivered{};
     };
     static constexpr std::size_t group_cost = sizeof(group) + 64;
-    static std::string_view unpack(std::string_view bytes)
-    {
+    static std::string_view unpack(std::string_view bytes) {
         if (bytes.size() < payload_prefix)
+        {
             return {};
+        }
         const auto length = static_cast<std::size_t>(detail::read(bytes, 0, 2));
         if (length < 24 || length > bytes.size() - payload_prefix)
+        {
             return {};
+        }
         const auto message = bytes.substr(payload_prefix, length);
         return detail::checksum(message) == detail::read(bytes, 2, 4) ? message : std::string_view{};
     }
-    std::string header(unsigned kind, unsigned k, unsigned p, unsigned index, std::size_t size,
-                       std::uint32_t group_id) const
-    {
+    std::string header(
+        unsigned kind, unsigned k, unsigned p, unsigned index, std::size_t size, std::uint32_t group_id) const {
         std::string bytes(header_size, '\0');
         bytes.replace(0, 4, "AFEC");
         bytes[4] = 1;
@@ -504,13 +565,16 @@ private:
         detail::write(bytes, 16, group_id, 4);
         return bytes;
     }
-    void emit_wire(std::string_view bytes, bool data, bool parity)
-    {
+    void emit_wire(std::string_view bytes, bool data, bool parity) {
         if (stopped_)
+        {
             return;
+        }
         stats_.wire_bytes_tx += bytes.size();
         if (data)
+        {
             ++stats_.data_packets_tx;
+        }
         if (parity)
         {
             ++stats_.parity_packets_tx;
@@ -518,10 +582,11 @@ private:
         }
         emit_(bytes);
     }
-    void emit_group(const std::vector<std::string>& messages, unsigned parity, unsigned kind = 0)
-    {
+    void emit_group(const std::vector<std::string>& messages, unsigned parity, unsigned kind = 0) {
         if (stopped_ || messages.empty())
+        {
             return;
+        }
         std::size_t size{}, wire_size{};
         for (const auto& bytes : messages)
         {
@@ -531,13 +596,17 @@ private:
         parity =
             std::min<std::size_t>(parity, wire_size * options_.max_redundancy_percent / 100 / (header_size + size));
         if (messages.size() < options_.min_data_shards)
+        {
             parity = 0;
+        }
         if (!parity)
         {
             for (const auto& message : messages)
             {
                 if (stopped_)
+                {
                     break;
+                }
                 std::string payload(payload_prefix, '\0');
                 detail::write(payload, 0, message.size(), 2);
                 detail::write(payload, 2, detail::checksum(message), 4);
@@ -552,7 +621,9 @@ private:
         for (std::size_t i = 0; i < k; ++i)
         {
             if (stopped_)
+            {
                 return;
+            }
             std::string payload(payload_prefix, '\0');
             detail::write(payload, 0, messages[i].size(), 2);
             detail::write(payload, 2, detail::checksum(messages[i]), 4);
@@ -562,49 +633,60 @@ private:
             emit_wire(bytes, kind == 0, false);
         }
         if (stopped_)
+        {
             return;
+        }
         arknet::detail::fecpp::fec_code code(k, k + parity);
-        code.encode(data.data(), data.size(),
-                    [&](std::size_t i, std::size_t, const std::uint8_t* data, std::size_t count)
-                    {
-                        if (i < k)
-                            return;
-                        auto bytes = header(1, k, parity, i, size, id);
-                        bytes.append(reinterpret_cast<const char*>(data), count);
-                        emit_wire(bytes, false, true);
-                    });
+        code.encode(
+            data.data(), data.size(), [&](std::size_t i, std::size_t, const std::uint8_t* data, std::size_t count) {
+                if (i < k)
+                {
+                    return;
+                }
+                auto bytes = header(1, k, parity, i, size, id);
+                bytes.append(reinterpret_cast<const char*>(data), count);
+                emit_wire(bytes, false, true);
+            });
     }
-    void flush()
-    {
+    void flush() {
         if (stopped_ || pending_.empty())
+        {
             return;
+        }
         auto messages = std::move(pending_);
         pending_.clear();
         pending_bytes_ = 0;
         emit_group(messages, stats_.current_parity_shards);
     }
-    void finalize(const group& value)
-    {
+    void finalize(const group& value) {
         stats_.data_shards_rx += value.k;
         for (unsigned i = 0; i < value.k; ++i)
+        {
             if (!value.present[i])
+            {
                 ++stats_.missing_shards;
+            }
+        }
         finalized_recovered_ += value.recovered;
         if (!value.decoded)
+        {
             ++stats_.expired_groups;
+        }
     }
-    void retire(std::uint32_t id)
-    {
+    void retire(std::uint32_t id) {
         retired_[id % retired_.size()] = id;
         retired_valid_[id % retired_.size()] = true;
     }
-    void change(std::uint8_t parity, change_reason reason, std::uint32_t now)
-    {
+    void change(std::uint8_t parity, change_reason reason, std::uint32_t now) {
         if (parity == stats_.current_parity_shards)
+        {
             return;
+        }
         flush();
         if (stopped_)
+        {
             return;
+        }
         stats_.current_parity_shards = parity;
         stats_.last_change = reason;
         ++stats_.policy_changes;
@@ -631,4 +713,4 @@ private:
     unsigned stable_{};
     bool have_highest_{}, feedback_started_{}, have_peer_{}, sampling_{}, changed_{}, stopped_{};
 };
-}
+} // namespace arknet::fec

@@ -6,35 +6,34 @@
 #include <arknet/base/detail/ecs.hpp>
 #include <arknet/base/error.hpp>
 
-namespace arknet::detail
-{
-template <class Derived, class Args> class udp_recv_op
+namespace arknet::detail {
+template<class Derived, class Args>
+class udp_recv_op
 {
 protected:
-    template <class Condition>
-    void _udp_post_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition)
-    {
+    template<class Condition>
+    void _udp_post_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition) {
         auto& owner = static_cast<Derived&>(*this);
         if (!owner.is_started())
+        {
             return;
+        }
         ARKNET_ASSERT(owner.io_->running_in_this_thread());
         ARKNET_ASSERT(!owner.reading_);
         owner.reading_ = true;
         auto storage = owner.buffer().prepare(udp_frame_size);
         owner.socket().async_receive(
-            storage, make_allocator(owner.rallocator(),
-                                    [&owner, lifetime = std::move(lifetime), condition = std::move(condition)](
-                                        const error_code& error, std::size_t count) mutable
-                                    {
-                                        owner.reading_ = false;
-                                        owner._handle_recv(error, count, std::move(lifetime), std::move(condition));
-                                    }));
+            storage, make_allocator(
+                         owner.rallocator(), [&owner, lifetime = std::move(lifetime), condition = std::move(condition)](
+                                                 const error_code& error, std::size_t count) mutable {
+                             owner.reading_ = false;
+                             owner._handle_recv(error, count, std::move(lifetime), std::move(condition));
+                         }));
     }
 
-    template <class Condition>
+    template<class Condition>
     void _udp_handle_recv(const error_code& error, std::size_t count, std::shared_ptr<Derived> lifetime,
-                          std::shared_ptr<ecs_t<Condition>> condition)
-    {
+        std::shared_ptr<ecs_t<Condition>> condition) {
         auto& owner = static_cast<Derived&>(*this);
         set_last_error(error);
         if (!owner.is_started())
@@ -59,4 +58,4 @@ protected:
         owner._post_recv(std::move(lifetime), std::move(condition));
     }
 };
-}
+} // namespace arknet::detail

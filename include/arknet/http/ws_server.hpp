@@ -3,27 +3,25 @@
 #pragma once
 #include <arknet/http/ws_session.hpp>
 #include <arknet/tcp/tcp_server.hpp>
-namespace arknet::detail
-{
-template <class Derived, class Session>
+namespace arknet::detail {
+template<class Derived, class Session>
 class ws_server_impl_t : public websocket_server_impl<Derived, tcp_server_impl_t<Derived, Session>, Session>
 {
 public:
-    template <class... Construction>
+    template<class... Construction>
     explicit ws_server_impl_t(Construction&&... construction)
         : websocket_server_impl<Derived, tcp_server_impl_t<Derived, Session>, Session>(
-              std::forward<Construction>(construction)...)
-    {
-    }
+              std::forward<Construction>(construction)...) {}
 };
-}
-namespace arknet
-{
-template <class Derived, class Session> using ws_server_impl_t = detail::ws_server_impl_t<Derived, Session>;
-template <class Session> class ws_server_t : public detail::ws_server_impl_t<ws_server_t<Session>, Session>
+} // namespace arknet::detail
+namespace arknet {
+template<class Derived, class Session>
+using ws_server_impl_t = detail::ws_server_impl_t<Derived, Session>;
+template<class Session>
+class ws_server_t : public detail::ws_server_impl_t<ws_server_t<Session>, Session>
 {
 public:
     using detail::ws_server_impl_t<ws_server_t<Session>, Session>::ws_server_impl_t;
 };
 using ws_server = ws_server_t<ws_session>;
-}
+} // namespace arknet

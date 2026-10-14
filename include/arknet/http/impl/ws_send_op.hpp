@@ -6,32 +6,30 @@
 #include <arknet/base/error.hpp>
 #include <arknet/external/beast.hpp>
 
-namespace arknet::detail
-{
-template <class Derived, class Args> class ws_send_op
+namespace arknet::detail {
+template<class Derived, class Args>
+class ws_send_op
 {
 protected:
-    template <class Data, class Completion> bool _ws_send(Data& payload, Completion&& completion)
-    {
+    template<class Data, class Completion>
+    bool _ws_send(Data& payload, Completion&& completion) {
         auto& owner = static_cast<Derived&>(*this);
 #ifndef NDEBUG
         ARKNET_ASSERT(owner.post_send_counter_.fetch_add(1) == 0);
 #endif
-        owner.ws_stream().async_write(
-            asio::buffer(payload),
+        owner.ws_stream().async_write(asio::buffer(payload),
             make_allocator(owner.wallocator(),
-                           [&owner, lifetime = owner.selfptr(),
-                            completion = std::forward<Completion>(completion)](error_code ec, std::size_t size) mutable
-                           {
+                [&owner, lifetime = owner.selfptr(), completion = std::forward<Completion>(completion)](
+                    error_code ec, std::size_t size) mutable {
 #ifndef NDEBUG
-                               owner.post_send_counter_.fetch_sub(1);
+                    owner.post_send_counter_.fetch_sub(1);
 #endif
-                               set_last_error(ec);
-                               completion(ec, size);
-                               if (ec && owner.state_ == state_t::started)
-                                   owner._do_disconnect(ec, owner.selfptr());
-                           }));
+                    set_last_error(ec);
+                    completion(ec, size);
+                    if (ec && owner.state_ == state_t::started)
+                        owner._do_disconnect(ec, owner.selfptr());
+                }));
         return true;
     }
 };
-}
+} // namespace arknet::detail
