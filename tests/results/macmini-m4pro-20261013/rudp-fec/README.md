@@ -18,14 +18,14 @@ RUDP/FEC is not included in `v0.1.0-rc.1`.
 | Boost.Asio, Release + TLS | 55 checks / 219 doctest cases | [Passed](arknet-rudp-fec-check-boost.log) |
 | ASan/UBSan, Standalone Asio | 10 selected suites / 109 cases | [Logs](arknet-rudp-final-asan/) |
 | TSan, Standalone Asio | 8 selected suites / 86 cases | [Logs](arknet-rudp-final-tsan/) |
-| Real zephyr/arknet peers, each backend | 12 process pairs / 16 sessions / 512 messages and echoes | [Evidence](interop/arknet-zephyr-interop-final.md) |
+| Real zephyr/arknet peers, each dependency configuration | 12 process pairs / 16 sessions / 512 messages and echoes | [Evidence](interop/arknet-zephyr-interop-final.md) |
 | Formatting and exclusion rules | 146 project C++ files; third-party exclusions | [Check](arknet-rudp-fec-format.log), [runner](arknet-rudp-fec-format-runner.log) |
 | Report generator | Schema/accounting checks, linked SVGs, XML and rendering | [Log](arknet-rudp-report-verification.log) |
 | Bilingual documentation | Build, routes, local references and AI Markdown exports | [Log](arknet-rudp-fec-docs-check.log) |
 
 Complete checks include installed-package consumption and benchmark smoke cases;
 smoke timings are not published performance results. RUDP FEC passed 11 cases
-and 2,564 assertions with both Release backends and both sanitizer builds.
+and 2,564 assertions with both Release dependency configurations and both sanitizer builds.
 ASan/UBSan covers ARQ, reference ARQ/FEC interop, RUDP/FEC, lifecycle, detail and
 concurrency. TSan covers FEC, reference FEC interop, RUDP/FEC, lifecycle, detail
 and concurrency. This record does not claim a complete local sanitizer run of

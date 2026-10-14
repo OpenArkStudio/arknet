@@ -7,7 +7,7 @@ and execution mode; each report records its host, source, commands and scope.
 ## RUDP measurements
 
 [RUDP FEC report](rudp.md): 96 configurations and 276 measured runs across both
-Asio backends, three IO models, ARQ-only/fixed/adaptive policies, payloads,
+Asio dependency combinations, three IO models, ARQ-only/fixed/adaptive policies, payloads,
 in-flight requests and injected loss. SVG charts compare throughput, p99 RTT,
 CPU, wire overhead, recovery, retransmissions and retained memory.
 The public RUDP API currently uses callbacks; RUDP coroutines remain TODO.
@@ -15,7 +15,7 @@ The public RUDP API currently uses callbacks; RUDP coroutines remain TODO.
 ## UDP measurements
 
 [UDP performance report](udp-update.md) includes 504 matrix runs, 21 buffer probes and
-a 60-second stress test for each backend.
+a 60-second stress test for each dependency combination.
 
 - [IO models](udp.md): one context/one thread, one context/multiple threads and partitioned contexts.
 - [Payload and in-flight requests](dimensions-udp.md): repeated configurations with failure groups retained.

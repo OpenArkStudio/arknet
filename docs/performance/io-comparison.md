@@ -12,7 +12,7 @@ Native Asio TCP coroutine Release local loopback: 1024-byte messages,
 ![Native Asio coroutine batch p99 RTT by IO model](assets/coroutine-work0-latency.svg)
 
 - One context/four threads has the highest throughput median and one
-  context/two threads the lowest batch p99 median for both backends.
+  context/two threads the lowest batch p99 median for both dependency combinations.
 - Standalone's batch p99 run ranges overlap between one context/two threads
   and one context/four threads, so these runs do not establish a consistent
   tail-latency advantage.
@@ -24,9 +24,9 @@ Native Asio TCP coroutine Release local loopback: 1024-byte messages,
 ![Native Asio coroutine batch p99 RTT with application computation](assets/coroutine-work10000-latency.svg)
 
 - Four contexts/one thread each has the highest throughput median and lowest
-  batch p99 median for both backends.
+  batch p99 median for both dependency combinations.
 - Batch p99 run ranges overlap between one context/four threads and four
-  contexts/one thread each for both backends.
+  contexts/one thread each for both dependency combinations.
 
 [Complete coroutine baseline](coroutine.md) ·
 [Payload, batch and execution comparisons](dimensions.md#native-tcp)
@@ -61,7 +61,7 @@ one context/one thread. `--execution callback` runs the matched native callback
 mode. `--work 10000` adds 10,000
 deterministic iterations per server echo; `0` adds no application computation.
 This is a synthetic load, not a production parser or crypto algorithm. Compare
-topologies within the same benchmark program, backend, payload, concurrency and
+topologies within the same benchmark program, dependency combination, payload, concurrency and
 computation setting. The Asio coroutine program sends and reads fixed-size batches:
 with `--window` above one, its latency is batch RTT. The arknet callback program continuously
 replenishes its window and reports individual-message RTT. Their throughput and

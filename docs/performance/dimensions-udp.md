@@ -19,7 +19,7 @@ Local measurements on 2026-10-12: 216 runs, 62 valid configurations and 10 faile
 
 ## Failed Profiles
 
-| Backend / execution | Payload bytes / window | Thread model | Application computation | Failure |
+| Dependency / execution | Payload bytes / window | Thread model | Application computation | Failure |
 | --- | --- | --- | --- | --- |
 | Boost.Asio / callback | 16384 / 16 | 4 contexts / one thread each | No extra application computation | #1: benchmark failed with exit code 1; UDP lost messages: 1, Drain timeouts: 1, Warmup errors: 2; #2: benchmark failed with exit code 1; UDP lost messages: 1, Drain timeouts: 1; #3: benchmark failed with exit code 1; UDP lost messages: 1, Drain timeouts: 1, Warmup errors: 2 |
 | Boost.Asio / callback | 16384 / 16 | 1 context / 4 threads | No extra application computation | #1: benchmark failed with exit code 1; UDP lost messages: 1, Drain timeouts: 1, Warmup errors: 2; #2: benchmark failed with exit code 1; UDP lost messages: 1, Drain timeouts: 1; #3: benchmark failed with exit code 1; UDP lost messages: 1, Drain timeouts: 1 |

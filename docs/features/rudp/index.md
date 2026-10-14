@@ -25,7 +25,7 @@ requires its business regression tests.
 | Capability | Behavior |
 | --- | --- |
 | Endpoints | `rudp_client`, `rudp_server`, `rudp_session` and CRTP variants |
-| Addresses and backend | IPv4/IPv6; Standalone Asio or Boost.Asio |
+| Addresses and dependency | IPv4/IPv6; Standalone Asio or Boost.Asio |
 | Messages | Empty and binary messages; fragmentation and ordered reassembly |
 | Reliability | ACKs, timeout and fast retransmission, bounded retries |
 | Optional recovery | Fixed or adaptive Reed–Solomon FEC, with ARQ retransmission fallback |

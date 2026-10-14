@@ -86,10 +86,10 @@ jumbograms. IPv4 and IPv6 use different IP headers; these sizes are not
 interchangeable.
 
 The [IPv4 boundary and burst-loss report](../../performance/udp-limits.md) shows
-36 passing and 18 failing runs per backend at 16 clients/one context/one thread.
+36 passing and 18 failing runs per dependency configuration at 16 clients/one context/one thread.
 65,507-byte messages pass at window 1; 16 KiB passes at window 16 but loses
 767 echoes per run at window 64. Socket buffer drops increase by 23,778 per
-backend while IPv4 fragmentation/reassembly counters stay at zero. The local
+dependency configuration while IPv4 fragmentation/reassembly counters stay at zero. The local
 MTU calculation therefore does not establish fragmentation as the loss cause.
 These results do not measure IPv6 loss or cross-host behavior.
 

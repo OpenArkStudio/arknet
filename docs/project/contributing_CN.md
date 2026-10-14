@@ -12,7 +12,7 @@ arknet 作为独立的 header-only 项目开发。通过范围明确的修改和
 | `include/arknet/udp/` | UDP 客户端、服务端、Session 和 cast |
 | `include/arknet/http/` | HTTP/HTTPS、路由和 WebSocket 实现 |
 | `include/arknet/websocket/` | 公共 WebSocket 头文件 |
-| `include/arknet/external/` | Asio 和 Beast 后端接入 |
+| `include/arknet/external/` | Asio 和 Beast 依赖接入 |
 | `include/arknet/bho/` | 内置的第三方 Boost 头文件 |
 | `tests/` | doctest、集成检查、压力测试和测试证书 |
 | `benchmarks/` | 正式的回调及协程基准程序、矩阵执行器和报告工具 |
@@ -69,7 +69,7 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 并使用对应配置的输出子目录和带 `.exe` 扩展名的程序。
 
 新增测试应复现行为或失败，必要时检查完成次数和停止结果。异步断言使用明确的
-同步机制和有时限的等待。修改共享组件或后端时，应覆盖受影响的两种后端、TLS
+同步机制和有时限的等待。修改共享组件或依赖接入层时，应覆盖受影响的两种依赖方案、TLS
 开关及内置和外部 IO。生命周期和并发修改使用 sanitizer 检查；性能测试使用独立
 的 Release 构建。当前检查配置和未覆盖范围见[测试](testing_CN.md)。
 

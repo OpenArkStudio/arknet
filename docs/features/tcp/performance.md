@@ -12,11 +12,11 @@ application computation.
 ### What This Run Shows
 
 - Four contexts/one thread each has the highest throughput median for both
-  backends.
+  dependency combinations.
 - The lowest p99 median belongs to one context/two threads for standalone and
   four contexts/one thread each for Boost.
 - With one client and window 1, one context/four threads has lower throughput
-  medians than one context/one thread for both backends.
+  medians than one context/one thread for both dependency combinations.
 
 [Complete TCP report](../../performance/tcp.md) ·
 [Test environment](../../performance/overview.md) ·
@@ -27,7 +27,7 @@ application computation.
 ## Build and Compare IO Models
 
 Run from the repository root with a Release build. Replace the Asio include path
-with `-DARKNET_USE_BOOST_ASIO=ON` for the Boost backend, keeping other settings
+with `-DARKNET_USE_BOOST_ASIO=ON` for the Boost dependency combination, keeping other settings
 and hardware unchanged.
 
 Commands assume a single-configuration generator. With Visual Studio, add

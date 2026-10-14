@@ -14,7 +14,7 @@ window 16 and no extra application computation.
 ![HTTP p99 RTT by IO model](../../performance/assets/http-work0-latency.svg)
 
 - Four contexts/one thread each has the highest throughput median and lowest
-  p99 median for both backends.
+  p99 median for both dependency combinations.
 - Moving from one context/two threads to one context/four threads increases
   throughput medians and p99 medians. The p99 run ranges overlap.
 
@@ -27,7 +27,7 @@ window 16 and no extra application computation.
 ![HTTPS p99 RTT by IO model](../../performance/assets/https-work0-latency.svg)
 
 - Four contexts/one thread each has the highest throughput median and lowest
-  p99 median for both backends.
+  p99 median for both dependency combinations.
 - HTTPS has lower throughput medians than HTTP at the same load and thread
   model.
 

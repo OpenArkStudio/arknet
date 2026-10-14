@@ -2,7 +2,7 @@
 
 本页汇总各协议的最终测量：UDP 测量于 2026-10-12，其他协议和原生 TCP 协程测量于 2026-10-10。各协议保留自己的源码哈希与原始记录。
 
-本机完成 **1,620 次 IPv4 测量**，比较 Asio 后端配置下的吞吐量、p99 延迟和 IO 模型。
+本机完成 **1,620 次 IPv4 测量**，比较不同 Asio 依赖方案下的吞吐量、p99 延迟和 IO 模型。
 
 ## 测试条件
 
@@ -72,7 +72,7 @@ Release 构建；测量 1.0 s，预热 0.25 s，重复 3 次。
 
 Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch arm64; TLS ON; sanitizers OFF. Standalone Asio 1.38.2 with BHO Beast based on Boost 1.84 (API 351); Boost 1.90.0 with Asio 1.38.0 and Beast API 359; OpenSSL 3.6.4. Mac mini on AC power, low power mode disabled, no CPU affinity.
 
-两种后端使用的 Beast 版本不同，后端之间的性能差异同时包含依赖版本的影响，不能全部归因于 Asio。
+两种依赖方案使用的 Beast 版本不同，方案之间的性能差异同时包含依赖版本的影响，不能全部归因于 Asio。
 
 ## 指标定义
 

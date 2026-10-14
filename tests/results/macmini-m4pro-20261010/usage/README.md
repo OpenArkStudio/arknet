@@ -6,7 +6,7 @@ The TCP, UDP, WebSocket, TLS and HTTP Usage pages were extracted and checked on
 2026-10-10. Their English and Chinese C++ blocks match exactly. The two programs
 from each page and the documented HTTPS/WSS equivalents form 14 executables.
 
-| Backend | Dependency | Compiled programs | Passed client/server pairs |
+| Dependency | Dependency | Compiled programs | Passed client/server pairs |
 | --- | --- | ---: | ---: |
 | Standalone | Asio 1.38.2 | 14 | 7 |
 | Boost | Boost 1.90.0 | 14 | 7 |
@@ -26,7 +26,7 @@ use `scripts/benchmark_matrix.sh`; see [Methodology](../../../../docs/performanc
 ## Historical Collection Commands
 
 Run from the repository root. These commands use the dependency paths on the
-validation machine; replace those paths on another host. Run the two backend
+validation machine; replace those paths on another host. Run the two dependency configuration
 checks sequentially because their examples use the same listening ports.
 
 ```sh

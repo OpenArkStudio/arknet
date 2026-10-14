@@ -60,9 +60,9 @@ The [previous CI run](https://github.com/OpenArkStudio/arknet/actions/runs/38044
 found queued cancellation callbacks keeping their context alive through a shared
 ownership cycle. The callback now uses a weak reference. A deterministic test
 covers strand/direct executors and unrun/stopped contexts: all four contexts
-remain owned before the fix, and all four are released after it on both backends.
+remain owned before the fix, and all four are released after it on both dependency configurations.
 The local full checks above include this regression. Linux LeakSanitizer also
-passed on both backends in the cross-platform CI run below.
+passed on both dependency configurations in the cross-platform CI run below.
 
 Windows also exceeded the 35-minute job limit. The UDP rejection test recorded
 system error 1784 for the 65,508-byte send on both

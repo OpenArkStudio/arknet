@@ -55,7 +55,7 @@ bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_coroutine_
 Repeat both commands with the executables from the Boost build directory, set
 `--backend boost`, and write `local-dimensions-boost-callback.json` and
 `local-dimensions-boost-native.json`. These matrices contain **756 arknet
-callback measurements and 432 matched native TCP measurements per backend**.
+callback measurements and 432 matched native TCP measurements per dependency configuration**.
 All seven protocols use the four explicit outstanding-request limits, including
 UDP. Batch size and connection count are independent settings.
 
@@ -98,7 +98,7 @@ bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_coroutine_
   --output benchmarks/results/local-coroutine.json
 ```
 
-Per backend, the callback matrix has **630 measurements**:
+Per dependency configuration, the callback matrix has **630 measurements**:
 seven protocols × three payloads × two traffic profiles × five topologies ×
 three repetitions. The coroutine TCP matrix has **180 measurements**, adding
 two handler-work levels. Default runner durations are three measured seconds

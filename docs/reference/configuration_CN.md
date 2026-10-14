@@ -19,10 +19,10 @@
 | --- | --- |
 | `ARKNET_USE_BOOST_ASIO=1` | 使用 Boost；未定义或设为 `0` 时使用 standalone Asio |
 | `ARKNET_ENABLE_SSL` | 定义即启用安全传输；关闭时不要定义此宏 |
-| `ARKNET_HEADER_ONLY` | 内部后端宏，不用于切换编译库 |
+| `ARKNET_HEADER_ONLY` | 内部依赖实现宏，不用于切换编译库 |
 | `ARKNET_ENABLE_TIMER_CALLBACK_WHEN_ERROR` | 错误时调用定时器回调；回调中检查 `get_last_error()` |
 
-全部翻译单元必须使用一致的后端、TLS 和行为宏。
+全部翻译单元必须使用一致的依赖方案、TLS 和行为宏。
 CMake 的 `ON`／`OFF` 值与 C++ 宏是否定义是不同的配置约定。
 
 ## 运行时默认值

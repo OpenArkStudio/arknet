@@ -12,7 +12,7 @@ Release 本机回环测试：HTTP/1.1 POST 回显 1024 字节请求体、16 个�
 
 ![不同 IO 模型下的 HTTP p99 RTT](../../performance/assets/http-work0-latency.svg)
 
-- 两种后端都以 4 个 io_context 各 1 个线程的吞吐量中位数最高、p99 中位数最低。
+- 两种依赖方案都以 4 个 io_context 各 1 个线程的吞吐量中位数最高、p99 中位数最低。
 - 从 1 个 io_context、2 个线程增加到 1 个 io_context、4 个线程时，吞吐量中位数提高，p99 中位数也提高；p99 运行范围重叠。
 
 [完整 HTTP 报告](../../performance/http_CN.md)
@@ -23,7 +23,7 @@ Release 本机回环测试：HTTP/1.1 POST 回显 1024 字节请求体、16 个�
 
 ![不同 IO 模型下的 HTTPS p99 RTT](../../performance/assets/https-work0-latency.svg)
 
-- 两种后端都以 4 个 io_context 各 1 个线程的吞吐量中位数最高、p99 中位数最低。
+- 两种依赖方案都以 4 个 io_context 各 1 个线程的吞吐量中位数最高、p99 中位数最低。
 - 同一负载与线程模型下，HTTPS 的吞吐量中位数低于 HTTP。
 
 [完整 HTTPS 报告](../../performance/https_CN.md) · [测试环境](../../performance/overview_CN.md) · [指标与统计口径](../../performance/methodology_CN.md)

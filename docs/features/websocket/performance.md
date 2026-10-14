@@ -12,12 +12,12 @@ no extra application computation.
 ![WebSocket p99 RTT by IO model](../../performance/assets/websocket-work0-latency.svg)
 
 - Four contexts/one thread each has the highest throughput median for both
-  backends.
+  dependency combinations.
 - Standalone's lowest p99 median belongs to four contexts/one thread each;
   Boost's belongs to two contexts/one thread each, whose run range overlaps
   four contexts/one thread each.
 - With one client and window 1, one context/four threads has lower throughput
-  medians than one context/one thread for both backends.
+  medians than one context/one thread for both dependency combinations.
 
 ### WSS
 
@@ -26,7 +26,7 @@ no extra application computation.
 ![WSS p99 RTT by IO model](../../performance/assets/wss-work0-latency.svg)
 
 - Four contexts/one thread each has the highest throughput median and lowest
-  p99 median for both backends.
+  p99 median for both dependency combinations.
 - WSS has lower throughput medians than plaintext WebSocket at the same load
   and thread model.
 
@@ -74,8 +74,8 @@ results and [TLS performance](../tls/performance.md) for the build commands.
 
 This test measures binary echoes after upgrade, excluding browser scheduling,
 upgrade rate, idle connections, compression, ping/pong, authentication, fan-out
-and slow peers. The backends use different Asio/Beast versions, so differences
-cannot be attributed solely to backend selection.
+and slow peers. The dependency combinations use different Asio/Beast versions, so differences
+cannot be attributed solely to dependency selection.
 
 See [testing](../../project/testing.md),
 [WebSocket tests](https://github.com/OpenArkStudio/arknet/blob/main/tests/websocket.cpp)

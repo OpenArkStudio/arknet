@@ -49,7 +49,7 @@ check for leaks in this run.
 
 ## Benchmark entry checks
 
-Each backend's `*-protocol-probes.json` contains seven probes: TCP, UDP,
+Each dependency configuration's `*-protocol-probes.json` contains seven probes: TCP, UDP,
 WebSocket, TLS, WSS, HTTP and HTTPS. Each `*-native-probes.json` contains eight
 probes: callback/coroutine, one context/four threads or four contexts/one thread
 each, and zero or 10,000 computation iterations. All 30 probes passed.
@@ -60,7 +60,7 @@ records include commands, host details and source hashes.
 CPU percentage was checked against `CPU time / cpu_elapsed_seconds * 100`,
 allowing less than 0.001 percentage points of output rounding error.
 Every `address_family` is `ipv6`; TLS uses the separate IPv6 identity.
-Both backends' `arknet_ipv6_echo` examples were built and ran successfully.
+Both dependency configurations' `arknet_ipv6_echo` examples were built and ran successfully.
 
 These checks cover local IPv6 loopback only. They do not validate external
 IPv6 routing, scoped link-local addresses, DNS family fallback, or dual-stack

@@ -4,7 +4,7 @@
 
 The first regular release includes TCP, native UDP, RUDP, WebSocket/WSS,
 HTTP/HTTPS with routing, and optional TLS/mTLS. arknet remains C++20 and
-header-only, with Standalone Asio and Boost.Asio backends.
+header-only, with Standalone Asio and Boost.Asio dependency configurations.
 
 RUDP includes ARQ-only, fixed Reed–Solomon FEC and adaptive FEC policies.
 Negotiation, ordered delivery, recovery, bounded resources, reconnect and

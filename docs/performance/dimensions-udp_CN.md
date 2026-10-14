@@ -19,7 +19,7 @@
 
 ## 失败配置
 
-| 后端 / 模式 | 消息字节 / 窗口 | 线程模型 | 业务计算 | 失败信息 |
+| 依赖方案 / 模式 | 消息字节 / 窗口 | 线程模型 | 业务计算 | 失败信息 |
 | --- | --- | --- | --- | --- |
 | Boost.Asio / 回调 | 16384 / 16 | 4 个 io_context 各 1 个线程 | 无额外业务计算 | #1: benchmark failed with exit code 1; UDP 丢失报文: 1, 等待在途消息完成超时: 1, 预热错误: 2; #2: benchmark failed with exit code 1; UDP 丢失报文: 1, 等待在途消息完成超时: 1; #3: benchmark failed with exit code 1; UDP 丢失报文: 1, 等待在途消息完成超时: 1, 预热错误: 2 |
 | Boost.Asio / 回调 | 16384 / 16 | 1 个 io_context / 4 个线程 | 无额外业务计算 | #1: benchmark failed with exit code 1; UDP 丢失报文: 1, 等待在途消息完成超时: 1, 预热错误: 2; #2: benchmark failed with exit code 1; UDP 丢失报文: 1, 等待在途消息完成超时: 1; #3: benchmark failed with exit code 1; UDP 丢失报文: 1, 等待在途消息完成超时: 1 |

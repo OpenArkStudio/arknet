@@ -51,7 +51,7 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 | concurrency／keepalive | 发送配额、回调完成计数、并发停止和 TCP keepalive |
 | TLS | 信任／身份拒绝、mTLS、截止时间、WSS 和重连时创建新 stream |
 | IPv6 | TCP、UDP/session/cast、WS/WSS、HTTP/HTTPS、TLS IP 身份验证和握手 Host |
-| 安装包消费项目 | 后端／TLS 配置传播与已安装公开头文件 |
+| 安装包消费项目 | 依赖方案／TLS 配置传播与已安装公开头文件 |
 
 持续压力测试验证数据与序号、完成计数、连接／服务端重启、未完成写入和队列清理。
 每种协议将 `--seconds` 分配给四种配置：库内置调度器、单 context 单线程、
@@ -64,7 +64,7 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 （10 个性能核心、4 个能效核心）、48 GiB 内存、macOS 27.0.1（26A434）、
 Apple Clang 21.0.0、CMake 4.3.3、Standalone Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。
 
-| 后端 | 构建 | TLS | 检查 / doctest 用例 | 结果 |
+| 依赖方案 | 构建 | TLS | 检查 / doctest 用例 | 结果 |
 | --- | --- | --- | ---: | --- |
 | Standalone Asio | Release | ON | 55 / 219 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-standalone.log) |
 | Boost.Asio | Release | ON | 55 / 219 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-boost.log) |
@@ -77,8 +77,8 @@ Apple Clang 21.0.0、CMake 4.3.3、Standalone Asio 1.38.2、Boost 1.90.0、OpenS
 | ASan/UBSan | Standalone Asio：ARQ、独立 ARQ/FEC 实现互通、RUDP/FEC、lifecycle、detail 与 concurrency | 109 | 通过 |
 | TSan | Standalone Asio：FEC、独立 FEC 实现互通、RUDP/FEC、lifecycle、detail 与 concurrency | 86 | 通过 |
 
-RUDP FEC 端点测试在两种 Release 后端及独立 ASan/UBSan、TSan 构建中均通过 11 个用例、
-2,564 项断言。真实 zephyr/arknet 混合进程测试每种后端均通过 12 组，覆盖重连、ARK 二进制
+RUDP FEC 端点测试在两种 Release 依赖方案及独立 ASan/UBSan、TSan 构建中均通过 11 个用例、
+2,564 项断言。真实 zephyr/arknet 混合进程测试每种依赖方案均通过 12 组，覆盖重连、ARK 二进制
 消息头、4096 字节消息体、ARQ 报文丢失和乱序。中继保留 SYN/ACK/FIN，未验证 FIN 丢失后的可靠关闭。
 
 [日志与复现命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/README_CN.md)
@@ -109,15 +109,15 @@ ASan/UBSan 与 TSan 使用独立构建。它们会增加运行开销，发布的
 
 ## CI 与未覆盖范围
 
-CI 在 Linux／macOS／Windows 检查两种后端，Linux 另运行 ASan/UBSan 和 TSan。
-Job 名称包含系统、后端、TLS 和检查模式。main push 与 PR 使用独立触发，
+CI 在 Linux／macOS／Windows 检查两种依赖方案，Linux 另运行 ASan/UBSan 和 TSan。
+Job 名称包含系统、依赖方案、TLS 和检查模式。main push 与 PR 使用独立触发，
 过期运行会取消。CI 上传测试日志、执行基准冒烟，不生成性能报告矩阵。
 
 本机 RUDP 测量覆盖随机／突发丢包、延迟、重复与乱序，并包含六组 120 秒持续运行。
 这些结果不能预测跨主机容量和广域网延迟。文件描述符耗尽、生产时长耐久及
 [ARK 业务验收](production-readiness_CN.md)仍需单独验证。
 
-文档中的 14 个独立客户端、服务端程序也在两种后端上编译、运行通过。每种后端
+文档中的 14 个独立客户端、服务端程序也在两种依赖方案上编译、运行通过。每种依赖方案
 的七组协议检查了回显内容，全部 28 个进程正常退出。
 [构建、运行日志与复现脚本](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/usage/README_CN.md)
 独立保留这项检查，不混入性能测量。

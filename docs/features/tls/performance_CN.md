@@ -10,8 +10,8 @@ Release 本机回环测试：TLS 握手后发送 1024 字节消息、16 个客�
 
 ### 本机结论
 
-- 两种后端都以 4 个 io_context 各 1 个线程的吞吐量中位数最高、p99 中位数最低。
-- 单客户端、窗口 1 时，两种后端则都以 1 个 io_context、1 个线程的吞吐量中位数最高、p99 中位数最低。
+- 两种依赖方案都以 4 个 io_context 各 1 个线程的吞吐量中位数最高、p99 中位数最低。
+- 单客户端、窗口 1 时，两种依赖方案则都以 1 个 io_context、1 个线程的吞吐量中位数最高、p99 中位数最低。
 
 [完整 TCPS 报告](../../performance/tcps_CN.md) · [WSS 报告](../../performance/wss_CN.md) · [HTTPS 报告](../../performance/https_CN.md)
 
@@ -21,7 +21,7 @@ Release 本机回环测试：TLS 握手后发送 1024 字节消息、16 个客�
 
 ## 构建与复现
 
-在仓库根目录使用 Release 构建。使用 Boost 时，将 standalone 头文件路径参数替换为 `-DARKNET_USE_BOOST_ASIO=ON`。两个后端应使用相同 OpenSSL 版本、主机和构建选项。
+在仓库根目录使用 Release 构建。使用 Boost 时，将 Standalone Asio 头文件路径参数替换为 `-DARKNET_USE_BOOST_ASIO=ON`。两种依赖方案应使用相同 OpenSSL 版本、主机和构建选项。
 
 命令采用单配置 generator。使用 Visual Studio 时，在构建命令中加入 `--config Release`，并运行 `benchmarks/Release/` 下的可执行文件。Windows 可执行文件带有 `.exe` 后缀。
 
@@ -50,7 +50,7 @@ done
 
 服务端使用测试证书与私钥，客户端信任测试 CA，并校验证书链和 IP 身份。公开证书仅用于本地测试；mTLS 正确性由 [TLS 测试](https://github.com/OpenArkStudio/arknet/blob/main/tests/tls.cpp)单独覆盖。
 
-比较 TCP/TCPS、WebSocket/WSS 或 HTTP/HTTPS 时，保持消息大小、并发、计算量、后端和线程模型一致。TCP 使用 `use_dgram`，WebSocket 使用二进制帧，HTTP 使用持久连接。
+比较 TCP/TCPS、WebSocket/WSS 或 HTTP/HTTPS 时，保持消息大小、并发、计算量、依赖方案和线程模型一致。TCP 使用 `use_dgram`，WebSocket 使用二进制帧，HTTP 使用持久连接。
 
 测试未覆盖握手速率、频繁重连、会话恢复、证书轮换、密码套件或 mTLS 吞吐量，JSON 也不记录协商的密码套件。端到端差异包含协议解析与加密开销，稳态回环结果不能推算频繁建连能力或跨主机容量。
 

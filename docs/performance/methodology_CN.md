@@ -52,7 +52,7 @@ bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_coroutine_
 
 再用 Boost 构建目录中的两个可执行文件运行相同命令，将 `--backend` 改为 `boost`，
 输出分别设为 `local-dimensions-boost-callback.json` 和 `local-dimensions-boost-native.json`。
-每种后端包含 **756 次 arknet 回调测量和
+每种依赖方案包含 **756 次 arknet 回调测量和
 432 次原生 TCP 对照测量**。七种协议均使用显式设置的四档在途请求上限，
 包括 UDP；批量大小与连接数分别设置。
 
@@ -89,7 +89,7 @@ bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_coroutine_
   --output benchmarks/results/local-coroutine.json
 ```
 
-每种后端的回调矩阵包含 **630 次测量**：
+每种依赖方案的回调矩阵包含 **630 次测量**：
 七种协议 × 三种消息大小 × 两档流量 × 五种拓扑 × 三次重复。
 协程 TCP 矩阵包含 **180 次测量**，增加两档业务计算量。
 运行脚本默认测量三秒、预热一秒；上面的命令与较短的本机基线一致。

@@ -1,6 +1,6 @@
 # UDP Performance Report
 
-Local measurements on 2026-10-12 include 504 matrix runs, 21 receive-buffer isolation runs, and a 60-second UDP stress run for each backend. Independent Release C++ programs produced these results, not CI.
+Local measurements on 2026-10-12 include 504 matrix runs, 21 receive-buffer isolation runs, and a 60-second UDP stress run for each dependency configuration. Independent Release C++ programs produced these results, not CI.
 
 ## Test Conditions
 
@@ -35,7 +35,7 @@ All failed records remain archived. A failed repetition excludes all three runs 
 
 ![UDP p99 RTT: medians and ranges across IO models](assets/udp-work0-latency.svg)
 
-| Backend | io_contexts / threads | Roundtrips / s | p99 RTT / μs | Process CPU / % |
+| Dependency | io_contexts / threads | Roundtrips / s | p99 RTT / μs | Process CPU / % |
 | --- | --- | ---: | ---: | ---: |
 | Standalone | 1 / 1 | 92,515 | 207.79 | 99.4 |
 | Standalone | 1 / 2 | 86,611 | 211.58 | 173.3 |

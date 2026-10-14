@@ -1,7 +1,7 @@
 # 示例
 
 仓库包含小型 C++ 应用，各协议指南另提供完整的客户端与服务端程序。
-两端使用一致的后端与 TLS 设置。
+两端使用一致的依赖方案与 TLS 设置。
 
 ## 仓库程序
 
@@ -19,7 +19,7 @@ cmake -S . -B build -DARKNET_BUILD_EXAMPLES=ON \
 cmake --build build --parallel 3
 ```
 
-Boost 后端将 Asio include 参数替换为 `-DARKNET_USE_BOOST_ASIO=ON`。
+Boost 依赖方案将 Asio include 参数替换为 `-DARKNET_USE_BOOST_ASIO=ON`。
 Visual Studio 添加 `--config Release`，运行 `examples/Release/` 下的 `.exe`。
 程序源码说明实际端口与停止方式。
 

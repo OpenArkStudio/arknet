@@ -2,7 +2,7 @@
 
 The report contains the final measurements for each protocol: UDP on 2026-10-12, and other protocols and native coroutine TCP on 2026-10-10. Each protocol retains its own source hash and raw records.
 
-**1,620 local IPv4 measurements** compare throughput, p99 latency and IO models across the Asio backends.
+**1,620 local IPv4 measurements** compare throughput, p99 latency and IO models across the Asio dependency combinations.
 
 ## Test Conditions
 
@@ -72,7 +72,7 @@ Coroutine window=16 measures batch RTT; the callback program measures message RT
 
 Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch arm64; TLS ON; sanitizers OFF. Standalone Asio 1.38.2 with BHO Beast based on Boost 1.84 (API 351); Boost 1.90.0 with Asio 1.38.0 and Beast API 359; OpenSSL 3.6.4. Mac mini on AC power, low power mode disabled, no CPU affinity.
 
-The backends use different Beast versions, so differences between backends also include dependency-version effects and cannot be attributed solely to Asio.
+The dependency combinations use different Beast versions, so differences between them also include dependency-version effects and cannot be attributed solely to Asio.
 
 ## Metric Definitions
 

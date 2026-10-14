@@ -2,7 +2,7 @@
 
 Date: 2026-10-13. Local macOS 27.0.1 (26A434), AppleClang 21.0.0.21000101, CMake Release builds.
 
-| Backend | Process pairs | Sessions | Application messages | Echoes | Result |
+| Dependency | Process pairs | Sessions | Application messages | Echoes | Result |
 | --- | ---: | ---: | ---: | ---: | --- |
 | Standalone Asio 1.38.2 | 12 | 16 | 512 | 512 | Passed |
 | Boost.Asio / Boost 1.90.0 | 12 | 16 | 512 | 512 | Passed |
@@ -13,7 +13,7 @@ Each session carries 32 binary messages with ARK-compatible native packed CS (7-
 
 The test-only relay drops every ninth ARQ datagram in each direction and holds every seventh eligible ARQ datagram until another packet passes it or a 6 ms deadline. The relay preserves control packets. Actual weak-network counters from the successful runs:
 
-| Backend | Direction | Close initiator | Dropped | Reordered | Socket errors | FIN forwarded |
+| Dependency | Direction | Close initiator | Dropped | Reordered | Socket errors | FIN forwarded |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
 | Standalone | zephyr client / arknet server | Client | 31 | 35 | 0 | 1 |
 | Standalone | zephyr client / arknet server | Server | 30 | 32 | 0 | 1 |

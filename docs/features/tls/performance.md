@@ -12,9 +12,9 @@ window 16 and no extra application computation.
 ### What This Run Shows
 
 - Four contexts/one thread each has the highest throughput median and lowest
-  p99 median for both backends.
+  p99 median for both dependency combinations.
 - With one client and window 1, one context/one thread has the best throughput
-  and p99 medians for both backends. The benefit of extra threads depends on
+  and p99 medians for both dependency combinations. The benefit of extra threads depends on
   concurrency.
 
 [Complete TCPS report](../../performance/tcps.md) · [WSS report](../../performance/wss.md) ·
@@ -27,7 +27,7 @@ window 16 and no extra application computation.
 ## Build and Reproduce
 
 Use a Release build from the repository root. Replace the standalone include
-argument with `-DARKNET_USE_BOOST_ASIO=ON` for Boost. Both backends must use the
+argument with `-DARKNET_USE_BOOST_ASIO=ON` for Boost. Both dependency combinations must use the
 same OpenSSL version, host and build options for a meaningful comparison.
 
 Commands assume a single-configuration generator. With Visual Studio, add
@@ -65,7 +65,7 @@ mTLS correctness is covered separately by
 [TLS tests](https://github.com/OpenArkStudio/arknet/blob/main/tests/tls.cpp).
 
 Compare TCP/TCPS, WebSocket/WSS or HTTP/HTTPS with matching message size,
-concurrency, computation, backend and thread model. TCP uses `use_dgram`,
+concurrency, computation, dependency combination and thread model. TCP uses `use_dgram`,
 WebSocket uses binary frames, and HTTP uses persistent connections.
 
 The test excludes handshake rate, connection churn, session resumption,

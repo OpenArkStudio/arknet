@@ -10,9 +10,9 @@ Release 本机回环测试：1024 字节消息、16 个客户端、窗口 16，�
 
 ### 本机结论
 
-- 两种后端都以 4 个 io_context 各 1 个线程的吞吐量中位数最高。
+- 两种依赖方案都以 4 个 io_context 各 1 个线程的吞吐量中位数最高。
 - 最低 p99 中位数对应 standalone 的 1 个 io_context、2 个线程，以及 Boost 的 4 个 io_context 各 1 个线程。
-- 单客户端、窗口 1 时，两种后端使用 1 个 io_context、4 个线程的吞吐量中位数均低于 1 个 io_context、1 个线程。
+- 单客户端、窗口 1 时，两种依赖方案使用 1 个 io_context、4 个线程的吞吐量中位数均低于 1 个 io_context、1 个线程。
 
 [完整 TCP 报告](../../performance/tcp_CN.md) · [测试环境](../../performance/overview_CN.md) · [指标与统计口径](../../performance/methodology_CN.md)
 
@@ -20,7 +20,7 @@ Release 本机回环测试：1024 字节消息、16 个客户端、窗口 16，�
 
 ## 构建与 IO 模型对比
 
-在仓库根目录使用 Release 构建。使用 Boost 后端时，将 Asio 头文件路径参数替换为 `-DARKNET_USE_BOOST_ASIO=ON`，保持其他设置和硬件一致。
+在仓库根目录使用 Release 构建。使用 Boost 依赖方案时，将 Asio 头文件路径参数替换为 `-DARKNET_USE_BOOST_ASIO=ON`，保持其他设置和硬件一致。
 
 命令采用单配置 generator。使用 Visual Studio 时，在构建命令中加入 `--config Release`，并运行 `benchmarks/Release/` 下的可执行文件。Windows 可执行文件带有 `.exe` 后缀。
 

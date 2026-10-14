@@ -73,7 +73,7 @@ FEC retention sums endpoint statistics sampled every 100 ms and can miss shorter
 
 1,024 B; window 16; one io_context / one endpoint thread. Sampled peaks are medians across three rounds.
 
-| Backend / Policy | Restored / 1,000 | Retransmitted / 1,000 | FEC Retained / KiB | Relay Route Peaks Sum / KiB | Process RSS / MiB | Max Observed Parity |
+| Dependency / Policy | Restored / 1,000 | Retransmitted / 1,000 | FEC Retained / KiB | Relay Route Peaks Sum / KiB | Process RSS / MiB | Max Observed Parity |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Standalone Asio / ARQ only | 0.0 | 331.7 | 0.0 | 50.5 | 6.8 | 0 |
 | Standalone Asio / Fixed FEC | 182.8 | 185.9 | 37.7 | 84.3 | 7.1 | 2 |
@@ -114,7 +114,7 @@ Application messages are fragmented to the protocol MTU. 16 KiB denotes a messag
 
 Each case has one measured run, so no repeated-run whiskers are shown. All message checks passed. Memory uses the definitions above; peaks alone do not establish the absence of long-term leaks.
 
-| Backend / Policy | Message Round Trips | Round Trips/s | p99 / ms | CPU / % | Wire Overhead / % | FEC Sampled Peak / KiB |
+| Dependency / Policy | Message Round Trips | Round Trips/s | p99 / ms | CPU / % | Wire Overhead / % | FEC Sampled Peak / KiB |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Standalone Asio / ARQ only | 20,734 | 172 | 599.6 | 48.6 | 24.2 | 0.0 |
 | Standalone Asio / Fixed FEC | 27,622 | 229 | 448.3 | 82.1 | 66.2 | 232.6 |
@@ -127,7 +127,7 @@ Each case has one measured run, so no repeated-run whiskers are shown. All messa
 
 The following compares main-matrix cases with one io_context / one endpoint thread, keeping IO models separate from policy ranking.
 
-| Backend | Network Condition | Highest Round-Trip Throughput | Lowest p99 RTT |
+| Dependency | Network Condition | Highest Round-Trip Throughput | Lowest p99 RTT |
 | --- | --- | ---: | ---: |
 | Standalone Asio | No injected loss | ARQ only 62,827 round trips/s | ARQ only 1.1 ms |
 | Standalone Asio | Random loss | Fixed FEC 844 round trips/s | Adaptive FEC 142.5 ms |
@@ -136,9 +136,9 @@ The following compares main-matrix cases with one io_context / one endpoint thre
 | Boost.Asio | Random loss | Fixed FEC 869 round trips/s | Fixed FEC 160.0 ms |
 | Boost.Asio | Burst loss | Adaptive FEC 878 round trips/s | Adaptive FEC 150.7 ms |
 
-The ranges below span the two backends' three-run medians:
+The ranges below span the two dependency configurations' three-run medians:
 
-- No injected loss: ARQ only reached 61,705 - 62,827 round trips/s, with p99 1.06 - 1.09 ms. Both throughput and p99 favored ARQ-only over the measured FEC policies on both backends.
+- No injected loss: ARQ only reached 61,705 - 62,827 round trips/s, with p99 1.06 - 1.09 ms. Both throughput and p99 favored ARQ-only over the measured FEC policies on both dependency configurations.
 - Random loss: FEC throughput was 835 - 869 round trips/s versus 560 - 572 for ARQ only. Process CPU increased from 25.4 - 26.6% to 52.7 - 56.2%, and wire-byte overhead from 21.7 - 21.9% to 55.1 - 60.1%.
 - Random loss, 64 B and one in-flight request per client: fixed FEC reached 116 - 117 round trips/s, below ARQ-only's 138 - 139. Small-message, low-concurrency workloads need separate evaluation.
 
