@@ -7,6 +7,7 @@
 #include <arknet/base/error.hpp>
 
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class udp_recv_op
 {

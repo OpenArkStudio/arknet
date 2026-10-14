@@ -9,11 +9,13 @@
 #include <arknet/external/beast.hpp>
 
 namespace arknet::detail {
+
 template<class T, class = void>
     struct is_websocket_client : std::bool_constant < requires(T& client)
 {
     client.ws_stream();
 } > {};
+
 template<class T, class = void>
     struct is_websocket_server : std::bool_constant < requires(typename T::session_type& session)
 {
@@ -25,10 +27,12 @@ class ws_stream_cp : public ws_stream_tag
 {
 public:
     using ws_stream_type = typename Args::stream_t;
+
     ws_stream_type& ws_stream() noexcept {
         ARKNET_ASSERT(ws_stream_);
         return *ws_stream_;
     }
+
     const ws_stream_type& ws_stream() const noexcept {
         ARKNET_ASSERT(ws_stream_);
         return *ws_stream_;
@@ -45,10 +49,12 @@ protected:
         limits.handshake_timeout = owner.get_connect_timeout();
         ws_stream_->set_option(limits);
     }
+
     template<class Condition, class Transport>
     void _ws_start(std::shared_ptr<Derived>&, std::shared_ptr<ecs_t<Condition>>&, Transport&) {
         ARKNET_ASSERT(static_cast<Derived&>(*this).io_->running_in_this_thread());
     }
+
     template<class Chain>
     void _ws_stop(std::shared_ptr<Derived> lifetime, Chain chain) {
         auto& owner = static_cast<Derived&>(*this);
@@ -102,6 +108,7 @@ protected:
             },
             chain.move_guard());
     }
+
     template<class Condition>
     void _ws_post_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy) {
         auto& owner = static_cast<Derived&>(*this);
@@ -129,11 +136,13 @@ protected:
                 owner._handle_recv(ec, size, std::move(lifetime), std::move(policy));
             }));
     }
+
     template<class Condition>
     void _ws_handle_recv(const error_code& ec, std::size_t size, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy) {
         static_cast<Derived&>(*this)._tcp_handle_recv(ec, size, std::move(lifetime), std::move(policy));
     }
+
     template<class Condition>
     void _post_control_callback(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy) {
         auto& owner = static_cast<Derived&>(*this);
@@ -151,6 +160,7 @@ protected:
                 });
         });
     }
+
     template<class Condition>
     void _handle_control_callback(websocket::frame_type type, beast::string_view payload,
         std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy) {
@@ -169,10 +179,13 @@ protected:
             break;
         }
     }
+
     template<class Condition>
     void _handle_control_ping(beast::string_view, std::shared_ptr<Derived>, std::shared_ptr<ecs_t<Condition>>) {}
+
     template<class Condition>
     void _handle_control_pong(beast::string_view, std::shared_ptr<Derived>, std::shared_ptr<ecs_t<Condition>>) {}
+
     template<class Condition>
     void _handle_control_close(
         beast::string_view, std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>>) {
@@ -182,6 +195,7 @@ protected:
             owner._do_disconnect(websocket::error::closed, std::move(lifetime));
         }
     }
+
     template<class Condition, class Chain>
     void _post_read_upgrade_request(
         std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
@@ -202,6 +216,7 @@ protected:
                 owner._handle_read_upgrade_request(ec, std::move(lifetime), std::move(policy), std::move(chain));
             }));
     }
+
     template<class Condition, class Chain>
     void _handle_read_upgrade_request(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
@@ -218,6 +233,7 @@ protected:
             owner._post_upgrade(std::move(lifetime), std::move(policy), owner.get_upgrade_request(), std::move(chain));
         }
     }
+
     template<class Condition, class Message, class Chain>
     void _post_upgrade(
         std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy, Message& message, Chain chain) {
@@ -246,6 +262,7 @@ protected:
             ws_stream_->async_handshake(message, authority, owner.get_upgrade_target(), std::move(completion));
         }
     }
+
     template<class Condition, class Chain>
     void _post_upgrade(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy, Chain chain)
         requires(Args::is_session)
@@ -257,6 +274,7 @@ protected:
                 owner._handle_upgrade(ec, std::move(lifetime), std::move(policy), std::move(chain));
             }));
     }
+
     template<class Condition, class Chain>
     void _session_handle_upgrade(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
@@ -275,6 +293,7 @@ protected:
             }
         });
     }
+
     template<class Condition, class Chain>
     void _client_handle_upgrade(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
@@ -283,6 +302,7 @@ protected:
         owner._fire_upgrade(lifetime);
         owner._done_connect(ec, std::move(lifetime), std::move(policy), std::move(chain));
     }
+
     template<class Condition, class Chain>
     void _handle_upgrade(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
@@ -297,6 +317,7 @@ protected:
                 ec, std::move(lifetime), std::move(policy), std::move(chain));
         }
     }
+
     std::unique_ptr<ws_stream_type> ws_stream_;
 };
 } // namespace arknet::detail

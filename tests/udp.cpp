@@ -11,6 +11,7 @@
 #include "check.hpp"
 
 namespace {
+
 struct udp_send_probe : arknet::detail::udp_send_op<udp_send_probe, void>
 {
     struct test_io
@@ -19,27 +20,35 @@ struct udp_send_probe : arknet::detail::udp_send_op<udp_send_probe, void>
             return true;
         }
     } context;
+
     test_io* io_ = &context;
+
     struct test_stream
     {
         arknet::error_code error;
         std::size_t count{};
+
         template<class Buffer, class Handler>
         void async_send(Buffer, Handler&& handler) {
             handler(error, count);
         }
+
         template<class Buffer, class Handler>
         void async_send_to(Buffer buffer, const asio::ip::udp::endpoint&, Handler&& handler) {
             async_send(buffer, std::forward<Handler>(handler));
         }
     } socket;
+
     arknet::detail::handler_memory<> memory;
+
     auto& stream() {
         return socket;
     }
+
     auto& wallocator() {
         return memory;
     }
+
     using udp_send_op::_udp_send;
     using udp_send_op::_udp_send_to;
 };
@@ -79,6 +88,7 @@ struct udp_io_runner
     asio::io_context context;
     asio::executor_work_guard<asio::io_context::executor_type> work{context.get_executor()};
     std::thread thread{[this] { context.run(); }};
+
     void finish() {
         work.reset();
         context.stop();
@@ -87,6 +97,7 @@ struct udp_io_runner
             thread.join();
         }
     }
+
     ~udp_io_runner() {
         finish();
     }
@@ -323,6 +334,7 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
     constexpr std::size_t race_rows = 34;
     constexpr std::size_t race_offset = admission_attempts + 1;
     constexpr std::size_t attempts = race_offset + threads * race_rows;
+
     struct result
     {
         bool submitted{};
@@ -332,6 +344,7 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
         std::size_t bytes{};
         arknet::error_code error;
     };
+
     std::array<result, attempts> results{};
     std::mutex result_mutex;
     std::condition_variable completed;
@@ -579,6 +592,7 @@ DOCTEST_TEST_CASE("UDP cast rejects a send copied before callback stop and resta
         using arknet::udp_cast_t<filtered_cast>::udp_cast_t;
         std::promise<void> entered;
         std::latch release{1};
+
         std::string_view data_filter_before_send(std::string_view bytes) {
             if (bytes == "previous")
             {
@@ -588,6 +602,7 @@ DOCTEST_TEST_CASE("UDP cast rejects a send copied before callback stop and resta
             return bytes;
         }
     };
+
     messages received;
     messages started;
     udp_io_runner runner;
@@ -610,20 +625,24 @@ DOCTEST_TEST_CASE("UDP cast rejects a send copied before callback stop and resta
         sender.async_send(target, std::string_view("previous"),
             [&](const arknet::error_code& error, std::size_t count) { sent.set_value({error, count}); });
     });
+
     struct unlock
     {
         std::latch& latch;
         bool armed = true;
+
         void open() {
             if (std::exchange(armed, false))
             {
                 latch.count_down();
             }
         }
+
         ~unlock() {
             open();
         }
     } release{sender.release};
+
     await(paused);
     sender.post([&] {
         sender.stop();
@@ -649,6 +668,7 @@ DOCTEST_TEST_CASE("UDP custom session can stop during connect without delivering
     public:
         using arknet::udp_session_t<custom_session>::udp_session_t;
     };
+
     std::atomic<std::size_t> connect_count{};
     std::atomic<std::size_t> receive_count{};
     std::promise<void> rejected;
@@ -684,6 +704,7 @@ class udp_delayed_session : public arknet::udp_session_t<udp_delayed_session>
 {
 public:
     using arknet::udp_session_t<udp_delayed_session>::udp_session_t;
+
     template<class Data, class Completion>
     bool _do_send(Data& data, Completion&& completion) {
         auto timer = std::make_shared<asio::steady_timer>(this->io_->executor());

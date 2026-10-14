@@ -17,13 +17,16 @@
 #if defined(ARKNET_INTEROP_LEGACY)
 #include <zephyr/udp/udp_client.hpp>
 #include <zephyr/udp/udp_server.hpp>
+
 #else
 #include <arknet/rudp/rudp_client.hpp>
 #include <arknet/rudp/rudp_server.hpp>
 #include "impairment.hpp"
+
 #endif
 
 namespace {
+
 using namespace std::chrono_literals;
 #if defined(ARKNET_INTEROP_LEGACY)
 namespace network = zephyr;
@@ -43,6 +46,7 @@ enum class scenario
     reconnect,
     impaired
 };
+
 const char* scenario_name(scenario value) {
     return value == scenario::baseline ? "baseline" : value == scenario::reconnect ? "reconnect" : "impaired";
 }
@@ -53,10 +57,12 @@ void require(bool condition, const std::string& reason) {
         throw std::runtime_error(reason);
     }
 }
+
 template<class Integer>
 void append_native(std::string& bytes, Integer value) {
     bytes.append(reinterpret_cast<const char*>(&value), sizeof value);
 }
+
 std::vector<std::string> application_messages() {
     constexpr std::array<std::uint32_t, 8> body_sizes{0, 1, 23, 1024, 4096, 4096, 511, 4096};
     std::vector<std::string> result;
@@ -82,10 +88,12 @@ std::vector<std::string> application_messages() {
     }
     return result;
 }
+
 struct peer_state
 {
     explicit peer_state(const std::vector<std::string>& messages)
         : expected(messages) {}
+
     const std::vector<std::string>& expected;
     std::mutex mutex;
     std::condition_variable ready;
@@ -110,11 +118,13 @@ struct peer_state
         ready.notify_all();
         return failure.empty();
     }
+
     void fail(std::string reason) {
         std::lock_guard lock(mutex);
         failure = std::move(reason);
         ready.notify_all();
     }
+
     void disconnect(network::error_code error, bool reset_received = false) {
         std::lock_guard lock(mutex);
         if (reset_received)
@@ -130,6 +140,7 @@ struct peer_state
         disconnect_errors.push_back(error);
         ready.notify_all();
     }
+
     template<class Predicate>
     void wait(Predicate predicate, const char* reason, std::chrono::seconds timeout = 5s) {
         std::unique_lock lock(mutex);
@@ -139,6 +150,7 @@ struct peer_state
         require(failure.empty(), failure);
     }
 };
+
 template<class Endpoint>
 bool send_async(Endpoint& endpoint, std::string_view bytes) {
 #if defined(ARKNET_INTEROP_LEGACY)
@@ -147,6 +159,7 @@ bool send_async(Endpoint& endpoint, std::string_view bytes) {
     return endpoint.async_send(bytes);
 #endif
 }
+
 template<class Endpoint>
 bool start(Endpoint& endpoint, unsigned short port) {
 #if defined(ARKNET_INTEROP_LEGACY)
@@ -162,6 +175,7 @@ void configure_arq(Endpoint& endpoint) {
     options.congestion_control = false;
     endpoint.set_rudp_options(options);
 }
+
 void verify_impairment(std::unique_ptr<arknet_interop::data_impairment>& relay) {
     if (!relay)
     {

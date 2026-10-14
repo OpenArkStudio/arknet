@@ -29,22 +29,28 @@
 #include <arknet/base/io_pool.hpp>
 #include <arknet/base/listener.hpp>
 #include <arknet/base/session_mgr.hpp>
+
 namespace arknet {
+
 class session
 {
 public:
     static constexpr bool is_client() noexcept {
         return false;
     }
+
     static constexpr bool is_session() noexcept {
         return true;
     }
+
     static constexpr bool is_server() noexcept {
         return false;
     }
 };
 } // namespace arknet
+
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class session_impl_t
     : public arknet::session
@@ -76,6 +82,7 @@ public:
     using buffer_type = typename Args::buffer_t;
     using send_cp<Derived, Args>::send;
     using send_cp<Derived, Args>::async_send;
+
     template<class... SocketArgs>
     session_impl_t(session_mgr_t<Derived>& sessions, listener_t& listener, std::shared_ptr<io_t> lane,
         std::size_t initial, std::size_t maximum, SocketArgs&&... socket_args)
@@ -84,6 +91,7 @@ public:
         , sessions_(sessions)
         , listener_(listener)
         , buffer_(initial, maximum) {}
+
     void stop() {
         this->derived().dispatch([this] {
             this->_stop_silence_timer();
@@ -97,16 +105,20 @@ public:
             counter_ptr_.reset();
         });
     }
+
     void destroy() {
         this->socket_.reset();
         this->io_.reset();
     }
+
     bool is_started() const noexcept {
         return state_.load() == state_t::started;
     }
+
     bool is_stopped() const noexcept {
         return state_.load() == state_t::stopped;
     }
+
     buffer_wrap<buffer_type>& buffer() noexcept {
         return buffer_;
     }
@@ -118,19 +130,25 @@ protected:
             this->_make_connect_timeout_timer(this->selfptr(), this->connect_timeout_);
         });
     }
+
     session_mgr_t<Derived>& sessions() noexcept {
         return sessions_;
     }
+
     listener_t& listener() noexcept {
         return listener_;
     }
+
     std::atomic<state_t>& state() noexcept {
         return state_;
     }
+
     constexpr bool life_id() const noexcept {
         return true;
     }
+
     constexpr void reset_life_id() noexcept {}
+
     session_mgr_t<Derived>& sessions_;
     listener_t& listener_;
     buffer_wrap<buffer_type> buffer_;

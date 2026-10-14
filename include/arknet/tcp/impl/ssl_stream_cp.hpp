@@ -13,6 +13,7 @@
 #include <arknet/base/io_pool.hpp>
 
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class ssl_stream_cp : public ssl_stream_tag
 {
@@ -20,13 +21,16 @@ public:
     using ssl_socket_type = typename Args::socket_t;
     using ssl_stream_type = asio::ssl::stream<ssl_socket_type&>;
     using ssl_handshake_type = asio::ssl::stream_base::handshake_type;
+
     ssl_stream_cp(asio::ssl::context& context, ssl_handshake_type role) noexcept
         : ssl_ctx_(context)
         , ssl_type_(role) {}
+
     ssl_stream_type& ssl_stream() noexcept {
         ARKNET_ASSERT(ssl_stream_);
         return *ssl_stream_;
     }
+
     const ssl_stream_type& ssl_stream() const noexcept {
         ARKNET_ASSERT(ssl_stream_);
         return *ssl_stream_;
@@ -38,11 +42,13 @@ protected:
         // Capture the configured identity only after the application has loaded it.
         ssl_stream_ = std::make_unique<ssl_stream_type>(socket, context);
     }
+
     template<class Condition>
     void _ssl_start(
         std::shared_ptr<Derived>&, std::shared_ptr<ecs_t<Condition>>&, ssl_socket_type&, asio::ssl::context&) noexcept {
         ARKNET_ASSERT(static_cast<Derived&>(*this).io_->running_in_this_thread());
     }
+
     template<class Chain>
     void _ssl_stop(std::shared_ptr<Derived> lifetime, Chain chain) {
         auto& owner = static_cast<Derived&>(*this);
@@ -81,6 +87,7 @@ protected:
             },
             chain.move_guard());
     }
+
     template<class Condition, class Chain>
     void _post_handshake(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
         auto& owner = static_cast<Derived&>(*this);
@@ -90,13 +97,16 @@ protected:
             owner._handle_handshake(ec, std::move(lifetime), std::move(policy), std::move(chain));
             return;
         }
+
         struct deadline
         {
             asio::steady_timer timer;
             bool expired = false;
+
             explicit deadline(asio::any_io_executor executor)
                 : timer(executor) {}
         };
+
         auto timeout = std::make_shared<deadline>(owner.io_->executor());
         timeout->timer.expires_after(owner.get_connect_timeout());
         timeout->timer.async_wait([&owner, lifetime, timeout](error_code ec) {
@@ -123,6 +133,7 @@ protected:
                     std::move(policy), std::move(chain));
             }));
     }
+
     error_code _prepare_handshake() {
         if constexpr (!Args::is_client)
         {
@@ -172,10 +183,12 @@ protected:
             return accepted == 1 ? error_code{} : _ssl_configuration_error();
         }
     }
+
     static error_code _ssl_configuration_error() noexcept {
         const int native = static_cast<int>(ERR_get_error());
         return native ? error_code{native, asio::error::get_ssl_category()} : error_code{asio::error::invalid_argument};
     }
+
     template<class Condition, class Chain>
     void _session_handle_handshake(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
@@ -194,6 +207,7 @@ protected:
             }
         });
     }
+
     template<class Condition, class Chain>
     void _client_handle_handshake(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
@@ -202,6 +216,7 @@ protected:
         owner._fire_handshake(lifetime);
         owner._done_connect(ec, std::move(lifetime), std::move(policy), std::move(chain));
     }
+
     template<class Condition, class Chain>
     void _handle_handshake(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
@@ -216,6 +231,7 @@ protected:
                 ec, std::move(lifetime), std::move(policy), std::move(chain));
         }
     }
+
     asio::ssl::context& ssl_ctx_;
     ssl_handshake_type ssl_type_;
     std::unique_ptr<ssl_stream_type> ssl_stream_;

@@ -15,6 +15,7 @@
 #include <arknet/external/beast.hpp>
 
 namespace arknet {
+
 using http_route_request = http::request<http::string_body>;
 using http_route_response = http::response<http::string_body>;
 
@@ -45,17 +46,20 @@ class http_router
         parameter,
         literal
     };
+
     struct segment
     {
         segment_kind kind;
         std::string value;
     };
+
     struct route
     {
         http::verb method;
         std::vector<segment> segments;
         detail::function<void(const http_route_context&, http_route_response&)> handler;
     };
+
     std::vector<route> routes_;
     std::vector<detail::function<bool(const http_route_context&, http_route_response&)>> middleware_;
     detail::function<void(std::exception_ptr)> error_handler_;

@@ -14,6 +14,7 @@
 #include <arknet/base/io_pool.hpp>
 
 namespace arknet::detail {
+
 ARKNET_CLASS_FORWARD_DECLARE_BASE;
 
 template<class Derived, class Args>
@@ -31,26 +32,31 @@ public:
     bool async_send(endpoint_type endpoint, Data&& data) {
         return submit(std::move(endpoint), std::forward<Data>(data), [](const error_code&, std::size_t) {});
     }
+
     template<class Data, class Completion>
         requires send_completion_handler<Completion>
     bool async_send(endpoint_type endpoint, Data&& data, Completion&& completion) {
         return submit(std::move(endpoint), std::forward<Data>(data), std::forward<Completion>(completion));
     }
+
     template<class Data>
     auto async_send(endpoint_type endpoint, Data&& data, asio::use_future_t<>) {
         return future_for(
             [&](auto completion) { async_send(std::move(endpoint), std::forward<Data>(data), std::move(completion)); });
     }
+
     template<class Element, class Count>
         requires std::is_integral_v<remove_cvref_t<Count>>
     bool async_send(endpoint_type endpoint, Element* data, Count count) {
         return submit_range(std::move(endpoint), data, count, [](const error_code&, std::size_t) {});
     }
+
     template<class Element, class Count, class Completion>
         requires(std::is_integral_v<remove_cvref_t<Count>> && send_completion_handler<Completion>)
     bool async_send(endpoint_type endpoint, Element* data, Count count, Completion&& completion) {
         return submit_range(std::move(endpoint), data, count, std::forward<Completion>(completion));
     }
+
     template<class Element, class Count>
         requires std::is_integral_v<remove_cvref_t<Count>>
     auto async_send(endpoint_type endpoint, Element* data, Count count, asio::use_future_t<>) {
@@ -64,6 +70,7 @@ public:
         return async_send(std::forward<Host>(host), std::forward<Service>(service), std::forward<Data>(data),
             [](const error_code&, std::size_t) {});
     }
+
     template<class Host, class Service, class Data, class Completion>
         requires(!std::is_same_v<remove_cvref_t<Host>, endpoint_type> && send_completion_handler<Completion>)
     bool async_send(Host&& host, Service&& service, Data&& data, Completion&& completion) {
@@ -71,6 +78,7 @@ public:
                           detail::to_string(std::forward<Service>(service))},
             std::forward<Data>(data), std::forward<Completion>(completion));
     }
+
     template<class Host, class Service, class Data>
         requires(!std::is_same_v<remove_cvref_t<Host>, endpoint_type>)
     auto async_send(Host&& host, Service&& service, Data&& data, asio::use_future_t<>) {
@@ -79,12 +87,14 @@ public:
                 std::move(completion));
         });
     }
+
     template<class Host, class Service, class Element, class Count>
         requires(!std::is_same_v<remove_cvref_t<Host>, endpoint_type> && std::is_integral_v<remove_cvref_t<Count>>)
     bool async_send(Host&& host, Service&& service, Element* data, Count count) {
         return async_send(std::forward<Host>(host), std::forward<Service>(service), data, count,
             [](const error_code&, std::size_t) {});
     }
+
     template<class Host, class Service, class Element, class Count, class Completion>
         requires(!std::is_same_v<remove_cvref_t<Host>, endpoint_type> && std::is_integral_v<remove_cvref_t<Count>> &&
                  send_completion_handler<Completion>)
@@ -93,6 +103,7 @@ public:
                                 detail::to_string(std::forward<Service>(service))},
             data, count, std::forward<Completion>(completion));
     }
+
     template<class Host, class Service, class Element, class Count>
         requires(!std::is_same_v<remove_cvref_t<Host>, endpoint_type> && std::is_integral_v<remove_cvref_t<Count>>)
     auto async_send(Host&& host, Service&& service, Element* data, Count count, asio::use_future_t<>) {
@@ -125,12 +136,14 @@ private:
                   const error_code& error, std::size_t count) mutable { promise.set_value({error, count}); });
         return future;
     }
+
     template<class Completion>
     bool reject(Completion& completion, const error_code& error) {
         set_last_error(error);
         this->_call_completion(completion, error, 0);
         return false;
     }
+
     template<class Destination, class Element, class Count, class Completion>
     bool submit_range(Destination destination, Element* data, Count count, Completion&& completion) {
         if (!data || (std::is_signed_v<Count> && count < 0) ||
@@ -200,6 +213,7 @@ private:
             pending.reset();
             return reject(completion, asio::error::no_buffer_space);
         }
+
         struct request
         {
             decltype(payload) data;
@@ -207,6 +221,7 @@ private:
             reservation_type reservation;
             std::shared_ptr<Derived> lifetime;
         };
+
         reservation_type reservation(*this, bytes);
         auto operation = std::make_shared<request>(
             request{std::move(payload), std::forward<Completion>(completion), std::move(reservation), owner.selfptr()});

@@ -12,6 +12,7 @@
 #include "check.hpp"
 
 namespace {
+
 enum class protocol
 {
     tcp,
@@ -143,6 +144,7 @@ struct io_runner
     asio::io_context context;
     asio::executor_work_guard<asio::io_context::executor_type> work{context.get_executor()};
     std::thread thread{[this] { context.run(); }};
+
     ~io_runner() {
         work.reset();
         context.stop();
@@ -153,6 +155,7 @@ struct io_runner
 struct cleanup
 {
     std::function<void()> stop;
+
     ~cleanup() {
         if (stop)
         {
@@ -231,6 +234,7 @@ struct batch
         , seen(size)
         , total(size)
         , round(generation) {}
+
     std::vector<std::atomic<unsigned>> echo_calls;
     std::vector<std::atomic<unsigned>> seen;
     const std::size_t total;
@@ -245,10 +249,12 @@ struct batch
         std::lock_guard lock(mutex);
         changed.notify_all();
     }
+
     void fail() {
         failed = true;
         notify();
     }
+
     bool wait() {
         std::unique_lock lock(mutex);
         return changed.wait_for(lock, 20s, [&] { return failed || (completed == total * 2 && received == total); }) &&
@@ -294,6 +300,7 @@ struct flow
         , calls(count)
         , seen(count)
         , peer(std::move(client)) {}
+
     std::shared_ptr<batch> monitor;
     const std::size_t id;
     const std::size_t total;

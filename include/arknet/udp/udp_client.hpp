@@ -8,6 +8,7 @@
 #include <arknet/udp/impl/udp_send_op.hpp>
 
 namespace arknet::detail {
+
 struct template_args_udp_client : udp_tag
 {
     static constexpr bool is_session = false;
@@ -122,11 +123,13 @@ public:
         return bind_notification(
             event_type::connect, std::forward<Function>(function), std::forward<Object>(object)...);
     }
+
     template<class Function, class... Object>
     Derived& bind_disconnect(Function&& function, Object&&... object) {
         return bind_notification(
             event_type::disconnect, std::forward<Function>(function), std::forward<Object>(object)...);
     }
+
     template<class Function, class... Object>
     Derived& bind_init(Function&& function, Object&&... object) {
         return bind_notification(event_type::init, std::forward<Function>(function), std::forward<Object>(object)...);
@@ -220,11 +223,13 @@ protected:
     void _do_stop(const error_code& error, std::shared_ptr<Derived> lifetime, Chain chain) {
         this->derived()._post_stop(error, std::move(lifetime), std::move(chain));
     }
+
     template<class Chain>
     void _post_stop(const error_code& error, std::shared_ptr<Derived> lifetime, Chain chain) {
         base::stop();
         this->derived()._handle_stop(error, std::move(lifetime), std::move(chain));
     }
+
     template<class Chain>
     void _handle_stop(const error_code&, std::shared_ptr<Derived>, Chain) {}
 
@@ -232,10 +237,12 @@ protected:
     bool _do_send(Data& data, Completion&& completion) {
         return this->derived()._udp_send(data, std::forward<Completion>(completion));
     }
+
     template<class Condition>
     void _post_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition) {
         this->derived()._udp_post_recv(std::move(lifetime), std::move(condition));
     }
+
     template<class Condition>
     void _handle_recv(const error_code& error, std::size_t count, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> condition) {
@@ -245,15 +252,18 @@ protected:
     void _fire_init() {
         this->listener_.notify(event_type::init);
     }
+
     template<class Condition>
     void _fire_recv(std::shared_ptr<Derived>&, std::shared_ptr<ecs_t<Condition>>&, std::string_view bytes) {
         this->listener_.notify(event_type::recv, detail::call_data_filter_before_recv(this->derived(), bytes));
     }
+
     template<class Condition>
     void _fire_connect(std::shared_ptr<Derived>&, std::shared_ptr<ecs_t<Condition>>&) {
         is_disconnect_called_ = false;
         this->listener_.notify(event_type::connect);
     }
+
     void _fire_disconnect(std::shared_ptr<Derived>&) {
         is_disconnect_called_ = true;
         this->listener_.notify(event_type::disconnect);
@@ -271,15 +281,18 @@ private:
 } // namespace arknet::detail
 
 namespace arknet {
+
 using udp_client_args = detail::template_args_udp_client;
 template<class Derived, class Args>
 using udp_client_impl_t = detail::udp_client_impl_t<Derived, Args>;
+
 template<class Derived>
 class udp_client_t : public detail::udp_client_impl_t<Derived>
 {
 public:
     using detail::udp_client_impl_t<Derived>::udp_client_impl_t;
 };
+
 class udp_client : public udp_client_t<udp_client>
 {
 public:

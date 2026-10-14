@@ -15,8 +15,11 @@
 #include <arknet/base/impl/data_persistence_cp.hpp>
 #include <arknet/base/impl/send_queue_cp.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 ARKNET_CLASS_FORWARD_DECLARE_BASE;
+
 template<class Derived, class Args>
 class send_cp
     : public data_persistence_cp<Derived, Args>
@@ -33,38 +36,46 @@ public:
     bool async_send(Data&& data) {
         return async_send(std::forward<Data>(data), ignore_completion{});
     }
+
     template<class Character>
         requires is_char_v<Character>
     bool async_send(Character* data) {
         return async_send(data, string_length(data));
     }
+
     template<class Element, std::integral Count>
     bool async_send(Element* data, Count count) {
         return async_send(data, count, ignore_completion{});
     }
+
     template<class Data>
     auto async_send(Data&& data, asio::use_future_t<>) {
         return future_for([&](auto callback) { async_send(std::forward<Data>(data), std::move(callback)); });
     }
+
     template<class Character>
         requires is_char_v<Character>
     auto async_send(Character* data, asio::use_future_t<> token) {
         return async_send(data, string_length(data), token);
     }
+
     template<class Element, std::integral Count>
     auto async_send(Element* data, Count count, asio::use_future_t<>) {
         return future_for([&](auto callback) { async_send(data, count, std::move(callback)); });
     }
+
     template<class Data, class Callback>
         requires send_completion_handler<Callback>
     bool async_send(Data&& data, Callback&& callback) {
         return submit(std::forward<Data>(data), completion_for(std::forward<Callback>(callback)), sender().selfptr());
     }
+
     template<class Character, class Callback>
         requires(is_char_v<Character> && send_completion_handler<Callback>)
     bool async_send(Character* data, Callback&& callback) {
         return async_send(data, string_length(data), std::forward<Callback>(callback));
     }
+
     template<class Element, std::integral Count, class Callback>
         requires send_completion_handler<Callback>
     bool async_send(Element* data, Count count, Callback&& callback) {
@@ -88,15 +99,18 @@ public:
             return async_send(asio::const_buffer(data, bytes), std::forward<Callback>(callback));
         }
     }
+
     template<class Data>
     std::size_t send(Data&& data) {
         return wait_send(sender().async_send(std::forward<Data>(data), asio::use_future));
     }
+
     template<class Character>
         requires is_char_v<Character>
     std::size_t send(Character* data) {
         return send(data, string_length(data));
     }
+
     template<class Element, std::integral Count>
     std::size_t send(Element* data, Count count) {
         return wait_send(sender().async_send(data, count, asio::use_future));
@@ -107,11 +121,13 @@ protected:
     void internal_async_send(std::shared_ptr<Derived> owner, Data&& data) {
         internal_async_send(std::move(owner), std::forward<Data>(data), ignore_completion{});
     }
+
     template<class Data, class Callback>
         requires send_completion_handler<Callback>
     void internal_async_send(std::shared_ptr<Derived> owner, Data&& data, Callback&& callback) {
         submit(std::forward<Data>(data), completion_for(std::forward<Callback>(callback)), std::move(owner));
     }
+
     template<class Data, class Callback>
     void internal_async_send(
         std::shared_ptr<Derived> owner, Data&& data, Callback&& callback, event_queue_guard<Derived> guard) {
@@ -123,19 +139,23 @@ private:
     {
         void operator()(const error_code&, std::size_t) const noexcept {}
     };
+
     Derived& sender() noexcept {
         return static_cast<Derived&>(*this);
     }
+
     template<class Character>
     static std::size_t string_length(const Character* data) {
         return data ? std::char_traits<std::remove_cv_t<Character>>::length(data) : 0;
     }
+
     template<class Callback>
     static bool reject(Callback& callback, error_code error) {
         set_last_error(error);
         _call_completion(callback, error, 0);
         return false;
     }
+
     template<class Submit>
     static auto future_for(Submit&& operation) {
         std::promise<result_type> promise;
@@ -144,11 +164,13 @@ private:
                       const error_code& error, std::size_t bytes) mutable { promise.set_value({error, bytes}); });
         return future;
     }
+
     template<class Callback>
     static auto completion_for(Callback&& callback) {
         return [callback = std::forward<Callback>(callback)](std::shared_ptr<Derived>, const error_code& error,
                    std::size_t bytes, event_queue_guard<Derived>) mutable { _call_completion(callback, error, bytes); };
     }
+
     template<class Data>
     std::size_t payload_size(const Data& data) {
         if constexpr (requires { sender()._send_data_size(data); })
@@ -164,6 +186,7 @@ private:
             return asio::buffer_size(asio::buffer(data));
         }
     }
+
     template<class Data, class Callback>
     bool submit(
         Data&& input, Callback&& callback, std::shared_ptr<Derived> owner, event_queue_guard<Derived> guard = {}) {
@@ -227,6 +250,7 @@ private:
             std::move(guard));
         return true;
     }
+
     std::size_t wait_send(std::future<result_type> future) {
         if (sender().io_->context().get_executor().running_in_this_thread() &&
             future.wait_for(std::chrono::nanoseconds::zero()) != std::future_status::ready)

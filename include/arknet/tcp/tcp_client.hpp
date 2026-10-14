@@ -7,6 +7,7 @@
 #include <arknet/tcp/impl/tcp_send_op.hpp>
 
 namespace arknet::detail {
+
 struct template_args_tcp_client : tcp_tag
 {
     static constexpr bool is_session = false, is_client = true, is_server = false;
@@ -15,6 +16,7 @@ struct template_args_tcp_client : tcp_tag
     using send_data_t = std::string_view;
     using recv_data_t = std::string_view;
 };
+
 ARKNET_CLASS_FORWARD_DECLARE_BASE;
 ARKNET_CLASS_FORWARD_DECLARE_TCP_BASE;
 ARKNET_CLASS_FORWARD_DECLARE_TCP_CLIENT;
@@ -44,16 +46,19 @@ public:
         : super(initial, maximum, workers) {
         configure();
     }
+
     template<class Scheduler>
         requires(!std::is_integral_v<std::remove_cvref_t<Scheduler>>)
     explicit tcp_client_impl_t(std::size_t initial, std::size_t maximum, Scheduler&& scheduler)
         : super(initial, maximum, std::forward<Scheduler>(scheduler)) {
         configure();
     }
+
     template<class Scheduler>
         requires(!std::is_integral_v<std::remove_cvref_t<Scheduler>>)
     explicit tcp_client_impl_t(Scheduler&& scheduler)
         : tcp_client_impl_t(tcp_frame_size, max_buffer_size, std::forward<Scheduler>(scheduler)) {}
+
     ~tcp_client_impl_t() {
         stop();
     }
@@ -63,6 +68,7 @@ public:
         return this->derived().template _do_connect<false>(std::forward<Host>(host), std::forward<Port>(port),
             ecs_helper::make_ecs(asio::transfer_at_least(1), std::forward<Options>(options)...));
     }
+
     template<class Host, class Port, class... Options>
     bool async_start(Host&& host, Port&& port, Options&&... options) {
         return this->derived().template _do_connect<true>(std::forward<Host>(host), std::forward<Port>(port),
@@ -105,14 +111,17 @@ public:
     Derived& bind_recv(F&& callback, Bound&&... bound) {
         return bind<std::string_view>(event_type::recv, std::forward<F>(callback), std::forward<Bound>(bound)...);
     }
+
     template<class F, class... Bound>
     Derived& bind_connect(F&& callback, Bound&&... bound) {
         return bind<>(event_type::connect, std::forward<F>(callback), std::forward<Bound>(bound)...);
     }
+
     template<class F, class... Bound>
     Derived& bind_disconnect(F&& callback, Bound&&... bound) {
         return bind<>(event_type::disconnect, std::forward<F>(callback), std::forward<Bound>(bound)...);
     }
+
     template<class F, class... Bound>
     Derived& bind_init(F&& callback, Bound&&... bound) {
         return bind<>(event_type::init, std::forward<F>(callback), std::forward<Bound>(bound)...);
@@ -175,21 +184,25 @@ protected:
     void _do_init(std::shared_ptr<ecs_t<Condition>>&) noexcept {
         dgram_ = std::is_same_v<typename ecs_t<Condition>::condition_lowest_type, use_dgram_t>;
     }
+
     template<class Condition, class Chain>
     void _do_start(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
         this->derived().reset_connect_time();
         this->derived().update_alive_time();
         this->derived()._start_recv(std::move(lifetime), std::move(policy), std::move(chain));
     }
+
     template<class Chain>
     void _handle_disconnect(const error_code& ec, std::shared_ptr<Derived> lifetime, Chain chain) {
         close_socket();
         super::_handle_disconnect(ec, std::move(lifetime), std::move(chain));
     }
+
     template<class Chain>
     void _do_stop(const error_code& ec, std::shared_ptr<Derived> lifetime, Chain chain) {
         this->derived()._post_stop(ec, std::move(lifetime), std::move(chain));
     }
+
     template<class Chain>
     void _post_stop(const error_code& ec, std::shared_ptr<Derived> lifetime, Chain chain) {
         this->derived().disp_event(
@@ -201,10 +214,12 @@ protected:
             },
             chain.move_guard());
     }
+
     template<class Chain>
     void _handle_stop(const error_code&, std::shared_ptr<Derived>, Chain) {
         ARKNET_ASSERT(this->state_ == state_t::stopped);
     }
+
     template<class Condition, class Chain>
     void _start_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
         this->derived().dispatch(
@@ -216,27 +231,33 @@ protected:
                 this->derived()._post_recv(std::move(lifetime), std::move(policy));
             });
     }
+
     template<class Data, class F>
     bool _do_send(Data& data, F&& completion) {
         return this->derived()._tcp_send(data, std::forward<F>(completion));
     }
+
     template<class Condition>
     void _post_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy) {
         this->derived()._tcp_post_recv(std::move(lifetime), std::move(policy));
     }
+
     template<class Condition>
     void _handle_recv(const error_code& ec, std::size_t size, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy) {
         this->derived()._tcp_handle_recv(ec, size, std::move(lifetime), std::move(policy));
     }
+
     void _fire_init() {
         ARKNET_ASSERT(this->io_->running_in_this_thread());
         this->listener_.notify(event_type::init);
     }
+
     template<class Condition>
     void _fire_recv(std::shared_ptr<Derived>&, std::shared_ptr<ecs_t<Condition>>&, std::string_view data) {
         this->listener_.notify(event_type::recv, detail::call_data_filter_before_recv(this->derived(), data));
     }
+
     template<class Condition>
     void _fire_connect(std::shared_ptr<Derived>&, std::shared_ptr<ecs_t<Condition>>&) {
         ARKNET_ASSERT(this->io_->running_in_this_thread());
@@ -245,6 +266,7 @@ protected:
 #endif
         this->listener_.notify(event_type::connect);
     }
+
     void _fire_disconnect(std::shared_ptr<Derived>&) {
         ARKNET_ASSERT(this->io_->running_in_this_thread());
 #ifndef NDEBUG
@@ -252,6 +274,7 @@ protected:
 #endif
         this->listener_.notify(event_type::disconnect);
     }
+
     bool dgram_ = false;
 #ifndef NDEBUG
     bool is_disconnect_called_ = false;
@@ -260,11 +283,13 @@ private:
     void configure() {
         this->set_connect_timeout(std::chrono::milliseconds(tcp_connect_timeout));
     }
+
     template<class... Signature, class F, class... Bound>
     Derived& bind(event_type event, F&& callback, Bound&&... bound) {
         this->listener_.bind(event, observer_t<Signature...>{std::forward<F>(callback), std::forward<Bound>(bound)...});
         return this->derived();
     }
+
     void close_socket() {
         error_code ignored, option_error;
         asio::socket_base::linger linger;
@@ -285,15 +310,18 @@ private:
 } // namespace arknet::detail
 
 namespace arknet {
+
 using tcp_client_args = detail::template_args_tcp_client;
 template<class Derived, class Args>
 using tcp_client_impl_t = detail::tcp_client_impl_t<Derived, Args>;
+
 template<class Derived>
 class tcp_client_t : public detail::tcp_client_impl_t<Derived>
 {
 public:
     using detail::tcp_client_impl_t<Derived>::tcp_client_impl_t;
 };
+
 class tcp_client : public tcp_client_t<tcp_client>
 {
 public:
@@ -302,17 +330,21 @@ public:
 } // namespace arknet
 #if defined(ARKNET_INCLUDE_RATE_LIMIT)
 #include <arknet/tcp/tcp_stream.hpp>
+
 namespace arknet {
+
 struct tcp_rate_client_args : tcp_client_args
 {
     using socket_t = tcp_stream<simple_rate_policy>;
 };
+
 template<class Derived>
 class tcp_rate_client_t : public tcp_client_impl_t<Derived, tcp_rate_client_args>
 {
 public:
     using tcp_client_impl_t<Derived, tcp_rate_client_args>::tcp_client_impl_t;
 };
+
 class tcp_rate_client : public tcp_rate_client_t<tcp_rate_client>
 {
 public:

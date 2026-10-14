@@ -7,6 +7,7 @@
 #include <arknet/udp/impl/udp_send_op.hpp>
 
 namespace arknet::detail {
+
 struct template_args_udp_session : udp_tag
 {
     static constexpr bool is_session = true;
@@ -74,6 +75,7 @@ public:
     bool is_stopped() const noexcept {
         return this->state_ == state_t::stopped;
     }
+
     std::string get_remote_address() const noexcept {
         try
         {
@@ -87,15 +89,19 @@ public:
             return {};
         }
     }
+
     std::string remote_address() const noexcept {
         return get_remote_address();
     }
+
     unsigned short get_remote_port() const noexcept {
         return this->remote_endpoint_.port();
     }
+
     unsigned short remote_port() const noexcept {
         return get_remote_port();
     }
+
     key_type hash_key() const noexcept {
         return this->remote_endpoint_;
     }
@@ -193,6 +199,7 @@ protected:
         base::stop();
         this->derived()._handle_stop(error, std::move(lifetime), std::move(chain));
     }
+
     template<class Chain>
     void _handle_stop(const error_code&, std::shared_ptr<Derived>, Chain) {}
 
@@ -206,10 +213,12 @@ protected:
         this->listener_.notify(
             event_type::recv, lifetime, detail::call_data_filter_before_recv(this->derived(), bytes));
     }
+
     template<class Condition>
     void _fire_connect(std::shared_ptr<Derived>& lifetime, std::shared_ptr<ecs_t<Condition>>&) {
         this->listener_.notify(event_type::connect, lifetime);
     }
+
     void _fire_disconnect(std::shared_ptr<Derived>& lifetime) {
         this->listener_.notify(event_type::disconnect, lifetime);
     }
@@ -217,9 +226,11 @@ protected:
     auto& rallocator() noexcept {
         return write_memory_;
     }
+
     auto& wallocator() noexcept {
         return write_memory_;
     }
+
     handler_memory<std::false_type, assizer<Args>> write_memory_;
     std::string first_datagram_;
     std::atomic<bool> stop_requested_{false};
@@ -227,15 +238,18 @@ protected:
 } // namespace arknet::detail
 
 namespace arknet {
+
 using udp_session_args = detail::template_args_udp_session;
 template<class Derived, class Args>
 using udp_session_impl_t = detail::udp_session_impl_t<Derived, Args>;
+
 template<class Derived>
 class udp_session_t : public detail::udp_session_impl_t<Derived>
 {
 public:
     using detail::udp_session_impl_t<Derived>::udp_session_impl_t;
 };
+
 class udp_session : public udp_session_t<udp_session>
 {
 public:

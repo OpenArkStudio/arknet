@@ -15,6 +15,7 @@
 #include <vector>
 
 namespace arknet::arq {
+
 struct options
 {
     std::size_t mtu = 1200;
@@ -376,21 +377,27 @@ public:
     std::size_t pending_segments() const {
         return send_queue_.size() + send_buffer_.size();
     }
+
     std::size_t pending_bytes() const {
         return pending_bytes_;
     }
+
     std::uint32_t conversation() const {
         return conversation_;
     }
+
     bool failed() const {
         return failed_;
     }
+
     std::uint64_t transmissions() const noexcept {
         return transmissions_;
     }
+
     std::uint64_t retransmissions() const noexcept {
         return retransmissions_;
     }
+
     std::uint32_t smoothed_rtt_ms() const noexcept {
         return static_cast<std::uint32_t>(smoothed_rtt_);
     }
@@ -412,6 +419,7 @@ private:
         std::uint32_t fast_acks = 0;
         std::uint8_t fragment = 0;
     };
+
     struct frame
     {
         std::string_view data;
@@ -426,13 +434,16 @@ private:
     static std::int32_t difference(std::uint32_t left, std::uint32_t right) {
         return std::bit_cast<std::int32_t>(left - right);
     }
+
     static std::uint8_t byte(std::string_view value, std::size_t offset) {
         return static_cast<std::uint8_t>(value[offset]);
     }
+
     static std::uint16_t read16(std::string_view value, std::size_t offset) {
         return static_cast<std::uint16_t>(
             byte(value, offset) | (static_cast<std::uint16_t>(byte(value, offset + 1)) << 8));
     }
+
     static std::uint32_t read32(std::string_view value, std::size_t offset) {
         std::uint32_t result = 0;
         for (std::size_t index = 0; index < 4; ++index)
@@ -441,25 +452,31 @@ private:
         }
         return result;
     }
+
     static void write16(std::string& target, std::uint16_t value) {
         target.push_back(static_cast<char>(value & 0xff));
         target.push_back(static_cast<char>(value >> 8));
     }
+
     static void write32(std::string& target, std::uint32_t value) {
         for (std::size_t index = 0; index < 4; ++index)
         {
             target.push_back(static_cast<char>((value >> (index * 8)) & 0xff));
         }
     }
+
     std::size_t payload_size() const {
         return options_.mtu - header_size;
     }
+
     std::uint32_t oldest_send() const {
         return send_buffer_.empty() ? next_send_ : send_buffer_.front().sequence;
     }
+
     std::uint16_t available_window() const {
         return static_cast<std::uint16_t>(options_.receive_window - receive_queue_.size());
     }
+
     void acknowledge_before(std::uint32_t sequence) {
         while (!send_buffer_.empty() && difference(sequence, send_buffer_.front().sequence) > 0)
         {
@@ -467,6 +484,7 @@ private:
             send_buffer_.pop_front();
         }
     }
+
     void acknowledge(std::uint32_t sequence) {
         for (auto position = send_buffer_.begin(); position != send_buffer_.end(); ++position)
         {
@@ -478,6 +496,7 @@ private:
             }
         }
     }
+
     void update_timeout(std::uint32_t elapsed) {
         const auto sample = static_cast<std::int64_t>(std::min<std::uint32_t>(elapsed, 60000));
         if (smoothed_rtt_ == 0)
@@ -495,6 +514,7 @@ private:
             std::clamp<std::int64_t>(smoothed_rtt_ + std::max<std::int64_t>(options_.interval, 4 * rtt_variance_),
                 options_.nodelay ? 30 : 100, 60000));
     }
+
     bool accept(const frame& value) {
         if (difference(value.sequence, next_receive_ + options_.receive_window) >= 0)
         {
@@ -530,6 +550,7 @@ private:
         acknowledgements_[value.sequence] = value.timestamp;
         return true;
     }
+
     void promote_received() {
         while (!receive_buffer_.empty() && receive_buffer_.front().sequence == next_receive_ &&
                receive_queue_.size() < options_.receive_window)
@@ -538,6 +559,7 @@ private:
             ++next_receive_;
         }
     }
+
     void grow_window() {
         if (!options_.congestion_control || congestion_window_ >= remote_window_)
         {

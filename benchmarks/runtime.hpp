@@ -30,14 +30,18 @@ public:
             throw;
         }
     }
+
     ~benchmark_runtime() {
         stop();
     }
+
     benchmark_runtime(const benchmark_runtime&) = delete;
     benchmark_runtime& operator=(const benchmark_runtime&) = delete;
+
     asio::io_context& context_at(std::size_t index = 0) {
         return *contexts_[index % contexts_.size()];
     }
+
     std::vector<asio::io_context*> server_lanes(std::size_t clients) {
         std::vector<asio::io_context*> result;
         for (std::size_t i = 0; i <= clients; ++i)
@@ -46,6 +50,7 @@ public:
         }
         return result;
     }
+
     void stop() {
         // Drain cross-context captures before any context can destroy its services.
         for (auto& guard : guards_)

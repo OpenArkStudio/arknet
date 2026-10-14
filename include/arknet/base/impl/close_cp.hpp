@@ -7,7 +7,9 @@
 #include <arknet/base/impl/event_queue_cp.hpp>
 #include <arknet/base/io_pool.hpp>
 #include <arknet/base/listener.hpp>
+
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class close_cp
 {
@@ -36,6 +38,7 @@ protected:
             },
             chain.move_guard());
     }
+
     template<class Chain>
     void _post_close(const error_code& error, std::shared_ptr<Derived> owner, state_t prior, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
@@ -93,6 +96,7 @@ protected:
             }
         }
     }
+
     template<class Chain>
     void _handle_close(const error_code& error, std::shared_ptr<Derived> owner, Chain chain) {
         static_cast<Derived&>(*this)._post_disconnect(error, std::move(owner), std::move(chain));

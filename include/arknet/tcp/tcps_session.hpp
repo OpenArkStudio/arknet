@@ -5,7 +5,9 @@
 #include <arknet/tcp/impl/ssl_context_cp.hpp>
 #include <arknet/tcp/impl/ssl_stream_cp.hpp>
 #include <arknet/tcp/tcp_session.hpp>
+
 namespace arknet::detail {
+
 template<class Derived, class Args = template_args_tcp_session>
 class tcps_session_impl_t
     : public tcp_session_impl_t<Derived, Args>
@@ -23,18 +25,22 @@ public:
     using key_type = std::size_t;
     using buffer_type = typename Args::buffer_t;
     using ssl_stream_comp = ssl_stream_cp<Derived, Args>;
+
     explicit tcps_session_impl_t(asio::ssl::context& context, session_mgr_t<Derived>& sessions, listener_t& events,
         std::shared_ptr<io_t> lane, std::size_t initial, std::size_t maximum)
         : super(sessions, events, std::move(lane), initial, maximum)
         , ssl_stream_comp(context, asio::ssl::stream_base::server)
         , ctx_(context) {}
+
     void destroy() {
         this->ssl_stream_.reset();
         super::destroy();
     }
+
     auto& stream() noexcept {
         return this->ssl_stream();
     }
+
     const auto& stream() const noexcept {
         return this->ssl_stream();
     }
@@ -45,6 +51,7 @@ protected:
         super::_do_init(lifetime, policy);
         this->_ssl_init(policy, this->socket(), ctx_);
     }
+
     template<class Chain>
     void _post_shutdown(const error_code& ec, std::shared_ptr<Derived> lifetime, Chain chain) {
         this->_ssl_stop(lifetime,
@@ -54,6 +61,7 @@ protected:
                         },
                 chain.move_guard()});
     }
+
     template<class Condition, class Chain>
     void _handle_connect(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
@@ -65,23 +73,29 @@ protected:
                 this->derived()._post_handshake(std::move(lifetime), std::move(policy), std::move(chain));
             });
     }
+
     void _fire_handshake(std::shared_ptr<Derived>& lifetime) {
         ARKNET_ASSERT(this->sessions_.io_->running_in_this_thread());
         this->listener_.notify(event_type::handshake, lifetime);
     }
+
     asio::ssl::context& ctx_;
 };
 } // namespace arknet::detail
+
 namespace arknet {
+
 using tcps_session_args = detail::template_args_tcp_session;
 template<class Derived, class Args>
 using tcps_session_impl_t = detail::tcps_session_impl_t<Derived, Args>;
+
 template<class Derived>
 class tcps_session_t : public detail::tcps_session_impl_t<Derived>
 {
 public:
     using detail::tcps_session_impl_t<Derived>::tcps_session_impl_t;
 };
+
 class tcps_session : public tcps_session_t<tcps_session>
 {
 public:

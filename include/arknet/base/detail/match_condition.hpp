@@ -7,9 +7,12 @@
 #include <utility>
 
 #include <arknet/external/asio.hpp>
+
 namespace arknet::detail {
+
 using iterator = asio::buffers_iterator<asio::streambuf::const_buffers_type>;
 using diff_type = iterator::difference_type;
+
 inline std::pair<iterator, bool> dgram_match_role(iterator first, iterator last) noexcept {
     if (first == last)
     {
@@ -42,31 +45,39 @@ inline std::pair<iterator, bool> dgram_match_role(iterator first, iterator last)
     }
     return {payload + static_cast<diff_type>(length), true};
 }
+
 struct use_dgram_t
 {
 };
+
 struct hook_buffer_t
 {
 };
+
 template<class T>
 class condition_t
 {
 public:
     using type = T;
+
     template<class Value>
         requires(!std::is_same_v<std::remove_cvref_t<Value>, condition_t>)
     explicit condition_t(Value&& value)
         : value_(std::forward<Value>(value)) {}
+
     condition_t(condition_t&&) = default;
     condition_t& operator=(condition_t&&) = default;
     condition_t(const condition_t&) = delete;
     condition_t& operator=(const condition_t&) = delete;
+
     condition_t clone() {
         return condition_t(value_);
     }
+
     decltype(auto) operator()() noexcept {
         return lowest();
     }
+
     decltype(auto) lowest() noexcept {
         if constexpr (std::is_same_v<T, use_dgram_t>)
         {
@@ -85,21 +96,28 @@ public:
 private:
     T value_;
 };
+
 template<class T>
 condition_t(T) -> condition_t<std::remove_cvref_t<T>>;
+
 template<>
 class condition_t<void>
 {
 public:
     using type = void;
+
     condition_t clone() const noexcept {
         return {};
     }
+
     void operator()() const noexcept {}
+
     void lowest() const noexcept {}
 };
 } // namespace arknet::detail
+
 namespace arknet {
+
 inline constexpr detail::use_dgram_t use_dgram{};
 inline constexpr detail::hook_buffer_t hook_buffer{};
 } // namespace arknet

@@ -13,6 +13,7 @@
 #include "check.hpp"
 
 namespace {
+
 constexpr std::size_t sender_count = 8;
 constexpr std::size_t payload_size = 256;
 constexpr std::size_t operation_limit = 1024;
@@ -63,6 +64,7 @@ struct latch_release
 {
     std::latch& latch;
     bool released{};
+
     void open() {
         if (!released)
         {
@@ -70,6 +72,7 @@ struct latch_release
             latch.count_down();
         }
     }
+
     ~latch_release() {
         open();
     }
@@ -303,6 +306,7 @@ struct shutdown
     Client& client;
     Server& server;
     bool stopped{};
+
     void stop() {
         if (!stopped)
         {
@@ -311,6 +315,7 @@ struct shutdown
             stopped = true;
         }
     }
+
     ~shutdown() {
         stop();
     }
@@ -611,8 +616,10 @@ DOCTEST_TEST_CASE("TCP external stop before a blocked write") {
 }
 
 namespace {
+
 DOCTEST_TEST_CASE("TCP auto reconnect rejects a send copied in the previous generation") {
     watchdog timeout;
+
     class paused_client : public arknet::tcp_client_t<paused_client>
     {
     public:
@@ -633,6 +640,7 @@ DOCTEST_TEST_CASE("TCP auto reconnect rejects a send copied in the previous gene
             return data;
         }
     };
+
     messages connections;
     messages received;
     std::promise<void> fresh_received;

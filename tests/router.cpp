@@ -6,6 +6,7 @@
 #include "check.hpp"
 
 namespace {
+
 using verb = arknet::http::verb;
 using status = arknet::http::status;
 using field = arknet::http::field;

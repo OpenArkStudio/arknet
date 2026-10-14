@@ -9,6 +9,7 @@ mkdir -p "$temporary/scripts" "$temporary/include/arknet/bho" "$temporary/tests/
     "$temporary/include/arknet/thirdparty" \
     "$temporary/tests/results" "$temporary/benchmarks/results" "$temporary/examples"
 cp "$root/scripts/format.sh" "$temporary/scripts/"
+cp "$root/scripts/format_spacing.sh" "$temporary/scripts/"
 cd "$temporary"
 git init -q
 printf 'struct probe{int value;};\n' > original.hpp

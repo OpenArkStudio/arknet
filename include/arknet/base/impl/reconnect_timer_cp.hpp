@@ -8,7 +8,9 @@
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/impl/event_queue_cp.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class reconnect_timer_cp
 {
@@ -18,23 +20,28 @@ public:
         reconnect_enable_ = enabled;
         return static_cast<Derived&>(*this);
     }
+
     template<class Rep, class Period>
     Derived& set_auto_reconnect(bool enabled, std::chrono::duration<Rep, Period> delay) noexcept {
         reconnect_delay_ = to_steady_duration(delay);
         return set_auto_reconnect(enabled);
     }
+
     template<class = void>
     Derived& auto_reconnect(bool enabled) noexcept {
         return set_auto_reconnect(enabled);
     }
+
     template<class Rep, class Period>
     Derived& auto_reconnect(bool enabled, std::chrono::duration<Rep, Period> delay) noexcept {
         return set_auto_reconnect(enabled, delay);
     }
+
     template<class = void>
     bool is_auto_reconnect() const noexcept {
         return reconnect_enable_;
     }
+
     template<class = void>
     auto get_auto_reconnect_delay() const noexcept {
         return reconnect_delay_;
@@ -53,6 +60,7 @@ protected:
                 std::move(owner), std::move(options), reconnect_timer_, std::chrono::nanoseconds::max());
         });
     }
+
     template<class Rep, class Period, class Match>
     void _post_reconnect_timer(std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options,
         std::shared_ptr<safe_timer> timer, std::chrono::duration<Rep, Period> delay) {
@@ -77,6 +85,7 @@ protected:
             _handle_reconnect_timer(error, std::move(owner), std::move(options), std::move(timer));
         });
     }
+
     template<class Match>
     void _handle_reconnect_timer(const error_code& error, std::shared_ptr<Derived> owner,
         std::shared_ptr<ecs_t<Match>> options, std::shared_ptr<safe_timer> timer) {
@@ -112,6 +121,7 @@ protected:
         }
         _post_reconnect_timer(std::move(owner), std::move(options), std::move(timer), std::chrono::nanoseconds::max());
     }
+
     void _stop_reconnect_timer() {
         static_cast<Derived&>(*this).dispatch([this] {
 #ifndef NDEBUG
@@ -121,6 +131,7 @@ protected:
                 reconnect_timer_->cancel();
         });
     }
+
     void _wake_reconnect_timer() {
         static_cast<Derived&>(*this).dispatch([this] {
             if (reconnect_enable_ && reconnect_timer_)
@@ -129,6 +140,7 @@ protected:
             }
         });
     }
+
     std::shared_ptr<safe_timer> reconnect_timer_;
     std::chrono::steady_clock::duration reconnect_delay_ = std::chrono::seconds(1);
     bool reconnect_enable_ = true;

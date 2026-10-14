@@ -12,7 +12,9 @@
 #include <arknet/base/detail/future.hpp>
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 class pending_operation
 {
 public:
@@ -20,9 +22,12 @@ public:
         : counter_(std::move(counter)) {
         counter_->fetch_add(1, std::memory_order_relaxed);
     }
+
     pending_operation(pending_operation&& other) noexcept
         : counter_(std::move(other.counter_)) {}
+
     pending_operation(const pending_operation&) = delete;
+
     ~pending_operation() {
         if (counter_)
         {
@@ -34,12 +39,14 @@ public:
 private:
     std::shared_ptr<std::atomic_size_t> counter_;
 };
+
 inline void wait_pending_operations(const std::shared_ptr<std::atomic_size_t>& counter) {
     for (auto count = counter->load(std::memory_order_acquire); count; count = counter->load(std::memory_order_acquire))
     {
         counter->wait(count, std::memory_order_acquire);
     }
 }
+
 template<class Derived, class Args = void>
 class post_cp
 {
@@ -51,20 +58,24 @@ class post_cp
         handler_memory<std::false_type, assizer<Args>> allocator;
         std::set<asio::steady_timer*> timers;
     };
+
     std::shared_ptr<operation_state> tasks_ = std::make_shared<operation_state>();
 
 public:
     ~post_cp() {
         tasks_->alive.store(false, std::memory_order_release);
     }
+
     template<class Function>
     Derived& post(Function&& callback) {
         return submit<false>(std::forward<Function>(callback));
     }
+
     template<class Function>
     Derived& dispatch(Function&& callback) {
         return submit<true>(std::forward<Function>(callback));
     }
+
     template<class Function, class Rep, class Period>
     Derived& post(Function&& callback, std::chrono::duration<Rep, Period> delay) {
         auto& object = static_cast<Derived&>(*this);
@@ -98,23 +109,28 @@ public:
         });
         return object;
     }
+
     template<class Function, class Allocator>
     auto post(Function&& callback, asio::use_future_t<Allocator>) {
         return submit_future<false>(std::forward<Function>(callback));
     }
+
     template<class Function, class Allocator>
     auto dispatch(Function&& callback, asio::use_future_t<Allocator>) {
         return submit_future<true>(std::forward<Function>(callback));
     }
+
     template<class Function, class Rep, class Period, class Allocator>
     auto post(Function&& callback, std::chrono::duration<Rep, Period> delay, asio::use_future_t<Allocator>) {
         auto [future, task] = make_future_task(std::forward<Function>(callback));
         post(std::move(task), delay);
         return std::move(future);
     }
+
     Derived& stop_all_timed_events() {
         return cancel_tasks<false>();
     }
+
     Derived& stop_all_timed_tasks() {
         return stop_all_timed_events();
     }
@@ -123,9 +139,11 @@ protected:
     Derived& _dispatch_stop_all_timed_events() {
         return cancel_tasks<true>();
     }
+
     void _set_post_acceptance(bool accepting) {
         tasks_->accepting.store(accepting, std::memory_order_release);
     }
+
     void _wait_post_operations() {
         wait_pending_operations(tasks_->pending);
     }
@@ -151,6 +169,7 @@ private:
         }
         return object;
     }
+
     template<bool Inline, class Function>
     Derived& submit(Function&& callback) {
         auto& object = static_cast<Derived&>(*this);
@@ -183,6 +202,7 @@ private:
         }
         return object;
     }
+
     template<bool Inline, class Function>
     auto submit_future(Function&& callback) {
         auto [future, task] = make_future_task(std::forward<Function>(callback));

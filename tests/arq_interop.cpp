@@ -14,6 +14,7 @@
 #include "check.hpp"
 
 namespace {
+
 constexpr std::uint32_t interop_conversation = 0x83a27104;
 
 std::uint32_t read_wire32(std::string_view data, std::size_t offset) {
@@ -53,6 +54,7 @@ struct reference_link
         bool to_modern;
         std::string data;
     };
+
     arknet::arq::control_block modern;
     std::unique_ptr<ikcpcb, decltype(&ikcp_release)> reference;
     std::vector<delivery> pending;

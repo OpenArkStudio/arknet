@@ -2,8 +2,8 @@
 set -euo pipefail
 
 case "${1:---check}" in
-    --check) options=(--dry-run --Werror) ;;
-    --fix) options=(-i) ;;
+    --check) options=(--dry-run --Werror); spacing_mode=--check ;;
+    --fix) options=(-i); spacing_mode=--fix ;;
     *) printf 'Usage: bash scripts/format.sh [--check|--fix]\n' >&2; exit 2 ;;
 esac
 if [[ $# -gt 1 ]]; then
@@ -22,6 +22,7 @@ if [[ $("$formatter" --version) != *'version 18.'* ]]; then
 fi
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
+spacing_script=scripts/format_spacing.sh
 files=()
 while IFS= read -r -d '' file; do
     case "$file" in
@@ -36,4 +37,5 @@ if [[ ${#files[@]} -eq 0 ]]; then
     exit 2
 fi
 "$formatter" --style=file "${options[@]}" "${files[@]}"
+bash "$spacing_script" "$spacing_mode" "${files[@]}"
 printf 'Checked %s project C++ files.\n' "${#files[@]}"

@@ -11,11 +11,14 @@
 #include <arknet/base/impl/thread_id_cp.hpp>
 #include <arknet/base/impl/user_timer_cp.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 struct template_args_timer
 {
     static constexpr std::size_t allocator_storage_size = 256;
 };
+
 template<class Derived, class Args = template_args_timer>
 class timer_impl_t
     : public object_t<Derived>
@@ -32,11 +35,13 @@ public:
     using self = timer_impl_t;
     using iopoolcp = iopool_cp<Derived, Args>;
     using args_type = Args;
+
     timer_impl_t()
         : iopoolcp(1)
         , io_(iopoolcp::_get_io(0)) {
         start();
     }
+
     template<class Scheduler>
         requires(!std::is_integral_v<std::remove_cvref_t<Scheduler>>)
     explicit timer_impl_t(Scheduler&& scheduler)
@@ -44,9 +49,11 @@ public:
         , io_(iopoolcp::_get_io(0)) {
         start();
     }
+
     ~timer_impl_t() {
         stop();
     }
+
     bool start() {
         if (!this->start_iopool())
         {
@@ -59,6 +66,7 @@ public:
         this->dispatch([lane = io_] { lane->init_thread_id(); });
         return true;
     }
+
     void stop() {
         if (!io_)
         {
@@ -85,14 +93,17 @@ public:
         this->_wait_condition_operations();
         this->_wait_post_operations();
     }
+
     void destroy() {
         stop();
         io_.reset();
         this->destroy_iopool();
     }
+
     io_t& io() noexcept {
         return *io_;
     }
+
     const io_t& io() const noexcept {
         return *io_;
     }
@@ -101,18 +112,24 @@ protected:
     bool _accepts_async_work() const noexcept {
         return accepting_.load(std::memory_order_acquire);
     }
+
     std::atomic_bool accepting_{false};
+
     auto& rallocator() noexcept {
         return wallocator_;
     }
+
     auto& wallocator() noexcept {
         return wallocator_;
     }
+
     std::shared_ptr<io_t> io_;
     handler_memory<std::false_type, assizer<Args>> wallocator_;
 };
 } // namespace arknet::detail
+
 namespace arknet {
+
 class timer : public detail::timer_impl_t<timer>
 {
 public:

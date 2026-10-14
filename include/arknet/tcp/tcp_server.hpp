@@ -5,9 +5,11 @@
 #include <arknet/tcp/tcp_session.hpp>
 
 namespace arknet::detail {
+
 ARKNET_CLASS_FORWARD_DECLARE_BASE;
 ARKNET_CLASS_FORWARD_DECLARE_TCP_BASE;
 ARKNET_CLASS_FORWARD_DECLARE_TCP_SERVER;
+
 template<class Derived, class Session>
 class tcp_server_impl_t
     : public server_impl_t<Derived, Session>
@@ -21,6 +23,7 @@ public:
     using super = server_impl_t<Derived, Session>;
     using self = tcp_server_impl_t;
     using session_type = Session;
+
     explicit tcp_server_impl_t(std::size_t initial = tcp_frame_size, std::size_t maximum = max_buffer_size,
         std::size_t workers = default_concurrency() + 1)
         : super(workers)
@@ -28,6 +31,7 @@ public:
         , max_buffer_size_(maximum) {
         create_listener();
     }
+
     template<class Scheduler>
         requires(!std::is_integral_v<std::remove_cvref_t<Scheduler>>)
     explicit tcp_server_impl_t(std::size_t initial, std::size_t maximum, Scheduler&& scheduler)
@@ -36,10 +40,12 @@ public:
         , max_buffer_size_(maximum) {
         create_listener();
     }
+
     template<class Scheduler>
         requires(!std::is_integral_v<std::remove_cvref_t<Scheduler>>)
     explicit tcp_server_impl_t(Scheduler&& scheduler)
         : tcp_server_impl_t(tcp_frame_size, max_buffer_size, std::forward<Scheduler>(scheduler)) {}
+
     ~tcp_server_impl_t() {
         stop();
     }
@@ -49,6 +55,7 @@ public:
         return this->derived()._do_start(std::forward<Host>(host), std::forward<Port>(port),
             ecs_helper::make_ecs(asio::transfer_at_least(1), std::forward<Options>(options)...));
     }
+
     void stop() {
         if (this->is_iopool_stopped())
         {
@@ -86,21 +93,26 @@ public:
             result.get();
         }
     }
+
     void destroy() {
         counter_timer_.reset();
         acceptor_timer_.reset();
         acceptor_.reset();
         super::destroy();
     }
+
     bool is_started() const noexcept {
         return super::is_started();
     }
+
     bool is_stopped() const noexcept {
         return super::is_stopped();
     }
+
     asio::ip::tcp::acceptor& acceptor() noexcept {
         return *acceptor_;
     }
+
     const asio::ip::tcp::acceptor& acceptor() const noexcept {
         return *acceptor_;
     }
@@ -110,29 +122,35 @@ public:
         return bind<std::shared_ptr<Session>&, std::string_view>(
             event_type::recv, std::forward<F>(callback), std::forward<Bound>(bound)...);
     }
+
     template<class F, class... Bound>
     Derived& bind_accept(F&& callback, Bound&&... bound) {
         return bind<std::shared_ptr<Session>&>(
             event_type::accept, std::forward<F>(callback), std::forward<Bound>(bound)...);
     }
+
     template<class F, class... Bound>
     Derived& bind_connect(F&& callback, Bound&&... bound) {
         return bind<std::shared_ptr<Session>&>(
             event_type::connect, std::forward<F>(callback), std::forward<Bound>(bound)...);
     }
+
     template<class F, class... Bound>
     Derived& bind_disconnect(F&& callback, Bound&&... bound) {
         return bind<std::shared_ptr<Session>&>(
             event_type::disconnect, std::forward<F>(callback), std::forward<Bound>(bound)...);
     }
+
     template<class F, class... Bound>
     Derived& bind_init(F&& callback, Bound&&... bound) {
         return bind<>(event_type::init, std::forward<F>(callback), std::forward<Bound>(bound)...);
     }
+
     template<class F, class... Bound>
     Derived& bind_start(F&& callback, Bound&&... bound) {
         return bind<>(event_type::start, std::forward<F>(callback), std::forward<Bound>(bound)...);
     }
+
     template<class F, class... Bound>
     Derived& bind_stop(F&& callback, Bound&&... bound) {
         return bind<>(event_type::stop, std::forward<F>(callback), std::forward<Bound>(bound)...);
@@ -182,6 +200,7 @@ protected:
         set_last_error(asio::error::in_progress);
         return owner.is_started();
     }
+
     template<class Condition>
     void _handle_start(error_code ec, std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy) {
         ARKNET_ASSERT(this->io_->running_in_this_thread());
@@ -205,6 +224,7 @@ protected:
             this->derived()._post_accept(std::move(lifetime), std::move(policy));
         }
     }
+
     void _do_stop(const error_code& ec, std::shared_ptr<Derived> lifetime) {
         ARKNET_ASSERT(this->io_->running_in_this_thread());
         auto previous = this->state_.load();
@@ -217,6 +237,7 @@ protected:
             }
         }
     }
+
     void _post_stop(const error_code& ec, std::shared_ptr<Derived> lifetime, state_t) {
         this->derived().dispatch([this, ec, lifetime = std::move(lifetime)]() mutable {
             set_last_error(ec);
@@ -233,6 +254,7 @@ protected:
                 this->derived()._exec_stop(ec, std::move(lifetime));
         });
     }
+
     void _exec_stop(const error_code& ec, std::shared_ptr<Derived> lifetime) {
         // Queue the server completion after the last session releases its counter.
         this->derived().post([this, ec, lifetime = std::move(lifetime)]() mutable {
@@ -245,6 +267,7 @@ protected:
             }
         });
     }
+
     void _handle_stop(const error_code& ec, std::shared_ptr<Derived>) {
         set_last_error(ec);
         this->derived()._fire_stop();
@@ -259,6 +282,7 @@ protected:
         }
         stop_waiters_.clear();
     }
+
     template<class... Construction>
     std::shared_ptr<Session> _make_session(Construction&&... construction) {
         auto lane = this->_get_io();
@@ -269,6 +293,7 @@ protected:
         return std::make_shared<Session>(std::forward<Construction>(construction)..., this->sessions_, this->listener_,
             std::move(lane), init_buffer_size_, max_buffer_size_);
     }
+
     template<class Condition>
     void _post_accept(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy) {
         ARKNET_ASSERT(this->io_->running_in_this_thread());
@@ -292,6 +317,7 @@ protected:
                     this->derived()._handle_accept(ec, std::move(session), std::move(lifetime), std::move(policy));
                 }));
     }
+
     template<class Condition>
     void _handle_accept(const error_code& ec, std::shared_ptr<Session> session, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy) {
@@ -318,22 +344,26 @@ protected:
                 }
             });
     }
+
     void _fire_init() {
         ARKNET_ASSERT(this->io_->running_in_this_thread());
         this->listener_.notify(event_type::init);
     }
+
     void _fire_start() {
 #ifndef NDEBUG
         ARKNET_ASSERT(!is_stop_called_);
 #endif
         this->listener_.notify(event_type::start);
     }
+
     void _fire_stop() {
 #ifndef NDEBUG
         is_stop_called_ = true;
 #endif
         this->listener_.notify(event_type::stop);
     }
+
     std::unique_ptr<asio::ip::tcp::acceptor> acceptor_;
     std::unique_ptr<asio::steady_timer> acceptor_timer_, counter_timer_;
     std::size_t init_buffer_size_, max_buffer_size_;
@@ -347,11 +377,13 @@ private:
         acceptor_timer_ = std::make_unique<asio::steady_timer>(this->io_->executor());
         counter_timer_ = std::make_unique<asio::steady_timer>(this->io_->executor());
     }
+
     void close_listener() {
         error_code ignored;
         acceptor_->cancel(ignored);
         acceptor_->close(ignored);
     }
+
     error_code open_listener(const std::string& host, const std::string& service) {
         close_listener();
         error_code ec;
@@ -386,6 +418,7 @@ private:
         }
         return ec;
     }
+
     template<class... Signature, class F, class... Bound>
     Derived& bind(event_type event, F&& callback, Bound&&... bound) {
         this->listener_.bind(event, observer_t<Signature...>{std::forward<F>(callback), std::forward<Bound>(bound)...});
@@ -393,26 +426,33 @@ private:
     }
 };
 } // namespace arknet::detail
+
 namespace arknet {
+
 template<class Derived, class Session>
 using tcp_server_impl_t = detail::tcp_server_impl_t<Derived, Session>;
+
 template<class Session>
 class tcp_server_t : public detail::tcp_server_impl_t<tcp_server_t<Session>, Session>
 {
 public:
     using detail::tcp_server_impl_t<tcp_server_t<Session>, Session>::tcp_server_impl_t;
 };
+
 using tcp_server = tcp_server_t<tcp_session>;
 } // namespace arknet
 #if defined(ARKNET_INCLUDE_RATE_LIMIT)
 #include <arknet/tcp/tcp_stream.hpp>
+
 namespace arknet {
+
 template<class Session>
 class tcp_rate_server_t : public tcp_server_impl_t<tcp_rate_server_t<Session>, Session>
 {
 public:
     using tcp_server_impl_t<tcp_rate_server_t<Session>, Session>::tcp_server_impl_t;
 };
+
 using tcp_rate_server = tcp_rate_server_t<tcp_rate_session>;
 } // namespace arknet
 #endif

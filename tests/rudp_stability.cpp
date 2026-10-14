@@ -13,6 +13,7 @@
 #include "check.hpp"
 
 namespace {
+
 struct clock_probe : arknet::detail::alive_time_cp<clock_probe, void>
 {
     void move_wall_clock(std::chrono::system_clock::duration change) {
@@ -25,19 +26,23 @@ struct polled_server_t
 {
     asio::io_context context;
     Server server{context};
+
     ~polled_server_t() {
         asio::post(context, [this] { server.stop(); });
         context.run_for(200ms);
     }
+
     void start() {
         asio::post(context, [this] { server.start("127.0.0.1", 0); });
         context.run_for(5ms);
         check(server.is_started(), "server starts on caller's IO context");
     }
+
     void pump(std::chrono::milliseconds duration = 5ms) {
         context.run_for(duration);
     }
 };
+
 using polled_server = polled_server_t<arknet::rudp_server>;
 
 class raw_peer
@@ -48,12 +53,15 @@ public:
         socket_.connect(destination);
         socket_.non_blocking(true);
     }
+
     asio::ip::udp::endpoint endpoint() const {
         return socket_.local_endpoint();
     }
+
     void send(std::string_view bytes) {
         socket_.send(asio::buffer(bytes));
     }
+
     std::optional<std::uint32_t> acknowledged(std::uint32_t sync) {
         std::optional<std::uint32_t> conversation;
         std::array<char, 65536> bytes{};

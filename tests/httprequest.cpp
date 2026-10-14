@@ -8,6 +8,7 @@
 #include "check.hpp"
 
 namespace {
+
 using request_type = arknet::http_request::request_type;
 using response_type = arknet::http_request::response_type;
 
@@ -15,6 +16,7 @@ class io_runner
 {
 public:
     asio::io_context context;
+
     explicit io_runner(std::size_t count = 1)
         : guard_(asio::make_work_guard(context)) {
         for (std::size_t i = 0; i < count; ++i)
@@ -22,6 +24,7 @@ public:
             workers_.emplace_back([this] { context.run(); });
         }
     }
+
     ~io_runner() {
         guard_.reset();
         context.stop();
@@ -61,9 +64,11 @@ public:
         });
         check(server_.start("127.0.0.1", 0), "wire peer starts");
     }
+
     ~wire_server() {
         server_.stop();
     }
+
     std::string service() const {
         return std::to_string(server_.get_listen_port());
     }

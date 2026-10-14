@@ -8,7 +8,9 @@
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/impl/event_queue_cp.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class shutdown_cp
 {
@@ -37,6 +39,7 @@ protected:
             socket->close(ignored);
         });
     }
+
     template<class Chain>
     void _do_shutdown(const error_code& error, std::shared_ptr<Derived> owner, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
@@ -63,6 +66,7 @@ protected:
             },
             chain.move_guard());
     }
+
     template<class Chain>
     void _post_shutdown(const error_code& error, std::shared_ptr<Derived> owner, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
@@ -75,6 +79,7 @@ protected:
             object._handle_shutdown(error, std::move(owner), std::move(chain));
         }
     }
+
     template<class Chain>
     void _post_shutdown_tcp(const error_code& error, std::shared_ptr<Derived> owner, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
@@ -96,6 +101,7 @@ protected:
         }
         object._handle_shutdown(error, std::move(owner), std::move(chain));
     }
+
     template<class Chain>
     void _handle_shutdown(const error_code& error, std::shared_ptr<Derived> owner, Chain chain) {
         shutdown_timer_.reset();
@@ -106,6 +112,7 @@ protected:
         }
         static_cast<Derived&>(*this)._do_close(error, std::move(owner), std::move(chain));
     }
+
     template<class Chain>
     void _make_shutdown_timer(const error_code& error, std::shared_ptr<Derived> owner, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
@@ -117,6 +124,7 @@ protected:
         object._post_shutdown_timer(
             error, std::move(owner), std::move(chain), object.get_disconnect_timeout(), shutdown_timer_);
     }
+
     template<class Chain, class Rep, class Period>
     void _post_shutdown_timer(const error_code& error, std::shared_ptr<Derived> owner, Chain chain,
         std::chrono::duration<Rep, Period> delay, std::shared_ptr<safe_timer> timer) {
@@ -132,6 +140,7 @@ protected:
                 failure, error, std::move(owner), std::move(chain), std::move(timer));
         });
     }
+
     template<class Chain>
     void _handle_shutdown_timer(const error_code& failure, const error_code& error, std::shared_ptr<Derived> owner,
         Chain chain, std::shared_ptr<safe_timer> timer) {
@@ -154,6 +163,7 @@ protected:
 #endif
         object._handle_shutdown(error, std::move(owner), std::move(chain));
     }
+
     void _stop_shutdown_timer(std::shared_ptr<Derived> owner) {
         static_cast<Derived&>(*this).dispatch([this, owner = std::move(owner)] {
             if (shutdown_timer_)
@@ -162,6 +172,7 @@ protected:
             }
         });
     }
+
     std::shared_ptr<safe_timer> shutdown_timer_;
     std::shared_ptr<safe_timer> stop_deadline_timer_;
 };

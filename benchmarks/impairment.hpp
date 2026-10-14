@@ -22,11 +22,13 @@
 #include <arknet/base/error.hpp>
 
 namespace arknet_benchmark {
+
 struct impairment_options
 {
     unsigned loss_percent{}, duplicate_percent{}, reorder_percent{}, delay_ms{};
     unsigned burst_count{}, burst_period = 100;
     std::uint64_t seed = 0x61726b6e6574ULL;
+
     void validate() const {
         if (loss_percent > 100 || duplicate_percent > 100 || reorder_percent > 100 || delay_ms > 1000 ||
             burst_count >= burst_period || !burst_period || burst_period > 1000000)
@@ -35,6 +37,7 @@ struct impairment_options
         }
     }
 };
+
 struct impairment_statistics
 {
     std::uint64_t received_packets{}, received_bytes{}, forwarded_packets{}, forwarded_bytes{};
@@ -48,6 +51,7 @@ class udp_impairment
 {
     using udp = asio::ip::udp;
     using clock = std::chrono::steady_clock;
+
     struct route : std::enable_shared_from_this<route>
     {
         struct packet
@@ -56,6 +60,7 @@ class udp_impairment
             udp::endpoint destination;
             unsigned socket{};
         };
+
         route(asio::io_context& context, udp::endpoint server, impairment_options options)
             : sockets{udp::socket(context), udp::socket(context)}
             , timer(context)
@@ -69,10 +74,12 @@ class udp_impairment
                 socket.bind({asio::ip::make_address("127.0.0.1"), 0});
             }
         }
+
         void start() {
             receive(0);
             receive(1);
         }
+
         void close() noexcept {
             closed = true;
             try
@@ -91,6 +98,7 @@ class udp_impairment
             }
             stats.retained_bytes = stats.retained_packets = 0;
         }
+
         void receive(unsigned socket) {
             auto self = shared_from_this();
             sockets[socket].async_receive_from(asio::buffer(buffers[socket]), incoming[socket],
@@ -117,9 +125,11 @@ class udp_impairment
                     }
                 });
         }
+
         bool chance(unsigned socket, unsigned percent) {
             return percent != 0 && std::uniform_int_distribution<unsigned>(0, 99)(random[socket]) < percent;
         }
+
         void received(unsigned socket, std::string_view bytes) {
             if (socket == 0)
             {
@@ -165,6 +175,7 @@ class udp_impairment
                 schedule(bytes, socket, due + std::chrono::milliseconds(1));
             }
         }
+
         void schedule(std::string_view bytes, unsigned received_socket, clock::time_point due) {
             if (stats.retained_bytes + bytes.size() > max_buffer_bytes || stats.retained_packets >= max_packets)
             {
@@ -190,6 +201,7 @@ class udp_impairment
                 arm();
             }
         }
+
         void arm() {
             if (delayed.empty() || (armed && *armed <= delayed.begin()->first))
             {
@@ -224,6 +236,7 @@ class udp_impairment
                 }
             });
         }
+
         void send(unsigned socket) {
             if (sending[socket] || ready[socket].empty() || closed)
             {
@@ -260,6 +273,7 @@ class udp_impairment
                     }
                 });
         }
+
         std::array<udp::socket, 2> sockets;
         asio::steady_timer timer;
         udp::endpoint server;
@@ -279,17 +293,21 @@ class udp_impairment
 
 public:
     static constexpr std::size_t max_buffer_bytes = 8 * 1024 * 1024, max_packets = 8192;
+
     explicit udp_impairment(impairment_options options)
         : guard(asio::make_work_guard(context))
         , options(options) {
         options.validate();
         worker = std::thread([this] { context.run(); });
     }
+
     ~udp_impairment() {
         stop();
     }
+
     udp_impairment(const udp_impairment&) = delete;
     udp_impairment& operator=(const udp_impairment&) = delete;
+
     unsigned short add(const asio::ip::udp::endpoint& server) {
         return execute([this, server] {
             auto settings = options;
@@ -307,6 +325,7 @@ public:
             return value->sockets[0].local_endpoint().port();
         });
     }
+
     impairment_statistics snapshot(bool reset_peak = false) {
         return execute([this, reset_peak] {
             impairment_statistics total;
@@ -336,6 +355,7 @@ public:
             return total;
         });
     }
+
     void stop() noexcept {
         if (!worker.joinable())
         {
@@ -374,6 +394,7 @@ private:
         }
         return future.get();
     }
+
     asio::io_context context;
     asio::executor_work_guard<asio::io_context::executor_type> guard;
     impairment_options options;

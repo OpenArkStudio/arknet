@@ -11,6 +11,7 @@
 #include <arknet/base/error.hpp>
 
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class tcp_send_op
 {

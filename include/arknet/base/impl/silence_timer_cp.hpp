@@ -6,7 +6,9 @@
 
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 template<class Derived, class Args>
 class silence_timer_cp
 {
@@ -14,6 +16,7 @@ public:
     auto get_silence_timeout() const noexcept {
         return silence_timeout_;
     }
+
     template<class Rep, class Period>
     Derived& set_silence_timeout(std::chrono::duration<Rep, Period> duration) noexcept {
         silence_timeout_ = to_steady_duration(duration);
@@ -44,6 +47,7 @@ protected:
             });
         });
     }
+
     void _handle_silence_timer(const error_code& error, std::shared_ptr<Derived> owner) {
         if (error)
         {
@@ -62,6 +66,7 @@ protected:
             object._do_disconnect(asio::error::timed_out, std::move(owner));
         }
     }
+
     void _stop_silence_timer() {
         static_cast<Derived&>(*this).dispatch([this] {
 #ifndef NDEBUG
@@ -74,6 +79,7 @@ protected:
             }
         });
     }
+
     std::shared_ptr<safe_timer> silence_timer_;
     std::chrono::steady_clock::duration silence_timeout_ = std::chrono::milliseconds(tcp_silence_timeout);
 #ifndef NDEBUG

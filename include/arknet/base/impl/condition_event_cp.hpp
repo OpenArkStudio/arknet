@@ -10,14 +10,19 @@
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/impl/post_cp.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 template<class, class>
 class condition_event_cp;
 }
+
 namespace arknet {
+
 class async_event : public detail::object_t<async_event>
 {
 };
+
 class condition_event : public detail::object_t<condition_event>
 {
     template<class, class>
@@ -26,6 +31,7 @@ class condition_event : public detail::object_t<condition_event>
 public:
     explicit condition_event(const std::shared_ptr<detail::io_t>& lane)
         : event_timer_io_(lane) {}
+
     void notify() {
         notified_.store(true, std::memory_order_release);
         if (auto lane = event_timer_io_.lock())
@@ -60,6 +66,7 @@ protected:
             detail::cancel_timer(*event_timer_);
         }
     }
+
     std::weak_ptr<detail::io_t> event_timer_io_;
     std::unique_ptr<asio::steady_timer> event_timer_;
 
@@ -67,7 +74,9 @@ private:
     std::atomic_bool notified_ = false;
 };
 } // namespace arknet
+
 namespace arknet::detail {
+
 template<class Derived, class Args = void>
 class condition_event_cp
 {
@@ -78,12 +87,14 @@ class condition_event_cp
         std::shared_ptr<std::atomic_size_t> pending = std::make_shared<std::atomic_size_t>(0);
         std::map<condition_event*, std::shared_ptr<condition_event>> events;
     };
+
     std::shared_ptr<operation_state> events_ = std::make_shared<operation_state>();
 
 public:
     ~condition_event_cp() {
         events_->alive.store(false, std::memory_order_release);
     }
+
     template<class Function>
     auto post_condition_event(Function&& callback) {
         auto& object = static_cast<Derived&>(*this);
@@ -118,6 +129,7 @@ public:
         });
         return event;
     }
+
     Derived& notify_all_condition_events() {
         auto& object = static_cast<Derived&>(*this);
         asio::dispatch(object.io_->executor(),
@@ -134,6 +146,7 @@ protected:
     void _set_condition_acceptance(bool accepting) {
         events_->accepting.store(accepting, std::memory_order_release);
     }
+
     void _wait_condition_operations() {
         wait_pending_operations(events_->pending);
     }

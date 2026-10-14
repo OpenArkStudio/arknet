@@ -5,15 +5,19 @@
 #include <type_traits>
 
 #include <arknet/base/error.hpp>
+
 #if defined(_WIN32)
 #include <Mstcpip.h>
+
 #else
 #include <cerrno>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
+
 #endif
 
 namespace arknet::detail {
+
 template<class Socket>
 bool set_keepalive_options(
     Socket& socket, bool enabled = true, unsigned idle = 60, unsigned interval = 3, unsigned count = 3) noexcept {

@@ -6,7 +6,9 @@
 #include <utility>
 
 #include <arknet/base/error.hpp>
+
 namespace arknet::detail {
+
 template<class Derived, class Args = void>
 class user_data_cp
 {
@@ -16,14 +18,17 @@ public:
         user_data_ = std::forward<T>(value);
         return static_cast<Derived&>(*this);
     }
+
     template<class T>
     Derived& user_data(T&& value) {
         return set_user_data(std::forward<T>(value));
     }
+
     template<class T>
     T user_data() noexcept {
         return get_user_data<T>();
     }
+
     template<class T>
     T get_user_data() noexcept {
         if constexpr (std::is_pointer_v<T>)
@@ -51,13 +56,16 @@ public:
             }
         }
     }
+
     Derived& clear_user_data() noexcept {
         user_data_.reset();
         return static_cast<Derived&>(*this);
     }
+
     std::any& user_data_any() noexcept {
         return user_data_;
     }
+
     const std::any& user_data_any() const noexcept {
         return user_data_;
     }

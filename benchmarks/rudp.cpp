@@ -30,6 +30,7 @@
 #include "runtime.hpp"
 
 namespace {
+
 using clock_type = std::chrono::steady_clock;
 constexpr std::size_t sample_limit = 8192;
 constexpr auto drain_time = std::chrono::seconds(10);
@@ -299,6 +300,7 @@ struct metrics
         : tag(tag) {
         samples.reserve(sample_limit);
     }
+
     unsigned tag;
     clock_type::time_point started{}, deadline{};
     double elapsed{};
@@ -317,6 +319,7 @@ struct metrics
         std::lock_guard lock(done_mutex);
         done.notify_all();
     }
+
     void observe(double microseconds) {
         std::lock_guard lock(samples_mutex);
         ++observations;
@@ -333,6 +336,7 @@ struct metrics
             }
         }
     }
+
     std::uint64_t failures() const noexcept {
         return rejected + send_errors + content_errors + order_errors + unexpected + disconnects + unfinished +
                callback_exceptions + drain_timeouts + duplicate_completions;
@@ -413,6 +417,7 @@ struct client_state
         clock_type::time_point sent;
         std::uint64_t sequence{};
     };
+
     client_state(
         arknet::rudp_client& client, std::shared_ptr<round_state> owner, const options& settings, std::uint32_t id)
         : client(client)
@@ -420,6 +425,7 @@ struct client_state
         , settings(settings)
         , id(id)
         , slots(settings.window) {}
+
     arknet::rudp_client& client;
     std::shared_ptr<round_state> owner;
     const options& settings;

@@ -8,6 +8,7 @@
 #include <utility>
 
 namespace arknet::detail {
+
 template<class Function>
 auto make_future_task(Function&& callback) {
     using result_type = std::invoke_result_t<Function>;

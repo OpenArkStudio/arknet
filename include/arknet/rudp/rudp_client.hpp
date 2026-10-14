@@ -18,6 +18,7 @@
 #include <arknet/udp/udp_client.hpp>
 
 namespace arknet::detail {
+
 template<class Derived>
 class rudp_client_impl_t : public udp_client_t<Derived>
 {
@@ -25,6 +26,7 @@ class rudp_client_impl_t : public udp_client_t<Derived>
     ARKNET_CLASS_FRIEND_DECLARE_UDP_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_UDP_CLIENT;
     using udp_base = udp_client_t<Derived>;
+
     struct handshake
     {
         handshake(asio::any_io_executor executor, std::uint32_t sync, std::uint16_t mtu)
@@ -32,6 +34,7 @@ class rudp_client_impl_t : public udp_client_t<Derived>
             , request(mtu ? detail::rudp_fec_control(4, sync, 0, mtu) : detail::rudp_control(1, sync))
             , sync(sync)
             , requested_mtu(mtu) {}
+
         asio::steady_timer retry;
         std::string request;
         std::array<char, 65536> response{};
@@ -43,9 +46,11 @@ class rudp_client_impl_t : public udp_client_t<Derived>
 
 public:
     using udp_base::udp_base;
+
     ~rudp_client_impl_t() {
         stop();
     }
+
     Derived& set_rudp_options(const arq::options& options) {
         if (!this->is_stopped())
         {
@@ -56,9 +61,11 @@ public:
         options_ = options;
         return this->derived();
     }
+
     const arq::options& get_rudp_options() const noexcept {
         return options_;
     }
+
     Derived& set_fec_options(const fec::options& options) {
         if (!this->is_stopped())
         {
@@ -69,9 +76,11 @@ public:
         fec_options_ = options;
         return this->derived();
     }
+
     const fec::options& get_fec_options() const noexcept {
         return fec_options_;
     }
+
     std::future<rudp::statistics> get_rudp_statistics() {
         if (!this->is_started())
         {
@@ -87,16 +96,19 @@ public:
             },
             asio::use_future);
     }
+
     template<class Host, class Service>
     bool start(Host&& host, Service&& service) {
         stop_connect_ = false;
         return udp_base::start(std::forward<Host>(host), std::forward<Service>(service));
     }
+
     template<class Host, class Service>
     bool async_start(Host&& host, Service&& service) {
         stop_connect_ = false;
         return udp_base::async_start(std::forward<Host>(host), std::forward<Service>(service));
     }
+
     void stop() {
         stop_connect_ = true;
         if (this->state_ == detail::state_t::starting)
@@ -111,6 +123,7 @@ public:
         }
         udp_base::stop();
     }
+
     template<class Function, class... Object>
     Derived& bind_handshake(Function&& function, Object&&... object) {
         this->listener_.bind(detail::event_type::handshake,
@@ -166,6 +179,7 @@ protected:
         send_syn(operation, lifetime);
         receive_ack(std::move(operation), std::move(lifetime));
     }
+
     template<class Condition>
     void _fire_recv(
         std::shared_ptr<Derived>& lifetime, std::shared_ptr<detail::ecs_t<Condition>>&, std::string_view bytes) {
@@ -184,6 +198,7 @@ protected:
             channel->input(bytes);
         }
     }
+
     template<class Data, class Completion>
     bool _do_send(Data& data, Completion&& completion) {
         const auto buffer = asio::buffer(data);
@@ -200,6 +215,7 @@ protected:
         completion(error, error ? 0 : buffer.size());
         return !error;
     }
+
     template<class Chain>
     void _handle_disconnect(const error_code& error, std::shared_ptr<Derived> lifetime, Chain chain) {
         if (channel_)
@@ -227,6 +243,7 @@ private:
             throw std::invalid_argument("FEC wire MTU must be between 51 and 65507 bytes");
         }
     }
+
     void send_syn(const std::shared_ptr<handshake>& operation, const std::shared_ptr<Derived>& lifetime) {
         if (operation->finished)
         {
@@ -241,6 +258,7 @@ private:
             }
         });
     }
+
     void receive_ack(std::shared_ptr<handshake> operation, std::shared_ptr<Derived> lifetime) {
         this->reading_ = true;
         this->socket().async_receive(asio::buffer(operation->response), [this, operation, lifetime](error_code error,
@@ -284,6 +302,7 @@ private:
             complete(error, conversation, mtu);
         });
     }
+
     arq::options options_;
     fec::options fec_options_;
     std::shared_ptr<handshake> handshake_;
@@ -292,9 +311,12 @@ private:
     std::atomic<bool> stop_connect_{};
 };
 } // namespace arknet::detail
+
 namespace arknet {
+
 template<class Derived>
 using rudp_client_t = detail::rudp_client_impl_t<Derived>;
+
 class rudp_client : public rudp_client_t<rudp_client>
 {
 public:

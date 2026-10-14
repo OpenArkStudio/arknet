@@ -5,6 +5,7 @@
 #include "check.hpp"
 
 namespace {
+
 const std::string payload("ipv6\0payload", 12);
 
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)

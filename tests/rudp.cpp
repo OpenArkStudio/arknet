@@ -13,6 +13,7 @@
 #include "check.hpp"
 
 namespace {
+
 class lossy_relay
 {
 public:
@@ -23,19 +24,23 @@ public:
         receive();
         thread_ = std::thread([this] { context_.run(); });
     }
+
     ~lossy_relay() {
         context_.stop();
         thread_.join();
     }
+
     unsigned short port() const {
         return socket_.local_endpoint().port();
     }
+
     std::atomic<unsigned> dropped{}, duplicated{}, reordered{};
 
 private:
     void send(std::shared_ptr<std::string> bytes, asio::ip::udp::endpoint target) {
         socket_.async_send_to(asio::buffer(*bytes), target, [bytes](arknet::error_code, std::size_t) {});
     }
+
     void receive() {
         socket_.async_receive_from(asio::buffer(buffer_), sender_, [this](arknet::error_code error, std::size_t count) {
             if (error)
@@ -76,6 +81,7 @@ private:
             receive();
         });
     }
+
     asio::io_context context_;
     asio::executor_work_guard<asio::io_context::executor_type> work_;
     asio::ip::udp::socket socket_;

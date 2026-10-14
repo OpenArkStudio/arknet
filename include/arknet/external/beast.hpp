@@ -7,23 +7,29 @@
 #define BOOST_BEAST_USE_STD_STRING_VIEW
 #endif
 #include <boost/beast.hpp>
+
 #if defined(ARKNET_ENABLE_SSL)
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket/ssl.hpp>
+
 #endif
 namespace beast = boost::beast;
 #else
 #include <arknet/bho/beast.hpp>
+
 #if defined(ARKNET_ENABLE_SSL)
 #include <arknet/bho/beast/ssl.hpp>
 #include <arknet/bho/beast/websocket/ssl.hpp>
+
 #endif
 namespace beast = bho::beast;
 #endif
 
 namespace http = beast::http;
 namespace websocket = beast::websocket;
+
 namespace arknet {
+
 namespace http = beast::http;
 namespace websocket = beast::websocket;
 } // namespace arknet

@@ -11,7 +11,9 @@
 #include <arknet/base/detail/shared_mutex.hpp>
 #include <arknet/base/detail/util.hpp>
 #include <arknet/base/io_pool.hpp>
+
 namespace arknet::detail {
+
 template<class Session>
 class session_mgr_t
 {
@@ -28,11 +30,13 @@ public:
     using self = session_mgr_t;
     using args_type = typename Session::args_type;
     using key_type = typename Session::key_type;
+
     explicit session_mgr_t(std::shared_ptr<io_t> acceptor, std::atomic<state_t>& state)
         : io_(std::move(acceptor))
         , state_(state) {
         sessions_.reserve(64);
     }
+
     template<class Callback>
     void emplace(std::shared_ptr<Session> session, Callback&& callback) {
         if (!session)
@@ -51,6 +55,7 @@ public:
             callback(inserted);
         });
     }
+
     template<class Callback>
     void erase(std::shared_ptr<Session> session, Callback&& callback) {
         if (!session)
@@ -71,14 +76,17 @@ public:
             callback(erased);
         });
     }
+
     template<class Callable>
     void post(Callable&& callback) {
         asio::post(io_->executor(), make_allocator(allocator_, std::forward<Callable>(callback)));
     }
+
     template<class Callable>
     void dispatch(Callable&& callback) {
         asio::dispatch(io_->executor(), make_allocator(allocator_, std::forward<Callable>(callback)));
     }
+
     template<class Callable>
     void for_each(Callable&& callback) {
         for (auto& session : snapshot())
@@ -86,6 +94,7 @@ public:
             callback(session);
         }
     }
+
     template<class Callable>
     void quick_for_each(Callable&& callback) {
         arknet::shared_locker lock(mutex_);
@@ -94,11 +103,13 @@ public:
             callback(session);
         }
     }
+
     std::shared_ptr<Session> find(const key_type& key) {
         arknet::shared_locker lock(mutex_);
         const auto found = sessions_.find(key);
         return found == sessions_.end() ? nullptr : found->second;
     }
+
     template<class Predicate>
     std::shared_ptr<Session> find_if(Predicate&& predicate) {
         for (auto& session : snapshot())
@@ -110,16 +121,20 @@ public:
         }
         return {};
     }
+
     std::size_t size() const noexcept {
         arknet::shared_locker lock(mutex_);
         return sessions_.size();
     }
+
     bool empty() const noexcept {
         return size() == 0;
     }
+
     io_t& io() noexcept {
         return *io_;
     }
+
     const io_t& io() const noexcept {
         return *io_;
     }
