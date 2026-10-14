@@ -23,8 +23,7 @@ namespace beast = bho::beast;
 
 namespace http = beast::http;
 namespace websocket = beast::websocket;
-namespace arknet
-{
+namespace arknet {
 namespace http = beast::http;
 namespace websocket = beast::websocket;
-}
+} // namespace arknet

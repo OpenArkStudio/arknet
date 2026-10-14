@@ -29,38 +29,43 @@
 #include <arknet/base/io_pool.hpp>
 #include <arknet/base/listener.hpp>
 #include <arknet/base/session_mgr.hpp>
-namespace arknet
-{
+namespace arknet {
 class session
 {
 public:
-    static constexpr bool is_client() noexcept { return false; }
-    static constexpr bool is_session() noexcept { return true; }
-    static constexpr bool is_server() noexcept { return false; }
+    static constexpr bool is_client() noexcept {
+        return false;
+    }
+    static constexpr bool is_session() noexcept {
+        return true;
+    }
+    static constexpr bool is_server() noexcept {
+        return false;
+    }
 };
-}
-namespace arknet::detail
-{
-template <class Derived, class Args>
-class session_impl_t : public arknet::session,
-                       public object_t<Derived>,
-                       public io_context_cp<Derived, Args>,
-                       public thread_id_cp<Derived, Args>,
-                       public event_queue_cp<Derived, Args>,
-                       public user_data_cp<Derived, Args>,
-                       public connect_time_cp<Derived, Args>,
-                       public alive_time_cp<Derived, Args>,
-                       public socket_cp<Derived, Args>,
-                       public connect_cp<Derived, Args>,
-                       public shutdown_cp<Derived, Args>,
-                       public close_cp<Derived, Args>,
-                       public disconnect_cp<Derived, Args>,
-                       public user_timer_cp<Derived, Args>,
-                       public connect_timeout_cp<Derived, Args>,
-                       public send_cp<Derived, Args>,
-                       public post_cp<Derived, Args>,
-                       public condition_event_cp<Derived, Args>,
-                       public silence_timer_cp<Derived, Args>
+} // namespace arknet
+namespace arknet::detail {
+template<class Derived, class Args>
+class session_impl_t
+    : public arknet::session
+    , public object_t<Derived>
+    , public io_context_cp<Derived, Args>
+    , public thread_id_cp<Derived, Args>
+    , public event_queue_cp<Derived, Args>
+    , public user_data_cp<Derived, Args>
+    , public connect_time_cp<Derived, Args>
+    , public alive_time_cp<Derived, Args>
+    , public socket_cp<Derived, Args>
+    , public connect_cp<Derived, Args>
+    , public shutdown_cp<Derived, Args>
+    , public close_cp<Derived, Args>
+    , public disconnect_cp<Derived, Args>
+    , public user_timer_cp<Derived, Args>
+    , public connect_timeout_cp<Derived, Args>
+    , public send_cp<Derived, Args>
+    , public post_cp<Derived, Args>
+    , public condition_event_cp<Derived, Args>
+    , public silence_timer_cp<Derived, Args>
 {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
 
@@ -71,53 +76,60 @@ public:
     using buffer_type = typename Args::buffer_t;
     using send_cp<Derived, Args>::send;
     using send_cp<Derived, Args>::async_send;
-    template <class... SocketArgs>
+    template<class... SocketArgs>
     session_impl_t(session_mgr_t<Derived>& sessions, listener_t& listener, std::shared_ptr<io_t> lane,
-                   std::size_t initial, std::size_t maximum, SocketArgs&&... socket_args)
-        : io_context_cp<Derived, Args>(std::move(lane)),
-          socket_cp<Derived, Args>(std::forward<SocketArgs>(socket_args)...), sessions_(sessions), listener_(listener),
-          buffer_(initial, maximum)
-    {
+        std::size_t initial, std::size_t maximum, SocketArgs&&... socket_args)
+        : io_context_cp<Derived, Args>(std::move(lane))
+        , socket_cp<Derived, Args>(std::forward<SocketArgs>(socket_args)...)
+        , sessions_(sessions)
+        , listener_(listener)
+        , buffer_(initial, maximum) {}
+    void stop() {
+        this->derived().dispatch([this] {
+            this->_stop_silence_timer();
+            this->_stop_connect_timeout_timer();
+            this->_dispatch_stop_all_timers();
+            this->_dispatch_stop_all_timed_events();
+            this->notify_all_condition_events();
+            buffer_.consume(buffer_.size());
+            this->clear_user_data();
+            ecs_.reset();
+            counter_ptr_.reset();
+        });
     }
-    void stop()
-    {
-        this->derived().dispatch(
-            [this]
-            {
-                this->_stop_silence_timer();
-                this->_stop_connect_timeout_timer();
-                this->_dispatch_stop_all_timers();
-                this->_dispatch_stop_all_timed_events();
-                this->notify_all_condition_events();
-                buffer_.consume(buffer_.size());
-                this->clear_user_data();
-                ecs_.reset();
-                counter_ptr_.reset();
-            });
-    }
-    void destroy()
-    {
+    void destroy() {
         this->socket_.reset();
         this->io_.reset();
     }
-    bool is_started() const noexcept { return state_.load() == state_t::started; }
-    bool is_stopped() const noexcept { return state_.load() == state_t::stopped; }
-    buffer_wrap<buffer_type>& buffer() noexcept { return buffer_; }
+    bool is_started() const noexcept {
+        return state_.load() == state_t::started;
+    }
+    bool is_stopped() const noexcept {
+        return state_.load() == state_t::stopped;
+    }
+    buffer_wrap<buffer_type>& buffer() noexcept {
+        return buffer_;
+    }
 
 protected:
-    void start()
-    {
-        this->derived().dispatch(
-            [this]
-            {
-                this->io_->init_thread_id();
-                this->_make_connect_timeout_timer(this->selfptr(), this->connect_timeout_);
-            });
+    void start() {
+        this->derived().dispatch([this] {
+            this->io_->init_thread_id();
+            this->_make_connect_timeout_timer(this->selfptr(), this->connect_timeout_);
+        });
     }
-    session_mgr_t<Derived>& sessions() noexcept { return sessions_; }
-    listener_t& listener() noexcept { return listener_; }
-    std::atomic<state_t>& state() noexcept { return state_; }
-    constexpr bool life_id() const noexcept { return true; }
+    session_mgr_t<Derived>& sessions() noexcept {
+        return sessions_;
+    }
+    listener_t& listener() noexcept {
+        return listener_;
+    }
+    std::atomic<state_t>& state() noexcept {
+        return state_;
+    }
+    constexpr bool life_id() const noexcept {
+        return true;
+    }
     constexpr void reset_life_id() noexcept {}
     session_mgr_t<Derived>& sessions_;
     listener_t& listener_;
@@ -131,4 +143,4 @@ protected:
     std::atomic<int> post_recv_counter_ = 0;
 #endif
 };
-}
+} // namespace arknet::detail

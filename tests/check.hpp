@@ -20,15 +20,13 @@ using namespace std::chrono_literals;
 class messages
 {
 public:
-    void push(std::string_view data)
-    {
+    void push(std::string_view data) {
         std::lock_guard lock(mutex_);
         values_.emplace_back(data);
         ready_.notify_all();
     }
 
-    std::vector<std::string> wait(std::size_t count)
-    {
+    std::vector<std::string> wait(std::size_t count) {
         std::unique_lock lock(mutex_);
         check(ready_.wait_for(lock, 5s, [&] { return values_.size() >= count; }), "receive timeout");
         return values_;
@@ -40,8 +38,8 @@ private:
     std::vector<std::string> values_;
 };
 
-template <class Future> inline auto await(Future& future)
-{
+template<class Future>
+inline auto await(Future& future) {
     check(future.wait_for(5s) == std::future_status::ready, "completion timeout");
     return future.get();
 }

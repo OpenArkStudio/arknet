@@ -7,8 +7,7 @@
 
 #include <arknet/arknet.hpp>
 
-int main()
-{
+int main() {
     arknet::tcp_server server;
     server.bind_recv([](auto& session, std::string_view data) { session->async_send(data); });
     if (!server.start("::1", 0, arknet::use_dgram))
@@ -21,15 +20,13 @@ int main()
     arknet::tcp_client client;
     client.set_auto_reconnect(false);
     bool received_once = false;
-    client.bind_recv(
-        [&](std::string_view data)
+    client.bind_recv([&](std::string_view data) {
+        if (!received_once)
         {
-            if (!received_once)
-            {
-                received_once = true;
-                reply.set_value(std::string(data));
-            }
-        });
+            received_once = true;
+            reply.set_value(std::string(data));
+        }
+    });
     if (!client.start("::1", server.get_listen_port(), arknet::use_dgram) || !client.async_send("hello IPv6"))
     {
         std::cerr << arknet::get_last_error().message() << '\n';

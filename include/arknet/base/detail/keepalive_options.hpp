@@ -13,15 +13,15 @@
 #include <sys/socket.h>
 #endif
 
-namespace arknet::detail
-{
-template <class Socket>
-bool set_keepalive_options(Socket& socket, bool enabled = true, unsigned idle = 60, unsigned interval = 3,
-                           unsigned count = 3) noexcept
-{
+namespace arknet::detail {
+template<class Socket>
+bool set_keepalive_options(
+    Socket& socket, bool enabled = true, unsigned idle = 60, unsigned interval = 3, unsigned count = 3) noexcept {
     clear_last_error();
     if constexpr (!std::same_as<typename Socket::lowest_layer_type::protocol_type, asio::ip::tcp>)
+    {
         return true;
+    }
     else
     {
         if (!socket.is_open())
@@ -51,10 +51,11 @@ bool set_keepalive_options(Socket& socket, bool enabled = true, unsigned idle = 
             return false;
         }
         if (!enabled)
-            return true;
-        auto fd = socket.native_handle();
-        auto set_native = [&](int option, unsigned value)
         {
+            return true;
+        }
+        auto fd = socket.native_handle();
+        auto set_native = [&](int option, unsigned value) {
             int setting = static_cast<int>(value);
 #if defined(_WIN32)
             const int result =
@@ -91,4 +92,4 @@ bool set_keepalive_options(Socket& socket, bool enabled = true, unsigned idle = 
 #endif
     }
 }
-}
+} // namespace arknet::detail

@@ -2,8 +2,7 @@
 
 #include <arknet/arknet.hpp>
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     const std::string host = argc > 1 ? argv[1] : "127.0.0.1";
     const std::string port = argc > 2 ? argv[2] : "7000";
     arknet::tcp_server server;

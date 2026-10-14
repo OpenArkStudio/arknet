@@ -11,7 +11,7 @@ for throughput and p99 charts, model comparisons and machine specifications.
 
 | Capability | Status | Work and acceptance criteria |
 | --- | --- | --- |
-| RUDP FEC | Available in v0.1.0; locally validated | ARQ-only, fixed and adaptive Reed–Solomon policies, versioned negotiation, MTU accounting, bounded decoding and group expiry. FEC requires compatible peers; legacy ARQ sessions remain supported. See [policies](../features/rudp/fec.md) and [production acceptance](production-readiness.md). |
+| RUDP FEC | Included in v0.1.0 | ARQ-only, fixed and adaptive Reed–Solomon policies, versioned negotiation, MTU accounting, bounded decoding and group expiry. FEC requires compatible peers; legacy ARQ sessions remain supported. See [policies](../features/rudp/fec.md) and [production acceptance](production-readiness.md). |
 | HTTP/2 | TODO; dependency selection pending | Client/server/session, TLS ALPN `h2`, h2c prior knowledge, HPACK, multiplexing, stream/connection flow control, bounded headers/bodies, cancellation and GOAWAY. Verify interoperability with an independent peer and slow-consumer tests. |
 | HTTP/3 | TODO; research | Select a QUIC transport and QPACK implementation; require TLS 1.3, stream limits, congestion/loss handling, migration policy and independent-peer interoperability. |
 | Named pipe | TODO | Windows local client/server, message/byte semantics, overlapped IO, access control, cancellation and restart. |
@@ -35,11 +35,11 @@ HTTP/1 transports remain independently usable.
 
 ## Future Scope
 
-[RUDP](../features/rudp/index.md) and its C++20 ARQ core are available in `v0.1.0`.
-[FEC policies](../features/rudp/fec.md) describe the implemented fixed and adaptive
-presets, activation thresholds and resource limits.
-KCP message-mode interoperability, retry/queue limits and local measurement
-are implemented. ARK's RDP workflow now uses arknet through [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38);
+[RUDP](../features/rudp/index.md) and its C++20 ARQ core are included in `v0.1.0`.
+[FEC policies](../features/rudp/fec.md) describe the fixed and adaptive presets,
+activation thresholds and resource limits.
+The release covers KCP message-mode interoperability, retry/queue limits and local
+measurement. ARK's RDP workflow now uses arknet through [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38);
 production-duration validation remains to be verified for deployment adoption.
 
 MQTT, database protocols and proxies are not scheduled. Add them only when a

@@ -18,7 +18,7 @@
 - TLS、HTTPS 和 WSS 需要启用 `ARKNET_ENABLE_SSL` 并提供 OpenSSL。
 - IPv4 和 IPv6 共用端点 API，监听策略需要显式配置。
 - HTTP 当前实现 HTTP/1.1。原生 UDP 不增加重传或自动切包。
-- RUDP 的仅 ARQ、固定 FEC 与自适应 FEC 已实现并通过本机验证，包含在 `v0.1.0` 中；部署采用需完成[生产验收](../project/production-readiness_CN.md)。
+- RUDP 提供仅 ARQ、固定 FEC 与自适应 FEC，包含在 `v0.1.0` 中；部署采用需完成[生产验收](../project/production-readiness_CN.md)。
 - [单次 HTTP 请求](http/requests_CN.md)支持完成通知、超时与取消。
 - 公共协程端点、HTTP/2、HTTP/3、named pipe、Unix domain socket、RPC、
   DTLS 和 WebSocket 压缩列在[路线图](../project/roadmap_CN.md)中。

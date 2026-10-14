@@ -2,13 +2,17 @@
 #pragma once
 
 // Components cooperate through the CRTP endpoint's protected state.
-#define ARKNET_DETAIL_COMPONENT(K, name) template <class, class> K name;
+#define ARKNET_DETAIL_COMPONENT(K, name)                                                                               \
+    template<class, class>                                                                                             \
+    K name;
 #define ARKNET_DETAIL_BASE_ACCESS(K)                                                                                   \
     K io_t;                                                                                                            \
     K io_pool;                                                                                                         \
     K data_filter_before_helper;                                                                                       \
-    template <class> K event_queue_guard;                                                                              \
-    template <class> K session_mgr_t;                                                                                  \
+    template<class>                                                                                                    \
+    K event_queue_guard;                                                                                               \
+    template<class>                                                                                                    \
+    K session_mgr_t;                                                                                                   \
     ARKNET_DETAIL_COMPONENT(K, iopool_cp)                                                                              \
     ARKNET_DETAIL_COMPONENT(K, alive_time_cp)                                                                          \
     ARKNET_DETAIL_COMPONENT(K, condition_event_cp)                                                                     \

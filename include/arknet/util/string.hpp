@@ -8,11 +8,10 @@
 #include <type_traits>
 #include <utility>
 
-namespace arknet
-{
+namespace arknet {
 
-template <class T> std::string to_string(T&& value)
-{
+template<class T>
+std::string to_string(T&& value) {
     using type = std::remove_cvref_t<T>;
     if constexpr (std::is_pointer_v<type> && std::is_same_v<std::remove_cv_t<std::remove_pointer_t<type>>, char>)
     {
@@ -38,8 +37,8 @@ template <class T> std::string to_string(T&& value)
     }
 }
 
-template <class T> std::string_view to_string_view(const T& value)
-{
+template<class T>
+std::string_view to_string_view(const T& value) {
     using type = std::remove_cvref_t<T>;
     if constexpr (std::is_pointer_v<type> && std::is_same_v<std::remove_cv_t<std::remove_pointer_t<type>>, char>)
     {
@@ -55,4 +54,4 @@ template <class T> std::string_view to_string_view(const T& value)
     }
 }
 
-}
+} // namespace arknet

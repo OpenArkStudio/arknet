@@ -3,9 +3,9 @@
 #include "../benchmarks/coroutine.cpp"
 #include "check.hpp"
 
-DOCTEST_TEST_CASE("Native TCP benchmark drains both execution modes after an exception before traffic")
-{
+DOCTEST_TEST_CASE("Native TCP benchmark drains both execution modes after an exception before traffic") {
     for (const auto* execution : {"callback", "coroutine"})
+    {
         for (const auto* model : {"shared", "sharded"})
         {
             options settings;
@@ -20,18 +20,18 @@ DOCTEST_TEST_CASE("Native TCP benchmark drains both execution modes after an exc
                 run(settings, [] { throw std::runtime_error("injected failure after connect"); });
             }
             catch (const std::runtime_error& error)
-            {
-                propagated = std::string_view(error.what()) == "injected failure after connect";
-            }
+            { propagated = std::string_view(error.what()) == "injected failure after connect"; }
             check(propagated, "injected failure reaches the caller after listener and socket cancellation");
             check(clock_type::now() - started < 5s, "waiting client gates and server reads drain promptly");
         }
+    }
 }
 
-DOCTEST_TEST_CASE("Native callback and coroutine clients validate complete TCP batches")
-{
+DOCTEST_TEST_CASE("Native callback and coroutine clients validate complete TCP batches") {
     for (const auto* execution : {"callback", "coroutine"})
+    {
         for (const auto* model : {"shared", "sharded"})
+        {
             for (const auto window : {1u, 64u})
             {
                 options settings;
@@ -45,11 +45,13 @@ DOCTEST_TEST_CASE("Native callback and coroutine clients validate complete TCP b
                 settings.seconds = .1;
                 DOCTEST_CHECK_NOTHROW(run(settings));
             }
+        }
+    }
 }
 
-DOCTEST_TEST_CASE("Native TCP maximum batches complete without opposing write stalls")
-{
+DOCTEST_TEST_CASE("Native TCP maximum batches complete without opposing write stalls") {
     for (const auto* execution : {"callback", "coroutine"})
+    {
         for (const auto* model : {"shared", "sharded"})
         {
             options settings;
@@ -63,4 +65,5 @@ DOCTEST_TEST_CASE("Native TCP maximum batches complete without opposing write st
             settings.seconds = .2;
             DOCTEST_CHECK_NOTHROW(run(settings));
         }
+    }
 }

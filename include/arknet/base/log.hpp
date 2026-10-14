@@ -21,11 +21,9 @@
 #define ARKNET_LOG_FATAL(...) ((void)0)
 #endif
 
-namespace arknet::detail
-{
-inline bool& has_unexpected_behavior() noexcept
-{
+namespace arknet::detail {
+inline bool& has_unexpected_behavior() noexcept {
     thread_local bool detected = false;
     return detected;
 }
-}
+} // namespace arknet::detail

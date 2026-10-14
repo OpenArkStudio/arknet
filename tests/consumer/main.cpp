@@ -2,8 +2,7 @@
 
 int installed_fec_selfcheck();
 
-int main()
-{
+int main() {
     arknet::tcp_client tcp;
     arknet::udp_client udp;
     arknet::ws_client websocket;

@@ -16,13 +16,12 @@
 #if defined(ARKNET_ENABLE_SSL)
 #include <boost/asio/ssl.hpp>
 #endif
-namespace boost::asio
-{
+namespace boost::asio {
 using error_code = boost::system::error_code;
 using error_category = boost::system::error_category;
 using error_condition = boost::system::error_condition;
 using system_error = boost::system::system_error;
-}
+} // namespace boost::asio
 namespace asio = boost::asio;
 namespace bho = boost;
 #else
@@ -36,25 +35,22 @@ namespace bho = boost;
 #if defined(ARKNET_ENABLE_SSL)
 #include <asio/ssl.hpp>
 #endif
-namespace asio
-{
+namespace asio {
 using error_condition = std::error_condition;
 }
 #endif
 
-namespace arknet
-{
+namespace arknet {
 using error_code = asio::error_code;
 using error_category = asio::error_category;
 using error_condition = asio::error_condition;
 using system_error = asio::system_error;
-namespace detail
-{
-template <class T>
+namespace detail {
+template<class T>
 concept character = std::same_as<T, char> || std::same_as<T, wchar_t> || std::same_as<T, char8_t> ||
                     std::same_as<T, char16_t> || std::same_as<T, char32_t>;
 }
-}
+} // namespace arknet
 
 #if defined(ARKNET_USE_BOOST_ASIO) && ARKNET_USE_BOOST_ASIO
 namespace boost::asio
@@ -63,12 +59,11 @@ namespace asio
 #endif
 {
 // Pointer buffers describe text; explicit pointer/count sends describe binary data.
-template <class Pointer>
+template<class Pointer>
     requires std::is_pointer_v<std::remove_cvref_t<Pointer>> &&
              arknet::detail::character<std::remove_cv_t<std::remove_pointer_t<std::remove_cvref_t<Pointer>>>>
-const_buffer buffer(Pointer&& text) noexcept
-{
+const_buffer buffer(Pointer&& text) noexcept {
     using char_type = std::remove_cv_t<std::remove_pointer_t<std::remove_cvref_t<Pointer>>>;
     return text ? buffer(std::basic_string_view<char_type>(text)) : const_buffer{};
 }
-}
+} // namespace boost::asio
