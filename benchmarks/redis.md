@@ -53,3 +53,15 @@ After warmup and all recorded rounds succeed, the program writes one JSON object
 The CPU and memory metrics exclude the external Redis server. Unavailable platform metrics are `null`. Latency uses a bounded reservoir per concurrent chain; combined quantiles weight each sample by that chain's successful batch count divided by its retained sample count. Quantiles are estimates when sampling is active. Inspect the sample count before interpreting a tail percentile; a short round with few completed batches cannot characterize rare delays.
 
 This tool measures the callback API and the one-context/one-thread-per-connection configuration. It does not establish results for coroutine APIs, shared IO contexts, connection pools, or production deployment capacity.
+
+## Generate reports
+
+The optional Node tool `benchmarks/report_database_clients.mjs` converts completed JSONL results into bilingual Markdown and SVG charts. Node is needed for this reporting step, not for the benchmark executable. Keep raw data outside the repository and provide measurement metadata, expected group counts and measured source hashes; `--help` lists the fields.
+
+```sh
+node benchmarks/report_database_clients.mjs --input /tmp/redis-rounds \
+  --metadata /tmp/redis-measurement.json --out-dir /tmp/database-report
+node --test benchmarks/report_database_clients.test.mjs
+```
+
+The output follows the documentation layout: `features/redis/performance*.md` and `performance/assets/redis-*.svg`. A failed or incomplete matrix is rejected before report files are written. Bars show the median of round measurements; error bars span the minimum and maximum. RT p50/p99 values are summarized across round percentiles, not pooled into a new percentile.
