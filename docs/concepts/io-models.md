@@ -77,6 +77,41 @@ The first release provides callback-based arknet endpoints; the coroutine
 benchmark uses native Asio `awaitable`/`co_spawn` to test scheduler choices.
 A public coroutine endpoint API is deferred.
 
+## Caller-driven execution
+
+`arknet::manual_runtime` owns a context and work guard without starting a worker
+to run user handlers. Asio platform services may still use internal helper
+threads, such as Windows timers or DNS resolution.
+Call `poll(max_handlers)` from the constructing thread, for example during an
+application's update loop. Other threads can use its standard Asio executor to
+post completions:
+
+```cpp
+#include <arknet/base/manual_runtime.hpp>
+
+arknet::manual_runtime runtime;
+asio::post(runtime.get_executor(), [] { /* Runs in the thread calling poll. */ });
+runtime.poll(64); // At most 64 ready Asio handlers; never waits for work.
+```
+
+Bind `co_spawn` and timers to `runtime.get_executor()` to keep coroutine execution
+on that same thread. Continue polling while operations are pending. Idle polls
+return zero; later posts still run without restarting the runtime.
+
+`poll(0)` executes nothing. A foreign-thread or reentrant poll throws
+`std::logic_error`; handler exceptions propagate, and a later poll remains valid.
+The budget counts Asio handlers, not elapsed time or inline calls inside a
+handler. Posting is not bounded by this dispatch budget.
+
+The executor does not keep the context alive. Finish or cancel external
+operations and stop their producers before destroying the runtime on its owner
+thread. Active polling pins the context until that call returns; releasing the
+runtime does not cancel its handlers. Destruction releases unexecuted captures
+and is **not** an IO drain, join or dynamic-library unload barrier. Use the
+runtime's poll entry point rather than running or stopping its underlying context.
+Native endpoint callbacks still use their own executors unless explicitly bridged
+to this executor; the runtime alone does not change their callback thread.
+
 ## Asio References
 
 - [Threads and Asio](https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/core/threads.html)
