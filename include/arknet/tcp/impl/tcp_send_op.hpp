@@ -63,8 +63,9 @@ private:
 #endif
         asio::async_write(owner.stream(), buffers,
             make_allocator(owner.wallocator(),
-                [&owner, lifetime = owner.selfptr(), storage = std::move(storage), prefix,
-                    completion = std::forward<Completion>(completion)](error_code ec, std::size_t transferred) mutable {
+                owner._track_async_operation([&owner, lifetime = owner.selfptr(), storage = std::move(storage), prefix,
+                                                 completion = std::forward<Completion>(completion)](
+                                                 error_code ec, std::size_t transferred) mutable {
 #ifndef NDEBUG
                     owner.post_send_counter_.fetch_sub(1);
 #endif
@@ -73,7 +74,7 @@ private:
                     // A partially written frame cannot be retried on the same byte stream.
                     if (ec && owner.state_ == state_t::started)
                         owner._do_disconnect(ec, owner.selfptr());
-                }));
+                })));
         return true;
     }
 };

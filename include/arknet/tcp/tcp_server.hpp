@@ -57,8 +57,39 @@ public:
     }
 
     void stop() {
+        const bool worker = this->iopool().running_in_threads();
+        std::unique_lock owner_lock(owner_stop_mutex_, std::defer_lock);
+        if (!worker)
+        {
+            owner_lock.lock();
+            if (owner_stop_active_)
+            {
+                set_last_error(asio::error::operation_not_supported);
+                return;
+            }
+        }
+        defer_event release_owner{[this, worker] {
+            if (!worker)
+            {
+                owner_stop_active_ = false;
+            }
+        }};
+        if (!worker)
+        {
+            owner_stop_active_ = true;
+        }
+        this->_set_async_wait_acceptance(false);
         if (this->is_iopool_stopped())
         {
+            if (!worker)
+            {
+                if (!this->io_->context().stopped())
+                {
+                    _wait_stop_operations();
+                }
+                // Another external owner may still be completing lane fences.
+                this->stop_iopool();
+            }
             return;
         }
         if (this->io_->context().stopped() && is_stopped())
@@ -67,8 +98,6 @@ public:
             return;
         }
         auto& owner = this->derived();
-        const bool worker = this->iopool().running_in_threads();
-        const bool external = this->is_external_iopool();
         owner.io_->unregobj(&owner);
         auto completion = std::make_shared<std::promise<void>>();
         auto result = completion->get_future();
@@ -83,15 +112,28 @@ public:
                 owner._do_stop(asio::error::operation_aborted, owner.selfptr());
             }
         });
-        if (external && !worker)
+        if (!worker)
         {
             result.get();
+            _wait_stop_operations();
         }
         this->stop_iopool();
-        if (!external && !worker)
+    }
+
+    bool wait_stopped() {
+        if (this->iopool().running_in_threads() || this->io_->context().get_executor().running_in_this_thread())
         {
-            result.get();
+            set_last_error(asio::error::operation_not_supported);
+            return false;
         }
+        std::lock_guard owner_lock(owner_stop_mutex_);
+        if (owner_stop_active_)
+        {
+            set_last_error(asio::error::operation_not_supported);
+            return false;
+        }
+        this->stop();
+        return this->is_stopped();
     }
 
     void destroy() {
@@ -244,8 +286,17 @@ protected:
             set_last_error(ec);
             ARKNET_ASSERT(this->state_ == state_t::stopping);
             counter_timer_->expires_at((asio::steady_timer::time_point::max)());
-            counter_timer_->async_wait([lifetime](error_code) {});
+            counter_timer_->async_wait(this->derived()._track_async_operation([lifetime](error_code) {}));
             this->sessions_.quick_for_each([](std::shared_ptr<Session>& session) { session->stop(); });
+            // TLS and protocol-upgrade sessions can still be starting before
+            // they join sessions_. Stop those accepted children as well.
+            for (auto& pending : _session_operations_snapshot())
+            {
+                if (auto session = pending.lock(); session && session->state_.load() == state_t::starting)
+                {
+                    session->stop();
+                }
+            }
 #ifndef NDEBUG
             this->sessions_.is_all_session_stop_called_ = true;
 #endif
@@ -303,20 +354,30 @@ protected:
             return;
         }
         auto session = this->derived()._make_session();
+        {
+            std::lock_guard lock(session_operations_mutex_);
+            if (session_operations_.size() >= session_operations_prune_at_)
+            {
+                std::erase_if(session_operations_, [](const auto& session) { return session.expired(); });
+                session_operations_prune_at_ = (std::max)(std::size_t{64}, session_operations_.size() * 2);
+            }
+            session_operations_.emplace_back(session);
+        }
         const auto executor = session->io_->executor();
 #ifndef NDEBUG
         ARKNET_ASSERT(this->post_recv_counter_.fetch_add(1) == 0);
 #endif
         acceptor_->async_accept(executor,
             make_allocator(this->rallocator_,
-                [this, session = std::move(session), lifetime = std::move(lifetime), policy = std::move(policy)](
-                    error_code ec, asio::ip::tcp::socket peer) mutable {
+                this->derived()._track_async_operation(
+                    [this, session = std::move(session), lifetime = std::move(lifetime), policy = std::move(policy)](
+                        error_code ec, asio::ip::tcp::socket peer) mutable {
 #ifndef NDEBUG
-                    this->post_recv_counter_.fetch_sub(1);
+                        this->post_recv_counter_.fetch_sub(1);
 #endif
-                    session->socket().lowest_layer() = std::move(peer);
-                    this->derived()._handle_accept(ec, std::move(session), std::move(lifetime), std::move(policy));
-                }));
+                        session->socket().lowest_layer() = std::move(peer);
+                        this->derived()._handle_accept(ec, std::move(session), std::move(lifetime), std::move(policy));
+                    })));
     }
 
     template<class Condition>
@@ -335,7 +396,7 @@ protected:
             return;
         }
         acceptor_timer_->expires_after(std::chrono::seconds(1));
-        acceptor_timer_->async_wait(
+        acceptor_timer_->async_wait(this->derived()._track_async_operation(
             [this, lifetime = std::move(lifetime), policy = std::move(policy)](error_code retry_error) mutable {
                 if (!retry_error)
                 {
@@ -343,7 +404,7 @@ protected:
                         this->derived()._post_accept(std::move(lifetime), std::move(policy));
                     });
                 }
-            });
+            }));
     }
 
     void _fire_init() {
@@ -373,6 +434,37 @@ protected:
     bool is_stop_called_ = false;
 #endif
 private:
+    auto _session_operations_snapshot() {
+        std::lock_guard lock(session_operations_mutex_);
+        return session_operations_;
+    }
+
+    void _wait_stop_operations() {
+        this->_wait_async_operations();
+        auto pending_sessions = _session_operations_snapshot();
+        // Stopped sessions may still own canceled native callbacks. They borrow
+        // the listener and manager even when a user retains the session itself.
+        for (auto& pending : pending_sessions)
+        {
+            if (auto session = pending.lock())
+            {
+                session->_wait_async_operations();
+            }
+        }
+        this->_wait_async_operations();
+        {
+            std::lock_guard lock(session_operations_mutex_);
+            session_operations_.clear();
+            session_operations_prune_at_ = 64;
+        }
+    }
+
+    std::mutex session_operations_mutex_;
+    std::recursive_mutex owner_stop_mutex_;
+    bool owner_stop_active_ = false;
+    std::vector<std::weak_ptr<Session>> session_operations_;
+    std::size_t session_operations_prune_at_ = 64;
+
     void create_listener() {
         acceptor_ = std::make_unique<asio::ip::tcp::acceptor>(this->io_->executor());
         acceptor_timer_ = std::make_unique<asio::steady_timer>(this->io_->executor());

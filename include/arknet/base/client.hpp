@@ -93,6 +93,7 @@ public:
         , buffer_(initial, maximum) {}
 
     bool start() noexcept {
+        this->_set_async_wait_acceptance(true);
         stopped_.store(false);
         return true;
     }
@@ -102,6 +103,7 @@ public:
     }
 
     void stop() {
+        this->_set_async_wait_acceptance(false);
         this->derived().dispatch([this] {
             this->_stop_reconnect_timer();
             this->_stop_connect_timeout_timer();

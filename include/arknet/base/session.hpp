@@ -93,6 +93,7 @@ public:
         , buffer_(initial, maximum) {}
 
     void stop() {
+        this->_set_async_wait_acceptance(false);
         this->derived().dispatch([this] {
             this->_stop_silence_timer();
             this->_stop_connect_timeout_timer();
@@ -125,6 +126,7 @@ public:
 
 protected:
     void start() {
+        this->_set_async_wait_acceptance(true);
         this->derived().dispatch([this] {
             this->io_->init_thread_id();
             this->_make_connect_timeout_timer(this->selfptr(), this->connect_timeout_);

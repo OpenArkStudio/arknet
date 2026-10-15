@@ -80,10 +80,11 @@ protected:
             timer->timer.expires_after(to_steady_duration(delay));
         }
         auto* operation = &timer->timer;
-        operation->async_wait([this, owner = std::move(owner), options = std::move(options), timer = std::move(timer)](
-                                  const error_code& error) mutable {
-            _handle_reconnect_timer(error, std::move(owner), std::move(options), std::move(timer));
-        });
+        operation->async_wait(static_cast<Derived&>(*this)._track_async_operation(
+            [this, owner = std::move(owner), options = std::move(options), timer = std::move(timer)](
+                const error_code& error) mutable {
+                _handle_reconnect_timer(error, std::move(owner), std::move(options), std::move(timer));
+            }));
     }
 
     template<class Match>

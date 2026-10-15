@@ -4,6 +4,7 @@
 #include <arknet/base/detail/linear_buffer.hpp>
 #include <arknet/base/impl/condition_event_cp.hpp>
 #include <arknet/base/impl/event_queue_cp.hpp>
+#include <arknet/base/impl/post_cp.hpp>
 #include <arknet/base/listener.hpp>
 #include <arknet/base/session_mgr.hpp>
 #include "check.hpp"
@@ -198,6 +199,7 @@ DOCTEST_TEST_CASE("Listeners can replace and clear themselves during notificatio
 
 struct queue_fixture
     : arknet::detail::event_queue_cp<queue_fixture>
+    , arknet::detail::post_cp<queue_fixture>
     , std::enable_shared_from_this<queue_fixture>
 {
     explicit queue_fixture(std::shared_ptr<asio::io_context> context)
@@ -221,6 +223,7 @@ struct queue_fixture
     using event_queue_cp::next_event;
     using event_queue_cp::post_event;
     using event_queue_cp::push_event;
+    using post_cp::_track_async_operation;
     std::shared_ptr<arknet::detail::io_t> io_;
     arknet::detail::handler_memory<> allocator_;
     bool* destroyed = nullptr;

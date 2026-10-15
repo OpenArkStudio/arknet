@@ -99,6 +99,11 @@ public:
     auto post_condition_event(Function&& callback) {
         auto& object = static_cast<Derived&>(*this);
         auto event = std::make_shared<condition_event>(object.io_);
+        if (!events_->accepting.load(std::memory_order_acquire))
+        {
+            set_last_error(asio::error::operation_aborted);
+            return event;
+        }
         if constexpr (requires { object._accepts_async_work(); })
         {
             if (!object._accepts_async_work())
@@ -107,26 +112,27 @@ public:
                 return event;
             }
         }
-        asio::dispatch(object.io_->executor(), [state = events_, owner = object.selfptr(),
-                                                   pending = pending_operation(events_->pending), event,
-                                                   callback = std::forward<Function>(callback)]() mutable {
-            if (!state->alive.load(std::memory_order_acquire) || !state->accepting.load(std::memory_order_acquire))
-            {
-                return;
-            }
-            state->events.emplace(event.get(), event);
-            event->async_wait(
-                [pending = pending_operation(state->pending), state, owner = std::move(owner), key = event.get(),
-                    callback = std::optional<std::decay_t<Function>>(std::in_place, std::move(callback))]() mutable {
-                    state->events.erase(key);
-                    auto current = std::move(callback);
-                    callback.reset();
-                    if (state->alive.load(std::memory_order_acquire))
-                    {
-                        (*current)();
-                    }
-                });
-        });
+        asio::dispatch(object.io_->executor(),
+            pending_handler(events_->pending, [state = events_, owner = object.selfptr(), event,
+                                                  callback = std::forward<Function>(callback)]() mutable {
+                if (!state->alive.load(std::memory_order_acquire) || !state->accepting.load(std::memory_order_acquire))
+                {
+                    return;
+                }
+                state->events.emplace(event.get(), event);
+                event->async_wait(
+                    [pending = pending_operation(state->pending), state, owner = std::move(owner), key = event.get(),
+                        callback =
+                            std::optional<std::decay_t<Function>>(std::in_place, std::move(callback))]() mutable {
+                        state->events.erase(key);
+                        auto current = std::move(callback);
+                        callback.reset();
+                        if (state->alive.load(std::memory_order_acquire))
+                        {
+                            (*current)();
+                        }
+                    });
+            }));
         return event;
     }
 

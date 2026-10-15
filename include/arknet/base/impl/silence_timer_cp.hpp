@@ -38,13 +38,14 @@ protected:
             auto timer = std::make_shared<safe_timer>(static_cast<Derived&>(*this).io_->executor());
             silence_timer_ = timer;
             timer->timer.expires_after(to_steady_duration(delay));
-            timer->timer.async_wait([this, owner = std::move(owner), timer](const error_code& error) mutable {
-                if (timer != silence_timer_ || timer->canceled.test(std::memory_order_acquire))
-                {
-                    return;
-                }
-                _handle_silence_timer(error, std::move(owner));
-            });
+            timer->timer.async_wait(static_cast<Derived&>(*this)._track_async_operation(
+                [this, owner = std::move(owner), timer](const error_code& error) mutable {
+                    if (timer != silence_timer_ || timer->canceled.test(std::memory_order_acquire))
+                    {
+                        return;
+                    }
+                    _handle_silence_timer(error, std::move(owner));
+                }));
         });
     }
 

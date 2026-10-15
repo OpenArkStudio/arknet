@@ -56,6 +56,7 @@ public:
     }
 
     void stop() {
+        this->_set_async_wait_acceptance(false);
         const auto state = this->state_.load();
         if (state == state_t::stopped || state == state_t::stopping)
         {
@@ -63,19 +64,29 @@ public:
         }
         stop_requested_ = true;
         auto& owner = this->derived();
-        if (owner.sessions_.io_->running_in_this_thread() && state == state_t::starting)
-        {
-            owner.set_linger(true, 0);
-            error_code ignored;
-            owner.socket().close(ignored);
-        }
-        owner.dispatch([&owner, lifetime = owner.selfptr()] { owner._arm_stop_deadline(); });
         auto completion = std::make_shared<std::promise<void>>();
         auto result = completion->get_future();
-        owner.post_event([&owner, lifetime = owner.selfptr(), completion](event_queue_guard<Derived> guard) mutable {
-            owner._do_disconnect(asio::error::operation_aborted, std::move(lifetime),
-                defer_event{[completion](event_queue_guard<Derived>) { completion->set_value(); }, std::move(guard)});
-        });
+        // Initialization borrows the socket on the listener lane. Post through
+        // that lane before transferring cancellation to the socket's own lane.
+        owner.sessions_.post(owner._track_async_operation([&owner, lifetime = owner.selfptr(), completion] {
+            owner.dispatch([&owner, lifetime] {
+                // A handshake holds the event queue guard, so cancellation
+                // must run before the disconnect event queued behind it.
+                if (owner.state_.load() == state_t::starting)
+                {
+                    owner.set_linger(true, 0);
+                    error_code ignored;
+                    owner.socket().cancel(ignored);
+                    owner.socket().close(ignored);
+                }
+                owner._arm_stop_deadline();
+            });
+            owner.post_event([&owner, lifetime, completion](event_queue_guard<Derived> guard) mutable {
+                owner._do_disconnect(asio::error::operation_aborted, std::move(lifetime),
+                    defer_event{
+                        [completion](event_queue_guard<Derived>) { completion->set_value(); }, std::move(guard)});
+            });
+        }));
         // Different strands can share one worker, so check context membership before waiting.
         while (!owner.io_->context().get_executor().running_in_this_thread() &&
                !owner.sessions_.io_->context().get_executor().running_in_this_thread())

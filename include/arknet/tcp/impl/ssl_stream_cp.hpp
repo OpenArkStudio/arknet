@@ -62,20 +62,20 @@ protected:
                 event_queue_guard<Derived> guard) mutable {
                 auto timer = std::make_shared<asio::steady_timer>(owner.io_->executor());
                 timer->expires_after(owner.get_disconnect_timeout());
-                timer->async_wait([&owner, lifetime](error_code ec) {
+                timer->async_wait(owner._track_async_operation([&owner, lifetime](error_code ec) {
                     if (!ec)
                     {
                         error_code ignored;
                         owner.socket().cancel(ignored);
                         owner.socket().close(ignored);
                     }
-                });
+                }));
                 error_code ignored;
                 owner.socket().cancel(ignored);
 #ifndef NDEBUG
                 ARKNET_ASSERT(owner.post_send_counter_.fetch_add(1) == 0);
 #endif
-                ssl_stream_->async_shutdown(
+                ssl_stream_->async_shutdown(owner._track_async_operation(
                     [&owner, lifetime = std::move(lifetime), timer,
                         chain = defer_event{std::move(event), std::move(guard)}](error_code ec) mutable {
 #ifndef NDEBUG
@@ -83,7 +83,7 @@ protected:
 #endif
                         detail::cancel_timer(*timer);
                         set_last_error(ec);
-                    });
+                    }));
             },
             chain.move_guard());
     }
@@ -109,7 +109,7 @@ protected:
 
         auto timeout = std::make_shared<deadline>(owner.io_->executor());
         timeout->timer.expires_after(owner.get_connect_timeout());
-        timeout->timer.async_wait([&owner, lifetime, timeout](error_code ec) {
+        timeout->timer.async_wait(owner._track_async_operation([&owner, lifetime, timeout](error_code ec) {
             if (ec)
             {
                 return;
@@ -118,20 +118,21 @@ protected:
             error_code ignored;
             owner.socket().cancel(ignored);
             owner.socket().close(ignored);
-        });
+        }));
 #ifndef NDEBUG
         ARKNET_ASSERT(owner.post_send_counter_.fetch_add(1) == 0);
 #endif
         ssl_stream_->async_handshake(ssl_type_,
-            make_allocator(owner.wallocator(), [&owner, lifetime = std::move(lifetime), policy = std::move(policy),
-                                                   timeout, chain = std::move(chain)](error_code ec) mutable {
+            make_allocator(owner.wallocator(),
+                owner._track_async_operation([&owner, lifetime = std::move(lifetime), policy = std::move(policy),
+                                                 timeout, chain = std::move(chain)](error_code ec) mutable {
 #ifndef NDEBUG
-                owner.post_send_counter_.fetch_sub(1);
+                    owner.post_send_counter_.fetch_sub(1);
 #endif
-                detail::cancel_timer(timeout->timer);
-                owner._handle_handshake(timeout->expired ? error_code{asio::error::timed_out} : ec, std::move(lifetime),
-                    std::move(policy), std::move(chain));
-            }));
+                    detail::cancel_timer(timeout->timer);
+                    owner._handle_handshake(timeout->expired ? error_code{asio::error::timed_out} : ec,
+                        std::move(lifetime), std::move(policy), std::move(chain));
+                })));
     }
 
     error_code _prepare_handshake() {

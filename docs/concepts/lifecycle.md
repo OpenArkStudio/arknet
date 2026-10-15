@@ -29,6 +29,18 @@ For transport clients and servers:
 | `wait_stopped()` from an owner thread | Complete shutdown and report whether waiting was allowed |
 | `wait_stopped()` from a worker of the involved context/pool | Return `false` with `operation_not_supported` |
 
+For TCP-based endpoints, owner-thread completion includes canceled native I/O,
+accepted callback captures and session work that still borrows the server.
+Stopping rejects new user timers, delayed posts and condition waits; an explicit
+restart reopens them. Already accepted condition callbacks still run during
+shutdown. Stop application producers before shutdown: immediate posts remain
+available, so callbacks must not submit work indefinitely. Serialize lifecycle
+operations such as stop followed by restart. TCP servers, including their HTTP,
+WebSocket and TLS variants, allow concurrent owner stop waiters. If a callback's
+capture or a session destructor reenters stop on the same owner thread during
+drain, `stop()` returns without waiting and sets `operation_not_supported`;
+`wait_stopped()` returns `false` with that error.
+
 Database clients use their own asynchronous `close()` contract; see
 [database shutdown](../features/database-clients.md#limits-and-callback-ownership).
 

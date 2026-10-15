@@ -39,13 +39,14 @@ protected:
         ARKNET_ASSERT(owner.post_recv_counter_.fetch_add(1) == 0);
 #endif
         auto completion = make_allocator(owner.rallocator(),
-            [&owner, lifetime = std::move(lifetime), policy](error_code ec, std::size_t size) mutable {
-                owner.reading_ = false;
+            owner._track_async_operation(
+                [&owner, lifetime = std::move(lifetime), policy](error_code ec, std::size_t size) mutable {
+                    owner.reading_ = false;
 #ifndef NDEBUG
-                owner.post_recv_counter_.fetch_sub(1);
+                    owner.post_recv_counter_.fetch_sub(1);
 #endif
-                owner._handle_recv(ec, size, std::move(lifetime), std::move(policy));
-            });
+                    owner._handle_recv(ec, size, std::move(lifetime), std::move(policy));
+                }));
         auto&& condition = policy->get_condition().lowest();
         if constexpr (std::is_invocable_v<decltype(condition), const error_code&, std::size_t>)
         {

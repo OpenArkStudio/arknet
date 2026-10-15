@@ -29,15 +29,16 @@ protected:
         auto timer = std::make_shared<safe_timer>(object.io_->executor());
         stop_deadline_timer_ = timer;
         timer->timer.expires_after(object.get_disconnect_timeout());
-        timer->timer.async_wait([timer, socket = object.socket_](const error_code& error) {
-            if (error || timer->canceled.test(std::memory_order_acquire))
-            {
-                return;
-            }
-            error_code ignored;
-            socket->cancel(ignored);
-            socket->close(ignored);
-        });
+        timer->timer.async_wait(
+            object._track_async_operation([timer, socket = object.socket_](const error_code& error) {
+                if (error || timer->canceled.test(std::memory_order_acquire))
+                {
+                    return;
+                }
+                error_code ignored;
+                socket->cancel(ignored);
+                socket->close(ignored);
+            }));
     }
 
     template<class Chain>
@@ -134,11 +135,12 @@ protected:
         }
         timer->timer.expires_after(to_steady_duration(delay));
         auto* operation = &timer->timer;
-        operation->async_wait([this, error, owner = std::move(owner), chain = std::move(chain),
-                                  timer = std::move(timer)](const error_code& failure) mutable {
-            static_cast<Derived&>(*this)._handle_shutdown_timer(
-                failure, error, std::move(owner), std::move(chain), std::move(timer));
-        });
+        operation->async_wait(static_cast<Derived&>(*this)._track_async_operation(
+            [this, error, owner = std::move(owner), chain = std::move(chain), timer = std::move(timer)](
+                const error_code& failure) mutable {
+                static_cast<Derived&>(*this)._handle_shutdown_timer(
+                    failure, error, std::move(owner), std::move(chain), std::move(timer));
+            }));
     }
 
     template<class Chain>

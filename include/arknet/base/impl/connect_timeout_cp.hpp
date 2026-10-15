@@ -47,10 +47,10 @@ protected:
         }
         timer->timer.expires_after(to_steady_duration(duration));
         auto* operation = &timer->timer;
-        operation->async_wait(
+        operation->async_wait(static_cast<Derived&>(*this)._track_async_operation(
             [this, owner = std::move(owner), timer = std::move(timer)](const error_code& error) mutable {
                 _handle_connect_timeout_timer(error, std::move(owner), std::move(timer));
-            });
+            }));
     }
 
     template<class Object = Derived>

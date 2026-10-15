@@ -76,8 +76,14 @@ public:
     }
 
     void stop() {
+        this->_set_async_wait_acceptance(false);
+        const bool worker = this->iopool().running_in_threads();
         if (this->is_iopool_stopped())
         {
+            if (!worker && !this->io_->context().stopped())
+            {
+                this->_wait_async_operations();
+            }
             return;
         }
         if (this->io_->context().stopped() && super::is_stopped())
@@ -100,9 +106,10 @@ public:
                             },
                     std::move(guard)});
         });
-        if (!this->iopool().running_in_threads())
+        if (!worker)
         {
             result.get();
+            this->_wait_async_operations();
         }
         this->stop_iopool();
     }

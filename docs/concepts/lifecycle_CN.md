@@ -24,6 +24,15 @@
 | 所有者线程调用 `wait_stopped()` | 完成停止，并报告是否允许等待 |
 | 在所涉及 context 或线程池的工作线程调用 `wait_stopped()` | 返回 `false`，错误为 `operation_not_supported` |
 
+对于基于 TCP 的端点，所有者线程等待完成后，已取消的原生 I/O、已受理回调的捕获对象，
+以及仍借用服务端资源的 Session 任务均已退出。停止期间拒绝新增用户定时器、延迟 post
+和条件等待；显式重新启动后恢复受理。此前已受理的条件回调仍会在关闭期间执行。
+应用应先停止外部任务生产者：普通即时 post 仍可提交，因此回调不得无限提交后续工作。
+停止后重新启动等生命周期操作须串行执行。TCP 服务端及其 HTTP、WebSocket 和 TLS
+派生服务端允许多个所有者线程同时等待停止。若回调捕获对象或 Session 的析构函数
+在排空期间从同一所有者线程重入停止，`stop()` 返回而不等待，并设置
+`operation_not_supported`；`wait_stopped()` 返回 `false`，并设置该错误。
+
 数据库客户端另行使用异步 `close()` 约定，见
 [数据库关闭与回调所有权](../features/database-clients_CN.md#限额与回调生命周期)。
 
