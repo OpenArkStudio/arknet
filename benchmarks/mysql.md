@@ -64,3 +64,21 @@ warmup and are excluded from the measurements. Server CPU is excluded. Record th
 server version/configuration, client/server machines, compiler, dependency versions,
 TLS setting and network path alongside any published results. Loopback measurements
 do not establish remote deployment capacity.
+
+## Generate a report
+
+The optional Node tool `benchmarks/report_database_clients.mjs` converts a complete
+JSONL matrix into bilingual Markdown and SVG charts. The compiled benchmark does
+not need Node. Keep raw data outside the repository and provide measurement
+metadata, expected group counts and measured source hashes; see `--help`.
+
+```sh
+node benchmarks/report_database_clients.mjs --input /tmp/mysql-rounds \
+  --metadata /tmp/mysql-measurement.json --out-dir /tmp/database-report
+node --test benchmarks/report_database_clients.test.mjs
+```
+
+Outputs follow the documentation layout: `features/mysql/performance*.md` and
+`performance/assets/mysql-*.svg`. Failed, incomplete or duplicate measurements are
+rejected before output. Bars show round medians, with minimum–maximum whiskers.
+Latency summaries are medians of each round's percentiles.

@@ -52,3 +52,15 @@ MySQL 每个连接同时执行一条命令。增大 `--window` 会增加客户�
 所有请求链合计最多保留约 65,536 条延迟样本。连接建立、认证和语句预处理在预热前完成，不计入测量。
 CPU 指标不包含服务端。发布结果时应记录服务端版本和配置、两端机器、编译器、依赖版本、TLS 设置及网络环境。
 本机回环测试不能直接证明跨机器部署容量。
+
+## 生成报告
+
+可选的 Node 工具 `benchmarks/report_database_clients.mjs` 将完整 JSONL 矩阵转换为双语 Markdown 与 SVG 图表。编译得到的基准程序不需要 Node。原始数据保存在仓库外，另行提供测试元数据、预期组合数和实测源码哈希；字段见 `--help`。
+
+```sh
+node benchmarks/report_database_clients.mjs --input /tmp/mysql-rounds \
+  --metadata /tmp/mysql-measurement.json --out-dir /tmp/database-report
+node --test benchmarks/report_database_clients.test.mjs
+```
+
+输出遵循文档目录结构：`features/mysql/performance*.md` 和 `performance/assets/mysql-*.svg`。失败、不完整或重复的测量会在输出前被拒绝。柱为各轮中位数，误差线为最小值到最大值；RT 汇总的是每轮分位数的中位数。
