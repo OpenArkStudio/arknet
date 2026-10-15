@@ -92,6 +92,7 @@ public:
     }
 
     void destroy() {
+        this->clear_listen_endpoint();
         this->acceptor_.reset();
         base::destroy();
     }
@@ -192,6 +193,7 @@ protected:
             {
                 auto endpoint = endpoints.begin()->endpoint();
                 owner.acceptor_->open(endpoint.protocol(), error);
+                owner.update_listen_endpoint();
                 if (!error)
                 {
                     error_code ignored;
@@ -199,6 +201,7 @@ protected:
                     clear_last_error();
                     owner._fire_init();
                     owner.acceptor_->bind(endpoint, error);
+                    owner.update_listen_endpoint();
                 }
             }
             owner._handle_start(error, std::move(lifetime), std::move(condition));
@@ -242,6 +245,7 @@ protected:
         error_code ignored;
         this->acceptor_->cancel(ignored);
         this->acceptor_->close(ignored);
+        this->clear_listen_endpoint();
         this->sessions_.for_each([](std::shared_ptr<Session>& session) { session->stop(); });
         this->counter_ptr_.reset();
     }

@@ -30,7 +30,7 @@ function(arknet_configure_check_target)
         USES_TERMINAL)
 endfunction()
 
-set(arknet_test_names tcp udp lifecycle detail concurrency io_pool keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec)
+set(arknet_test_names tcp udp lifecycle detail concurrency io_pool socket_metadata keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec)
 if(ARKNET_USE_BOOST_ASIO)
     list(APPEND arknet_test_names websocket http router httprequest)
 endif()
