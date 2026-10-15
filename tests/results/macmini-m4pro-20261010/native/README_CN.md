@@ -31,7 +31,6 @@ RTT 样本数与分位数顺序、有效预热流量、持续时间和进程 CPU
 可能影响其耗时，不能作为正式性能测量。
 
 两种服务端均完整读取并回复一批消息，CPU 模拟负载仍按固定载荷大小逐条执行。
-修复前的双方发送等待保存在[独立诊断目录](../../../../benchmarks/results/diagnostics/native-batch-flow-control/README_CN.md)。
 
 `*-build.log` 与 `*-test.log` 保留四组构建和测试结果。Sanitizer 均使用
 `halt_on_error=1`，未报告 sanitizer 错误。验证时源码的 SHA256：
