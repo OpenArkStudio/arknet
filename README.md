@@ -8,6 +8,7 @@ arknet is a general-purpose C++20, header-only networking library maintained by 
 
 - **Protocols:** TCP, UDP, WebSocket/WSS and HTTP/HTTPS with routing; optional TLS/mTLS.
 - **Reliable UDP:** RUDP with a C++20 ARQ core, KCP-compatible messages and optional fixed/adaptive Reed–Solomon FEC.
+- **MySQL:** native single-node queries, prepared parameters, transactions and exclusive connection leases.
 - **Addresses:** IPv4 and IPv6 through the same client and server interfaces.
 - **Runtime:** reconnect, timers, post, bounded sends, and owned or external IO contexts.
 - **Extension:** CRTP inheritance, component composition and custom sessions.
@@ -18,7 +19,7 @@ arknet is a general-purpose C++20, header-only networking library maintained by 
 - **CMake** 3.21+: for the provided builds, examples and tests.
 - **Standalone Asio** 1.38+: the default networking dependency.
 - **Boost** 1.90+: an alternative to Standalone Asio, providing Asio and Beast.
-- **OpenSSL** 1.1.1+: required only for TLS, HTTPS and WSS.
+- **OpenSSL** 1.1.1+: required for MySQL authentication, TLS, HTTPS and WSS.
 
 Choose either Standalone Asio or Boost. [Installation and configuration](docs/get-started/installation.md)
 covers dependency setup and CMake options.
@@ -43,6 +44,7 @@ Use the `arknet::arknet` CMake interface target to configure applications.
 - [Documentation and protocol guides](docs/README.md)
 - [Local performance reports](docs/performance/index.md)
 - [RUDP guide](docs/features/rudp/index.md) and [single HTTP requests](docs/features/http/requests.md)
+- [MySQL client and pool](docs/features/mysql/index.md)
 - [Roadmap and TODOs](docs/project/roadmap.md)
 - [Online documentation](https://openarkstudio.github.io/arknet/)
 

@@ -21,6 +21,7 @@ target supplies headers, compile settings and dependencies; arknet has no compil
 | WebSocket / WSS | Complete messages and HTTP Upgrade | [WebSocket](features/websocket/index.md) |
 | HTTP / HTTPS | HTTP/1.1 requests, responses, routing and middleware | [HTTP](features/http/index.md) |
 | TLS / mTLS | Encrypted transport and certificate verification | [TLS](features/tls/index.md) |
+| MySQL | Native queries, prepared parameters, transactions and exclusive leases | [MySQL](features/mysql/index.md) |
 
 Each module includes client and server programs, configuration, limits and a performance entry.
 [Capabilities and support](features/index.md) records dependencies and planned features.

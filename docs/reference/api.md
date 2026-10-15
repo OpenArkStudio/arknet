@@ -1,7 +1,8 @@
 # Public API Index
 
-Include `<arknet/arknet.hpp>` for all enabled capabilities, or include only the
-specific public header. Secure headers require `ARKNET_ENABLE_SSL`.
+Include `<arknet/arknet.hpp>` for enabled transport capabilities, or include only
+the specific public header. Database clients use their own explicit headers.
+Secure transport headers and MySQL connections require `ARKNET_ENABLE_SSL`.
 
 ## Public Types
 
@@ -17,6 +18,7 @@ specific public header. Secure headers require `ARKNET_ENABLE_SSL`.
 | TLS TCP | `tcps_client` | `tcps_server`, `tcps_session` | [TLS](../features/tls/index.md) |
 | HTTPS | `https_client` | `https_server`, `https_session` | [HTTP](../features/http/index.md) |
 | Secure WebSocket | `wss_client` | `wss_server`, `wss_session` | [TLS](../features/tls/index.md) |
+| MySQL | `mysql::connection`, `mysql::pool` | Exclusive pool leases; explicitly include `<arknet/mysql/connection.hpp>` or `<arknet/mysql/pool.hpp>` | [MySQL](../features/mysql/index.md) |
 | Scheduling | `timer`, `io_pool`, `io_t` | `iopool` is an alias for `io_pool` | [Runtime](../concepts/lifecycle.md), [IO models](../concepts/io-models.md) |
 
 The protocol guides cover CRTP variants and public include paths. UDP endpoint

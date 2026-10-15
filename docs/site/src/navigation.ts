@@ -35,6 +35,12 @@ const tree: Entry[] = [
       [`features/${slug}/configuration`, "Configuration and advanced usage", "配置与进阶使用"],
       [`features/${slug}/performance`, "Performance", "性能"],
     ] })),
+    { en: "MySQL", zh: "MySQL", children: [
+      ["features/mysql", "Overview", "概览"],
+      ["features/mysql/usage", "Queries and connection pool", "查询与连接池"],
+      ["features/mysql/configuration", "Configuration and limits", "配置与限额"],
+      ["features/mysql/performance", "Performance", "性能"],
+    ] },
   ] },
   { en: "Guides", zh: "使用指南", children: [
     ["guides", "Overview", "概览"],
