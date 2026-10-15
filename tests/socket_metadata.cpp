@@ -8,6 +8,9 @@
 #include <type_traits>
 
 #if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <winsock2.h>
 
 #endif
