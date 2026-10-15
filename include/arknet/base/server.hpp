@@ -3,6 +3,7 @@
 #pragma once
 #include <atomic>
 #include <memory>
+#include <mutex>
 
 #include <arknet/base/define.hpp>
 #include <arknet/base/detail/allocator.hpp>
@@ -149,8 +150,9 @@ public:
     }
 
     std::string get_listen_address() const noexcept {
-        const auto endpoint = acceptor().local_endpoint(get_last_error());
-        return get_last_error() ? std::string{} : endpoint.address().to_string();
+        const auto endpoint = listen_endpoint_snapshot();
+        set_last_error(endpoint.error);
+        return endpoint.error ? std::string{} : endpoint.address.to_string();
     }
 
     unsigned short listen_port() const noexcept {
@@ -158,7 +160,9 @@ public:
     }
 
     unsigned short get_listen_port() const noexcept {
-        return acceptor().local_endpoint(get_last_error()).port();
+        const auto endpoint = listen_endpoint_snapshot();
+        set_last_error(endpoint.error);
+        return endpoint.port;
     }
 
     std::size_t session_count() const noexcept {
@@ -186,6 +190,20 @@ public:
     }
 
 protected:
+    // Only the listener's IO lane touches the native socket. Public metadata
+    // reads use a snapshot so callback-driven close cannot race local_endpoint.
+    void update_listen_endpoint() noexcept {
+        error_code error;
+        const auto endpoint = this->derived().acceptor().local_endpoint(error);
+        std::lock_guard lock(listen_mutex_);
+        listen_endpoint_ = {endpoint.address(), endpoint.port(), error};
+    }
+
+    void clear_listen_endpoint() noexcept {
+        std::lock_guard lock(listen_mutex_);
+        listen_endpoint_ = {};
+    }
+
     auto& rallocator() noexcept {
         return rallocator_;
     }
@@ -217,5 +235,21 @@ protected:
     std::atomic<int> post_send_counter_ = 0;
     std::atomic<int> post_recv_counter_ = 0;
 #endif
+
+private:
+    struct listen_metadata
+    {
+        asio::ip::address address;
+        unsigned short port = 0;
+        error_code error = asio::error::bad_descriptor;
+    };
+
+    listen_metadata listen_endpoint_snapshot() const noexcept {
+        std::lock_guard lock(listen_mutex_);
+        return listen_endpoint_;
+    }
+
+    mutable std::mutex listen_mutex_;
+    listen_metadata listen_endpoint_;
 };
 } // namespace arknet::detail
