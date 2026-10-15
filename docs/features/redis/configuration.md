@@ -65,6 +65,14 @@ arknet::redis::tls_client client(options);
 
 The client certificate and private key are optional for one-way TLS, required when the server demands mTLS. `tls_private_key_password` supports encrypted keys. A pool applies these fields through `client_configuration`; `pool_options.certificate_authority`, when provided, selects its CA file. Certificate-chain and DNS/IP identity verification remain enabled. The connection host controls identity verification; a Redis client name does not alter it.
 
+### Server TLS retry issue
+
+On this machine, Redis 7.4.2 with OpenSSL 3.6.4 closed connections under a 16 KiB ECHO workload with 64 commands per batch and 4 in-flight batches per connection. The server logged `SSL routines::bad length`; clients received `Broken pipe` or a connection reset. The official `redis-benchmark` reproduced the same error at the same outstanding-command count. The server's `src/tls.c` write path matches the retry-length issue described in Valkey's [upstream fix](https://github.com/valkey-io/valkey/pull/1737). This is a source-based explanation; a minimal-patch control was not used to prove it is the sole cause.
+
+Valkey 8.0.11, which includes the upstream fix, passed the unchanged workload with both client variants and the official tool. The performance report identifies this server explicitly. This is not a Redis message-size limit.
+
+Check server logs and fixed releases when diagnosing this disconnect. The client does not hide server errors by disabling certificate verification, silently reconnecting or replaying writes.
+
 ## Execution and shutdown
 
 The library owns IO contexts, threads and transport lifetimes. A standalone client owns one IO context/thread; a pool owns one context/thread shared by its clients. Accepted command callbacks, connection callbacks and pushes run on the associated IO lane; rejected client submissions are also completed there. Callbacks must not throw or block. The empty-lease rejection above is the synchronous exception.

@@ -53,3 +53,15 @@ cmake --build build/redis-benchmark --target arknet_redis_benchmark --config Rel
 CPU 和内存指标不包含外部 Redis 服务端；平台不支持的指标输出 `null`。每条并发请求链采用有上限的蓄水池采样；合并分位数时，按该链的成功批次数与样本数之比加权。发生采样时，分位数为估计值。解读尾延迟前应检查样本量，短时间内完成的少量批次不足以反映罕见延迟。
 
 此程序测量回调接口，以及每条连接一个 IO context、一个线程的配置，不代表协程接口、共享 IO context、连接池或实际部署容量的性能结论。
+
+## 生成报告
+
+可选的 Node 工具 `benchmarks/report_database_clients.mjs` 将完整 JSONL 结果转换为双语 Markdown 与 SVG 图表。只有生成报告需要 Node，基准程序本身不需要。原始数据保存在仓库外，另行提供测试元数据、预期组合数和实测源码哈希；字段见 `--help`。
+
+```sh
+node benchmarks/report_database_clients.mjs --input /tmp/redis-rounds \
+  --metadata /tmp/redis-measurement.json --out-dir /tmp/database-report
+node --test benchmarks/report_database_clients.test.mjs
+```
+
+输出遵循文档目录结构：`features/redis/performance*.md` 和 `performance/assets/redis-*.svg`。包含失败结果或不完整矩阵时，会在写入报告前拒绝处理。柱为各轮中位数，误差线为最小值到最大值；RT p50／p99 汇总的是每轮分位数，不是合并原始延迟后重新计算的分位数。

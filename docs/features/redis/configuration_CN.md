@@ -65,6 +65,14 @@ arknet::redis::tls_client client(options);
 
 单向 TLS 不要求客户端证书和私钥；服务端要求 mTLS 时需要提供。加密私钥可通过 `tls_private_key_password` 配置密码。连接池通过 `client_configuration` 使用这些字段；若指定 `pool_options.certificate_authority`，则采用该 CA 文件。证书链与 DNS/IP 身份验证保持启用。验证身份由连接的主机名决定，与 Redis 客户端名称无关。
 
+### 服务端 TLS 重试问题
+
+本机 Redis 7.4.2 配合 OpenSSL 3.6.4，在 16 KiB ECHO、每批 64 条命令、每连接 4 批在途的负载下出现服务端主动断开，日志为 `SSL routines::bad length`，客户端收到 `Broken pipe` 或连接重置。官方 `redis-benchmark` 在同一服务端、相同在途命令量下也出现该错误。其服务端 `src/tls.c` 写入路径与 Valkey [上游修复说明](https://github.com/valkey-io/valkey/pull/1737)中的 TLS 重试长度问题一致；这是源码分析，未通过仅移植该补丁的对照证明唯一根因。
+
+包含上游修复的 Valkey 8.0.11 在原负载下通过两套客户端与官方工具的对照。性能报告使用该服务端，并明确标注版本。这不是 Redis 报文大小上限。
+
+遇到这类断开时先检查服务端日志和修复版本。客户端不会通过关闭证书验证、静默重连或重放写命令掩盖服务端错误。
+
 ## 执行与关闭
 
 网络库管理 IO context、线程和传输对象的生命周期。独立客户端使用一个 IO context 和线程；连接池使用一个由内部客户端共用的 context 和线程。命令完成、连接完成和推送回调运行在对应 IO 线程上；被拒绝的客户端提交也在那里完成。回调不得抛异常或阻塞。前述空租约拒绝是同步完成的例外。
