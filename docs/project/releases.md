@@ -37,7 +37,7 @@ Database deadline checks reject nonpositive and unrepresentable durations before
 
 ### Validation and scope
 
-Client and pool correctness suites contain 49 MySQL cases / 1355 assertions and 33 Redis cases / 284 assertions. Independent-server checks include MySQL Community Server 8.4.11 and Redis 7.4.2. Protocol codecs, clock boundaries and process-exit ordering have separate tests; sanitizer results and local Release measurements are recorded in [testing](testing.md) and the [performance reports](../performance/index.md).
+Client and pool correctness suites contain 49 MySQL cases / 1355 assertions and 35 Redis cases / 316 assertions. Independent-server checks include MySQL Community Server 8.4.11 and Redis 7.4.2. Protocol codecs, clock boundaries and process-exit ordering have separate tests; sanitizer results and local Release measurements are recorded in [testing](testing.md) and the [performance reports](../performance/index.md).
 
 MySQL supports one Classic Protocol result per command, without multi-result execution, `LOCAL INFILE`, compression, cursors or arbitrary authentication plugins. Redis Cluster, Sentinel and Pub/Sub remain TODO. Public database coroutine APIs, HTTP/2, HTTP/3, named pipes, Unix domain sockets and RPC are separate [roadmap](roadmap.md) items.
 

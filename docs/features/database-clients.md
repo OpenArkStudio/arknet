@@ -54,7 +54,7 @@ Cancellation cannot retract a command that has already been sent. Neither client
 
 | Situation | MySQL | Redis |
 | --- | --- | --- |
-| Queued, unsent cancellation | Remove that request without consuming another response | Remove that request without consuming another response |
+| Queued, unsent cancellation | Remove that request without consuming another response | No unsent-removal guarantee; transport-accepted writes may still execute |
 | Sent cancellation or timeout | Close the session; report an unknown outcome when execution may have occurred | Complete the caller, retain ordered response slots and admission budget while replies drain; close on drain expiry |
 | Diagnostic flag | `connection_result.outcome_unknown` | `result.command_may_have_run` |
 
@@ -96,7 +96,7 @@ Independent-server checks include MySQL Community Server 8.4.11 and Redis 7.4.2.
 | Client and pool suites | Cases | Assertions |
 | --- | ---: | ---: |
 | MySQL | 49 | 1355 |
-| Redis | 33 | 284 |
+| Redis | 35 | 316 |
 
 Deadline tests include nonpositive durations, integer extremes and clock-addition boundaries. Correctness and sanitizer checks are separate from local Release measurements; test counts are not throughput or capacity figures.
 

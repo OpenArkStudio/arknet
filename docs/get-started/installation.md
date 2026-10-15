@@ -142,8 +142,8 @@ cmake --build build-vcpkg --parallel 3
 Add `include/` and the chosen provider's include directory to your compiler
 search paths, compile as C++20, and link platform socket/thread dependencies.
 MySQL connections and secure transports also require OpenSSL's headers and libraries. On Windows,
-link `ws2_32` and `mswsock`. The CMake target additionally sets `/bigobj`
-for MSVC.
+link `ws2_32` and `mswsock`, and define `NOMINMAX` before including Windows headers.
+The CMake target propagates `NOMINMAX` and additionally sets `/bigobj` for MSVC.
 
 Define configuration macros before including arknet or provider headers:
 

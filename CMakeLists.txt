@@ -31,6 +31,7 @@ if(ARKNET_ENABLE_SSL)
     target_link_libraries(arknet INTERFACE OpenSSL::SSL OpenSSL::Crypto)
 endif()
 if(WIN32)
+    target_compile_definitions(arknet INTERFACE NOMINMAX)
     target_link_libraries(arknet INTERFACE ws2_32 mswsock)
 endif()
 

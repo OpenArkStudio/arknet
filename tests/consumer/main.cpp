@@ -1,3 +1,8 @@
+#if defined(_WIN32)
+#include <winsock2.h>
+
+#endif
+
 #include <arknet/arknet.hpp>
 #include <arknet/redis/client.hpp>
 #include <arknet/redis/pool.hpp>
@@ -5,6 +10,7 @@
 #ifdef ARKNET_ENABLE_SSL
 #include <arknet/mysql/connection.hpp>
 #include <arknet/mysql/pool.hpp>
+
 #endif
 
 #if !ARKNET_USE_BOOST_ASIO && (defined(BOOST_ASIO_VERSION) || defined(BOOST_BEAST_VERSION))

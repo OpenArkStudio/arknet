@@ -8,11 +8,14 @@
 `is_started()` 和 `is_stopped()` 读取原子生命周期状态，对象存活期间可从其他线程查询。
 结果只反映查询时的状态，不保证连接随后仍可用，也不代表可以跨线程直接操作 socket。
 
+服务端的 `get_listen_address()` 和 `get_listen_port()` 在启动与关闭期间读取同步保护的端点快照。
+直接访问 `acceptor()` 仍需遵守 Asio 的线程约定。
+
 内置 IO 线程池每个通道使用一个 context 和一个工作线程。外部 context 可以由一个
 或多个线程调用 `run()`。每个外部通道使用 strand 串行执行自身回调；下一次回调
 可能运行在不同的宿主线程。独立通道可以并行执行，应用仍需同步跨通道共享的状态。
 
-客户端和服务端的停止约定如下：
+传输端点的客户端和服务端采用以下停止约定：
 
 | 操作 | 约定 |
 | --- | --- |
@@ -20,6 +23,9 @@
 | `request_stop()` | 调度停止，可在网络回调中调用 |
 | 所有者线程调用 `wait_stopped()` | 完成停止，并报告是否允许等待 |
 | 在所涉及 context 或线程池的工作线程调用 `wait_stopped()` | 返回 `false`，错误为 `operation_not_supported` |
+
+数据库客户端另行使用异步 `close()` 约定，见
+[数据库关闭与回调所有权](../features/database-clients_CN.md#限额与回调所有权)。
 
 启动、发送和停止期间，外部 context、运行线程及 work guard 必须持续运行。arknet
 不会停止宿主 context。先停止并销毁网络对象，再释放宿主 work guard 并等待运行

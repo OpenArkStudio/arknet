@@ -11,13 +11,16 @@ duration of that callback; copy it to retain it.
 from another thread while the object is alive. Each result is a snapshot; it
 does not reserve the connection or make direct socket access safe across threads.
 
+Server `get_listen_address()` and `get_listen_port()` read synchronized endpoint
+snapshots during start and close. Direct `acceptor()` access still follows Asio's threading rules.
+
 Owned IO pools use one context and one worker per lane. External contexts can
 have one or multiple threads calling `run()`. Each external lane uses a strand
 that serializes its callbacks. A callback can run on a different host thread
 on its next invocation. Independent lanes can execute concurrently, so shared
 application state still needs synchronization.
 
-For clients and servers:
+For transport clients and servers:
 
 | Operation | Contract |
 | --- | --- |
@@ -25,6 +28,9 @@ For clients and servers:
 | `request_stop()` | Schedule shutdown; suitable inside a network callback |
 | `wait_stopped()` from an owner thread | Complete shutdown and report whether waiting was allowed |
 | `wait_stopped()` from a worker of the involved context/pool | Return `false` with `operation_not_supported` |
+
+Database clients use their own asynchronous `close()` contract; see
+[database shutdown](../features/database-clients.md#limits-and-callback-ownership).
 
 Keep external contexts, their runners and work guards running throughout start,
 send and shutdown. arknet does not stop the host context. Stop and destroy the

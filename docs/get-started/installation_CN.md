@@ -132,7 +132,8 @@ cmake --build build-vcpkg --parallel 3
 
 将 `include/` 和所选依赖库的头文件目录加入编译器搜索路径，以 C++20 编译，并链接
 平台的 socket 和线程依赖。MySQL 连接与安全传输还需要 OpenSSL 头文件和库。Windows 下链接
-`ws2_32` 和 `mswsock`。CMake 目标还会为 MSVC 添加 `/bigobj`。
+`ws2_32` 和 `mswsock`，并在包含 Windows 头文件前定义 `NOMINMAX`。
+CMake 目标会传递 `NOMINMAX`，并为 MSVC 添加 `/bigobj`。
 
 在包含 arknet 或依赖库头文件前定义配置宏：
 
