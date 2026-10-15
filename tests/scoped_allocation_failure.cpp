@@ -4,6 +4,7 @@
 
 #if defined(_WIN32)
 #include <malloc.h>
+
 #endif
 
 #include "scoped_allocation_failure.hpp"
