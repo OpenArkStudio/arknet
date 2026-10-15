@@ -32,7 +32,7 @@ evidence below.
 | Memory and concurrency, same snapshot | Full Boost.Asio ASan+UBSan: 52 checks / 470 cases / 615,937 assertions; full Standalone Asio TSan: 51 / 410 / 333,108; no sanitizer diagnostics. Leak checking is disabled and installed-consumer child binaries are not instrumented |
 | Real databases | Isolated MySQL Community 8.4.11 with TLS and Redis 7.4.2 with TCP/TLS/mTLS in all four complete configurations; includes client/pool shutdown and publication-failure recovery |
 | Additional shutdown coverage | Selected Boost NoTLS targets: 8 checks / 66 cases / 1,515 assertions; ASan queued-connect, HTTP external-context and external-stop: 72 process checks / 280 cases / 4,664 assertions |
-| Test-only snapshot `25bb9f8` | Four dependency/sanitizer combinations, 30 focused cases each, plus 128 selected native-error executions; all pass locally. The MSVC CRT allocation path awaits Windows CI |
+| Test-only snapshot `25bb9f8` | Four dependency/sanitizer combinations, 30 focused cases each, plus 128 selected native-error executions; all pass locally. The MSVC CRT allocation path is covered by Windows CI, outside this macOS validation |
 | Cross-platform release gate | [PR #16](https://github.com/OpenArkStudio/arknet/pull/16) must pass all 14 required checks before release; local results do not substitute for the candidate's own checks |
 | Local performance | Release measurements identify product revision `2aa5bc0`; see the [comparison reports](../performance/index.md). Redis-protocol performance uses Valkey 8.0.11, separately from Redis 7.4.2 correctness checks |
 | Real legacy peers, 2026-10-13 | Both dependency configurations: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each; independent archived evidence |

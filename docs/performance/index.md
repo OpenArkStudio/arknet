@@ -4,6 +4,8 @@ These reports measure local loopback workloads on a Mac mini M4 Pro, not CI
 runner performance. Choose a report with matching protocol, payload, concurrency
 and execution mode; each report records its host, source, commands and scope.
 
+Download the [raw measurements and verification tools](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-benchmark-comparison.tar.gz) with the [SHA256 checksum](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-benchmark-comparison.tar.gz.sha256). The data is distributed as a release asset, outside the source repository.
+
 ## Version and execution comparisons
 
 - [Database clients](database-comparison.md): MySQL and Redis throughput, response time and CPU for v0.2.0 and the complete-shutdown implementation.

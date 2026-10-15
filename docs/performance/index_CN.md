@@ -3,6 +3,8 @@
 这些报告在 Mac mini M4 Pro 上测量本地回环负载。报告记录机器、源码、命令与
 适用范围，数据不来自 CI。比较时应保持协议、包体、并发和执行方式一致。
 
+下载[原始测量记录与校验工具](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-benchmark-comparison.tar.gz)及 [SHA256 校验和](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-benchmark-comparison.tar.gz.sha256)。数据作为 Release 附件提供，不写入源码仓库。
+
 ## 版本与执行方式对照
 
 - [数据库客户端](database-comparison_CN.md)：v0.2.0 与完整关闭等待实现的 MySQL、Redis 吞吐、响应时间和 CPU 对照。

@@ -20,10 +20,12 @@
 #include <boost/asio/detail/config.hpp>
 #include <boost/asio/detail/cstdint.hpp>
 #include <boost/asio/detail/throw_exception.hpp>
+
 #else
 #include <asio/detail/config.hpp>
 #include <asio/detail/cstdint.hpp>
 #include <asio/detail/throw_exception.hpp>
+
 #endif
 
 namespace scoped_allocation_failure {
@@ -44,8 +46,10 @@ inline void* asio_aligned_malloc(std::size_t size, std::size_t alignment) noexce
 #define _aligned_malloc ::scoped_allocation_failure::asio_aligned_malloc
 #if !defined(ARKNET_USE_BOOST_ASIO) || ARKNET_USE_BOOST_ASIO
 #include <boost/asio/detail/memory.hpp>
+
 #else
 #include <asio/detail/memory.hpp>
+
 #endif
 #undef _aligned_malloc
 #endif

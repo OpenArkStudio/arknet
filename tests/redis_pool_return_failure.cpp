@@ -1,6 +1,7 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
 #if defined(_MSC_VER)
 #include "scoped_asio_allocation_failure.hpp"
+
 #endif
 
 #include <atomic>

@@ -9,6 +9,8 @@ restarts and cleanup. Performance measurements run locally after those checks
 pass and use a Release build without sanitizers. CI checks regressions and
 smoke execution; its shared-runner timing is not the published baseline.
 
+Download the [validation logs and source mapping](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz) with the [SHA256 checksum](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz.sha256). The archive includes bilingual instructions and an independent verifier.
+
 ## Build and Run
 
 ```sh
@@ -151,8 +153,8 @@ All focused cases pass without sanitizer diagnostics. The 128 selected
 native-error executions each check nine assertions; other cases excluded by the
 filter are not environment skips. These runs are additional to the complete
 snapshot, not a complete-suite run of the test-only changes. The MSVC-specific
-CRT allocation path requires Windows CI and remains pending; macOS cannot
-execute that path.
+CRT allocation path is covered by the Windows CI jobs; this macOS validation
+does not execute it.
 
 ASan leak checking is disabled on this macOS host. The complete-suite ASan runs
 also disable online symbolization to avoid a diagnosed symbolizer hang; memory

@@ -8,6 +8,8 @@
 性能测量在这些检查通过后于本机执行，使用不带 Sanitizer 的 Release 构建。
 CI 用于回归和冒烟执行，共享 runner 的时间不作为发布的性能基线。
 
+下载[验证日志与源码对应关系](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz)及 [SHA256 校验和](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz.sha256)。归档包含双语说明和独立校验工具。
+
 ## 构建与执行
 
 ```sh
@@ -136,7 +138,7 @@ HTTP 显式过滤器排除的用例不属于环境条件导致的跳过；完整
 全部专项用例通过，未出现 Sanitizer 诊断。指定原生错误用例共执行 128 次，
 每次检查九项断言；过滤器排除的其他用例不属于环境条件导致的跳过。
 这些记录补充完整源码快照的结果，不代表纯测试改动的整套检查结果。
-MSVC 专用 CRT 分配路径须由 Windows CI 验证，目前待完成；macOS 无法执行该路径。
+MSVC 专用 CRT 分配路径在 Windows CI 中执行，本机 macOS 验证不覆盖该路径。
 
 本机 macOS ASan 关闭泄漏检测。完整检查的 ASan 还关闭了在线符号化，以避开已定位的
 符号化程序挂起问题，内存检测仍然启用。没有新增 Sanitizer 抑制规则或强制预包含参数。
