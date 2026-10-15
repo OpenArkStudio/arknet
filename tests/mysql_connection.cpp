@@ -564,7 +564,9 @@ DOCTEST_TEST_CASE("MySQL pending count and memory limits reject excess requests 
         REQUIRE(bool(connect(client, options)));
         std::promise<query_result> active;
         auto active_result = active.get_future();
-        client.async_query("active", [&](query_result value) { active.set_value(std::move(value)); });
+        // Each encoded query is at least 33 bytes. Together they exceed the
+        // 64-byte budget regardless of the standard library's string capacity.
+        client.async_query(std::string(32, 'a'), [&](query_result value) { active.set_value(std::move(value)); });
         REQUIRE(received.wait_for(5s) == std::future_status::ready);
         const auto rejected = query(client, std::string(32, 'x'));
         CHECK(rejected.status.code == connection_errc::queue_full);
