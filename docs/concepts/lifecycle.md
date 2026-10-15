@@ -40,3 +40,24 @@ The standalone `arknet::timer` starts during construction and has `stop()`, but
 no `request_stop()` or `wait_stopped()`. Calling its `stop()` in a callback is
 nonblocking. An owner thread can call `stop()` again to drain pending completion
 handlers while the external context is still running.
+
+## Process shutdown
+
+Stop network work and release its owners before returning from `main`. When a
+callback releases the last endpoint owner on an owned IO worker, arknet defers
+pool deletion to a cleanup worker. Process cleanup waits for those owned pools,
+their callbacks and TLS resources before OpenSSL's normal global cleanup. The
+cleanup worker starts when the first owned IO pool is constructed, rather than
+when a header is included.
+
+For globals, include an arknet IO header before declaring the owning object in
+each translation unit. This also covers an initially empty `shared_ptr` assigned
+from `main`. A forward-declared or type-erased global owner in another translation
+unit without that include must be explicitly reset before `main` returns; its
+static destruction order cannot be inferred by arknet.
+
+The default Standalone Asio configuration uses native thread storage. If Asio was
+included first, or the application explicitly selects legacy pthread-key thread
+storage, keep that configuration consistent across translation units and destroy
+all owned endpoints and pools before leaving `main`. External IO runners remain
+the application's responsibility.

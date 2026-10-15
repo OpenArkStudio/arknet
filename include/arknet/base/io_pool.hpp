@@ -9,6 +9,7 @@
 #include <functional>
 #include <future>
 #include <latch>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -188,6 +189,127 @@ public:
     virtual bool owns_context() const noexcept = 0;
 };
 
+// Admission remains valid after static destructors run, so a late constructor
+// can reject without accessing an already destroyed cleanup executor.
+inline constexpr std::size_t owned_pool_closed = std::size_t{1} << (std::numeric_limits<std::size_t>::digits - 1);
+inline constinit std::atomic<std::size_t> owned_pool_lifetimes{};
+
+// A callback can release the last endpoint owner on one of its own workers.
+// Keep accepting deferred deletion until every owned pool has fully drained.
+class owned_pool_cleanup
+{
+    std::mutex executor_mutex_;
+    std::unique_ptr<asio::thread_pool> executor_;
+
+public:
+    owned_pool_cleanup() {
+#if defined(ARKNET_ENABLE_SSL)
+        // Register OpenSSL's normal atexit cleanup before this singleton's
+        // destructor, including when the first TLS context is created later.
+        if (!OPENSSL_init_ssl(0, nullptr))
+        {
+            throw std::runtime_error("could not initialize OpenSSL for owned IO runtime");
+        }
+#endif
+    }
+
+    ~owned_pool_cleanup() {
+        for (;;)
+        {
+            auto live = owned_pool_lifetimes.load(std::memory_order_acquire);
+            if (!live)
+            {
+                if (owned_pool_lifetimes.compare_exchange_weak(live, owned_pool_closed, std::memory_order_acq_rel))
+                {
+                    break;
+                }
+                continue;
+            }
+            owned_pool_lifetimes.wait(live, std::memory_order_acquire);
+        }
+        if (executor_)
+        {
+            executor_->join();
+        }
+    }
+
+    void ensure_executor() {
+        std::lock_guard lock(executor_mutex_);
+        if (!executor_)
+        {
+            executor_ = std::make_unique<asio::thread_pool>(1);
+        }
+    }
+
+    void release(iopool_base* pool) {
+        std::lock_guard lock(executor_mutex_);
+        asio::post(*executor_, [pool] { delete pool; });
+    }
+};
+
+inline owned_pool_cleanup& pool_cleanup() {
+    static owned_pool_cleanup cleanup;
+    return cleanup;
+}
+
+// Ordered, non-inline initialization in each consumer translation unit places
+// cleanup before globals declared after this header, including initially empty
+// shared owners that only acquire their pool from main. No worker starts here.
+namespace {
+
+[[maybe_unused]] const bool owned_pool_cleanup_initialized = [] {
+    pool_cleanup();
+    return true;
+}();
+
+} // namespace
+
+class owned_pool_membership
+{
+    static void unregister() noexcept {
+        owned_pool_lifetimes.fetch_sub(1, std::memory_order_acq_rel);
+        owned_pool_lifetimes.notify_all();
+    }
+
+public:
+    owned_pool_membership() {
+        auto live = owned_pool_lifetimes.load(std::memory_order_acquire);
+        for (;;)
+        {
+            if (live & owned_pool_closed)
+            {
+                throw std::logic_error("owned IO runtime has already shut down");
+            }
+            if (live == owned_pool_closed - 1)
+            {
+                throw std::length_error("too many owned IO pools");
+            }
+            if (owned_pool_lifetimes.compare_exchange_weak(live, live + 1, std::memory_order_acq_rel))
+            {
+                break;
+            }
+        }
+        try
+        {
+            // Fail worker initialization from pool construction, before its
+            // callbacks can release their last owner on an IO worker.
+            pool_cleanup().ensure_executor();
+        }
+        catch (...)
+        {
+            unregister();
+            throw;
+        }
+    }
+
+    owned_pool_membership(const owned_pool_membership&) = delete;
+    owned_pool_membership& operator=(const owned_pool_membership&) = delete;
+
+    ~owned_pool_membership() {
+        unregister();
+    }
+};
+
 class io_pool : public iopool_base
 {
     enum class phase
@@ -196,6 +318,8 @@ class io_pool : public iopool_base
         running,
         draining
     };
+    // Declared first: release admission only after workers and lanes are gone.
+    owned_pool_membership membership_;
     std::vector<std::shared_ptr<io_t>> lanes_;
     std::vector<io_context_work_guard> work_;
     std::vector<std::thread> workers_;
@@ -578,27 +702,6 @@ public:
     }
 };
 
-// A callback can release the last endpoint owner on one of its own workers.
-// Keep the pool alive until another thread can drain and join those workers.
-class owned_pool_cleanup
-{
-    asio::thread_pool executor_{1};
-
-public:
-    ~owned_pool_cleanup() {
-        executor_.join();
-    }
-
-    void release(iopool_base* pool) {
-        asio::post(executor_, [pool] { delete pool; });
-    }
-};
-
-inline owned_pool_cleanup& pool_cleanup() {
-    static owned_pool_cleanup cleanup;
-    return cleanup;
-}
-
 struct iopool_deleter
 {
     void operator()(iopool_base* pool) const {
@@ -753,8 +856,6 @@ public:
     explicit iopool_cp(T&& scheduler) {
         if constexpr (std::integral<std::remove_cvref_t<T>>)
         {
-            // Construct cleanup before an owned endpoint starts its workers.
-            pool_cleanup();
             iopool_.reset(new io_pool(static_cast<std::size_t>(scheduler)));
         }
         else
