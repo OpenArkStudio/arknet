@@ -4,6 +4,15 @@ These reports measure local loopback workloads on a Mac mini M4 Pro, not CI
 runner performance. Choose a report with matching protocol, payload, concurrency
 and execution mode; each report records its host, source, commands and scope.
 
+## Version and execution comparisons
+
+- [Database clients](database-comparison.md): MySQL and Redis throughput, response time and CPU for v0.2.0 and the complete-shutdown implementation.
+- [Network endpoints](transport-comparison.md): matched TCP, TLS TCP, HTTP, HTTPS, WebSocket and WSS workloads.
+- [Five-second workload comparison](steady-workloads.md): eight selected workloads, five fresh processes per version, with throughput, CPU and response time.
+- [Asio callbacks and coroutines](asio-execution-control.md): execution modes and worker counts within the same revision.
+
+The configuration grids contain 1,632 rounds; the five-second comparison contains 80 rounds. Databases use native connection callbacks; the Asio control bypasses arknet endpoints. They do not measure ark's database coroutine bridge.
+
 ## RUDP measurements
 
 [RUDP FEC report](rudp.md): 96 configurations and 276 measured runs across both

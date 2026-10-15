@@ -70,49 +70,95 @@ and teardown. Slow receivers test backpressure rather than throughput.
 
 ## Local Verification
 
-Verified on 2026-10-15 using a Mac mini `Mac16,11`, Apple M4 Pro,
-14 physical/logical cores (10 performance and 4 efficiency cores), 48 GiB RAM,
-macOS 27.0.1 (26A434), Apple Clang 21.0.0, CMake 4.3.3,
-Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
+The complete-suite source snapshot is `6c8418e`; its networking changes are
+included in measured revision `2aa5bc0`. The separate test-only snapshot
+`25bb9f8` covers allocation-failure portability and native-connect ordering below.
+[PR #16](https://github.com/OpenArkStudio/arknet/pull/16) records the candidate
+review and cross-platform CI; local results do not substitute for its checks.
 
-| Dependency | Build / TLS | Checks | doctest cases | Assertions | Result |
-| --- | --- | ---: | ---: | ---: | --- |
-| Boost.Asio | Release / ON | 75 | 374 | 1,952,026 | Passed |
-| Standalone Asio | Release / ON | 62 | 314 | 976,980 | Passed |
+Validation date: 2026-10-15. The machine is a Mac mini `Mac16,11`, Apple M4 Pro, 14 physical/logical cores
+(10 performance and 4 efficiency cores), 48 GiB RAM, macOS 27.0.1 (26A434).
+Dependencies are Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
+Ordinary builds use Apple Clang 21.0.0; sanitizer builds use LLVM 22.1.7.
 
-Checks count programs invoked by `arknet_check`; cases count doctest cases.
-Both complete runs had zero failed or skipped cases and include benchmark smoke
-cases and installed-package consumption. Real database tests use isolated
-MySQL 8.4.11 and Redis 7.4.2 services; without their environment variables,
-those optional cases are skipped rather than replaced by simulated servers.
+### Complete Checks
 
-### Database Client Sanitizers
+All four builds use Debug, TLS and tests ON, examples and benchmarks OFF.
+Compilation finishes before checks run serially with real database services.
 
-Separate LLVM 22.1.7 builds instrument the test framework and arknet code.
+| Dependency / instrumentation | Checks | doctest cases | Assertions | Result |
+| --- | ---: | ---: | ---: | --- |
+| Boost.Asio | 52/52 | 470 | 978,433 | Passed |
+| Standalone Asio | 51/51 | 410 | 576,824 | Passed |
+| Boost.Asio / ASan+UBSan | 52/52 | 470 | 615,937 | Passed |
+| Standalone Asio / TSan | 51/51 | 410 | 333,108 | Passed |
 
-| Build | Scope | Cases | Assertions | Result |
-| --- | --- | ---: | ---: | --- |
-| Boost.Asio / TSan | MySQL connection and pool | 51 | 1,899 | Passed, 0 skipped |
-| Standalone Asio / TSan | MySQL connection and pool | 51 | 1,899 | Passed, 0 skipped |
-| Boost.Asio / ASan+UBSan | MySQL connection and pool | 51 | 1,899 | Passed, 0 skipped |
-| Boost.Asio / TSan | Redis client and pool | 35 | 316 | Passed, 0 skipped |
-| Standalone Asio / ASan+UBSan | Redis client and pool | 35 | 316 | Passed, 0 skipped |
+Checks count programs invoked by `arknet_check`; cases count doctest executions.
+Assertion totals are observed counts, including duration-based stress cases.
+The enabled default suites have zero failures or environment skips. Archived
+Zephyr interoperability is not enabled in these runs; its independent evidence
+is recorded below. Reference ARQ/FEC interoperability is included.
 
-The Boost.Asio database TSan executions cover 86 cases and 2,215 assertions in
-total. MySQL's additional Standalone Asio TSan and Boost.Asio ASan+UBSan runs
-cover the same 51 cases and 1,899 assertions separately. No sanitizer diagnostics
-were reported, and no suppressions were used. macOS ASan runs disable leak detection.
-MySQL includes runtime ownership through post return and independent
-invalid-connect/rejected-command destruction cases. Redis includes the RESET
-byte-budget and REPLCONF response-correlation regressions.
-[Scope, environment and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README.md)
-record the exact distinctions. These are database suites, not a full-project
-sanitizer result.
+Each configuration includes external-context stop (15 cases / 375 assertions),
+queued-connect cancellation (4 / 44), protocol and runtime-exit suites, stress,
+and installed-package consumption. The installed-consumer child build does not
+inherit sanitizer flags; its binaries are not sanitizer-instrumented.
 
-MySQL codec tests include the standard stream header required by MSVC assertion
-diagnostics. Aggregate command admission is tested using encoded request sizes
-whose sum exceeds the budget, independently of string capacity or small-string
-optimization.
+### Database and Shutdown Coverage
+
+All four configurations execute the optional real-service cases against isolated
+MySQL Community 8.4.11 and Redis 7.4.2, without database-case skips. MySQL verifies
+TLS; Redis covers TCP, TLS and mTLS. Coverage includes connection/client and pool
+operations, permanent `close_and_wait()`, late connects, callback/capture retirement,
+publication failures and recovery, cancellation, and reset isolation.
+Without the documented service environment variables, real-service cases skip
+rather than substitute simulated services. Performance uses Valkey 8.0.11 for
+the Redis protocol; it is separate from this Redis 7.4.2 interoperability evidence.
+
+TCP-based endpoint checks cover native completion and capture retirement.
+Complete concurrent owner-stop serialization is verified for TCP servers and
+HTTP/WebSocket/TLS-derived servers. It is not a new guarantee for every protocol.
+External-context owners keep their runners alive through drain and stop external
+producers first; worker callbacks must not block waiting for themselves.
+See [lifecycle](../concepts/lifecycle.md) and the formal
+[shutdown and fault tests](https://github.com/OpenArkStudio/arknet/pull/16/files).
+These results do not establish dynamic-library unloading safety.
+
+### Additional Focused Checks
+
+| Scope | Checks | Cases | Assertions | Result |
+| --- | ---: | ---: | ---: | --- |
+| Boost.Asio, TLS OFF: eight selected targets | 8/8 | 66 | 1,515 | Passed |
+| Boost.Asio ASan+UBSan: queued-connect, HTTP external-context and external-stop repetitions | 72/72 | 280 | 4,664 | Passed |
+
+The NoTLS selection covers TCP, external-stop, manual-runtime, queued-connect
+cancellation and four Redis shutdown/publication-failure targets; it is not a
+complete NoTLS matrix or a MySQL-without-OpenSSL result. The 72 ASan executions
+comprise 32 queued-connect runs, 32 selected HTTP cases and eight external-stop
+runs. Cases excluded by the explicit HTTP filter are not environment skips.
+The complete unfiltered HTTP suite passes in the complete checks above.
+
+The test-only allocation and connect-ordering snapshot has separate coverage:
+
+| Dependency / instrumentation | Focused cases | Assertions | Selected native-error executions |
+| --- | ---: | ---: | ---: |
+| Boost.Asio / ASan+UBSan | 30 | 927 | 32/32 passed |
+| Standalone Asio / ASan+UBSan | 30 | 927 | 32/32 passed |
+| Boost.Asio / TSan | 30 | 926 | 32/32 passed |
+| Standalone Asio / TSan | 30 | 926 | 32/32 passed |
+
+All focused cases pass without sanitizer diagnostics. The 128 selected
+native-error executions each check nine assertions; other cases excluded by the
+filter are not environment skips. These runs are additional to the complete
+snapshot, not a complete-suite run of the test-only changes. The MSVC-specific
+CRT allocation path requires Windows CI and remains pending; macOS cannot
+execute that path.
+
+ASan leak checking is disabled on this macOS host. The complete-suite ASan runs
+also disable online symbolization to avoid a diagnosed symbolizer hang; memory
+instrumentation remains enabled. No sanitizer suppressions or forced-include
+workarounds were added. Only the existing reference-KCP test translation unit
+excludes `null,object-size` instrumentation.
 
 ### RUDP Interoperability Evidence
 

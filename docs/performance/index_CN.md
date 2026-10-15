@@ -3,6 +3,15 @@
 这些报告在 Mac mini M4 Pro 上测量本地回环负载。报告记录机器、源码、命令与
 适用范围，数据不来自 CI。比较时应保持协议、包体、并发和执行方式一致。
 
+## 版本与执行方式对照
+
+- [数据库客户端](database-comparison_CN.md)：v0.2.0 与完整关闭等待实现的 MySQL、Redis 吞吐、响应时间和 CPU 对照。
+- [网络端点](transport-comparison_CN.md)：TCP、TLS TCP、HTTP、HTTPS、WebSocket 与 WSS 的相同负载对照。
+- [5 秒负载对照](steady-workloads_CN.md)：8 组选定负载，每个版本使用五个独立进程，展示吞吐、CPU 和响应时间的变化。
+- [Asio 回调与协程](asio-execution-control_CN.md)：同一版本、相同负载下的执行方式和线程数对照。
+
+配置矩阵共 1,632 轮，5 秒负载对照共 80 轮。数据库使用原生连接回调，Asio 执行方式对照绕过 arknet 端点；不包含 ark 的数据库协程桥。
+
 ## RUDP 测量
 
 [RUDP FEC 报告](rudp_CN.md)：两种 Asio 依赖方案共 96 组配置、276 次测量，覆盖

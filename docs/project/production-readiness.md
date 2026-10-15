@@ -26,21 +26,27 @@ evidence below.
 
 ## Recorded acceptance status
 
-| Scope | Evidence as of 2026-10-15 |
+| Scope | Evidence |
 | --- | --- |
-| Complete local checks | Release + TLS: Boost.Asio 75 checks / 374 cases / 1,952,026 assertions; Standalone Asio 62 / 314 / 976,980; no failures or skipped cases |
-| Database correctness | Real MySQL 8.4.11 and Redis 7.4.2; MySQL client/pool 51 cases / 1,899 assertions, Redis 35 / 316 |
-| Database memory and concurrency | Boost.Asio database TSan: 86 cases / 2,215 assertions; MySQL Standalone Asio TSan and Boost.Asio ASan+UBSan: 51 / 1,899 each; Redis Standalone Asio ASan+UBSan: 35 / 316; no failures, skips, diagnostics or suppressions; [scope and commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README.md) |
-| RUDP memory/concurrency evidence, 2026-10-13 | Selected ASan/UBSan suites: 109 cases; selected TSan suites: 86 cases; not a complete current-project sanitizer run |
-| Cross-platform CI, v0.1.0 historical evidence | [13 jobs passed](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095): both Asio dependency configurations, Linux/macOS/Windows, builds without TLS, ASan/UBSan, TSan, installed consumers and formatting; this run does not validate v0.2.0 |
-| Cross-platform release gate | All 14 required checks must pass before merge: [CI runs](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml); local results do not substitute for the release candidate's own checks |
-| Real legacy peers, 2026-10-13 | Both dependency configurations: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each |
+| Complete local checks, snapshot `6c8418e` | Debug + TLS: Boost.Asio 52 checks / 470 cases / 978,433 assertions; Standalone Asio 51 / 410 / 576,824. Enabled default suites pass without failures or environment skips; archived Zephyr interoperability is not enabled |
+| Memory and concurrency, same snapshot | Full Boost.Asio ASan+UBSan: 52 checks / 470 cases / 615,937 assertions; full Standalone Asio TSan: 51 / 410 / 333,108; no sanitizer diagnostics. Leak checking is disabled and installed-consumer child binaries are not instrumented |
+| Real databases | Isolated MySQL Community 8.4.11 with TLS and Redis 7.4.2 with TCP/TLS/mTLS in all four complete configurations; includes client/pool shutdown and publication-failure recovery |
+| Additional shutdown coverage | Selected Boost NoTLS targets: 8 checks / 66 cases / 1,515 assertions; ASan queued-connect, HTTP external-context and external-stop: 72 process checks / 280 cases / 4,664 assertions |
+| Test-only snapshot `25bb9f8` | Four dependency/sanitizer combinations, 30 focused cases each, plus 128 selected native-error executions; all pass locally. The MSVC CRT allocation path awaits Windows CI |
+| Cross-platform release gate | [PR #16](https://github.com/OpenArkStudio/arknet/pull/16) must pass all 14 required checks before release; local results do not substitute for the candidate's own checks |
+| Local performance | Release measurements identify product revision `2aa5bc0`; see the [comparison reports](../performance/index.md). Redis-protocol performance uses Valkey 8.0.11, separately from Redis 7.4.2 correctness checks |
+| Real legacy peers, 2026-10-13 | Both dependency configurations: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each; independent archived evidence |
 | Measured RUDP/FEC load | 96 configurations, 276 runs, 7,960,439 successful message round trips; six 120-second sustained runs |
-| ark integration | Direct replacement and C++20 in [#38](https://github.com/OpenArkStudio/ark/pull/38); core/official plugin organization in [#41](https://github.com/OpenArkStudio/ark/pull/41) and snake_case interfaces/style in [#43](https://github.com/OpenArkStudio/ark/pull/43), all merged |
-| ark receive buffering | Allocation changes and local measurements merged in [#42](https://github.com/OpenArkStudio/ark/pull/42); business regression and deployment acceptance remain separate |
-| Production deployment | Target-network cross-host capacity, production-duration endurance and deployment access control pending |
+| ark integration | Direct replacement and C++20 in [#38](https://github.com/OpenArkStudio/ark/pull/38); core/official plugin organization in [#41](https://github.com/OpenArkStudio/ark/pull/41), snake_case interfaces/style in [#43](https://github.com/OpenArkStudio/ark/pull/43), and receive buffering in [#42](https://github.com/OpenArkStudio/ark/pull/42), all merged |
+| Production deployment | Target-network cross-host capacity, production-duration endurance, business acceptance and deployment access control pending |
 
-[Testing and validation](testing.md) records complete checks and database results.
+[Testing and validation](testing.md) records configurations, source snapshots and
+sanitizer limitations. Concurrent complete owner stops are serialized for TCP
+servers and HTTP/WebSocket/TLS-derived servers; this is not a blanket guarantee
+for every protocol. Hosts must stop producers and keep external context runners
+alive through drain. Local validation does not establish dynamic-library
+unloading safety or the cluster PCU target.
+
 The [RUDP/FEC record](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec)
 retains its independent interoperability evidence. The ark replacement is merged;
 business behavior and deployment acceptance still need their own workload tests.

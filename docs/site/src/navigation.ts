@@ -66,6 +66,10 @@ const tree: Entry[] = [
   ] },
   { en: "Performance", zh: "性能", children: [
     ["performance", "Reports and measurement scope", "报告与测量范围"],
+    ["performance/database-comparison", "Database version comparison", "数据库版本对照"],
+    ["performance/transport-comparison", "Transport version comparison", "网络端点版本对照"],
+    ["performance/steady-workloads", "Five-second workload comparison", "5 秒负载对照"],
+    ["performance/asio-execution-control", "Asio callbacks and coroutines", "Asio 回调与协程"],
     ["performance/rudp", "RUDP", "RUDP"],
     ["performance/methodology", "Methodology and metrics", "测量方法与指标"],
     ["performance/io-comparison", "IO and coroutine comparison", "IO 与协程对比"],

@@ -1,5 +1,19 @@
 # Releases
 
+## 0.2.1
+
+Complete database and TCP-family shutdown waits so accepted native operations, callbacks and their captures retire before owners release resources. See [lifecycle](../concepts/lifecycle.md) for asynchronous and permanent-close boundaries.
+
+- MySQL connections, Redis clients and both pools provide `close_and_wait()`. Permanent closure seals admission, finishes callbacks and retires owned IO resources; retained leases and statement handles become inert.
+- TCP, TLS TCP, HTTP and WebSocket shutdown waits for native completions, session continuations and callback captures. Shutdown prevents long timer rearming while preserving explicit restart and ordinary reconnect.
+- `manual_runtime` owns its context and work guard without creating a worker that executes business handlers. Applications drive `poll()` from their update loop. Its standard Asio executor supports `awaitable` and `co_spawn`; dedicated public coroutine protocol endpoints remain TODO.
+- Redis pools retain diagnostics and recover connection capacity after lease-return submission failures, without replaying commands or rewriting successful results.
+- Formal regressions cover concurrent shutdown waiters, late connect completions, publication failures, TLS handshakes and capture lifetimes. Windows allocation-failure tests cover Asio's direct CRT allocation path.
+
+[Performance reports](../performance/index.md) include local configuration grids, five-second workload comparisons and a separate raw-Asio callback/coroutine control. Each report identifies its measured commit. Networking implementation matches the release; version identifiers, tests, documentation and the comparison build entry are updated separately. Raw JSON stays outside the repository.
+
+Applications must stop producers before waiting, and external contexts must keep running. Network shutdown completion does not establish business-task drainage, dynamic-plugin unload safety or deployment capacity.
+
 ## 0.2.0
 
 This release adds native single-node MySQL and Redis clients, simplifies networking dependencies, and fixes owned-runtime cleanup at process exit. arknet remains C++20 and header-only.

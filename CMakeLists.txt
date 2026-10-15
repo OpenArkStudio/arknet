@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(arknet VERSION 0.2.0 LANGUAGES CXX)
+project(arknet VERSION 0.2.1 LANGUAGES CXX)
 include(GNUInstallDirs)
 
 option(ARKNET_USE_BOOST_ASIO "Use Boost.Asio and Boost.Beast" ON)
