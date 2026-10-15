@@ -1591,10 +1591,11 @@ private:
         }
 
         void request_close() {
+            const auto self = shared_from_this();
             const auto cutoff = generation.fetch_add(1) + 1;
             stop_admission();
             open = false;
-            asio::post(executor, [self = shared_from_this(), cutoff] {
+            asio::post(executor, [self, cutoff] {
                 if (!self->current || self->current->generation >= cutoff)
                 {
                     return;
@@ -1635,12 +1636,15 @@ private:
     }
 
     request_id submit_command(
-        std::shared_ptr<command> operation, detail::command_status encoded = detail::command_status::complete) {
+        std::shared_ptr<command> request, detail::command_status encoded = detail::command_status::complete) {
+        const auto self = state_;
+        // Destroy the command's timer before releasing this runtime owner.
+        auto operation = std::move(request);
         const auto id = operation->id;
         auto admission =
             !operation->expires ? state::failure(connection_errc::invalid_options, "Invalid MySQL command deadline")
             : encoded == detail::command_status::complete
-                ? state_->reserve_command(operation)
+                ? self->reserve_command(operation)
                 : state::failure(connection_errc::invalid_options, "Invalid MySQL command payload or size");
         if (!admission)
         {
@@ -1650,7 +1654,7 @@ private:
         }
         try
         {
-            asio::post(state_->executor, [self = state_, operation, admission = std::move(admission)]() mutable {
+            asio::post(self->executor, [self, operation, admission = std::move(admission)]() mutable {
                 if (!admission)
                 {
                     self->complete_command(operation, std::move(admission));
@@ -1663,7 +1667,7 @@ private:
         }
         catch (...)
         {
-            state_->release_command(operation);
+            self->release_command(operation);
             throw;
         }
         return id;
@@ -1692,10 +1696,12 @@ public:
     }
 
     void async_connect(connect_options options, connect_handler handler) {
-        const auto epoch = state_->generation.load();
-        asio::post(
-            state_->executor, [self = state_, options = std::move(options), handler = std::move(handler),
-                                  epoch]() mutable { self->start(std::move(options), std::move(handler), epoch); });
+        // A completion on another thread may destroy the facade before post returns.
+        const auto self = state_;
+        const auto epoch = self->generation.load();
+        asio::post(self->executor, [self, options = std::move(options), handler = std::move(handler), epoch]() mutable {
+            self->start(std::move(options), std::move(handler), epoch);
+        });
     }
 
     // Requests are FIFO on this connection. A timeout includes queue time.
@@ -1756,11 +1762,13 @@ public:
     }
 
     void cancel(request_id id) {
-        asio::post(state_->executor, [self = state_, id] { self->cancel_command(id); });
+        const auto self = state_;
+        asio::post(self->executor, [self, id] { self->cancel_command(id); });
     }
 
     void close() {
-        state_->request_close();
+        const auto self = state_;
+        self->request_close();
     }
 
     bool is_open() const noexcept {

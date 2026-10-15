@@ -995,3 +995,60 @@ DOCTEST_TEST_CASE("MySQL invalid command deadlines preserve IDs callbacks and wi
     client.close();
     peer.finish();
 }
+
+DOCTEST_TEST_CASE("MySQL invalid connect callbacks may destroy their connection safely") {
+    const auto caller = std::this_thread::get_id();
+    for (int iteration = 0; iteration < 32; ++iteration)
+    {
+        auto client = std::make_unique<connection>();
+        std::promise<connection_result> completion;
+        auto future = completion.get_future();
+        std::atomic<int> calls{};
+        auto options = connect_options{};
+        options.host.clear();
+        client->async_connect(options, [&](connection_result result) {
+            CHECK(std::this_thread::get_id() != caller);
+            ++calls;
+            client.reset();
+            completion.set_value(std::move(result));
+        });
+        REQUIRE(future.wait_for(5s) == std::future_status::ready);
+        CHECK(future.get().code == connection_errc::invalid_options);
+        CHECK(calls.load() == 1);
+        CHECK_FALSE(client);
+    }
+}
+
+DOCTEST_TEST_CASE("MySQL rejected command callbacks may destroy their connection safely") {
+    const auto caller = std::this_thread::get_id();
+    for (const bool invalid_deadline : {false, true})
+    {
+        for (int iteration = 0; iteration < 32; ++iteration)
+        {
+            auto client = std::make_unique<connection>();
+            std::promise<query_result> completion;
+            auto future = completion.get_future();
+            std::atomic<int> calls{};
+            query_options options;
+            if (invalid_deadline)
+            {
+                options.timeout = 0ms;
+            }
+            const auto id = client->async_query(
+                "SELECT 1",
+                [&](query_result result) {
+                    CHECK(std::this_thread::get_id() != caller);
+                    ++calls;
+                    client.reset();
+                    completion.set_value(std::move(result));
+                },
+                options);
+            CHECK(id != 0);
+            REQUIRE(future.wait_for(5s) == std::future_status::ready);
+            CHECK(future.get().status.code ==
+                  (invalid_deadline ? connection_errc::invalid_options : connection_errc::not_connected));
+            CHECK(calls.load() == 1);
+            CHECK_FALSE(client);
+        }
+    }
+}
