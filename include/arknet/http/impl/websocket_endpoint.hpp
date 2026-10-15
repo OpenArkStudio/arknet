@@ -38,7 +38,7 @@ public:
     ~websocket_endpoint_impl() {
         if constexpr (Args::is_client)
         {
-            this->stop();
+            this->stop_before_destroy(*this);
         }
     }
 
@@ -313,7 +313,7 @@ public:
         : Transport(std::forward<Construction>(construction)...) {}
 
     ~websocket_server_impl() {
-        this->stop();
+        this->stop_before_destroy(*this);
     }
 
     template<class Host, class Port, class... Options>

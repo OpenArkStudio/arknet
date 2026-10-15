@@ -589,3 +589,125 @@ DOCTEST_TEST_CASE("Timer queries reject a directly stopped external context") {
     context.run();
     check(unexpected_callbacks == 0, "restarting context after timer destruction is safe");
 }
+
+namespace {
+
+class context_destruction_probe final : public asio::execution_context::service
+{
+public:
+    inline static asio::execution_context::id id;
+
+    context_destruction_probe(asio::execution_context& context, std::shared_ptr<std::promise<void>> destroyed)
+        : asio::execution_context::service(context)
+        , destroyed_(std::move(destroyed)) {}
+
+    ~context_destruction_probe() override {
+        destroyed_->set_value();
+    }
+
+private:
+    void shutdown() override {}
+
+    std::shared_ptr<std::promise<void>> destroyed_;
+};
+
+template<class Endpoint>
+void configure_release_endpoint(Endpoint& endpoint) {
+    if constexpr (Endpoint::is_client())
+    {
+        endpoint.set_auto_reconnect(false);
+    }
+#if defined(ARKNET_ENABLE_SSL)
+    if constexpr (requires { endpoint.load_verify_file(std::string{}); })
+    {
+        const std::string certs = ARKNET_TEST_CERT_DIR;
+        if constexpr (Endpoint::is_client())
+        {
+            endpoint.load_verify_file(certs + "/ca.pem");
+        }
+        else
+        {
+            endpoint.set_cert_file("", certs + "/server.pem", certs + "/server-key.pem", "");
+        }
+        check(!arknet::get_last_error(), "endpoint certificate configuration succeeds");
+    }
+#endif
+}
+
+template<class Endpoint>
+void release_callback_owner(std::uint16_t port = 0) {
+    struct application_owner
+    {
+        std::shared_ptr<Endpoint> endpoint = std::make_shared<Endpoint>(1024, 128 * 1024, 2);
+
+        ~application_owner() {
+            endpoint->stop();
+        }
+    };
+
+    auto owner = std::make_shared<application_owner>();
+    auto destroyed = std::make_shared<std::promise<void>>();
+    auto completion = destroyed->get_future();
+    auto& context = owner->endpoint->iopool().get(0)->context();
+    asio::add_service(context, new context_destruction_probe(context, destroyed));
+    configure_release_endpoint(*owner->endpoint);
+    check(owner->endpoint->start("127.0.0.1", port), "owned endpoint starts");
+    const std::weak_ptr weak_owner = owner;
+    const std::weak_ptr weak_endpoint = owner->endpoint;
+    auto* endpoint = owner->endpoint.get();
+    endpoint->post([owner = std::move(owner)]() mutable { owner.reset(); });
+    await(completion);
+    check(weak_owner.expired() && weak_endpoint.expired(),
+        "releasing the callback owner destroys its endpoint and drains the owned context");
+}
+
+template<class Client, class Server>
+void release_client_callback_owner() {
+    Server server(1024, 128 * 1024, 2);
+    configure_release_endpoint(server);
+    check(server.start("127.0.0.1", 0), "client peer starts");
+    release_callback_owner<Client>(server.get_listen_port());
+    server.stop();
+}
+
+} // namespace
+
+DOCTEST_TEST_CASE("Owned listeners release final callback owners on an IO worker") {
+    for (unsigned repetition = 0; repetition < 8; ++repetition)
+    {
+        release_callback_owner<arknet::tcp_server>();
+        release_callback_owner<arknet::udp_server>();
+        release_callback_owner<arknet::rudp_server>();
+#if defined(ARKNET_ENABLE_SSL)
+        release_callback_owner<arknet::tcps_server>();
+#if defined(ARKNET_USE_BOOST_ASIO)
+        release_callback_owner<arknet::wss_server>();
+        release_callback_owner<arknet::https_server>();
+#endif
+#endif
+#if defined(ARKNET_USE_BOOST_ASIO)
+        release_callback_owner<arknet::ws_server>();
+        release_callback_owner<arknet::http_server>();
+#endif
+    }
+}
+
+DOCTEST_TEST_CASE("Owned clients release final callback owners on an IO worker") {
+    for (unsigned repetition = 0; repetition < 8; ++repetition)
+    {
+        release_client_callback_owner<arknet::tcp_client, arknet::tcp_server>();
+        release_client_callback_owner<arknet::udp_client, arknet::udp_server>();
+        release_client_callback_owner<arknet::rudp_client, arknet::rudp_server>();
+#if defined(ARKNET_ENABLE_SSL)
+        release_client_callback_owner<arknet::tcps_client, arknet::tcps_server>();
+#if defined(ARKNET_USE_BOOST_ASIO)
+        release_client_callback_owner<arknet::wss_client, arknet::wss_server>();
+        release_client_callback_owner<arknet::https_client, arknet::https_server>();
+#endif
+#endif
+#if defined(ARKNET_USE_BOOST_ASIO)
+        release_client_callback_owner<arknet::ws_client, arknet::ws_server>();
+        release_client_callback_owner<arknet::http_client, arknet::http_server>();
+#endif
+    }
+}
