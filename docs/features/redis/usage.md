@@ -38,6 +38,8 @@ Arguments are length-delimited `std::string` values, so embedded zeros and CR/LF
 
 The complete example uses promises to wait on the main thread. Never wait on a future from an IO callback; callbacks run on the connection's IO lane. Keep application objects captured by callbacks alive through their completion.
 
+An independent client can call `close_and_wait()` on the main thread when it needs to wait for accepted handlers, their captures and owned transport resources to retire. Check its boolean return; it refuses its own IO lane and pool-owned clients. Ordinary `close()` remains asynchronous. See the [shutdown contract](configuration.md#execution-and-shutdown) before using this wait during application teardown.
+
 ## Exclusive pool leases
 
 Include `<arknet/redis/pool.hpp>`. Configure `pool_options.connection`, then call `async_acquire`. A successful `acquire_result` contains a move-only `connection` lease. Submit commands through that lease, then call `release()` or let it leave scope. Use `discard()` when the connection must not be reused.

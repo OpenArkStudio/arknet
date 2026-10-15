@@ -38,6 +38,8 @@ client.async_pipeline({{"PING"}, {"ECHO", payload}}, [](arknet::redis::result re
 
 完整示例通过 promise 在主线程等待。回调运行在连接的 IO 线程上，不要在其中等待 future。回调捕获的应用对象需要存活到回调完成。
 
+独立客户端需要等待已受理 handler、其捕获及自有传输资源回收时，可在主线程调用 `close_and_wait()` 并检查返回值；自身 IO 线程和池内客户端不支持此等待。普通 `close()` 仍为异步关闭。应用退出前请先阅读[关闭约定](configuration_CN.md#执行与关闭)。
+
 ## 独占连接租约
 
 包含 `<arknet/redis/pool.hpp>`，配置 `pool_options.connection` 后调用 `async_acquire`。成功的 `acquire_result` 包含只能移动的 `connection` 租约。通过租约提交命令，完成后调用 `release()` 或离开作用域；不应复用的连接调用 `discard()`。

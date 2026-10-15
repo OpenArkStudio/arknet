@@ -75,8 +75,14 @@ Check server logs and fixed releases when diagnosing this disconnect. The client
 
 ## Execution and shutdown
 
-The library owns IO contexts, threads and transport lifetimes. A standalone client owns one IO context/thread; a pool owns one context/thread shared by its clients. Accepted command callbacks, connection callbacks and pushes run on the associated IO lane; rejected client submissions are also completed there. Callbacks must not throw or block. The empty-lease rejection above is the synchronous exception.
+The library owns IO contexts, threads and transport lifetimes. A standalone client owns one IO context/thread; a pool owns one context/thread shared by its clients. Accepted command callbacks, connection callbacks and pushes run on the associated IO lane. Callbacks must not throw or block. Empty-lease and permanently closed-client rejections complete synchronously on their caller.
 
 `close()` atomically rejects further useful work and schedules terminal shutdown. Pending operations complete once, but `close()` returning does **not** mean their callbacks or transport cleanup have drained. Destruction may request the same deferred shutdown, including when invoked from a callback. Application state captured by callbacks needs its own lifetime ownership; a request deadline or object destruction does not make a dangling reference safe.
+
+If dispatching `close()` fails before shutdown begins, it restores the request flag and may be retried. A shutdown that has already begun remains terminal.
+
+For an independent client, call `close_and_wait()` from a non-IO thread to permanently close admission, finish previously accepted handlers and release their captures, join its owned worker, and destroy its transport, TLS objects and timers before returning success. It returns false with `operation_not_supported` on its own IO worker, during reentrant publication/finalization, or for a pool-owned child; these refusals do not initiate permanent shutdown. Do not hold locks needed by callbacks while waiting. Shutdown failures may throw.
+
+After the permanent gate closes, connect/command submissions invoke their handler synchronously with `client_errc::closed`; commands return ID 0. Cancellation, push-handler registration and ordinary `close()` become inert. These later caller-side rejections are outside the earlier accepted-operation set; their handlers may propagate exceptions. The application must separately stop and join its submitting threads before releasing shared application code. This method does not provide a pool, process-wide cleanup or dynamic-library unload barrier.
 
 There is no automatic reconnect. Construct a new client after terminal close. A pool's `close()` also terminates queued acquisitions and its connections; it is not a callback-drain barrier.

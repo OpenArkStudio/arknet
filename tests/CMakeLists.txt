@@ -30,7 +30,7 @@ function(arknet_configure_check_target)
         USES_TERMINAL)
 endfunction()
 
-set(arknet_test_names tcp udp lifecycle detail concurrency io_pool manual_runtime socket_metadata keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec mysql_wire mysql_handshake mysql_command redis_resp redis_client redis_pool)
+set(arknet_test_names tcp udp lifecycle detail concurrency io_pool manual_runtime socket_metadata keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec mysql_wire mysql_handshake mysql_command redis_resp redis_client redis_pool redis_shutdown)
 if(ARKNET_USE_BOOST_ASIO)
     list(APPEND arknet_test_names websocket http router httprequest)
 endif()
@@ -51,6 +51,17 @@ foreach(name IN LISTS arknet_test_names)
         arknet_add_check(${name} 30 arknet_${name}_test)
     endif()
 endforeach()
+if(ARKNET_ENABLE_SSL)
+    target_sources(arknet_redis_shutdown_test PRIVATE redis_shutdown_tls.cpp)
+endif()
+add_executable(arknet_redis_close_failure_test redis_close_failure.cpp scoped_allocation_failure.cpp test_main.cpp)
+target_link_libraries(arknet_redis_close_failure_test PRIVATE arknet::arknet arknet_test_framework)
+# Exercise an actual replaceable-new allocation failure at Asio dispatch, not a
+# product hook or a handler cache hit. These policies apply only to this process.
+target_compile_definitions(arknet_redis_close_failure_test PRIVATE
+    BOOST_ASIO_DISABLE_SMALL_BLOCK_RECYCLING BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC BOOST_ASIO_DISABLE_BOOST_ALIGN
+    ASIO_DISABLE_SMALL_BLOCK_RECYCLING ASIO_DISABLE_STD_ALIGNED_ALLOC ASIO_DISABLE_BOOST_ALIGN)
+arknet_add_check(redis_close_failure 30 arknet_redis_close_failure_test)
 add_executable(arknet_owned_runtime_exit_test owned_runtime_exit.cpp)
 target_link_libraries(arknet_owned_runtime_exit_test PRIVATE arknet::arknet)
 foreach(mode callback nested global late indirect)
