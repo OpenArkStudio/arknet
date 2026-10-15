@@ -36,7 +36,7 @@ public:
         : tcps_server_impl_t(ARKNET_DEFAULT_SSL_METHOD, std::forward<Construction>(construction)...) {}
 
     ~tcps_server_impl_t() {
-        this->stop();
+        this->stop_before_destroy(*this);
     }
 
     template<class F, class... Bound>

@@ -80,7 +80,7 @@ public:
     ~http_endpoint_impl_t() {
         if constexpr (Args::is_client)
         {
-            this->stop();
+            this->stop_before_destroy(*this);
         }
     }
 
@@ -343,7 +343,7 @@ public:
     using super::super;
 
     ~http_server_impl_t() {
-        this->stop();
+        this->stop_before_destroy(*this);
     }
 
     template<class F, class... C>
