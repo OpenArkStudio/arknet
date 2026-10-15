@@ -29,13 +29,6 @@ struct tracked_transport : arknet::tcp_client
     explicit tracked_transport(Args&&... args)
         : arknet::tcp_client(std::forward<Args>(args)...) {
         ++constructed;
-        bind_init([] {
-            if (auto* current = init_probe.exchange(nullptr))
-            {
-                current->entered.count_down();
-                current->release.wait();
-            }
-        });
     }
 
     inline static std::atomic<unsigned> constructed{};
@@ -43,19 +36,30 @@ struct tracked_transport : arknet::tcp_client
     inline static std::atomic<unsigned> late_connect_errors{};
     inline static std::atomic<publication_probe*> probe{};
     inline static std::atomic<publication_probe*> connect_probe{};
-    inline static std::atomic<publication_probe*> init_probe{};
     inline static std::function<void()> reenter;
     inline static std::function<void()> on_destroy;
+    inline static std::function<void(arknet::error_code)> before_connect;
     inline static std::mutex callbacks_mutex;
     std::atomic_bool stop_requested{};
 
     template<class Handler>
     auto& bind_connect(Handler handler) {
         arknet::tcp_client::bind_connect([this, handler = std::move(handler)]() mutable {
-            if (stop_requested && arknet::get_last_error())
+            const auto error = arknet::get_last_error();
+            std::function<void(arknet::error_code)> callback;
+            {
+                std::lock_guard lock(callbacks_mutex);
+                callback = std::exchange(before_connect, {});
+            }
+            if (callback)
+            {
+                callback(error);
+            }
+            if (stop_requested && error)
             {
                 ++late_connect_errors;
             }
+            arknet::set_last_error(error);
             handler();
         });
         return *this;
@@ -669,37 +673,42 @@ DOCTEST_TEST_CASE("Redis pool retires a late failed transport connect without du
     // A closed listener gives an actual connection refusal. On Darwin, a
     // bound non-listening socket can silently drop SYNs instead of refusing.
     tracked_pool connections(options);
-    publication_probe probe;
-    tracked_transport::init_probe = &probe;
     const auto errors = tracked_transport::late_connect_errors.load();
     const auto retired = tracked_transport::destroyed.load();
+    const auto constructed = tracked_transport::constructed.load();
     std::atomic<unsigned> completed{};
+    std::promise<void> terminal;
+    auto closed = terminal.get_future();
+
+    struct reset_connect_observer
+    {
+        ~reset_connect_observer() {
+            std::lock_guard lock(tracked_transport::callbacks_mutex);
+            tracked_transport::before_connect = {};
+        }
+    } reset_observer;
+
+    {
+        std::lock_guard lock(tracked_transport::callbacks_mutex);
+        tracked_transport::before_connect = [&](arknet::error_code error) {
+            CHECK(bool(error));
+            // This is the real native completion on the pool actor. Close
+            // inline before forwarding its unchanged error to Redis.
+            connections.close();
+            CHECK(completed == 1);
+            terminal.set_value();
+        };
+    }
     connections.async_acquire([&](auto response) {
         CHECK(response.error == client_errc::closed);
         ++completed;
     });
-    probe.entered.wait();
-    std::promise<bool> closed;
-    auto ready = closed.get_future();
-    std::thread finalizer([&] { closed.set_value(connections.close_and_wait()); });
-    bool gate_seen{};
-    const auto deadline = std::chrono::steady_clock::now() + 5s;
-    while (std::chrono::steady_clock::now() < deadline)
-    {
-        if (connections.async_acquire({}) == 0)
-        {
-            gate_seen = true;
-            break;
-        }
-        std::this_thread::yield();
-    }
-    CHECK(gate_seen);
-    probe.release.count_down();
-    CHECK(await(ready));
-    finalizer.join();
+    await(closed);
+    CHECK(connections.close_and_wait());
     CHECK(completed == 1);
     CHECK(tracked_transport::late_connect_errors == errors + 1);
     CHECK(tracked_transport::destroyed > retired);
+    CHECK(tracked_transport::destroyed - retired == tracked_transport::constructed - constructed);
 }
 
 DOCTEST_TEST_CASE("Redis pool shutdown cancels a blackholed connect after a queued transport start") {

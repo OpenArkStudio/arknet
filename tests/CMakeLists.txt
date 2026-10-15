@@ -55,20 +55,22 @@ if(ARKNET_ENABLE_SSL)
     target_sources(arknet_redis_shutdown_test PRIVATE redis_shutdown_tls.cpp)
     target_sources(arknet_redis_pool_shutdown_test PRIVATE redis_pool_shutdown_tls.cpp)
 endif()
+function(arknet_configure_allocation_failure_test target)
+    target_link_libraries(${target} PRIVATE arknet::arknet arknet_test_framework)
+    # Force a real allocation at Asio submission. The test preload additionally
+    # covers MSVC's direct CRT path without changing production allocation.
+    target_compile_definitions(${target} PRIVATE
+        BOOST_ASIO_DISABLE_SMALL_BLOCK_RECYCLING BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC BOOST_ASIO_DISABLE_BOOST_ALIGN
+        ASIO_DISABLE_SMALL_BLOCK_RECYCLING ASIO_DISABLE_STD_ALIGNED_ALLOC ASIO_DISABLE_BOOST_ALIGN)
+endfunction()
+add_executable(arknet_allocation_failure_test allocation_failure.cpp scoped_allocation_failure.cpp test_main.cpp)
+arknet_configure_allocation_failure_test(arknet_allocation_failure_test)
+arknet_add_check(allocation_failure 30 arknet_allocation_failure_test)
 add_executable(arknet_redis_close_failure_test redis_close_failure.cpp scoped_allocation_failure.cpp test_main.cpp)
-target_link_libraries(arknet_redis_close_failure_test PRIVATE arknet::arknet arknet_test_framework)
-# Exercise an actual replaceable-new allocation failure at Asio dispatch, not a
-# product hook or a handler cache hit. These policies apply only to this process.
-target_compile_definitions(arknet_redis_close_failure_test PRIVATE
-    BOOST_ASIO_DISABLE_SMALL_BLOCK_RECYCLING BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC BOOST_ASIO_DISABLE_BOOST_ALIGN
-    ASIO_DISABLE_SMALL_BLOCK_RECYCLING ASIO_DISABLE_STD_ALIGNED_ALLOC ASIO_DISABLE_BOOST_ALIGN)
+arknet_configure_allocation_failure_test(arknet_redis_close_failure_test)
 arknet_add_check(redis_close_failure 30 arknet_redis_close_failure_test)
 add_executable(arknet_redis_pool_return_failure_test redis_pool_return_failure.cpp scoped_allocation_failure.cpp test_main.cpp)
-target_link_libraries(arknet_redis_pool_return_failure_test PRIVATE arknet::arknet arknet_test_framework)
-# Isolate real Asio allocation failure injection from normal allocation policies.
-target_compile_definitions(arknet_redis_pool_return_failure_test PRIVATE
-    BOOST_ASIO_DISABLE_SMALL_BLOCK_RECYCLING BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC BOOST_ASIO_DISABLE_BOOST_ALIGN
-    ASIO_DISABLE_SMALL_BLOCK_RECYCLING ASIO_DISABLE_STD_ALIGNED_ALLOC ASIO_DISABLE_BOOST_ALIGN)
+arknet_configure_allocation_failure_test(arknet_redis_pool_return_failure_test)
 arknet_add_check(redis_pool_return_failure 30 arknet_redis_pool_return_failure_test)
 add_executable(arknet_owned_runtime_exit_test owned_runtime_exit.cpp)
 target_link_libraries(arknet_owned_runtime_exit_test PRIVATE arknet::arknet)
@@ -129,11 +131,9 @@ if(ARKNET_ENABLE_SSL)
         ARKNET_TEST_CERT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs")
     arknet_add_check(mysql_shutdown 60 arknet_mysql_shutdown_test)
     add_executable(arknet_mysql_pool_return_failure_test mysql_pool_return_failure.cpp scoped_allocation_failure.cpp test_main.cpp)
-    target_link_libraries(arknet_mysql_pool_return_failure_test PRIVATE arknet::arknet arknet_test_framework)
+    arknet_configure_allocation_failure_test(arknet_mysql_pool_return_failure_test)
     target_compile_definitions(arknet_mysql_pool_return_failure_test PRIVATE
-        ARKNET_TEST_CERT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs"
-        BOOST_ASIO_DISABLE_SMALL_BLOCK_RECYCLING BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC BOOST_ASIO_DISABLE_BOOST_ALIGN
-        ASIO_DISABLE_SMALL_BLOCK_RECYCLING ASIO_DISABLE_STD_ALIGNED_ALLOC ASIO_DISABLE_BOOST_ALIGN)
+        ARKNET_TEST_CERT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs")
     arknet_add_check(mysql_pool_return_failure 60 arknet_mysql_pool_return_failure_test)
     add_executable(arknet_mysql_pool_shutdown_test mysql_pool_shutdown.cpp test_main.cpp)
     target_link_libraries(arknet_mysql_pool_shutdown_test PRIVATE arknet::arknet arknet_test_framework)

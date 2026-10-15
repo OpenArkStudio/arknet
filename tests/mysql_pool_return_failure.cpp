@@ -1,3 +1,7 @@
+#if defined(_MSC_VER)
+#include "scoped_asio_allocation_failure.hpp"
+#endif
+
 #include <array>
 #include <atomic>
 #include <chrono>
