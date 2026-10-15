@@ -535,3 +535,42 @@ DOCTEST_TEST_CASE(
     check(response && response.replies[0].text == "PONG", "command over mutual TLS");
 }
 #endif
+
+DOCTEST_TEST_CASE("Redis rejects REPLCONF locally without consuming ordered response slots") {
+    server endpoint([](peer& remote) {
+        remote.hello();
+        remote.expect({"ECHO", "correlated"});
+        remote.send("$10\r\ncorrelated\r\n");
+        remote.wait_closed();
+    });
+    arknet::redis::client_options options;
+    options.max_pending_commands = 1;
+    client connection(options);
+    check(connect(connection, endpoint.port()), "connected");
+    const auto caller = std::this_thread::get_id();
+    for (const auto& arguments :
+        std::vector<command>{{"REPLCONF", "ACK", "0"}, {"REPLCONF", "GETACK", "*"}, {"replconf", "capa", "psync2"}})
+    {
+        std::atomic<unsigned> callbacks{};
+        std::promise<result> completed;
+        auto response = completed.get_future();
+        const auto id = connection.async_execute(arguments, [&](result reply) {
+            check(std::this_thread::get_id() != caller, "rejection completes on the owned IO lane");
+            ++callbacks;
+            completed.set_value(std::move(reply));
+        });
+        check(id != 0, "rejected command retains its request ID");
+        const auto rejected = await(response);
+        check(rejected.error == client_errc::unsupported_command && !rejected.command_may_have_run,
+            "replication configuration is rejected before sending");
+        check(callbacks.load() == 1, "rejection completes exactly once");
+    }
+    std::promise<result> completed;
+    auto response = completed.get_future();
+    connection.async_execute({"ECHO", "correlated"}, [&](result reply) { completed.set_value(std::move(reply)); });
+    const auto echoed = await(response);
+    check(echoed && echoed.replies.size() == 1 && echoed.replies.front().text == "correlated",
+        "local rejection preserves the single-command quota and reply association");
+    connection.close();
+    endpoint.finish();
+}

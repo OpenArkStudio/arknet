@@ -436,3 +436,37 @@ DOCTEST_TEST_CASE("Redis TLS pool reuses only authenticated reset connections" *
     connections.close();
 }
 #endif
+
+DOCTEST_TEST_CASE("Redis pool discards a connection when RESET exceeds its encoded byte budget") {
+    server endpoint(
+        [](peer& remote) {
+            remote.expect({"PING"});
+            remote.send("+PONG\r\n");
+            remote.expect({"PING"});
+            remote.send("+PONG\r\n");
+            remote.wait_closed();
+        },
+        2);
+    arknet::redis::pool_options options;
+    options.max_connections = 1;
+    options.connection.protocol = arknet::redis::protocol_version::resp2;
+    options.connection.port = endpoint.port();
+    options.client_configuration.max_pending_bytes = 14;
+    pool connections(options);
+    auto first = acquire(connections);
+    check(first, "the RESP2 PING handshake fits the configured byte budget");
+    auto first_reply = execute(first.connection, {"PING"});
+    check(first_reply && first_reply.replies.front().text == "PONG", "ordinary command fits the same budget");
+    first.connection.release();
+    check(!first.connection, "returning the lease prevents further use");
+    auto second = acquire(connections);
+    check(second, "failed RESET encoding discards the old connection without hanging the next acquire");
+    std::promise<result> late;
+    auto rejected = late.get_future();
+    first.connection.async_execute({"PING"}, [&](result response) { late.set_value(std::move(response)); });
+    check(await(rejected).error == client_errc::closed, "the discarded lease cannot affect its replacement");
+    auto second_reply = execute(second.connection, {"PING"});
+    check(second_reply && second_reply.replies.front().text == "PONG", "replacement replies remain correlated");
+    connections.close();
+    endpoint.finish();
+}

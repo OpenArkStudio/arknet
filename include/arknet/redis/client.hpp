@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -269,7 +270,7 @@ private:
 
         static bool unsupported(const command& arguments) {
             for (std::string_view name : {"SUBSCRIBE", "PSUBSCRIBE", "SSUBSCRIBE", "UNSUBSCRIBE", "PUNSUBSCRIBE",
-                     "SUNSUBSCRIBE", "MONITOR", "SYNC", "PSYNC"})
+                     "SUNSUBSCRIBE", "MONITOR", "SYNC", "PSYNC", "REPLCONF"})
             {
                 if (matches(arguments.front(), name))
                 {
@@ -874,6 +875,23 @@ private:
                 handler(result{client_errc::closed});
                 return;
             }
+            std::string bytes;
+            auto encoding_error = client_errc::none;
+            try
+            { bytes = state::encode({{"RESET"}}, self->options.max_pending_bytes); }
+            catch (const std::length_error&)
+            { encoding_error = client_errc::queue_full; }
+            catch (const std::bad_alloc&)
+            { encoding_error = client_errc::queue_full; }
+            if (encoding_error != client_errc::none)
+            {
+                self->shutdown(encoding_error);
+                if (handler)
+                {
+                    handler(result{encoding_error});
+                }
+                return;
+            }
             self->ready = false;
             self->connect_handler = std::move(handler);
             self->connect_timer = std::make_shared<asio::steady_timer>(self->executor());
@@ -904,7 +922,7 @@ private:
                     }
                 }
             };
-            self->enqueue(operation, state::encode({{"RESET"}}, self->options.max_pending_bytes));
+            self->enqueue(operation, std::move(bytes));
         });
     }
 
