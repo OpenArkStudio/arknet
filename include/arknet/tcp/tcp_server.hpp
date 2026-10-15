@@ -97,6 +97,7 @@ public:
     void destroy() {
         counter_timer_.reset();
         acceptor_timer_.reset();
+        this->clear_listen_endpoint();
         acceptor_.reset();
         super::destroy();
     }
@@ -382,6 +383,7 @@ private:
         error_code ignored;
         acceptor_->cancel(ignored);
         acceptor_->close(ignored);
+        this->clear_listen_endpoint();
     }
 
     error_code open_listener(const std::string& host, const std::string& service) {
@@ -400,6 +402,7 @@ private:
         }
         const asio::ip::tcp::endpoint endpoint = *candidates.begin();
         acceptor_->open(endpoint.protocol(), ec);
+        this->update_listen_endpoint();
         if (ec)
         {
             return ec;
@@ -412,6 +415,7 @@ private:
         clear_last_error();
         this->derived()._fire_init();
         acceptor_->bind(endpoint, ec);
+        this->update_listen_endpoint();
         if (!ec)
         {
             acceptor_->listen(asio::socket_base::max_listen_connections, ec);
