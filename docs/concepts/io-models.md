@@ -47,6 +47,13 @@ Let every runner drain before destroying any context: a queued cancellation
 handler in one context may retain a session or strand from another context.
 See [lifetime and send rules](sending.md).
 
+An owned endpoint's final reference can be released on an IO callback after its
+close completes. arknet transfers pool draining and joining to an internal cleanup
+thread, avoiding a worker waiting for itself. Destruction of an already closed
+endpoint does not enqueue another stop operation. Owned endpoints in the same
+executable or shared library share the cleanup thread; it does not execute
+network business callbacks. Callers still own the lifetime of external contexts.
+
 ## Coroutine Workloads
 
 A coroutine changes how asynchronous control flow is expressed; it does not

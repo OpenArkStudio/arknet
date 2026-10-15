@@ -37,7 +37,7 @@ public:
         : tcps_client_impl_t(ARKNET_DEFAULT_SSL_METHOD, std::forward<Construction>(construction)...) {}
 
     ~tcps_client_impl_t() {
-        this->stop();
+        this->stop_before_destroy(*this);
     }
 
     void destroy() {
