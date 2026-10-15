@@ -41,6 +41,7 @@ const tree: Entry[] = [
       ["features/mysql/configuration", "Configuration and limits", "配置与限额"],
       ["features/mysql/performance", "Performance", "性能"],
     ] },
+    ["features/database-clients", "Database clients", "数据库客户端"],
   ] },
   { en: "Guides", zh: "使用指南", children: [
     ["guides", "Overview", "概览"],

@@ -22,7 +22,7 @@ RUDP、WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，
 | TLS / mTLS | 加密传输与证书校验 | [TLS](features/tls/index_CN.md) |
 | MySQL | 原生查询、预处理参数、事务与独占连接租约 | [MySQL](features/mysql/index_CN.md) |
 
-每个模块包含客户端与服务端程序、配置、限制和性能入口。
+传输指南包含客户端与服务端程序，服务客户端指南介绍查询、命令和连接池。各指南均说明配置、限制与性能。
 [能力与支持状态](features/index_CN.md)列出依赖与计划中的功能。
 
 ## 使用 arknet

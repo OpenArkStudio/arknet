@@ -23,7 +23,8 @@ target supplies headers, compile settings and dependencies; arknet has no compil
 | TLS / mTLS | Encrypted transport and certificate verification | [TLS](features/tls/index.md) |
 | MySQL | Native queries, prepared parameters, transactions and exclusive leases | [MySQL](features/mysql/index.md) |
 
-Each module includes client and server programs, configuration, limits and a performance entry.
+Transport guides include client and server programs; service guides cover clients and pools.
+Each guide records configuration, limits and performance.
 [Capabilities and support](features/index.md) records dependencies and planned features.
 
 ## Build with arknet

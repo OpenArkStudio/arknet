@@ -50,6 +50,7 @@ and `shasum` are not prerequisites for these C++ tests or single benchmarks.
 | ARQ / RUDP | Canonical protocol interop, loss/reordering, bounded memory, handshake retries, IPv4/IPv6, stale SYN handling and shutdown |
 | FEC / RUDP FEC | Independent Reed–Solomon interop, negotiation, CRC rejection, duplicate/replay handling, recovery, partial groups, memory budgets, fixed/adaptive policies and concurrent statistics |
 | Lifecycle / detail / IO pool | Timer/post cancellation, real completion before destruction, mutable listeners, executor serialization, queued work and restart |
+| Process exit / thread storage | Last-owner callback release, nested pools, direct/indirect globals, both multi-TU link orders, late-construction rejection and explicit Asio configuration preservation |
 | Concurrency / keepalive | Send limits, callback completion accounting, concurrent shutdown, TCP keepalive options |
 | TLS | Trust/identity rejection, mTLS, deadlines, WSS and fresh stream on reconnect |
 | IPv6 | TCP, UDP/session/cast, WS/WSS, HTTP/HTTPS, TLS IP identity and handshake Host |
