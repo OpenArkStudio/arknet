@@ -22,5 +22,7 @@ modules use the same lifecycle, owned-send and IO scheduling conventions.
 - [Single HTTP requests](http/requests.md) support completion, timeout and cancellation.
 - Public coroutine endpoints, HTTP/2, HTTP/3, named pipes, Unix domain sockets,
   RPC, DTLS and WebSocket compression are [planned](../project/roadmap.md).
+- Native MySQL and Redis clients are planned; the [database client guide](database-clients.md)
+  defines their single-node scope, failure handling and acceptance criteria.
 
 [Installation](../get-started/installation.md) · [Common concepts](../concepts/index.md) · [API index](../reference/api.md)

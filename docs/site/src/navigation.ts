@@ -35,6 +35,7 @@ const tree: Entry[] = [
       [`features/${slug}/configuration`, "Configuration and advanced usage", "配置与进阶使用"],
       [`features/${slug}/performance`, "Performance", "性能"],
     ] })),
+    ["features/database-clients", "Database clients", "数据库客户端"],
   ] },
   { en: "Guides", zh: "使用指南", children: [
     ["guides", "Overview", "概览"],
