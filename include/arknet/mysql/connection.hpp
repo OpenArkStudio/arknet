@@ -301,6 +301,8 @@ private:
             : deadline(executor) {}
     };
 
+    using statement_lifetime_list = std::vector<std::weak_ptr<prepared_statement::control>>;
+
     struct state : std::enable_shared_from_this<state>
     {
         // Destroyed last, after the resolver, timer and SSL stream.
@@ -330,7 +332,7 @@ private:
         std::size_t admission_count_limit = 0;
         std::size_t admission_byte_limit = 0;
         std::unordered_map<std::uint32_t, std::weak_ptr<prepared_statement::control>> statements;
-        std::vector<std::weak_ptr<prepared_statement::control>> statement_lifetimes;
+        std::shared_ptr<statement_lifetime_list> statement_lifetimes = std::make_shared<statement_lifetime_list>();
 
         explicit state(std::shared_ptr<arknet::detail::io_pool> runtime, bool owned)
             : pool(std::move(runtime))
@@ -1194,8 +1196,8 @@ private:
                     }
                 }
             };
-            std::erase_if(statement_lifetimes, [](const auto& weak) { return weak.expired(); });
-            statement_lifetimes.push_back(record);
+            std::erase_if(*statement_lifetimes, [](const auto& weak) { return weak.expired(); });
+            statement_lifetimes->push_back(record);
             complete_command(operation, {});
         }
 
@@ -1692,6 +1694,31 @@ private:
             });
         }
 
+        static void retire_statements(statement_lifetime_list& lifetimes) {
+            for (auto& weak : lifetimes)
+            {
+                if (auto statement = weak.lock())
+                {
+                    statement->closed = true;
+                    statement->cleanup = {};
+                }
+            }
+            lifetimes.clear();
+        }
+
+        // Only after the owning runtime has joined. A pool also retains the
+        // weak statement catalog when this child state expires before it.
+        void retire_context_resources() {
+            retire_statements(*statement_lifetimes);
+            statements.clear();
+            current.reset();
+            pending.clear();
+            active_command.reset();
+            executor = {};
+            std::lock_guard lock(publishing_mutex);
+            pool.reset();
+        }
+
         bool close_and_wait() {
             {
                 std::unique_lock lock(publishing_mutex);
@@ -1724,26 +1751,7 @@ private:
                 auto runtime = pool;
                 runtime->stop();
 
-                // These fields are exclusively owned here after worker join.
-                // Include handles invalidated by earlier close/reset commands.
-                for (auto& weak : statement_lifetimes)
-                {
-                    if (auto statement = weak.lock())
-                    {
-                        statement->closed = true;
-                        statement->cleanup = {};
-                    }
-                }
-                statement_lifetimes.clear();
-                statements.clear();
-                current.reset();
-                pending.clear();
-                active_command.reset();
-                executor = {};
-                {
-                    std::lock_guard lock(publishing_mutex);
-                    pool.reset();
-                }
+                retire_context_resources();
                 // Destroy the owned context on this non-IO thread, before
                 // announcing success to other waiters.
                 runtime.reset();

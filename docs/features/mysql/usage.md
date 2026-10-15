@@ -97,3 +97,39 @@ Include `<arknet/mysql/pool.hpp>`, set `pool_options.connection`, and call `asyn
 `release()` or lease destruction starts return processing. Pending command callbacks must finish before the connection is reset and restored to the configured database. `discard()` forbids reuse. A returned lease cannot submit useful work, and prepared handles cannot escape to another borrower. An empty configured database causes returned connections to be discarded because reset cannot clear a database selected by a previous borrower. Set `pool_options.connection.database` when reusable pooled sessions are required.
 
 See [pool limits and reset](configuration.md#pool-limits-and-reset) for deadlines, database isolation and IO ownership.
+
+
+### Permanent pool shutdown
+
+Ordinary `pool::close()` requests cancellation asynchronously. For the pool-owned
+IO boundary, stop application producers and call `pool::close_and_wait()` from a
+non-library-IO owner thread:
+
+```cpp
+if (!connections.close_and_wait())
+{
+    // Own IO worker or reentrant call: operation_not_supported.
+}
+```
+
+Success means accepted acquisitions and lease operations have delivered their
+terminal callbacks, callback captures have retired, and all pool-owned IO workers
+have exited and been joined. Children removed by an earlier discard are included.
+Retained leases and prepared statements are made inert: they retain no child
+executor, timer, SSL stream or automatic-cleanup callable. An individual lease
+never stops the shared runtime; discarding it leaves other leases usable.
+
+The permanent gate covers acquisition, cancellation, lease submission and return.
+Later `async_acquire` and lease `async_*` calls reject synchronously on their caller
+with `not_connected` and request ID 0. Rejection handlers may throw to the caller.
+Later cancellation and return calls do not post work. Concurrent waiters observe
+the same completed shutdown; shutdown exceptions propagate and do not indicate a
+completed boundary. Accepted IO callbacks must return without throwing.
+
+Waiting on a pool worker or reentrantly during publication/finalization returns
+false with `operation_not_supported`. Do not wait on another library IO worker,
+hold a lock needed by a callback, or wait for a callback that itself needs the
+waiting owner thread. There is no timeout that implies successful teardown.
+Application callers and their objects must still be stopped and destroyed before
+unloading code; this is not a process cleanup-worker or dynamic-library unload
+barrier.
