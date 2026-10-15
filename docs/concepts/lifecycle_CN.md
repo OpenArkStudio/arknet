@@ -25,7 +25,7 @@
 | 在所涉及 context 或线程池的工作线程调用 `wait_stopped()` | 返回 `false`，错误为 `operation_not_supported` |
 
 数据库客户端另行使用异步 `close()` 约定，见
-[数据库关闭与回调所有权](../features/database-clients_CN.md#限额与回调所有权)。
+[数据库关闭与回调所有权](../features/database-clients_CN.md#限额与回调生命周期)。
 
 启动、发送和停止期间，外部 context、运行线程及 work guard 必须持续运行。arknet
 不会停止宿主 context。先停止并销毁网络对象，再释放宿主 work guard 并等待运行

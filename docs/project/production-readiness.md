@@ -21,22 +21,28 @@ resources, failure recovery, concurrency checks and regression tests of the cons
 
 [Testing](testing.md) and the [RUDP report](../performance/rudp.md) record measured
 scope and results. Local loopback and simulated loss do not establish production
-capacity on a deployment network. RUDP is included in `v0.1.0`; deployment
-acceptance requires the remaining evidence below.
+capacity on a deployment network. Deployment acceptance requires the remaining
+evidence below.
 
 ## Recorded acceptance status
 
-| Scope | Evidence as of 2026-10-13 |
+| Scope | Evidence as of 2026-10-15 |
 | --- | --- |
-| Complete local checks | Both Release + TLS dependency configurations: 55 checks and 219 doctest cases each |
-| Concurrency and memory checks | Selected ASan/UBSan suites: 109 cases; selected TSan suites: 86 cases |
-| Cross-platform CI | [All 13 jobs passed](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095): both Asio dependency configurations, Linux/macOS/Windows, builds without TLS, ASan/UBSan, TSan, installed consumers and formatting |
-| Real legacy peers | Both dependency configurations: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each |
+| Complete local checks | Release + TLS: Boost.Asio 75 checks / 372 cases / 1,980,155 assertions; Standalone Asio 62 / 312 / 978,483; no failures or skipped cases |
+| Database correctness and concurrency | Real MySQL 8.4.11 and Redis 7.4.2; native client/pool TSan: 84 cases / 1,671 assertions; Standalone Asio Redis ASan+UBSan: 35 / 316, no failures, skips or diagnostics; [scope and commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README.md) |
+| RUDP memory/concurrency evidence, 2026-10-13 | Selected ASan/UBSan suites: 109 cases; selected TSan suites: 86 cases; not a complete current-project sanitizer run |
+| Cross-platform CI, v0.1.0 historical evidence | [13 jobs passed](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095): both Asio dependency configurations, Linux/macOS/Windows, builds without TLS, ASan/UBSan, TSan, installed consumers and formatting; this run does not validate v0.2.0 |
+| Cross-platform release gate | All 14 required checks must pass before merge: [CI runs](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml); local results do not substitute for the release candidate's own checks |
+| Real legacy peers, 2026-10-13 | Both dependency configurations: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each |
 | Measured RUDP/FEC load | 96 configurations, 276 runs, 7,960,439 successful message round trips; six 120-second sustained runs |
-| ARK replacement | Direct replacement merged in [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38); business regression and deployment acceptance pending |
+| ark integration | Direct replacement and C++20 in [#38](https://github.com/OpenArkStudio/ark/pull/38); core/official plugin organization in [#41](https://github.com/OpenArkStudio/ark/pull/41) and snake_case interfaces/style in [#43](https://github.com/OpenArkStudio/ark/pull/43), all merged |
+| ark receive buffering | Allocation changes and local measurements merged in [#42](https://github.com/OpenArkStudio/ark/pull/42); business regression and deployment acceptance remain separate |
 | Production deployment | Target-network cross-host capacity, production-duration endurance and deployment access control pending |
 
-[Retained logs and commands](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec) identify exact coverage. The ARK replacement is merged; the remaining checks cover business behavior and deployment acceptance.
+[Testing and validation](testing.md) records complete checks and database results.
+The [RUDP/FEC record](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec)
+retains its independent interoperability evidence. The ark replacement is merged;
+business behavior and deployment acceptance still need their own workload tests.
 
 ## Deployment capacity target
 
@@ -75,7 +81,7 @@ local reports cover message transport and recovery; they do not establish
 | TCP client/server/session | `tcp_client`, `tcp_server`, `tcp_session` | Raw byte streams; preserve ARK's own AFCS/AFSS framing |
 | WebSocket client/server/session | `ws_client`, `ws_server`, `ws_session` | Binary messages and upgrade callbacks |
 | UDP with `use_kcp` for RDP | `rudp_client`, `rudp_server`, `rudp_session` | Legacy ARQ-only wire mode for existing zephyr peers |
-| HTTP client | `http_request` | Completion dispatched by the module's `Update()`, with existing status handling |
+| HTTP client | `http_request` | Completion dispatched by `http_client_module_impl::update()`, with existing status handling |
 | Optional HTTP/Consul modules | HTTP requests, server and router | Update method/route APIs and verify registered routes when enabled |
 
 ARK bounds application bodies to 4096 bytes and performs its own application

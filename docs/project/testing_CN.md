@@ -12,16 +12,18 @@ CI 用于回归和冒烟执行，共享 runner 的时间不作为发布的性能
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
-  -DARKNET_ENABLE_SSL=ON -DARKNET_BUILD_BENCHMARKS=ON \
-  -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_ENABLE_SSL=ON -DARKNET_BUILD_TESTS=ON \
+  -DARKNET_BUILD_BENCHMARKS=ON -DARKNET_USE_BOOST_ASIO=ON
 cmake --build build --parallel 3
 cmake --build build --target arknet_check
 build/tests/arknet_stress_test --protocol all --seconds 60 \
   --clients 16 --rounds 2 --window 4 --certs tests/certs
 ```
 
-使用 Boost 时，将 Asio 头文件路径参数替换为
-`-DARKNET_USE_BOOST_ASIO=ON`。Windows 可执行文件带 `.exe` 后缀。
+使用 Standalone Asio 时，在独立构建目录设置
+`-DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include`。
+HTTP 和 WebSocket 检查依赖 Boost.Asio 与 Boost.Beast，因此两种配置的检查数量不同。
+Windows 可执行文件带 `.exe` 后缀。
 仓库提供的 TLS 证书仅用于测试，不用于生产身份。
 
 测试使用 doctest 2.5.3，源文件保存在 `tests/vendor/doctest`，
@@ -52,6 +54,8 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 | concurrency／keepalive | 发送配额、回调完成计数、并发停止和 TCP keepalive |
 | TLS | 信任／身份拒绝、mTLS、截止时间、WSS 和重连时创建新 stream |
 | IPv6 | TCP、UDP/session/cast、WS/WSS、HTTP/HTTPS、TLS IP 身份验证和握手 Host |
+| MySQL | 报文／认证／命令编解码、TLS 身份验证、查询、预处理、事务、结果上限、取消、有界准入，以及独占连接池的重置与数据库隔离 |
+| Redis | RESP2/RESP3、认证、TCP/TLS/mTLS、有序流水线、取消后的回复排空、有界准入、拒绝复制命令，以及独占连接池的重置、认证与数据库隔离 |
 | 安装包消费项目 | 依赖方案／TLS 配置传播与已安装公开头文件 |
 
 持续压力测试验证数据与序号、完成计数、连接／服务端重启、未完成写入和队列清理。
@@ -61,17 +65,40 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 
 ## 本机验证
 
-验证日期为 2026-10-13。机器为 Mac mini `Mac16,11`、Apple M4 Pro、14 个物理／逻辑核心
+验证日期为 2026-10-15。机器为 Mac mini `Mac16,11`、Apple M4 Pro、14 个物理／逻辑核心
 （10 个性能核心、4 个能效核心）、48 GiB 内存、macOS 27.0.1（26A434）、
 Apple Clang 21.0.0、CMake 4.3.3、Standalone Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。
 
-| 依赖方案 | 构建 | TLS | 检查 / doctest 用例 | 结果 |
-| --- | --- | --- | ---: | --- |
-| Standalone Asio | Release | ON | 55 / 219 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-standalone.log) |
-| Boost.Asio | Release | ON | 55 / 219 | [通过](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-boost.log) |
+| 依赖方案 | 构建／TLS | 检查数 | doctest 用例数 | 断言数 | 结果 |
+| --- | --- | ---: | ---: | ---: | --- |
+| Boost.Asio | Release／ON | 75 | 372 | 1,980,155 | 通过 |
+| Standalone Asio | Release／ON | 62 | 312 | 978,483 | 通过 |
 
 检查数是 `arknet_check` 执行的程序数，用例数是 doctest 用例总数。
-完整检查包含基准冒烟和安装包使用检查。
+两套完整检查均无失败或跳过的用例，并包含基准冒烟和安装包使用检查。
+真实数据库测试使用隔离的 MySQL 8.4.11 与 Redis 7.4.2 服务；未提供服务环境变量时，
+对应的可选用例会跳过，不会以模拟服务代替。
+
+### 数据库客户端 Sanitizer 验证
+
+独立构建使用 LLVM 22.1.7，测试框架和 arknet 代码均启用检测。
+
+| 构建 | 范围 | 用例数 | 断言数 | 结果 |
+| --- | --- | ---: | ---: | --- |
+| Boost.Asio／TSan | MySQL connection 与 pool | 49 | 1,355 | 通过，0 跳过 |
+| Boost.Asio／TSan | Redis client 与 pool | 35 | 316 | 通过，0 跳过 |
+| Standalone Asio／ASan+UBSan | Redis client 与 pool | 35 | 316 | 通过，0 跳过 |
+
+两次 TSan 执行合计 84 个用例、1,671 项断言，没有 Sanitizer 诊断，也没有使用抑制规则。
+MySQL 在整合前的实现工作树中还通过了 Boost.Asio ASan+UBSan 的 49 个用例、1,355 项断言；
+这份证据与整合源的 TSan 执行分开记录。Redis 包含 RESET 字节预算与 REPLCONF 回复关联回归。
+[检查范围、环境与复现命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README_CN.md)
+记录了各项区别。这些结果覆盖数据库测试组，不代表全项目都执行过 Sanitizer 检查。
+
+### RUDP 互通专项证据
+
+以下专项执行记录于 2026-10-13，源码版本与范围保留在链接记录中；
+其中较早的完整检查计数不代表当前项目。
 
 | 检测工具 | 范围 | 用例 | 结果 |
 | --- | --- | ---: | --- |
@@ -86,9 +113,10 @@ RUDP FEC 端点测试在两种 Release 依赖方案及独立 ASan/UBSan、TSan �
 记录了源码版本和检查范围。仅用于测试的原版 KCP 源码关闭 `null,object-size` 检测，
 arknet 自有代码保留完整检测。性能数据见独立的 [RUDP 报告](../performance/rudp_CN.md)。
 
-<Aside type="note" title="说明：发布版本范围">
+<Aside type="note" title="部署容量">
 
-RUDP、ARQ 和 HTTP 单次请求包含在 `v0.1.0` 中，已通过本机正确性检查；部署容量与耐久验证需另行验收。
+本机正确性、Sanitizer 和回环网络结果不能证明可承载集群 10 万～20 万 PCU。
+跨主机负载、资源预算、生产时长耐久以及 ARK 业务负载仍需单独验收。
 
 </Aside>
 

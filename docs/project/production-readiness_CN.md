@@ -19,22 +19,26 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 | 身份与访问控制 | RUDP 不提供认证与加密；按目标网络验收部署侧访问控制和应用身份验证 |
 
 [测试与验证](testing_CN.md)及 [RUDP 报告](../performance/rudp_CN.md)记录实际执行范围与结果。
-本机回环与模拟丢包不能确定部署网络上的生产容量。RUDP 包含在 `v0.1.0` 中；
-生产部署仍需补齐下面列出的验收证据。
+本机回环与模拟丢包不能确定部署网络上的生产容量。生产部署仍需补齐下面列出的验收证据。
 
 ## 验收状态
 
-| 范围 | 截至 2026-10-13 的证据 |
+| 范围 | 截至 2026-10-15 的证据 |
 | --- | --- |
-| 本机完整检查 | 两种 Release + TLS 依赖方案：每种 55 项检查、219 个 doctest 用例 |
-| 并发与内存检查 | 指定 ASan/UBSan 测试组：109 个用例；指定 TSan 测试组：86 个用例 |
-| 跨平台 CI | [13 项任务全部通过](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095)：两种 Asio 依赖方案、Linux/macOS/Windows、无 TLS 构建、ASan/UBSan、TSan、安装后使用及格式检查 |
-| 真实旧库对端 | 两种依赖方案：每种 12 组进程场景、16 个会话、512 条消息及回显 |
+| 本机完整检查 | Release + TLS：Boost.Asio 为 75 项检查／372 个用例／1,980,155 项断言；Standalone Asio 为 62／312／978,483；均无失败或跳过 |
+| 数据库正确性与并发 | 真实 MySQL 8.4.11 和 Redis 7.4.2；原生客户端／连接池 TSan 为 84 个用例／1,671 项断言；Standalone Asio Redis ASan+UBSan 为 35／316；无失败、跳过或诊断；[范围与命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README_CN.md) |
+| RUDP 内存／并发专项，2026-10-13 | 指定 ASan/UBSan 测试组：109 个用例；指定 TSan 测试组：86 个用例；不代表当前全项目 Sanitizer 执行 |
+| 跨平台 CI，v0.1.0 历史证据 | [13 项任务通过](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095)：两种 Asio 依赖方案、Linux/macOS/Windows、无 TLS 构建、ASan/UBSan、TSan、安装后使用及格式检查；这次执行不验证 v0.2.0 |
+| 跨平台发布条件 | 合并前须通过全部 14 项必需检查：[CI 记录](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml)；本机结果不代替发行候选自身的检查 |
+| 真实旧库对端，2026-10-13 | 两种依赖方案：每种 12 组进程场景、16 个会话、512 条消息及回显 |
 | RUDP/FEC 实测负载 | 96 组配置、276 次测量、7,960,439 次成功消息往返；六组 120 秒持续运行 |
-| ARK 替换 | 已在 [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38) 合并直接替换；业务回归与部署验收待完成 |
+| ark 整合 | [#38](https://github.com/OpenArkStudio/ark/pull/38) 完成直接替换与 C++20 升级；[#41](https://github.com/OpenArkStudio/ark/pull/41) 整理核心／官方插件；[#43](https://github.com/OpenArkStudio/ark/pull/43) 统一 snake_case 接口与风格；均已合并 |
+| ark 接收缓冲 | 分配优化及本机测量已在 [#42](https://github.com/OpenArkStudio/ark/pull/42) 合并；业务回归与部署验收仍单独进行 |
 | 生产部署 | 目标网络跨主机容量、生产时长耐久及部署访问控制待完成 |
 
-[保留日志与命令](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec)记录实际检查范围。ARK 直接替换已合并，剩余检查覆盖业务行为与部署验收。
+[测试与验证](testing_CN.md)记录完整检查和数据库结果。
+[RUDP/FEC 记录](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec)
+保留独立的互通专项证据。ark 直接替换已合并，业务行为与部署验收仍需使用对应负载测试。
 
 ## 部署容量目标
 
@@ -68,7 +72,7 @@ RUDP 服务端默认 `set_max_sessions()` 上限为 **1024 个会话**。部署�
 | TCP 客户端／服务端／Session | `tcp_client`、`tcp_server`、`tcp_session` | 原始字节流；保留 ARK 自己的 AFCS/AFSS 拆包 |
 | WebSocket 客户端／服务端／Session | `ws_client`、`ws_server`、`ws_session` | 二进制消息与升级回调 |
 | UDP 加 `use_kcp` 的 RDP | `rudp_client`、`rudp_server`、`rudp_session` | 与已有 zephyr 对端互通时使用旧 ARQ 报文模式 |
-| HTTP 客户端 | `http_request` | 由模块 `Update()` 派发完成通知，保持现有状态码处理 |
+| HTTP 客户端 | `http_request` | 由 `http_client_module_impl::update()` 派发完成通知，保持现有状态码处理 |
 | 可选 HTTP／Consul 模块 | HTTP 请求、服务端与路由 | 启用时更新方法与路由 API，并检查已注册路由 |
 
 ARK 的业务消息体上限为 4096 字节，并自行处理业务消息头。传输分片位于这一层之下。
