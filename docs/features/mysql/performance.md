@@ -1,50 +1,182 @@
-# MySQL Performance and Validation
+# MySQL Performance
 
-A measured MySQL performance report is pending. Functional test counts, protocol parser throughput and successful authentication do not establish query throughput or deployment capacity. No latency, CPU or capacity figures are published for this module yet.
+Bars show round medians; whiskers show minimum–maximum. Latency summaries are medians of the per-round percentiles.
 
-## Run the benchmark
+## Test environment
 
-The formal C++ program `arknet_mysql_benchmark` performs read-only text or prepared SELECT queries and verifies binary replies. Build and run it against a separately configured endpoint:
-
-```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
-  -DARKNET_ENABLE_SSL=ON -DARKNET_BUILD_BENCHMARKS=ON \
-  -DARKNET_USE_BOOST_ASIO=ON
-cmake --build build --target arknet_mysql_benchmark --config Release
-build/benchmarks/arknet_mysql_benchmark --host mysql.example.com --port 3306 \
-  --username application_user --ca /path/to/ca.pem --mode prepared \
-  --clients 4 --window 4 --payload 1024 --warmup 0.5 --seconds 3 --rounds 3
-```
-
-Supply the password through `ARKNET_MYSQL_PASSWORD`. TLS and certificate verification are enabled by default. [Full benchmark usage](../../../benchmarks/mysql.md) covers modes, bounds and output metrics. The executable is the test entry point; no Python or Ruby launcher is required.
-
-## Functional validation
-
-Validation includes an isolated MySQL Community Server 8.4.11 instance and controlled C++ protocol peers. Coverage includes verified TLS, password rejection, text queries, binary prepared parameters, transactions and session reset. Protocol tests exercise fragmentation, packet sequencing, the `0xffffff` physical-packet boundary, typed values, queue/result limits, cancellation and callback destruction.
-
-Boost.Asio and Standalone Asio builds, plus ASan/UBSan runs, check correctness and memory behavior. These checks are separate from performance measurements. See [the complete runnable example](usage.md) to verify connectivity and API behavior against your endpoint.
-
-## Measurement matrix
-
-A local query benchmark should record the following dimensions before drawing performance conclusions:
-
-| Dimension | Comparison |
+| Item | Configuration |
 | --- | --- |
-| Operation | The provided benchmark compares text SELECT and prepared SELECT; writes and transactions require a separate workload |
-| Payload | 1, 4 and 16 KiB result or parameter values, with row counts held constant |
-| Queue depth | 1, 4, 16 and 64 outstanding requests per connection |
-| Connections | Fixed connection counts, reported with the actual IO context and thread count |
-| Repetition | At least 3 independent rounds per combination after warmup |
-| Transport and dependency | Verified TLS; Boost.Asio and Standalone Asio |
+| Measurement (UTC) | 2026-10-15 12:46:17–12:51:23 |
+| Machine | Mac16,11 · Apple M4 Pro · arm64 |
+| CPU (physical / logical cores) | 14 / 14 |
+| Memory | 48 GiB |
+| Operating system | macOS 27.0.1 (26A434) |
+| Compiler | Apple Clang 21.0.0 (clang-2100.3.34.2) |
+| Build | Release · -O3 -DNDEBUG · C++20 |
+| Server | MySQL Community Server 8.4.11 |
+| Dependencies | Boost 1.90.0 / Standalone Asio 1.38.2 / OpenSSL 3.6.4 |
+| Authentication | caching_sha2_password |
+| Server configuration | max_allowed_packet=64 MiB; max_connections=32; charset=utf8mb4; autocommit=ON |
+| Connections | 1 / 4 |
+| Payload | 1 / 4 / 16 KiB |
+| Queries in flight per connection | 1 / 16 |
+| Query API | COM_QUERY / COM_STMT_EXECUTE |
+| Transport | TCP / TLS |
+| Source commit | 3643975b4c490fe4ddbb823d19fec1d13b37533d |
+| Warmup / target duration / rounds | 0.15 s / 1 s / 3 |
+| Workload combinations | 96 |
 
-Each bare connection executes commands sequentially. Increasing its queued depth adds outstanding application work; it does not multiplex simultaneous commands on the MySQL wire. Transaction benchmarks must identify the commands included per transaction and verify committed data.
+Client and MySQL server run on this machine over IPv4 loopback. TLS certificate-chain and IP identity verification are enabled. The setup first authenticated over TLS and warmed the caching_sha2_password authentication cache, including for subsequent plain-transport measurements. Connection setup, authentication and statement preparation are excluded from measured intervals. Other builds and tests were paused.
 
-## Report units and environment
+## Measurement scope
 
-Report successful operations per second, operation RT p50/p99 in microseconds including queueing, errors, client CPU as a percentage of one core, and client peak RSS in bytes. Distinguish queries, returned rows and committed transactions; they are different counts. Report server CPU separately if measured.
+Read-only text/prepared SELECT with binary results verified; callback API, one IO context/thread per connection. Query RT includes client queueing; commands execute sequentially per connection.
 
-The report must identify client and server hardware, OS, compiler and Release flags, server version/configuration, dependency versions, TLS settings, payload/row/queue/connection counts, warmup, measurement duration and repetition count. Client and server sharing a machine affects scheduling. Capacity conclusions require the intended deployment topology and workload, beyond local loopback.
+CPU is client process usage with one full core at 100%; it can exceed 100% and excludes the database server. RSS is the process lifetime peak, including warmup and earlier rounds, not newly allocated memory in that round.
 
-Performance data and charts belong to completed local measurements. Sanitizer runs and CI correctness checks do not supply those figures.
+Every group retains at least 4374 latency samples per round. Bounded sampling estimates percentiles. Local results do not establish production deployment capacity.
 
-The current benchmark uses independent connections. Pool acquisition contention, return/reset and database-restoration overhead need a separate pool workload.
+## Query throughput
+
+![Query throughput](../../performance/assets/mysql-throughput.svg)
+
+## Query RT p50
+
+![Query RT p50](../../performance/assets/mysql-p50.svg)
+
+## Query RT p99
+
+![Query RT p99](../../performance/assets/mysql-p99.svg)
+
+## Client CPU
+
+![Client CPU](../../performance/assets/mysql-cpu.svg)
+
+## Client process peak RSS
+
+![Client process peak RSS](../../performance/assets/mysql-rss.svg)
+
+## Detailed results
+
+<details>
+<summary>Expand median results</summary>
+
+| Dependency / transport / mode | Payload B | Clients | Queries in-flight/connection | Queries/s | Query p50 µs | Query p99 µs | CPU % | RSS MiB | Rounds |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Boost.Asio · TCP · prepared | 1024 | 1 | 1 | 11,506.37 | 86.79 | 97.88 | 18.52 | 6.84 | 3 |
+| Boost.Asio · TCP · text | 1024 | 1 | 1 | 11,928.78 | 83.96 | 97.5 | 17.56 | 7.3 | 3 |
+| Boost.Asio · TLS · prepared | 1024 | 1 | 1 | 11,521.09 | 86.67 | 103.04 | 19.16 | 8.06 | 3 |
+| Boost.Asio · TLS · text | 1024 | 1 | 1 | 11,477.82 | 86.63 | 102.33 | 19.16 | 8.09 | 3 |
+| Standalone Asio · TCP · prepared | 1024 | 1 | 1 | 11,497.05 | 86.79 | 98.04 | 18.48 | 6.81 | 3 |
+| Standalone Asio · TCP · text | 1024 | 1 | 1 | 11,829.55 | 83.96 | 96 | 17.38 | 6.77 | 3 |
+| Standalone Asio · TLS · prepared | 1024 | 1 | 1 | 11,526.15 | 86.67 | 100.54 | 18.81 | 8.03 | 3 |
+| Standalone Asio · TLS · text | 1024 | 1 | 1 | 11,559.21 | 86.63 | 99.63 | 19.09 | 8.02 | 3 |
+| Boost.Asio · TCP · prepared | 1024 | 1 | 16 | 12,871.5 | 1,240 | 1,336.54 | 21.08 | 7.11 | 3 |
+| Boost.Asio · TCP · text | 1024 | 1 | 16 | 12,078.76 | 1,325.33 | 1,353.33 | 18.68 | 7.16 | 3 |
+| Boost.Asio · TLS · prepared | 1024 | 1 | 16 | 12,360.94 | 1,282.67 | 1,492.88 | 24.56 | 8.39 | 3 |
+| Boost.Asio · TLS · text | 1024 | 1 | 16 | 12,520.27 | 1,276 | 1,318.63 | 24.87 | 8.36 | 3 |
+| Standalone Asio · TCP · prepared | 1024 | 1 | 16 | 12,755.26 | 1,260.67 | 1,333.29 | 18.89 | 7.47 | 3 |
+| Standalone Asio · TCP · text | 1024 | 1 | 16 | 12,277.61 | 1,303.92 | 1,345.29 | 19.52 | 7.17 | 3 |
+| Standalone Asio · TLS · prepared | 1024 | 1 | 16 | 12,952.93 | 1,227.96 | 1,312 | 23.34 | 8.25 | 3 |
+| Standalone Asio · TLS · text | 1024 | 1 | 16 | 12,663.78 | 1,257.46 | 1,342.67 | 24.01 | 8.38 | 3 |
+| Boost.Asio · TCP · prepared | 1024 | 4 | 1 | 39,157.05 | 101.67 | 115.08 | 93.06 | 9.56 | 3 |
+| Boost.Asio · TCP · text | 1024 | 4 | 1 | 38,936.04 | 101.54 | 133.58 | 96.03 | 10.5 | 3 |
+| Boost.Asio · TLS · prepared | 1024 | 4 | 1 | 37,203.1 | 106.79 | 126.33 | 101.49 | 10.36 | 3 |
+| Boost.Asio · TLS · text | 1024 | 4 | 1 | 36,786.87 | 107.67 | 139.42 | 105.84 | 11.77 | 3 |
+| Standalone Asio · TCP · prepared | 1024 | 4 | 1 | 39,213.62 | 101.58 | 115.21 | 92.72 | 8.81 | 3 |
+| Standalone Asio · TCP · text | 1024 | 4 | 1 | 38,840.19 | 101.79 | 137.25 | 96.2 | 9.63 | 3 |
+| Standalone Asio · TLS · prepared | 1024 | 4 | 1 | 37,236.94 | 106.88 | 123.5 | 101.86 | 10.16 | 3 |
+| Standalone Asio · TLS · text | 1024 | 4 | 1 | 37,241.96 | 106.71 | 131.13 | 103.12 | 10.83 | 3 |
+| Boost.Asio · TCP · prepared | 1024 | 4 | 16 | 44,496.46 | 1,434.96 | 1,563.21 | 109.12 | 9.72 | 3 |
+| Boost.Asio · TCP · text | 1024 | 4 | 16 | 43,769.07 | 1,447.46 | 1,681.33 | 112.24 | 9.53 | 3 |
+| Boost.Asio · TLS · prepared | 1024 | 4 | 16 | 42,045.48 | 1,516.08 | 1,654.67 | 118.97 | 10.73 | 3 |
+| Boost.Asio · TLS · text | 1024 | 4 | 16 | 42,214.73 | 1,510.71 | 1,643.17 | 120.54 | 12.59 | 3 |
+| Standalone Asio · TCP · prepared | 1024 | 4 | 16 | 44,180.33 | 1,439.46 | 1,617.04 | 109.87 | 9.5 | 3 |
+| Standalone Asio · TCP · text | 1024 | 4 | 16 | 44,595.01 | 1,429.21 | 1,567 | 110.5 | 9.78 | 3 |
+| Standalone Asio · TLS · prepared | 1024 | 4 | 16 | 42,057.2 | 1,516.33 | 1,643.17 | 118.86 | 12.22 | 3 |
+| Standalone Asio · TLS · text | 1024 | 4 | 16 | 42,160.15 | 1,512 | 1,652.42 | 120.21 | 11.13 | 3 |
+| Boost.Asio · TCP · prepared | 4096 | 1 | 1 | 8,739.17 | 114.58 | 126.71 | 16.27 | 7.23 | 3 |
+| Boost.Asio · TCP · text | 4096 | 1 | 1 | 9,696.04 | 102.63 | 117.25 | 16.84 | 6.86 | 3 |
+| Boost.Asio · TLS · prepared | 4096 | 1 | 1 | 8,655.52 | 115.96 | 129.33 | 17.11 | 8.19 | 3 |
+| Boost.Asio · TLS · text | 4096 | 1 | 1 | 9,025.54 | 109.33 | 129.29 | 19.22 | 8.44 | 3 |
+| Standalone Asio · TCP · prepared | 4096 | 1 | 1 | 8,716.31 | 114.63 | 126.71 | 15.95 | 6.89 | 3 |
+| Standalone Asio · TCP · text | 4096 | 1 | 1 | 9,690.69 | 102.63 | 118.71 | 16.81 | 6.83 | 3 |
+| Standalone Asio · TLS · prepared | 4096 | 1 | 1 | 8,634.48 | 115.96 | 130.63 | 17.16 | 8.39 | 3 |
+| Standalone Asio · TLS · text | 4096 | 1 | 1 | 9,132.07 | 109.29 | 121.63 | 19.02 | 8.13 | 3 |
+| Boost.Asio · TCP · prepared | 4096 | 1 | 16 | 10,148.95 | 1,575.63 | 1,651.92 | 19.03 | 7.11 | 3 |
+| Boost.Asio · TCP · text | 4096 | 1 | 16 | 10,869.03 | 1,470.63 | 1,536 | 20.87 | 7.42 | 3 |
+| Boost.Asio · TLS · prepared | 4096 | 1 | 16 | 9,861.53 | 1,614.33 | 1,801.92 | 20.47 | 8.42 | 3 |
+| Boost.Asio · TLS · text | 4096 | 1 | 16 | 10,533.54 | 1,518.63 | 1,600 | 22.79 | 8.55 | 3 |
+| Standalone Asio · TCP · prepared | 4096 | 1 | 16 | 9,958.73 | 1,577.33 | 1,874.46 | 19.3 | 7.13 | 3 |
+| Standalone Asio · TCP · text | 4096 | 1 | 16 | 10,851.38 | 1,473.29 | 1,538.42 | 21.15 | 7.41 | 3 |
+| Standalone Asio · TLS · prepared | 4096 | 1 | 16 | 9,726.05 | 1,642.63 | 1,765.33 | 20.47 | 8.8 | 3 |
+| Standalone Asio · TLS · text | 4096 | 1 | 16 | 10,473.27 | 1,520 | 1,704.04 | 22.87 | 8.48 | 3 |
+| Boost.Asio · TCP · prepared | 4096 | 4 | 1 | 30,804.24 | 129.33 | 145.75 | 82.55 | 9.33 | 3 |
+| Boost.Asio · TCP · text | 4096 | 4 | 1 | 32,869.6 | 121.13 | 138.17 | 90.07 | 8.92 | 3 |
+| Boost.Asio · TLS · prepared | 4096 | 4 | 1 | 28,988.82 | 137.21 | 162.83 | 92.11 | 10.63 | 3 |
+| Boost.Asio · TLS · text | 4096 | 4 | 1 | 30,576.26 | 130.08 | 153.04 | 101.61 | 9.73 | 3 |
+| Standalone Asio · TCP · prepared | 4096 | 4 | 1 | 30,765.54 | 129.5 | 145.08 | 82.87 | 8.98 | 3 |
+| Standalone Asio · TCP · text | 4096 | 4 | 1 | 32,933.25 | 121 | 136.58 | 89.73 | 8.91 | 3 |
+| Standalone Asio · TLS · prepared | 4096 | 4 | 1 | 29,089.75 | 136.71 | 162.54 | 91.87 | 10.36 | 3 |
+| Standalone Asio · TLS · text | 4096 | 4 | 1 | 30,534.41 | 130.29 | 154.21 | 101.7 | 10.5 | 3 |
+| Boost.Asio · TCP · prepared | 4096 | 4 | 16 | 33,714.1 | 1,893.17 | 2,009.83 | 94.85 | 11.25 | 3 |
+| Boost.Asio · TCP · text | 4096 | 4 | 16 | 36,641.17 | 1,742.33 | 1,857.25 | 103.38 | 10.34 | 3 |
+| Boost.Asio · TLS · prepared | 4096 | 4 | 16 | 31,819.25 | 2,004.04 | 2,129.17 | 105.04 | 11.73 | 3 |
+| Boost.Asio · TLS · text | 4096 | 4 | 16 | 33,665.92 | 1,896.04 | 2,065.83 | 115.34 | 11.61 | 3 |
+| Standalone Asio · TCP · prepared | 4096 | 4 | 16 | 33,657.06 | 1,887.71 | 2,028.21 | 96.53 | 9.88 | 3 |
+| Standalone Asio · TCP · text | 4096 | 4 | 16 | 36,649.12 | 1,741.17 | 1,861.42 | 103.29 | 10.16 | 3 |
+| Standalone Asio · TLS · prepared | 4096 | 4 | 16 | 31,395.56 | 2,004.71 | 2,277.92 | 107.19 | 10.75 | 3 |
+| Standalone Asio · TLS · text | 4096 | 4 | 16 | 33,153.5 | 1,896.46 | 2,198.46 | 116.4 | 11.64 | 3 |
+| Boost.Asio · TCP · prepared | 16384 | 1 | 1 | 5,143.8 | 193.29 | 214.63 | 12.93 | 7.05 | 3 |
+| Boost.Asio · TCP · text | 16384 | 1 | 1 | 5,778.03 | 169.29 | 203.17 | 17.19 | 6.97 | 3 |
+| Boost.Asio · TLS · prepared | 16384 | 1 | 1 | 4,430.11 | 225.29 | 246.17 | 16.33 | 8.09 | 3 |
+| Boost.Asio · TLS · text | 16384 | 1 | 1 | 4,970.88 | 200 | 214.63 | 24.01 | 8.38 | 3 |
+| Standalone Asio · TCP · prepared | 16384 | 1 | 1 | 5,104.48 | 194.63 | 217.54 | 12.99 | 6.8 | 3 |
+| Standalone Asio · TCP · text | 16384 | 1 | 1 | 5,870.31 | 169.33 | 184.67 | 16.71 | 7.23 | 3 |
+| Standalone Asio · TLS · prepared | 16384 | 1 | 1 | 4,487.25 | 221.38 | 241.58 | 16.22 | 8.05 | 3 |
+| Standalone Asio · TLS · text | 16384 | 1 | 1 | 4,945.85 | 202.63 | 225.42 | 24.09 | 8.03 | 3 |
+| Boost.Asio · TCP · prepared | 16384 | 1 | 16 | 5,420.74 | 2,944 | 3,093.33 | 14.13 | 7.55 | 3 |
+| Boost.Asio · TCP · text | 16384 | 1 | 16 | 6,293.75 | 2,539.88 | 2,639.42 | 17.41 | 7.75 | 3 |
+| Boost.Asio · TLS · prepared | 16384 | 1 | 16 | 4,700.77 | 3,401.33 | 3,513.33 | 17.49 | 8.7 | 3 |
+| Boost.Asio · TLS · text | 16384 | 1 | 16 | 4,941.19 | 3,235.42 | 3,429.21 | 23.61 | 9.8 | 3 |
+| Standalone Asio · TCP · prepared | 16384 | 1 | 16 | 5,431.81 | 2,941.33 | 3,080.63 | 14.1 | 7.45 | 3 |
+| Standalone Asio · TCP · text | 16384 | 1 | 16 | 6,310.95 | 2,533.25 | 2,669.92 | 17.52 | 8.19 | 3 |
+| Standalone Asio · TLS · prepared | 16384 | 1 | 16 | 4,673.69 | 3,421.29 | 3,536 | 17.28 | 8.56 | 3 |
+| Standalone Asio · TLS · text | 16384 | 1 | 16 | 4,963.74 | 3,222.58 | 3,313.63 | 23.08 | 8.92 | 3 |
+| Boost.Asio · TCP · prepared | 16384 | 4 | 1 | 17,514.32 | 227.46 | 258.25 | 64.42 | 8.86 | 3 |
+| Boost.Asio · TCP · text | 16384 | 4 | 1 | 20,886.45 | 190.92 | 213.83 | 83.35 | 9.95 | 3 |
+| Boost.Asio · TLS · prepared | 16384 | 4 | 1 | 15,686.74 | 253.04 | 312.25 | 85.44 | 9.81 | 3 |
+| Boost.Asio · TLS · text | 16384 | 4 | 1 | 14,240.67 | 234 | 294.83 | 100.76 | 10.89 | 3 |
+| Standalone Asio · TCP · prepared | 16384 | 4 | 1 | 17,483.96 | 227.75 | 260.79 | 64.64 | 9.42 | 3 |
+| Standalone Asio · TCP · text | 16384 | 4 | 1 | 20,851.22 | 191.08 | 216.54 | 83.46 | 9.88 | 3 |
+| Standalone Asio · TLS · prepared | 16384 | 4 | 1 | 15,702.55 | 252.5 | 309.38 | 84.69 | 10.02 | 3 |
+| Standalone Asio · TLS · text | 16384 | 4 | 1 | 16,781.85 | 235.71 | 292.13 | 119.7 | 11.36 | 3 |
+| Boost.Asio · TCP · prepared | 16384 | 4 | 16 | 18,494.61 | 3,456.96 | 3,607 | 70.54 | 10.86 | 3 |
+| Boost.Asio · TCP · text | 16384 | 4 | 16 | 22,195.27 | 2,877.17 | 3,013.13 | 91.88 | 15.59 | 3 |
+| Boost.Asio · TLS · prepared | 16384 | 4 | 16 | 15,809.49 | 4,042.13 | 4,272.21 | 89.86 | 11.78 | 3 |
+| Boost.Asio · TLS · text | 16384 | 4 | 16 | 15,747.7 | 3,828.04 | 4,014.67 | 112.84 | 16.86 | 3 |
+| Standalone Asio · TCP · prepared | 16384 | 4 | 16 | 18,468.67 | 3,462.46 | 3,606.75 | 70.76 | 10.73 | 3 |
+| Standalone Asio · TCP · text | 16384 | 4 | 16 | 22,247.73 | 2,867.88 | 3,018.96 | 91.38 | 13.64 | 3 |
+| Standalone Asio · TLS · prepared | 16384 | 4 | 16 | 15,868.85 | 4,031.92 | 4,201.5 | 89.53 | 11.94 | 3 |
+| Standalone Asio · TLS · text | 16384 | 4 | 16 | 15,517.76 | 3,865.71 | 4,417.71 | 114.57 | 16.86 | 3 |
+
+</details>
+
+## Reproduction and provenance
+
+[Build and run the benchmark](../../../benchmarks/mysql.md) · [API usage](usage.md)
+
+Raw dataset SHA-256: `4a99356008598a27bb4c418963e5a48072da998d73dcbe18d6139a040c001b04`
+
+| Measured source | SHA-256 |
+| --- | --- |
+| benchmarks/mysql.cpp | `badd0dfa01bb4c61de94893f8ad7a003eb48e146060651c8ad2f455e01a07d5c` |
+| include/arknet/base/detail/deadline.hpp | `767f8456a5961a6264e7c49aef4adc3438f63d0eaf5d15793a0d24c9224d4c0d` |
+| include/arknet/base/io_pool.hpp | `8ee8e6eae6c715c65179101de849b95c2ce16873d8e361c1b279556cf2641dc1` |
+| include/arknet/external/asio.hpp | `5445edf31fe7adf7ceebb89a194d5a5609fada00cfeb76b6e2107189bda4fc9d` |
+| include/arknet/mysql/connection.hpp | `77488fb4326945589fd63e1cb672bb71067ee253ea27c2d5d59f18b168a784ce` |
+| include/arknet/mysql/detail/auth.hpp | `867c9f2a0d842405ce88d0513e58d8fe3ea76bc2bee89fe9438d15cde4b0933c` |
+| include/arknet/mysql/detail/command.hpp | `8b93a09c5003622b9f52aefbb781feb0ec642df96b4513af464acb6d61d21aba` |
+| include/arknet/mysql/detail/handshake.hpp | `f6c94b4f6fe9ee6645fa6b728fb1b59b480e1390f0c3525ebfb34426f15b44cf` |
+| include/arknet/mysql/detail/wire.hpp | `b432b1c488772d05da58e80e9ceadd09151feeb4724bfe4e92ab83359d58a317` |
+| include/arknet/mysql/pool.hpp | `44e56ac33457dad19dcd80fccef10cd657acddb35a10ca9d7035435aeeb419bb` |
