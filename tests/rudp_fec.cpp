@@ -621,8 +621,21 @@ DOCTEST_TEST_CASE("RUDP FEC serializes concurrent sends and statistics on shared
                     }
                     check(ordered == expected[client][writer], "each writer preserves message content and order");
                 }
+                // ARQ can deliver the application message before the relay releases delayed FEC parity.
+                // Keep the recovery assertion, but allow the asynchronous parity path to finish first.
+                const auto recovery_deadline =
+                    std::chrono::steady_clock::now() + std::chrono::milliseconds(server_fec.group_lifetime_ms);
                 auto snapshot = clients[client]->get_rudp_statistics();
-                check(await(snapshot).fec.recovered_shards > 0, "concurrent FEC traffic repairs missing datagrams");
+                auto stats = await(snapshot);
+                while (stats.fec.recovered_shards == 0 && std::chrono::steady_clock::now() < recovery_deadline)
+                {
+                    std::this_thread::sleep_for(1ms);
+                    snapshot = clients[client]->get_rudp_statistics();
+                    stats = await(snapshot);
+                }
+                DOCTEST_INFO("client=" << client << " recovered=" << stats.fec.recovered_shards
+                                       << " dropped=" << relays[client]->dropped.load());
+                check(stats.fec.recovered_shards > 0, "concurrent FEC traffic repairs missing datagrams");
                 check(relays[client]->dropped > 0 && relays[client]->duplicated > 0 && relays[client]->reordered > 0,
                     "concurrent recovery executes loss duplication and reordering");
                 check(relays[client]->largest <= arq.mtu, "concurrent FEC packets respect negotiated wire MTU");
