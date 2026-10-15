@@ -104,6 +104,11 @@ if(ARKNET_ENABLE_SSL)
     target_compile_definitions(arknet_mysql_connection_test PRIVATE
         ARKNET_TEST_CERT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs")
     arknet_add_check(mysql_connection 60 arknet_mysql_connection_test)
+    add_executable(arknet_mysql_shutdown_test mysql_shutdown.cpp test_main.cpp)
+    target_link_libraries(arknet_mysql_shutdown_test PRIVATE arknet::arknet arknet_test_framework)
+    target_compile_definitions(arknet_mysql_shutdown_test PRIVATE
+        ARKNET_TEST_CERT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs")
+    arknet_add_check(mysql_shutdown 60 arknet_mysql_shutdown_test)
     add_executable(arknet_mysql_pool_test mysql_pool.cpp test_main.cpp)
     target_link_libraries(arknet_mysql_pool_test PRIVATE arknet::arknet arknet_test_framework)
     target_compile_definitions(arknet_mysql_pool_test PRIVATE

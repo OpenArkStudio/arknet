@@ -52,6 +52,42 @@ The complete program waits on promises from the main thread. Each callback owns 
 
 A failed commit with `status.outcome_unknown == true` may already have committed on the server. Do not retry the transaction automatically. See [cancellation and outcomes](configuration.md#cancellation-and-unknown-outcomes).
 
+## Permanent shutdown of an independent connection
+
+`close()` cancels the current session and permits a later `async_connect`.
+For an independently constructed `connection`, call `close_and_wait()` from a
+non-IO owner thread when the object will no longer be used:
+
+```cpp
+// First stop application producers. Do not hold locks required by callbacks.
+if (!client.close_and_wait())
+{
+    // Called on its own IO worker: get_last_error() is operation_not_supported.
+}
+```
+
+Success means accepted operations have completed once, their library-held handler
+captures have been destroyed, retained statement cleanup has been disabled, and
+this connection's IO worker has exited and been joined. Concurrent waiters observe
+the same completed shutdown. Ordinary `close()` retains its existing semantics.
+
+The permanent submission gate closes before waiting. Later `async_*` calls reject
+synchronously on their caller with `not_connected` and return request ID 0;
+`async_connect` also completes synchronously. These rejection handlers may propagate
+exceptions. `cancel()` and `close()` then do nothing. Before termination, accepted
+callbacks continue to run on the IO lane and must not throw. Allocation or system
+exceptions from shutdown propagate; they do not indicate a completed barrier.
+
+Calling from its own IO worker, a pool-owned child, or a reentrant publication or
+finalization returns false with `operation_not_supported` without starting permanent
+shutdown. Never wait from another library IO worker either: that restriction is a
+calling contract, not a global worker check. A handler that never returns can prevent
+shutdown from completing; there is no timeout that implies safe teardown.
+
+This operation does not stop another connection or a pool. It is not a process
+cleanup-worker or dynamic-library unload barrier. The host must still stop and wait
+for application callers and destroy their objects before unloading code.
+
 ## Connection pool
 
 The complete [pool example](../../../examples/mysql_pool.cpp) acquires an exclusive connection lease, starts a transaction, verifies a query and commits before returning the lease. It uses the same endpoint, credential and TLS environment variables as the client example.
