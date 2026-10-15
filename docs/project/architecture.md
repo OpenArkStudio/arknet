@@ -25,9 +25,7 @@ extra virtual interface. Servers accept a session type. Components own
 specific behavior: lifecycle, timers, reconnect, match conditions, event
 sequencing and send admission/data ownership.
 
-Standalone mode uses bundled BHO Beast adapted for standalone Asio. Boost
-mode uses official Boost.Asio and Boost.Beast. Those are provider choices,
-not interchangeable socket types within one program. HTTP/2 and HTTP/3
+Boost.Asio and official Boost.Beast are the default dependencies for all protocols. Standalone Asio supports TCP, UDP, RUDP and TLS. The two socket types cannot be mixed within one program. HTTP/2 and HTTP/3
 require distinct protocol engines; see the [roadmap](roadmap.md).
 
 ## Extend a Session

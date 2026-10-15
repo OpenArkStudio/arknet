@@ -13,7 +13,6 @@ arknet 作为独立的 header-only 项目开发。通过范围明确的修改和
 | `include/arknet/http/` | HTTP/HTTPS、路由和 WebSocket 实现 |
 | `include/arknet/websocket/` | 公共 WebSocket 头文件 |
 | `include/arknet/external/` | Asio 和 Beast 依赖接入 |
-| `include/arknet/bho/` | 内置的第三方 Boost 头文件 |
 | `tests/` | doctest、集成检查、压力测试和测试证书 |
 | `benchmarks/` | 正式的回调及协程基准程序、矩阵执行器和报告工具 |
 | `examples/` | 演示公共 API 的小型应用 |
@@ -48,7 +47,7 @@ doctest 和历史测量快照。CI 执行相同检查。格式工具仅用于开
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DARKNET_ENABLE_SSL=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 cmake --build build --parallel 3
 cmake --build build --target arknet_check
 ```
@@ -128,7 +127,7 @@ npm run check
 ## 第三方声明
 
 项目使用 BSL-1.0。独立编写的 arknet 核心代码使用 OpenArkStudio 声明。保留内置
-第三方文件的适用声明，包括 BHO 和 doctest。新增内置依赖时，同步更新中英文
+第三方文件的适用声明，包括 fecpp 和 doctest。新增内置依赖时，同步更新中英文
 [第三方声明](third-party-notices_CN.md)，并按许可证要求保留许可证文件。
 
 修改名称、格式或语言标准不会消除复制实现的许可证义务。第三方修改应独立维护，

@@ -1,5 +1,7 @@
 # WebSocket 性能
 
+以下图表记录移除内置 Beast 前的测量。Standalone Asio 的 HTTP/WebSocket 数据仅适用于该测量版本；当前版本使用 Boost。
+
 ## 本机测量结果
 
 Release 本机回环测试：1024 字节二进制消息、16 个客户端、窗口 16，无额外业务计算。
@@ -31,14 +33,14 @@ Release 本机回环测试：1024 字节二进制消息、16 个客户端、窗�
 
 ## 复现 IO 对比
 
-在仓库根目录运行。使用 Boost 时，将 standalone 头文件路径参数替换为 `-DARKNET_USE_BOOST_ASIO=ON`，保持其他设置一致。
+在仓库根目录使用 Boost 配置构建。
 
 命令采用单配置 generator。使用 Visual Studio 时，在构建命令中加入 `--config Release`，并运行 `benchmarks/Release/` 下的可执行文件。Windows 可执行文件带有 `.exe` 后缀。
 
 ```sh
 cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release \
   -DARKNET_BUILD_BENCHMARKS=ON -DARKNET_ENABLE_SSL=OFF \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=ON
 cmake --build build-perf --target arknet_loopback_benchmark --parallel 3
 build-perf/benchmarks/arknet_loopback_benchmark \
   --protocol websocket --payload 1024 --clients 16 --window 16 \

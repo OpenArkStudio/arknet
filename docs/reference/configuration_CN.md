@@ -7,7 +7,7 @@
 
 | 选项 | 默认值 | 作用 |
 | --- | --- | --- |
-| `ARKNET_USE_BOOST_ASIO` | `OFF` | 使用 Boost.Asio 和 Boost.Beast |
+| `ARKNET_USE_BOOST_ASIO` | `ON` | 使用 Boost.Asio 和 Boost.Beast |
 | `ARKNET_ENABLE_SSL` | `OFF` | 启用 TLS、HTTPS 和 WSS，并链接 OpenSSL |
 | `ARKNET_BUILD_TESTS` | 独立构建为 `ON`，嵌入构建为 `OFF` | 构建 doctest 和集成检查 |
 | `ARKNET_BUILD_EXAMPLES` | 独立构建为 `ON`，嵌入构建为 `OFF` | 构建示例程序 |
@@ -17,7 +17,7 @@
 
 | 宏 | 含义 |
 | --- | --- |
-| `ARKNET_USE_BOOST_ASIO=1` | 使用 Boost；未定义或设为 `0` 时使用 standalone Asio |
+| `ARKNET_USE_BOOST_ASIO=1` | 默认值 `1` 使用 Boost；设为 `0` 使用 Standalone Asio（TCP、UDP、RUDP、TLS） |
 | `ARKNET_ENABLE_SSL` | 定义即启用安全传输；关闭时不要定义此宏 |
 | `ARKNET_HEADER_ONLY` | 内部依赖实现宏，不用于切换编译库 |
 | `ARKNET_ENABLE_TIMER_CALLBACK_WHEN_ERROR` | 错误时调用定时器回调；回调中检查 `get_last_error()` |

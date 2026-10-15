@@ -14,7 +14,7 @@ smoke execution; its shared-runner timing is not the published baseline.
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
   -DARKNET_ENABLE_SSL=ON -DARKNET_BUILD_BENCHMARKS=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 cmake --build build --parallel 3
 cmake --build build --target arknet_check
 build/tests/arknet_stress_test --protocol all --seconds 60 \

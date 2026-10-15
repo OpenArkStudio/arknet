@@ -69,7 +69,7 @@ int main()
 <Step title="Build and check the echo">
 
 ```sh
-cmake -S . -B build -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+cmake -S . -B build
 cmake --build build --parallel 3
 ./build/arknet_echo
 ```

@@ -28,7 +28,7 @@ Release 本机回环测试：TLS 握手后发送 1024 字节消息、16 个客�
 ```sh
 cmake -S . -B build-perf-tls -DCMAKE_BUILD_TYPE=Release \
   -DARKNET_BUILD_BENCHMARKS=ON -DARKNET_ENABLE_SSL=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 cmake --build build-perf-tls --target arknet_loopback_benchmark --parallel 3
 for repetition in 1 2 3; do
   for protocol in tcp tcps websocket wss http https; do

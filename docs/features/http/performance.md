@@ -1,5 +1,7 @@
 # HTTP and HTTPS Performance
 
+The charts were measured before the bundled Beast headers were removed. Standalone HTTP/WebSocket results apply only to that measured revision; current builds use Boost.
+
 [Introduction](index.md) | [Usage](configuration.md)
 
 ## Local Results
@@ -39,15 +41,14 @@ window 16 and no extra application computation.
 
 ## Reproduce
 
-Build from the repository root. Replace the Asio include path with
-`-DARKNET_USE_BOOST_ASIO=ON` to test Boost.
+Build from the repository root with Boost.
 With Visual Studio, add `--config Release` to the build command and run the
 `.exe` under `benchmarks/Release/`.
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
   -DARKNET_ENABLE_SSL=ON -DARKNET_BUILD_BENCHMARKS=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=ON
 cmake --build build --target arknet_loopback_benchmark --parallel 3
 for repetition in 1 2 3; do
   for protocol in http https; do

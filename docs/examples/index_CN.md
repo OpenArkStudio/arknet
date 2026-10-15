@@ -15,11 +15,10 @@
 
 ```sh
 cmake -S . -B build -DARKNET_BUILD_EXAMPLES=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=ON
 cmake --build build --parallel 3
 ```
 
-Boost 依赖方案将 Asio include 参数替换为 `-DARKNET_USE_BOOST_ASIO=ON`。
 Visual Studio 添加 `--config Release`，运行 `examples/Release/` 下的 `.exe`。
 程序源码说明实际端口与停止方式。
 

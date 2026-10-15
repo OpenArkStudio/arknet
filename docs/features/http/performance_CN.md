@@ -1,5 +1,7 @@
 # HTTP 与 HTTPS 性能
 
+以下图表记录移除内置 Beast 前的测量。Standalone Asio 的 HTTP/WebSocket 数据仅适用于该测量版本；当前版本使用 Boost。
+
 [介绍](index_CN.md) | [使用](configuration_CN.md)
 
 ## 本机测量结果
@@ -32,14 +34,14 @@ Release 本机回环测试：HTTP/1.1 POST 回显 1024 字节请求体、16 个�
 
 ## 复现
 
-在仓库根目录构建。测试 Boost 时，将 Asio 头文件路径参数替换为 `-DARKNET_USE_BOOST_ASIO=ON`。
+在仓库根目录使用 Boost 配置构建。
 使用 Visual Studio 时，在构建命令中加入 `--config Release`，并运行
 `benchmarks/Release/` 下带 `.exe` 后缀的程序。
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
   -DARKNET_ENABLE_SSL=ON -DARKNET_BUILD_BENCHMARKS=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=ON
 cmake --build build --target arknet_loopback_benchmark --parallel 3
 for repetition in 1 2 3; do
   for protocol in http https; do

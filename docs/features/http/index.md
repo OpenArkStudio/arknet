@@ -1,5 +1,7 @@
 # HTTP and HTTPS
 
+Requires Boost.Asio and Boost.Beast; unavailable with Standalone Asio.
+
 arknet's HTTP client, server and session exchange Beast HTTP/1 messages.
 HTTPS uses the same message API over TLS when `ARKNET_ENABLE_SSL` is enabled.
 Both Asio providers expose the same public types and callback signatures.

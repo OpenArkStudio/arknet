@@ -19,25 +19,25 @@ MySQL 与 Redis 单节点原生客户端已列入开发计划，范围与发布�
 
 - **C++20**：支持该标准的编译器和标准库。
 - **CMake** 3.21+：用于仓库提供的构建配置、示例和测试。
-- **Standalone Asio** 1.38+：默认网络依赖库。
-- **Boost** 1.90+：可替代 Standalone Asio，提供 Asio 和 Beast。
+- **Standalone Asio** 1.38+：可选，支持 TCP、UDP、RUDP 和 TLS。
+- **Boost** 1.90+：默认依赖，提供 Asio 和 Beast，支持全部协议。
 - **OpenSSL** 1.1.1+：仅在启用 TLS、HTTPS 或 WSS 时需要。
 
-Standalone Asio 与 Boost 二选一。依赖安装和 CMake 选项见[安装与配置](docs/get-started/installation_CN.md)。
+默认选择 Boost；仅使用基础协议时可选择 Standalone Asio。依赖安装和 CMake 选项见[安装与配置](docs/get-started/installation_CN.md)。
 
 ## 快速开始
 
 构建示例和测试，然后执行完整检查：
 
 ```sh
-cmake -S . -B build -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+cmake -S . -B build
 cmake --build build --parallel 3
 cmake --build build --target arknet_check
 ```
 
 通过 `arknet::arknet` CMake 接口目标配置应用。
 
-- `ARKNET_USE_BOOST_ASIO=ON`：选择 Boost.Asio 和 Boost.Beast。
+- `ARKNET_USE_BOOST_ASIO=OFF`：仅使用 Standalone Asio 的 TCP、UDP、RUDP 和 TLS。
 - `ARKNET_ENABLE_SSL=ON`：启用 TLS、HTTPS 和 WSS。
 
 ## 文档

@@ -680,12 +680,12 @@ DOCTEST_TEST_CASE("Owned listeners release final callback owners on an IO worker
         release_callback_owner<arknet::rudp_server>();
 #if defined(ARKNET_ENABLE_SSL)
         release_callback_owner<arknet::tcps_server>();
-#if defined(ARKNET_USE_BOOST_ASIO)
+#if ARKNET_USE_BOOST_ASIO
         release_callback_owner<arknet::wss_server>();
         release_callback_owner<arknet::https_server>();
 #endif
 #endif
-#if defined(ARKNET_USE_BOOST_ASIO)
+#if ARKNET_USE_BOOST_ASIO
         release_callback_owner<arknet::ws_server>();
         release_callback_owner<arknet::http_server>();
 #endif
@@ -700,12 +700,12 @@ DOCTEST_TEST_CASE("Owned clients release final callback owners on an IO worker")
         release_client_callback_owner<arknet::rudp_client, arknet::rudp_server>();
 #if defined(ARKNET_ENABLE_SSL)
         release_client_callback_owner<arknet::tcps_client, arknet::tcps_server>();
-#if defined(ARKNET_USE_BOOST_ASIO)
+#if ARKNET_USE_BOOST_ASIO
         release_client_callback_owner<arknet::wss_client, arknet::wss_server>();
         release_client_callback_owner<arknet::https_client, arknet::https_server>();
 #endif
 #endif
-#if defined(ARKNET_USE_BOOST_ASIO)
+#if ARKNET_USE_BOOST_ASIO
         release_client_callback_owner<arknet::ws_client, arknet::ws_server>();
         release_client_callback_owner<arknet::http_client, arknet::http_server>();
 #endif

@@ -30,7 +30,11 @@ function(arknet_configure_check_target)
         USES_TERMINAL)
 endfunction()
 
-foreach(name tcp udp websocket lifecycle detail concurrency http router io_pool keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec httprequest)
+set(arknet_test_names tcp udp lifecycle detail concurrency io_pool keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec)
+if(ARKNET_USE_BOOST_ASIO)
+    list(APPEND arknet_test_names websocket http router httprequest)
+endif()
+foreach(name IN LISTS arknet_test_names)
     add_executable(arknet_${name}_test ${name}.cpp test_main.cpp)
     target_link_libraries(arknet_${name}_test PRIVATE arknet::arknet arknet_test_framework)
     target_compile_definitions(arknet_${name}_test PRIVATE

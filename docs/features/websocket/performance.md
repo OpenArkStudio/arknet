@@ -1,5 +1,7 @@
 # WebSocket Performance
 
+The charts were measured before the bundled Beast headers were removed. Standalone HTTP/WebSocket results apply only to that measured revision; current builds use Boost.
+
 ## Local Results
 
 Release local loopback: 1024-byte binary messages, 16 clients, window 16 and
@@ -40,17 +42,15 @@ no extra application computation.
 
 ## Reproduce the IO Comparison
 
-Run from the repository root. For Boost, replace the standalone include argument
-with `-DARKNET_USE_BOOST_ASIO=ON` and keep the other settings unchanged.
-
-Commands assume a single-configuration generator. With Visual Studio, add
+Build from the repository root with Boost.
+With Visual Studio, add
 `--config Release` to the build command and run the executable under
 `benchmarks/Release/`. Windows executables end in `.exe`.
 
 ```sh
 cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release \
   -DARKNET_BUILD_BENCHMARKS=ON -DARKNET_ENABLE_SSL=OFF \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=ON
 cmake --build build-perf --target arknet_loopback_benchmark --parallel 3
 build-perf/benchmarks/arknet_loopback_benchmark \
   --protocol websocket --payload 1024 --clients 16 --window 16 \

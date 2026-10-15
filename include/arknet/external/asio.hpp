@@ -27,7 +27,6 @@ using error_condition = boost::system::error_condition;
 using system_error = boost::system::system_error;
 } // namespace boost::asio
 namespace asio = boost::asio;
-namespace bho = boost;
 #else
 #ifndef ASIO_STANDALONE
 #define ASIO_STANDALONE

@@ -19,11 +19,11 @@ release criteria are in the [database client guide](docs/features/database-clien
 
 - **C++20:** a compatible compiler and standard library.
 - **CMake** 3.21+: for the provided builds, examples and tests.
-- **Standalone Asio** 1.38+: the default networking dependency.
-- **Boost** 1.90+: an alternative to Standalone Asio, providing Asio and Beast.
+- **Standalone Asio** 1.38+: optional, for TCP, UDP, RUDP and TLS.
+- **Boost** 1.90+: the default dependency, providing Asio and Beast for all protocols.
 - **OpenSSL** 1.1.1+: required only for TLS, HTTPS and WSS.
 
-Choose either Standalone Asio or Boost. [Installation and configuration](docs/get-started/installation.md)
+Use Boost by default, or choose Standalone Asio for the base protocols. [Installation and configuration](docs/get-started/installation.md)
 covers dependency setup and CMake options.
 
 ## Quick Start
@@ -31,14 +31,14 @@ covers dependency setup and CMake options.
 Build the examples and tests, then run the complete checks:
 
 ```sh
-cmake -S . -B build -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+cmake -S . -B build
 cmake --build build --parallel 3
 cmake --build build --target arknet_check
 ```
 
 Use the `arknet::arknet` CMake interface target to configure applications.
 
-- `ARKNET_USE_BOOST_ASIO=ON`: select Boost.Asio and Boost.Beast.
+- `ARKNET_USE_BOOST_ASIO=OFF`: use Standalone Asio for TCP, UDP, RUDP and TLS.
 - `ARKNET_ENABLE_SSL=ON`: enable TLS, HTTPS and WSS.
 
 ## Documentation

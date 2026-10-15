@@ -15,11 +15,10 @@ Build from the repository root:
 
 ```sh
 cmake -S . -B build -DARKNET_BUILD_EXAMPLES=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=ON
 cmake --build build --parallel 3
 ```
 
-For Boost, replace the Asio include argument with `-DARKNET_USE_BOOST_ASIO=ON`.
 For Visual Studio, add `--config Release` and run the `.exe` from `examples/Release/`.
 Read each program's source for its port and shutdown behavior.
 

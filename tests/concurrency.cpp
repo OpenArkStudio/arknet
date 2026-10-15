@@ -248,14 +248,15 @@ public:
             }
             else
             {
-                check(
-                    stopping && result.bytes <= size &&
-                        (result.error == asio::error::operation_aborted || result.error == asio::error::not_connected ||
-                            result.error == asio::error::bad_descriptor || result.error == asio::error::broken_pipe ||
-                            result.error == asio::error::connection_reset ||
-                            result.error == asio::error::connection_aborted || result.error == asio::error::eof ||
-                            result.error == websocket::error::closed),
-                    "accepted send cancellation error or byte count");
+                bool cancelled =
+                    result.error == asio::error::operation_aborted || result.error == asio::error::not_connected ||
+                    result.error == asio::error::bad_descriptor || result.error == asio::error::broken_pipe ||
+                    result.error == asio::error::connection_reset || result.error == asio::error::connection_aborted ||
+                    result.error == asio::error::eof;
+#if ARKNET_USE_BOOST_ASIO
+                cancelled = cancelled || result.error == websocket::error::closed;
+#endif
+                check(stopping && result.bytes <= size && cancelled, "accepted send cancellation error or byte count");
             }
             if (result.after_stop)
             {
@@ -726,12 +727,15 @@ DOCTEST_TEST_CASE("TCP dgram concurrent admission, recovery, and stop") {
     cases<arknet::tcp_client, arknet::tcp_server>("TCP dgram");
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("WebSocket concurrent admission, recovery, and stop") {
     watchdog timeout;
     cases<arknet::ws_client, arknet::ws_server>("WebSocket");
 }
+#endif
 
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("WebSocket TLS concurrent admission and recovery") {
     watchdog timeout;
     for (bool external : {false, true})
@@ -741,6 +745,7 @@ DOCTEST_TEST_CASE("WebSocket TLS concurrent admission and recovery") {
     }
     std::cout << "WebSocket TLS owned/external: concurrent admission and recovery passed\n";
 }
+#endif
 #endif
 
 DOCTEST_TEST_CASE("One io_context with four workers serializes each IO lane") {

@@ -25,29 +25,17 @@ reject older providers. See [Asio's revision history](https://think-async.com/As
 
 ## Choose an Asio Provider
 
-| Configuration | IO implementation | HTTP and WebSocket implementation |
+| Configuration | IO dependencies | Available protocols |
 | --- | --- | --- |
-| `ARKNET_USE_BOOST_ASIO=OFF` (default) | Standalone Asio | Bundled BHO Beast, adapted from Boost 1.84 |
-| `ARKNET_USE_BOOST_ASIO=ON` | Boost.Asio | Official Boost.Beast |
+| `ARKNET_USE_BOOST_ASIO=ON` (default) | Boost.Asio + Boost.Beast | TCP, UDP, RUDP, HTTP, WebSocket; optional TLS, HTTPS, WSS |
+| `ARKNET_USE_BOOST_ASIO=OFF` | Standalone Asio | TCP, UDP, RUDP; optional TLS |
 
-Both configurations expose the same arknet API. Install the dependencies for the
-chosen provider before configuring CMake. For standalone Asio, CMake searches
-for `asio.hpp`; set `ARKNET_ASIO_INCLUDE_DIR` if it is outside the search paths.
-For Boost or OpenSSL in a custom prefix, use `CMAKE_PREFIX_PATH`; OpenSSL also
-accepts `OPENSSL_ROOT_DIR`.
-
-### What Is BHO?
-
-BHO means **Boost Header Only**. The `include/arknet/bho/` directory contains
-adapted Boost headers under the `bho` namespace, including Beast and its
-supporting components. These headers let standalone Asio use HTTP and WebSocket
-without a separate Boost installation.
-
-Official Boost.Beast uses Boost.Asio socket types. The bundled BHO Beast is
-adapted to standalone Asio. In Boost mode, arknet uses official Boost.Beast.
-BHO is bundled compatibility code; it is not a third provider or an additional
-package to install. Its notices are listed in
-[Third-Party Notices](../project/third-party-notices.md).
+HTTP, WebSocket and rate-limited TCP streams require official Boost.Beast and
+the Boost configuration. These interfaces are unavailable with Standalone Asio;
+including their headers directly reports a compile error. Install the selected
+dependencies before configuring CMake. Set `ARKNET_ASIO_INCLUDE_DIR` to the
+directory containing `asio.hpp` for Standalone Asio. For custom Boost or OpenSSL
+prefixes, use `CMAKE_PREFIX_PATH`; OpenSSL also accepts `OPENSSL_ROOT_DIR`.
 
 ## CMake Options
 
@@ -67,7 +55,7 @@ From the repository root, run the command for your selected provider:
 
 ```sh
 # Standalone Asio
-cmake -S . -B build -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+cmake -S . -B build -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 
 # Boost.Asio with secure transports
 cmake -S . -B build-boost -DARKNET_USE_BOOST_ASIO=ON -DARKNET_ENABLE_SSL=ON
@@ -115,7 +103,7 @@ application, then install its headers and CMake package:
 
 ```sh
 cmake -S . -B build-install -DARKNET_BUILD_TESTS=OFF -DARKNET_BUILD_EXAMPLES=OFF \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=ON
 cmake --install build-install --prefix /path/to/prefix
 ```
 
@@ -133,8 +121,7 @@ configurations that need different providers or TLS settings.
 
 ## Use vcpkg
 
-The repository's `vcpkg.json` installs standalone Asio by default. Its optional
-`boost` and `ssl` features install Boost.Asio/Beast and OpenSSL. Features
+The development `vcpkg.json` enables Boost by default and also installs Standalone Asio for the two-configuration test matrix. The `boost` feature is enabled by default; the optional `ssl` feature installs OpenSSL. Features
 install dependencies; the corresponding arknet CMake options select behavior.
 `vcpkg-configuration.json` selects the repository's `ports/asio` overlay, pinned
 to Asio 1.38.2 with an archive checksum. The selected registry baseline still

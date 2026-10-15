@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <arknet/arknet.hpp>
+#include "crash_report.hpp"
 #include "resources.hpp"
 #include "runtime.hpp"
 #include "work.hpp"
@@ -366,6 +367,7 @@ bool owned_send(Sender& sender, const std::shared_ptr<const std::string>& payloa
     try
     {
         auto data = [&] {
+#if ARKNET_USE_BOOST_ASIO
             if constexpr (http_sender)
             {
                 if constexpr (Sender::is_client())
@@ -385,6 +387,7 @@ bool owned_send(Sender& sender, const std::shared_ptr<const std::string>& payloa
                 }
             }
             else
+#endif
             {
                 return *payload;
             }
@@ -918,7 +921,7 @@ bool output(const options& settings, const std::shared_ptr<context>& owner, cons
         error.empty() && warmup_ok && state->errors() == 0 && messages > 0 && state->pending_completions == 0;
     std::cout.imbue(std::locale::classic());
     std::cout << std::setprecision(12) << "{\"schema_version\":1,\"backend\":";
-#ifdef ARKNET_USE_BOOST_ASIO
+#if ARKNET_USE_BOOST_ASIO
     std::cout << "\"boost\"";
 #else
     std::cout << "\"standalone\"";
@@ -1017,6 +1020,7 @@ bool output(const options& settings, const std::shared_ptr<context>& owner, cons
 } // namespace
 
 int main(int argc, char** argv) {
+    benchmark_diagnostics::install_crash_reporter();
     options settings;
     auto owner = std::make_shared<context>();
     std::string error;
@@ -1031,6 +1035,7 @@ int main(int argc, char** argv) {
         {
             benchmark<false, false, false, arknet::udp_server, arknet::udp_client>(settings, owner);
         }
+#if ARKNET_USE_BOOST_ASIO
         else if (settings.protocol == "websocket")
         {
             benchmark<false, true, false, arknet::ws_server, arknet::ws_client>(settings, owner);
@@ -1039,11 +1044,13 @@ int main(int argc, char** argv) {
         {
             benchmark<false, false, false, arknet::http_server, arknet::http_client, true>(settings, owner);
         }
+#endif
 #ifdef ARKNET_ENABLE_SSL
         else if (settings.protocol == "tcps")
         {
             benchmark<true, false, true, arknet::tcps_server, arknet::tcps_client>(settings, owner);
         }
+#if ARKNET_USE_BOOST_ASIO
         else if (settings.protocol == "wss")
         {
             benchmark<false, true, true, arknet::wss_server, arknet::wss_client>(settings, owner);
@@ -1053,9 +1060,11 @@ int main(int argc, char** argv) {
             benchmark<false, false, true, arknet::https_server, arknet::https_client, true>(settings, owner);
         }
 #endif
+#endif
         else
         {
-            throw std::invalid_argument("TLS support is disabled in this build");
+            throw std::invalid_argument(
+                "protocol unavailable: HTTP/WebSocket require Boost; secure protocols require TLS");
         }
     }
     catch (const std::exception& failure)

@@ -5,18 +5,23 @@ add_executable(consumer main.cpp fec.cpp)
 target_link_libraries(consumer PRIVATE arknet::arknet)
 set(public_headers
     base/io_pool.hpp base/timer.hpp
-    tcp/tcp_client.hpp tcp/tcp_server.hpp tcp/tcp_session.hpp tcp/tcp_stream.hpp
+    tcp/tcp_client.hpp tcp/tcp_server.hpp tcp/tcp_session.hpp
     udp/udp_client.hpp udp/udp_server.hpp udp/udp_session.hpp udp/udp_cast.hpp
     arq/core.hpp fec/transport.hpp
     rudp/rudp_client.hpp rudp/rudp_server.hpp rudp/rudp_session.hpp
-    websocket/ws_client.hpp websocket/ws_server.hpp websocket/ws_session.hpp
-    http/http_client.hpp http/http_server.hpp http/http_session.hpp http/router.hpp
     util/spin_lock.hpp util/string.hpp)
+if(ARKNET_USE_BOOST_ASIO)
+    list(APPEND public_headers tcp/tcp_stream.hpp
+        websocket/ws_client.hpp websocket/ws_server.hpp websocket/ws_session.hpp
+        http/http_client.hpp http/http_server.hpp http/http_session.hpp http/router.hpp)
+endif()
 if(ARKNET_ENABLE_SSL)
     list(APPEND public_headers
-        tcp/tcps_client.hpp tcp/tcps_server.hpp tcp/tcps_session.hpp
-        websocket/wss_client.hpp websocket/wss_server.hpp websocket/wss_session.hpp
+        tcp/tcps_client.hpp tcp/tcps_server.hpp tcp/tcps_session.hpp)
+    if(ARKNET_USE_BOOST_ASIO)
+        list(APPEND public_headers websocket/wss_client.hpp websocket/wss_server.hpp websocket/wss_session.hpp
         http/https_client.hpp http/https_server.hpp http/https_session.hpp)
+    endif()
 endif()
 foreach(header IN LISTS public_headers)
     string(REPLACE "/" "_" unit "${header}")
@@ -25,3 +30,16 @@ foreach(header IN LISTS public_headers)
     target_sources(consumer PRIVATE "${source}")
 endforeach()
 add_custom_target(check_consumer COMMAND consumer DEPENDS consumer)
+
+if(NOT ARKNET_USE_BOOST_ASIO)
+    include(CheckCXXSourceCompiles)
+    set(CMAKE_REQUIRED_LIBRARIES arknet::arknet)
+    foreach(header http/http_client.hpp websocket/ws_client.hpp tcp/tcp_stream.hpp)
+        string(MAKE_C_IDENTIFIER "${header}" probe)
+        check_cxx_source_compiles("#include <arknet/${header}>\nint main() {}" "arknet_forbidden_${probe}")
+        if(arknet_forbidden_${probe})
+            message(FATAL_ERROR "${header} must reject Standalone Asio")
+        endif()
+    endforeach()
+    unset(CMAKE_REQUIRED_LIBRARIES)
+endif()

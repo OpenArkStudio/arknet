@@ -2,7 +2,9 @@
 #pragma once
 #include <arknet/external/asio.hpp>
 
-#if defined(ARKNET_USE_BOOST_ASIO) && ARKNET_USE_BOOST_ASIO
+#if !ARKNET_USE_BOOST_ASIO
+#error "arknet HTTP, WebSocket and rate-limited streams require Boost.Asio and Boost.Beast; set ARKNET_USE_BOOST_ASIO=1"
+#else
 #ifndef BOOST_BEAST_USE_STD_STRING_VIEW
 #define BOOST_BEAST_USE_STD_STRING_VIEW
 #endif
@@ -14,15 +16,6 @@
 
 #endif
 namespace beast = boost::beast;
-#else
-#include <arknet/bho/beast.hpp>
-
-#if defined(ARKNET_ENABLE_SSL)
-#include <arknet/bho/beast/ssl.hpp>
-#include <arknet/bho/beast/websocket/ssl.hpp>
-
-#endif
-namespace beast = bho::beast;
 #endif
 
 namespace http = beast::http;

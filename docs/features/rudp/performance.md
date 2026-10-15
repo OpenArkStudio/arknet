@@ -10,7 +10,7 @@ The permanent benchmark is `benchmarks/rudp.cpp`. Build and run it directly:
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARKNET_BUILD_BENCHMARKS=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 cmake --build build --target arknet_rudp_benchmark
 build/benchmarks/arknet_rudp_benchmark --payload 4096 --clients 8 --window 4 \
   --io-model shared --io-threads 4 --warmup 2 --seconds 3 --rounds 3 \

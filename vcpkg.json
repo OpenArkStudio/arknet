@@ -5,9 +5,10 @@
   "license": "BSL-1.0",
   "builtin-baseline": "0699a19d0c6386247ce50d4dedbb8217d484d536",
   "dependencies": ["asio"],
+  "default-features": ["boost"],
   "features": {
     "boost": {
-      "description": "Boost.Asio and Boost.Beast backend",
+      "description": "Boost.Asio and Boost.Beast dependencies",
       "dependencies": ["boost-asio", "boost-beast"]
     },
     "ssl": {

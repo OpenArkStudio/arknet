@@ -1,7 +1,6 @@
 #include <atomic>
 
 #include <arknet/arknet.hpp>
-#include <arknet/http/router.hpp>
 #include "check.hpp"
 
 namespace {
@@ -74,6 +73,7 @@ void stream_echo() {
     server.stop();
 }
 
+#if ARKNET_USE_BOOST_ASIO
 template<class Server, class Client>
 void websocket_echo(const char* host) {
     messages received;
@@ -173,6 +173,7 @@ void http_echo() {
     client.stop();
     server.stop();
 }
+#endif
 } // namespace
 
 DOCTEST_TEST_CASE("IPv6 endpoint conversion preserves address family and port") {
@@ -253,30 +254,40 @@ DOCTEST_TEST_CASE("UDP cast resolves IPv6 destinations and replies to IPv6 endpo
     receiver.stop();
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("WebSocket IPv6 Host uses brackets and the connected port") {
     websocket_echo<arknet::ws_server, arknet::ws_client>("::1");
 }
+#endif
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("WebSocket IPv4 Host retains its address and connected port") {
     websocket_echo<arknet::ws_server, arknet::ws_client>("127.0.0.1");
 }
+#endif
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("HTTP routes requests over IPv6 with a bracketed Host") {
     http_echo<arknet::http_server, arknet::http_client>();
 }
+#endif
 
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
 DOCTEST_TEST_CASE("TLS verifies IPv6 certificate identity and echoes binary data") {
     stream_echo<arknet::tcps_server, arknet::tcps_client>();
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("WSS verifies IPv6 identity and sends a bracketed Host") {
     websocket_echo<arknet::wss_server, arknet::wss_client>("::1");
 }
+#endif
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("HTTPS verifies IPv6 identity and preserves route behavior") {
     http_echo<arknet::https_server, arknet::https_client>();
 }
+#endif
 
 DOCTEST_TEST_CASE("TLS rejects an IPv4-only certificate for an IPv6 peer") {
     arknet::tcps_server server(1536, 16 * 1024 * 1024, 2);
