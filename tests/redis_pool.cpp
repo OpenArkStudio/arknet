@@ -215,6 +215,34 @@ DOCTEST_TEST_CASE("Redis pool destruction inside an acquisition callback safely 
     endpoint.finish();
 }
 
+DOCTEST_TEST_CASE("Redis pool acquire deadline includes the initial protocol handshake") {
+    std::promise<void> hello;
+    auto observed = hello.get_future();
+    server endpoint([&](peer& remote) {
+        remote.expect({"HELLO", "3"});
+        hello.set_value();
+        remote.wait_closed();
+    });
+    arknet::redis::pool_options options;
+    options.max_connections = 1;
+    options.connection.port = endpoint.port();
+    pool connections(options);
+    std::promise<pool::acquire_result> completed;
+    auto future = completed.get_future();
+    std::atomic<unsigned> calls{};
+    connections.async_acquire(
+        [&](auto response) {
+            ++calls;
+            completed.set_value(std::move(response));
+        },
+        100ms);
+    await(observed);
+    check(await(future).error == client_errc::timeout, "incomplete HELLO consumes the acquire deadline");
+    connections.close();
+    endpoint.finish();
+    check(calls == 1, "late connect cancellation does not deliver an expired lease");
+}
+
 DOCTEST_TEST_CASE("Redis pool discards unsupported RESET connections before admitting another lease") {
     server endpoint(
         [round = 0](peer& remote) mutable {

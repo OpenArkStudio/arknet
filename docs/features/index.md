@@ -1,7 +1,8 @@
 # Features
 
-Choose a transport by its message semantics and peer requirements. All implemented
-modules use the same lifecycle, owned-send and IO scheduling conventions.
+Choose a transport by its message semantics and peer requirements, or a native
+service client by its protocol. Transport endpoints share lifecycle, owned-send
+and IO scheduling conventions; service clients document their request and reply contracts.
 
 | Module | Server | Client | Configuration | Performance |
 | --- | --- | --- | --- | --- |
@@ -11,6 +12,7 @@ modules use the same lifecycle, owned-send and IO scheduling conventions.
 | [WebSocket / WSS](websocket/index.md) | [Create](websocket/server.md) | [Create](websocket/client.md) | [Upgrade and messages](websocket/configuration.md) | [Results](websocket/performance.md) |
 | [HTTP / HTTPS](http/index.md) | [Create](http/server.md) | [Create](http/client.md) | [Messages and Keep-Alive](http/configuration.md) | [Results](http/performance.md) |
 | [TLS / mTLS](tls/index.md) | [Create](tls/server.md) | [Create](tls/client.md) | [Certificates and mutual authentication](tls/configuration.md) | [Results](tls/performance.md) |
+| [Redis](redis/index.md) | External Redis service | [Client and pool](redis/usage.md) | [Limits, authentication and leases](redis/configuration.md) | [Benchmark](redis/performance.md) |
 
 ## Availability
 

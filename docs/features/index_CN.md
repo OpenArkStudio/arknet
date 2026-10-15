@@ -1,7 +1,8 @@
 # 功能
 
-根据消息语义和对端要求选择传输方式。已实现模块采用一致的生命周期、
-发送所有权与 IO 调度约定。
+根据消息语义和对端要求选择传输方式，根据服务协议选择原生客户端。
+传输端点采用一致的生命周期、发送所有权与 IO 调度约定；
+服务客户端另行说明请求与回复契约。
 
 | 模块 | 服务端 | 客户端 | 配置 | 性能 |
 | --- | --- | --- | --- | --- |
@@ -11,6 +12,7 @@
 | [WebSocket / WSS](websocket/index_CN.md) | [创建](websocket/server_CN.md) | [创建](websocket/client_CN.md) | [Upgrade 与消息](websocket/configuration_CN.md) | [结果](websocket/performance_CN.md) |
 | [HTTP / HTTPS](http/index_CN.md) | [创建](http/server_CN.md) | [创建](http/client_CN.md) | [消息与 Keep-Alive](http/configuration_CN.md) | [结果](http/performance_CN.md) |
 | [TLS / mTLS](tls/index_CN.md) | [创建](tls/server_CN.md) | [创建](tls/client_CN.md) | [证书与双向认证](tls/configuration_CN.md) | [结果](tls/performance_CN.md) |
+| [Redis](redis/index_CN.md) | 外部 Redis 服务 | [客户端与连接池](redis/usage_CN.md) | [限额、认证与租约](redis/configuration_CN.md) | [性能测试](redis/performance_CN.md) |
 
 ## 支持状态
 

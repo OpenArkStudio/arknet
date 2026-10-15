@@ -35,6 +35,12 @@ const tree: Entry[] = [
       [`features/${slug}/configuration`, "Configuration and advanced usage", "配置与进阶使用"],
       [`features/${slug}/performance`, "Performance", "性能"],
     ] })),
+    { en: "Redis", zh: "Redis", children: [
+      ["features/redis", "Overview", "概览"],
+      ["features/redis/usage", "Client and connection pool", "客户端与连接池"],
+      ["features/redis/configuration", "Configuration and limits", "配置与限额"],
+      ["features/redis/performance", "Performance", "性能"],
+    ] },
   ] },
   { en: "Guides", zh: "使用指南", children: [
     ["guides", "Overview", "概览"],

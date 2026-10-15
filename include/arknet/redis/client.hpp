@@ -17,8 +17,10 @@
 
 #include <arknet/redis/detail/resp.hpp>
 #include <arknet/tcp/tcp_client.hpp>
+
 #if defined(ARKNET_ENABLE_SSL)
 #include <arknet/tcp/tcps_client.hpp>
+
 #endif
 
 namespace arknet::redis {

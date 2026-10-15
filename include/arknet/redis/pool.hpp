@@ -248,6 +248,7 @@ private:
         completion_handler handler;
         std::shared_ptr<asio::steady_timer> timer;
         std::weak_ptr<entry> assigned;
+        std::chrono::steady_clock::time_point deadline;
         bool completed{};
         bool admitted{};
     };
@@ -349,6 +350,7 @@ private:
         }
 
         void acquire(std::shared_ptr<waiter> request, std::chrono::steady_clock::time_point deadline) {
+            request->deadline = deadline;
             if (closed || close_requested)
             {
                 complete(request, acquire_result{client_errc::closed});
@@ -404,6 +406,12 @@ private:
                 if (request->completed)
                 {
                     queue.pop_front();
+                    continue;
+                }
+                if (std::chrono::steady_clock::now() >= request->deadline)
+                {
+                    queue.pop_front();
+                    complete(request, acquire_result{client_errc::timeout});
                     continue;
                 }
                 auto idle = std::find_if(entries.begin(), entries.end(),
@@ -462,8 +470,16 @@ private:
                             }
                             else if (request && !request->completed)
                             {
-                                self->complete(
-                                    request, acquire_result{client_errc::none, {}, self->make_lease(connection)});
+                                if (std::chrono::steady_clock::now() >= request->deadline)
+                                {
+                                    self->discard(connection);
+                                    self->complete(request, acquire_result{client_errc::timeout});
+                                }
+                                else
+                                {
+                                    self->complete(
+                                        request, acquire_result{client_errc::none, {}, self->make_lease(connection)});
+                                }
                             }
                             else
                             {
@@ -547,7 +563,18 @@ public:
         request->admitted = self->reserve();
         auto deadline =
             std::chrono::steady_clock::now() + (timeout.count() > 0 ? timeout : self->options.acquire_timeout);
-        asio::post(self->executor(), [self, request, deadline] { self->acquire(request, deadline); });
+        try
+        {
+            asio::post(self->executor(), [self, request, deadline] { self->acquire(request, deadline); });
+        }
+        catch (...)
+        {
+            if (request->admitted)
+            {
+                --self->admitted;
+            }
+            throw;
+        }
         return request->id;
     }
 
