@@ -30,7 +30,7 @@ function(arknet_configure_check_target)
         USES_TERMINAL)
 endfunction()
 
-foreach(name tcp udp websocket lifecycle detail concurrency http router io_pool keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec httprequest redis_resp)
+foreach(name tcp udp websocket lifecycle detail concurrency http router io_pool keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec httprequest redis_resp redis_client redis_pool)
     add_executable(arknet_${name}_test ${name}.cpp test_main.cpp)
     target_link_libraries(arknet_${name}_test PRIVATE arknet::arknet arknet_test_framework)
     target_compile_definitions(arknet_${name}_test PRIVATE
@@ -40,6 +40,8 @@ foreach(name tcp udp websocket lifecycle detail concurrency http router io_pool 
     elseif(name STREQUAL "http")
         arknet_add_check(${name} 60 arknet_${name}_test)
     elseif(name STREQUAL "rudp_fec")
+        arknet_add_check(${name} 60 arknet_${name}_test)
+    elseif(name MATCHES "^redis_(client|pool)$")
         arknet_add_check(${name} 60 arknet_${name}_test)
     else()
         arknet_add_check(${name} 30 arknet_${name}_test)
