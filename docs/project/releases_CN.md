@@ -1,25 +1,54 @@
 # 版本发布
 
-## 下一版本发布准备
+## 0.2.0
 
-候选版本尚未确定版本号与发布日期。已发布版本仍为 `0.1.0`；下面列出发布条件，
-不表示这些新增能力已经可用。
+此版本加入 MySQL 与 Redis 单节点原生客户端，简化网络依赖，并修复内置 IO 运行机制在进程退出时的清理顺序。arknet 保持 C++20 与 header-only。
 
-候选范围包含 MySQL 与 Redis 单节点原生客户端，以及默认使用 Boost.Asio／Beast、移除 BHO
-的依赖简化。Standalone Asio 保留 TCP、UDP、RUDP 与 TLS。这些修改合并并通过验证前，
-继续以[安装文档](../get-started/installation_CN.md)中的默认值与可用协议为准。
+### 数据库客户端
 
-| 发布条件 | 需要完成的内容 |
+- **MySQL**：文本查询、类型化预处理参数与结果、显式事务、`caching_sha2_password` 与 `mysql_native_password`、验证证书的 TLS，以及带独占租约和限额的连接池。
+- **Redis**：二进制安全的 RESP2/RESP3 命令、有序流水线、认证、TLS/mTLS、独立的 RESP3 推送回调，以及带独占租约和限额的连接池。
+- **请求控制**：提交与结果限额、时限、取消、会话重置，以及失败命令可能已经执行的明确标志；不自动重放命令。
+
+[数据库客户端指南](../features/database-clients_CN.md)提供完整客户端和连接池程序、配置与限制。使用时显式包含对应的 MySQL 或 Redis 公开头文件。两个客户端均支持 Boost.Asio 和 Standalone Asio。
+
+MySQL 连接池重置后恢复配置的数据库；未配置数据库时丢弃归还的连接。预处理语句始终绑定会话。Redis 连接池在复用前重置会话，重新完成配置中的协议、认证和数据库设置。租约在未完成工作与归还处理结束前保持独占。
+
+MySQL 认证需要 OpenSSL，即使显式禁用 TLS 也不例外；MySQL 连接接口需要启用 `ARKNET_ENABLE_SSL`。MySQL 默认要求验证证书的 TLS，不自动降级。明文 Redis 不需要 OpenSSL，安全 Redis 需要。
+
+### 依赖与兼容性
+
+| 配置 | 可用能力 |
 | --- | --- |
-| MySQL 客户端 | 验收[查询、预处理、事务范围](../features/database-clients_CN.md)，以及认证／TLS、连接池、限额、取消和独立服务端互通 |
-| Redis 客户端 | 验收 RESP2／RESP3 命令与流水线，以及认证／TLS、连接池、限额、取消和独立服务端上的回复对应关系 |
-| 依赖调整 | 完成 [PR #6](https://github.com/OpenArkStudio/arknet/pull/6) 中待处理的 Windows 失败诊断，整合当前 IO 生命周期修复，再验证协议、依赖方案、TLS 构建组合及安装后的调用方 |
-| 验证记录 | 记录准确源码版本、服务端与机器配置、正确性与异常路径结果、并发检查、可复现的本地性能测量 |
-| 公开文档 | 提供可编译的客户端程序、经过验证的 API 参考、支持的服务端版本与认证方式，以及中英文限制说明 |
+| Boost.Asio + Boost.Beast，默认 | 全部受支持的传输与数据库客户端；安全能力需要 OpenSSL |
+| Standalone Asio | TCP、UDP、RUDP 与数据库客户端；TLS 需要 OpenSSL |
 
-仅完成协议编解码不能替代客户端发布验收。候选修改经过 PR 接受并通过必需检查后，
-再选择版本号、更新版本信息并发布最终说明。这里不承诺部署容量；
-[生产验收](production-readiness_CN.md)仍需结合实际负载完成。
+`ARKNET_USE_BOOST_ASIO` 的默认值改为 `ON`；继续使用 Standalone Asio 时设为 `OFF`。HTTP/HTTPS 与 WebSocket/WSS 需要 Boost，内置 BHO 目录已移除。此前通过 Standalone Asio 使用这些协议的应用需要选择 Boost。`arknet/bho/` 下的头文件引用，以及对内置 BHO 类型的直接使用，需要迁移到官方 Boost API。
+
+`arknet::arknet` 接口目标传递编译与依赖要求，不会引入 arknet 二进制库。升级已有构建或安装包前，先检查[安装与配置](../get-started/installation_CN.md)。
+
+### 运行机制与时限修复
+
+进程清理会在 OpenSSL 正常清理前，等待内置运行机制的回调、工作线程与 TLS 资源结束，覆盖回调释放最后一个持有者、嵌套 IO 线程池，以及受支持的直接或间接全局持有者。清理线程在第一个内置 IO 线程池构造时启动，单纯包含头文件不会启动线程。
+
+声明全局持有者的每个翻译单元，都需要在声明前包含相应 IO 头文件。其他翻译单元中未包含该头文件、仅依赖前置声明或类型擦除的全局持有者，需要在 `main` 返回前显式清理。显式选择或预先包含的旧 Asio 线程存储配置，仍需遵守对应的退出要求，详见[进程退出](../concepts/lifecycle_CN.md#进程退出)。
+
+数据库时限在时钟运算前检查，拒绝非正值和无法表示的时长。文档允许的单次覆盖值为零时，继续使用配置的默认值。已获准的任务在提交执行器时抛异常，会退回预留的队列额度。
+
+MySQL 在异步投递返回前保留运行时持有者，即使完成回调销毁连接也不会提前释放运行时。
+命令定时器先于对应的运行时持有者释放。独立的无效连接参数和命令拒绝销毁回归，
+与正常完成、取消回调的销毁用例共同覆盖生命周期。
+
+### 验证与范围
+
+客户端和连接池正确性测试包含 MySQL 51 个用例、1,899 项断言，以及 Redis 35 个用例、316 项断言。独立服务端验证包含 MySQL Community Server 8.4.11 与 Redis 7.4.2。协议编解码、时钟边界和进程退出顺序另有测试；sanitizer 结果与本地 Release 测量分别记录在[测试](testing_CN.md)和[性能报告](../performance/index_CN.md)中。
+
+MySQL 编解码测试显式包含 MSVC 断言诊断所需的标准流头文件。
+聚合准入回归按编码请求大小超过字节预算，不依赖小字符串优化（SSO）或字符串容量增长方式。
+
+MySQL 每条命令支持一个 Classic Protocol 结果，不提供多结果执行、`LOCAL INFILE`、压缩、游标或任意认证插件。Redis Cluster、Sentinel 与 Pub/Sub 仍为 TODO。公开数据库协程接口、HTTP/2、HTTP/3、named pipe、Unix domain socket 和 RPC 是[路线图](roadmap_CN.md)中的独立事项。
+
+应用与 ark 插件回归、跨主机负载和部署耐久仍需通过[部署验收](production-readiness_CN.md)；此发行版不代表已经达到生产 PCU 容量。
 
 ## 0.1.0
 

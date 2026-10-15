@@ -127,10 +127,15 @@ options parse(int argc, char** argv) {
     {
         throw std::invalid_argument("stress seconds exceeds one hour");
     }
-    bool selected = result.selected == "all" || result.selected == "tcp" || result.selected == "udp" ||
-                    result.selected == "ws" || result.selected == "http";
+    bool selected = result.selected == "all" || result.selected == "tcp" || result.selected == "udp";
+#if ARKNET_USE_BOOST_ASIO
+    selected = selected || result.selected == "ws" || result.selected == "http";
+#endif
 #if defined(ARKNET_ENABLE_SSL)
-    selected = selected || result.selected == "tcps" || result.selected == "wss" || result.selected == "https";
+    selected = selected || result.selected == "tcps";
+#if ARKNET_USE_BOOST_ASIO
+    selected = selected || result.selected == "wss" || result.selected == "https";
+#endif
 #endif
     if (!selected)
     {
@@ -264,6 +269,7 @@ struct batch
 
 template<protocol Kind, class Sender, class Data, class Callback>
 bool stress_send(Sender& sender, Data&& data, Callback&& callback) {
+#if ARKNET_USE_BOOST_ASIO
     if constexpr (Kind == protocol::http)
     {
         if constexpr (Sender::is_client())
@@ -283,9 +289,8 @@ bool stress_send(Sender& sender, Data&& data, Callback&& callback) {
         }
     }
     else
-    {
-        return sender.async_send(std::forward<Data>(data), std::forward<Callback>(callback));
-    }
+#endif
+    { return sender.async_send(std::forward<Data>(data), std::forward<Callback>(callback)); }
 }
 
 template<class Client, protocol Kind>
@@ -936,26 +941,34 @@ DOCTEST_TEST_CASE("stress.udp.load" * doctest::test_suite("stress.udp")) {
     run_protocol<arknet::udp_server, arknet::udp_client, protocol::udp>(stress_config, "UDP");
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("stress.ws.load" * doctest::test_suite("stress.ws")) {
     run_protocol<arknet::ws_server, arknet::ws_client, protocol::websocket>(stress_config, "WS");
 }
+#endif
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("stress.http.load" * doctest::test_suite("stress.http")) {
     run_protocol<arknet::http_server, arknet::http_client, protocol::http>(stress_config, "HTTP");
 }
+#endif
 
 #if defined(ARKNET_ENABLE_SSL)
 DOCTEST_TEST_CASE("stress.tcps.load" * doctest::test_suite("stress.tcps")) {
     run_protocol<arknet::tcps_server, arknet::tcps_client, protocol::tcp>(stress_config, "TCPS");
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("stress.wss.load" * doctest::test_suite("stress.wss")) {
     run_protocol<arknet::wss_server, arknet::wss_client, protocol::websocket>(stress_config, "WSS");
 }
+#endif
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("stress.https.load" * doctest::test_suite("stress.https")) {
     run_protocol<arknet::https_server, arknet::https_client, protocol::http>(stress_config, "HTTPS");
 }
+#endif
 #endif
 } // namespace
 

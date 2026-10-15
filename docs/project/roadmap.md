@@ -1,7 +1,8 @@
 # Roadmap and TODO
 
 The current implementation includes TCP, UDP/cast, WebSocket, HTTP/1.0 and
-HTTP/1.1, RUDP with ARQ and optional FEC, routing, timers/reconnect and optional TLS/HTTPS/WSS/mTLS. Planned
+HTTP/1.1, RUDP with ARQ and optional FEC, native single-node MySQL and Redis clients,
+routing, timers/reconnect and optional TLS/HTTPS/WSS/mTLS. Planned
 capabilities below have no public placeholder API and no release date.
 
 For the implemented capabilities, see the [local performance report](../performance/overview.md)
@@ -17,8 +18,7 @@ for throughput and p99 charts, model comparisons and machine specifications.
 | Named pipe | TODO | Windows local client/server, message/byte semantics, overlapped IO, access control, cancellation and restart. |
 | Unix domain socket | TODO | Local stream client/server, path ownership and cleanup, permission policy, cancellation and restart. Platform-specific abstract namespace/datagrams require separate decisions. |
 | RPC | TODO | Transport-independent framing and codec selection, request IDs, deadlines, cancellation, bounded inflight work and error propagation. |
-| MySQL client | TODO; implement in arknet | [Single-node scope and acceptance](../features/database-clients.md); independent-server interoperability and failure-path tests before ark plugin integration. |
-| Redis client | TODO; implement in arknet | [Single-node scope and acceptance](../features/database-clients.md); independent-server interoperability and failure-path tests before ark plugin integration. |
+| Redis Cluster, Sentinel and Pub/Sub | TODO | Topology discovery, redirection and subscription-specific response handling; independent-server interoperability and failure tests. |
 | Public coroutine API | TODO | Awaitable connect/read/write and cancellation integrated with lifecycle; compare shared and sharded executors under IO and CPU work. |
 | WebSocket compression | TODO | Negotiate permessage-deflate; enforce decompressed limits and test adversarial frames. |
 | DTLS | TODO | Select a supported engine; define peer identity, retransmission and datagram limits. |
@@ -37,15 +37,11 @@ HTTP/1 transports remain independently usable.
 
 ## Database clients
 
-MySQL queries, prepared statements and transactions, together with Redis
-RESP2/RESP3 commands and pipelines, form the agreed single-node scope. Both
-clients require authentication, TLS, pools, timeouts, cancellation and queue
-limits. Redis Cluster, Sentinel and Pub/Sub follow later.
-
-The [database client guide](../features/database-clients.md) defines ownership,
-connection-bound operations, uncertain write outcomes, validation and performance
-report requirements. The clients remain planned until that acceptance is complete;
-ark plugin integration follows client validation. No placeholder API is published.
+Native single-node [MySQL](../features/mysql/index.md) and [Redis](../features/redis/index.md)
+clients provide authentication, verified TLS, exclusive pool leases, deadlines and bounded requests.
+The [database client guide](../features/database-clients.md) describes their failure and ownership contracts.
+Redis Cluster, Sentinel, Pub/Sub and public database coroutine APIs remain TODO.
+ark plugin integration requires separate application regression and shutdown validation.
 
 ## Future Scope
 

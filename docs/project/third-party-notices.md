@@ -1,16 +1,5 @@
 # Third-Party Notices
 
-## Bundled Boost Headers
-
-`include/arknet/bho/` contains adapted Boost headers, including Beast and its
-supporting config, assertion, core, intrusive, metaprogramming, endian and
-platform-detection components. BHO means Boost Header Only. Each file retains
-its original authors and applicable Boost Software License notice.
-
-- [Boost](https://www.boost.org/)
-- [Boost.Beast](https://github.com/boostorg/beast)
-- [Boost Software License 1.0](https://github.com/OpenArkStudio/arknet/blob/main/LICENSE)
-
 ## Bundled Reed–Solomon Engine
 
 `include/arknet/thirdparty/fecpp.hpp` adapts [fecpp](https://github.com/randombit/fecpp)

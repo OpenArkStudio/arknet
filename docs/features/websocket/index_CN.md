@@ -1,5 +1,7 @@
 # WebSocket
 
+需要 Boost.Asio 和 Boost.Beast；不支持 Standalone Asio 配置。
+
 arknet 提供 WebSocket 客户端、服务端和 session，用于持久的双向消息通信。适合浏览器连接、聊天、通知和双方无需轮询即可发送的控制通道。`wss_client`、`wss_server` 和 `wss_session` 通过 [TLS](../tls/index_CN.md) 加密。
 
 ## 开始使用
@@ -19,7 +21,7 @@ arknet 提供 WebSocket 客户端、服务端和 session，用于持久的双向
 | `ws_server_t<Session>` | 应用定义的 session 类型 |
 | `ws_stream()` | 用于配置和查询协议的原生 Beast stream |
 
-实现基于 Beast：Standalone Asio 模式使用适配后的内置头文件，Boost.Asio 模式使用官方 Boost.Beast。两种依赖方案提供相同的 arknet 端点 API。详见 [依赖方案选择](../../get-started/installation_CN.md)。
+实现基于官方 Boost.Beast，需要 Boost.Asio。详见 [依赖方案选择](../../get-started/installation_CN.md)。
 
 客户端升级目标默认为 `/`，可携带路径和 query。通过 `get_upgrade_response()` 和 `get_upgrade_request()` 访问客户端响应与服务端请求。`bind_upgrade` 报告升级完成；成功升级后，connect 回调表示 WebSocket 连接可用。WSS 先完成 TLS 握手，再进行 HTTP 升级。
 

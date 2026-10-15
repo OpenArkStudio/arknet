@@ -1,5 +1,7 @@
 # WebSocket
 
+Requires Boost.Asio and Boost.Beast; unavailable with Standalone Asio.
+
 arknet provides WebSocket clients, servers and sessions for persistent,
 bidirectional messages. Use them for browser connections, chat, notifications
 and control channels where both peers need to send without polling.
@@ -22,9 +24,7 @@ and control channels where both peers need to send without polling.
 | `ws_server_t<Session>` | Application-defined session type |
 | `ws_stream()` | Native Beast stream for protocol configuration and inspection |
 
-The implementation uses Beast: bundled headers adapted for standalone Asio,
-or official Boost.Beast with Boost.Asio. Both providers expose the same arknet
-endpoint API. See [provider selection](../../get-started/installation.md#choose-an-asio-provider).
+The implementation uses official Boost.Beast and requires Boost.Asio. See [provider selection](../../get-started/installation.md#choose-an-asio-provider).
 
 The client upgrade target defaults to `/` and can include a path and query.
 Client responses and server requests remain available through

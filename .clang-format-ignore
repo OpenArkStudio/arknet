@@ -1,4 +1,3 @@
-include/arknet/bho/**
 include/arknet/thirdparty/**
 tests/vendor/**
 tests/results/**

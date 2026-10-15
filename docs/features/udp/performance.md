@@ -38,7 +38,7 @@ Commands assume a single-configuration generator. With Visual Studio, add
 ```sh
 cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release \
   -DARKNET_BUILD_BENCHMARKS=ON -DARKNET_ENABLE_SSL=OFF \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 cmake --build build-perf --target arknet_loopback_benchmark --parallel 3
 build-perf/benchmarks/arknet_loopback_benchmark \
   --protocol udp --payload 1024 --clients 16 --window 1 \

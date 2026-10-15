@@ -1,0 +1,402 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1112" height="1188" viewBox="0 0 1112 1188" role="img" aria-labelledby="mysql-cpu-zh">
+<title id="mysql-cpu-zh">MySQL · 客户端 CPU</title>
+<desc>柱为各轮中位数，误差线为最小值到最大值。</desc>
+<rect width="100%" height="100%" fill="#fff"/>
+<g font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" fill="#162538">
+<text x="28" y="32" font-size="21" font-weight="650">MySQL · 客户端 CPU</text>
+<text x="28" y="58" font-size="12">中位数；误差线：各轮最小值—最大值</text>
+<rect x="28" y="73" width="13" height="13" fill="#1261a0"/>
+<text x="48" y="83" font-size="12">Boost.Asio · TCP · 文本</text>
+<rect x="568" y="73" width="13" height="13" fill="#d15a12"/>
+<text x="588" y="83" font-size="12">Boost.Asio · TCP · 预处理</text>
+<rect x="28" y="97" width="13" height="13" fill="#2f7d58"/>
+<text x="48" y="107" font-size="12">Boost.Asio · TLS · 文本</text>
+<rect x="568" y="97" width="13" height="13" fill="#9055a2"/>
+<text x="588" y="107" font-size="12">Boost.Asio · TLS · 预处理</text>
+<rect x="28" y="121" width="13" height="13" fill="#455b73"/>
+<text x="48" y="131" font-size="12">Standalone Asio · TCP · 文本</text>
+<rect x="568" y="121" width="13" height="13" fill="#ad3670"/>
+<text x="588" y="131" font-size="12">Standalone Asio · TCP · 预处理</text>
+<rect x="28" y="145" width="13" height="13" fill="#8b720c"/>
+<text x="48" y="155" font-size="12">Standalone Asio · TLS · 文本</text>
+<rect x="568" y="145" width="13" height="13" fill="#137f86"/>
+<text x="588" y="155" font-size="12">Standalone Asio · TLS · 预处理</text>
+<text x="74" y="212" font-size="13" font-weight="600">1 KiB · 1 条连接</text>
+<text x="74" y="230" font-size="11">单核占用比例（%）</text>
+<line x1="74" x2="504" y1="444" y2="444" stroke="#dce3ec"/>
+<text x="66" y="448" font-size="10" text-anchor="end">0</text>
+<line x1="74" x2="504" y1="391.5" y2="391.5" stroke="#dce3ec"/>
+<text x="66" y="395.5" font-size="10" text-anchor="end">7.5</text>
+<line x1="74" x2="504" y1="339" y2="339" stroke="#dce3ec"/>
+<text x="66" y="343" font-size="10" text-anchor="end">15</text>
+<line x1="74" x2="504" y1="286.5" y2="286.5" stroke="#dce3ec"/>
+<text x="66" y="290.5" font-size="10" text-anchor="end">22.5</text>
+<line x1="74" x2="504" y1="234" y2="234" stroke="#dce3ec"/>
+<text x="66" y="238" font-size="10" text-anchor="end">30</text>
+<text x="181.5" y="462" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 17.15 [17.1–17.33] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="95.5" y="323.95" width="18.49" height="120.05000000000001" fill="#1261a0"/>
+<path d="M 104.745 322.725 V 324.328 M 101.745 322.725 H 107.745 M 101.745 324.328 H 107.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 18.4 [18.36–18.48] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="117" y="315.186" width="18.49" height="128.81400000000002" fill="#d15a12"/>
+<path d="M 126.245 314.61199999999997 V 315.466 M 123.245 314.61199999999997 H 129.245 M 123.245 315.466 H 129.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 18.96 [18.9–18.99] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="138.5" y="311.252" width="18.49" height="132.748" fill="#2f7d58"/>
+<path d="M 147.745 311.063 V 311.7 M 144.745 311.063 H 150.745 M 144.745 311.7 H 150.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 18.54 [18.47–18.72] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="160" y="314.255" width="18.49" height="129.745" fill="#9055a2"/>
+<path d="M 169.245 312.932 V 314.724 M 166.245 312.932 H 172.245 M 166.245 314.724 H 172.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 17.21 [17.18–17.24] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="181.5" y="323.523" width="18.49" height="120.47699999999998" fill="#455b73"/>
+<path d="M 190.745 323.355 V 323.733 M 187.745 323.355 H 193.745 M 187.745 323.733 H 193.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 18.51 [18.4–18.52] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="203" y="314.42999999999995" width="18.49" height="129.57000000000005" fill="#ad3670"/>
+<path d="M 212.245 314.367 V 315.186 M 209.245 314.367 H 215.245 M 209.245 315.186 H 215.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 19.09 [18.98–19.15] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="224.5" y="310.384" width="18.49" height="133.61599999999999" fill="#8b720c"/>
+<path d="M 233.745 309.95000000000005 V 311.11199999999997 M 230.745 309.95000000000005 H 236.745 M 230.745 311.11199999999997 H 236.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 19.03 [18.68–19.08] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="246" y="310.818" width="18.49" height="133.18200000000002" fill="#137f86"/>
+<path d="M 255.245 310.475 V 313.219 M 252.245 310.475 H 258.245 M 252.245 313.219 H 258.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="396.5" y="462" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 19.77 [19.42–20.24] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="310.5" y="305.603" width="18.49" height="138.397" fill="#1261a0"/>
+<path d="M 319.745 302.313 V 308.067 M 316.745 302.313 H 322.745 M 316.745 308.067 H 322.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 19.96 [19.89–20.07] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="332" y="304.28" width="18.49" height="139.72000000000003" fill="#d15a12"/>
+<path d="M 341.245 303.51 V 304.77700000000004 M 338.245 303.51 H 344.245 M 338.245 304.77700000000004 H 344.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 23.62 [23.49–23.89] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="353.5" y="278.688" width="18.49" height="165.312" fill="#2f7d58"/>
+<path d="M 362.745 276.798 V 279.59799999999996 M 359.745 276.798 H 365.745 M 359.745 279.59799999999996 H 365.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 23.7 [23.65–24.03] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="375" y="278.11400000000003" width="18.49" height="165.88599999999997" fill="#9055a2"/>
+<path d="M 384.245 275.82500000000005 V 278.443 M 381.245 275.82500000000005 H 387.245 M 381.245 278.443 H 387.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 18.53 [18.52–18.56] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="396.5" y="314.262" width="18.49" height="129.738" fill="#455b73"/>
+<path d="M 405.745 314.115 V 314.36 M 402.745 314.115 H 408.745 M 402.745 314.36 H 408.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 18.59 [18.27–20.34] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="418" y="313.856" width="18.49" height="130.144" fill="#ad3670"/>
+<path d="M 427.245 301.599 V 316.13800000000003 M 424.245 301.599 H 430.245 M 424.245 316.13800000000003 H 430.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 24.04 [23.93–24.14] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="439.5" y="275.741" width="18.49" height="168.25900000000001" fill="#8b720c"/>
+<path d="M 448.745 275.041 V 276.49 M 445.745 275.041 H 451.745 M 445.745 276.49 H 451.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 23.79 [23.57–24.07] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="461" y="277.46299999999997" width="18.49" height="166.53700000000003" fill="#137f86"/>
+<path d="M 470.245 275.48199999999997 V 279.04499999999996 M 467.245 275.48199999999997 H 473.245 M 467.245 279.04499999999996 H 473.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="289" y="488" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+<text x="614" y="212" font-size="13" font-weight="600">1 KiB · 4 条连接</text>
+<text x="614" y="230" font-size="11">单核占用比例（%）</text>
+<line x1="614" x2="1044" y1="444" y2="444" stroke="#dce3ec"/>
+<text x="606" y="448" font-size="10" text-anchor="end">0</text>
+<line x1="614" x2="1044" y1="391.5" y2="391.5" stroke="#dce3ec"/>
+<text x="606" y="395.5" font-size="10" text-anchor="end">37.5</text>
+<line x1="614" x2="1044" y1="339" y2="339" stroke="#dce3ec"/>
+<text x="606" y="343" font-size="10" text-anchor="end">75</text>
+<line x1="614" x2="1044" y1="286.5" y2="286.5" stroke="#dce3ec"/>
+<text x="606" y="290.5" font-size="10" text-anchor="end">112.5</text>
+<line x1="614" x2="1044" y1="234" y2="234" stroke="#dce3ec"/>
+<text x="606" y="238" font-size="10" text-anchor="end">150</text>
+<text x="721.5" y="462" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 93.44 [93.41–93.58] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="635.5" y="313.1798" width="18.49" height="130.8202" fill="#1261a0"/>
+<path d="M 644.745 312.9838 V 313.2274 M 641.745 312.9838 H 647.745 M 641.745 313.2274 H 647.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 92.72 [92.72–92.98] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="657" y="314.1934" width="18.49" height="129.8066" fill="#d15a12"/>
+<path d="M 666.245 313.8252 V 314.1934 M 663.245 313.8252 H 669.245 M 663.245 314.1934 H 669.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 103.15 [103.1–103.37] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="678.5" y="299.5886" width="18.49" height="144.41140000000001" fill="#2f7d58"/>
+<path d="M 687.745 299.2862 V 299.6558 M 684.745 299.2862 H 690.745 M 684.745 299.6558 H 690.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 102.8 [102.04–103.56] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="700" y="300.0786" width="18.49" height="143.9214" fill="#9055a2"/>
+<path d="M 709.245 299.0202 V 301.1454 M 706.245 299.0202 H 712.245 M 706.245 301.1454 H 712.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 93.46 [93.34–93.77] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="721.5" y="313.163" width="18.49" height="130.837" fill="#455b73"/>
+<path d="M 730.745 312.7192 V 313.3212 M 727.745 312.7192 H 733.745 M 727.745 313.3212 H 733.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 93.06 [92.87–93.28] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="743" y="313.7188" width="18.49" height="130.2812" fill="#ad3670"/>
+<path d="M 752.245 313.4108 V 313.9764 M 749.245 313.4108 H 755.245 M 749.245 313.9764 H 755.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 103.52 [103.14–103.61] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="764.5" y="299.0734" width="18.49" height="144.9266" fill="#8b720c"/>
+<path d="M 773.745 298.9474 V 299.60540000000003 M 770.745 298.9474 H 776.745 M 770.745 299.60540000000003 H 776.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 101.86 [101.43–102.26] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="786" y="301.3932" width="18.49" height="142.60680000000002" fill="#137f86"/>
+<path d="M 795.245 300.8374 V 301.9952 M 792.245 300.8374 H 798.245 M 792.245 301.9952 H 798.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="936.5" y="462" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 109.77 [109.62–110.56] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="850.5" y="290.31640000000004" width="18.49" height="153.68359999999996" fill="#1261a0"/>
+<path d="M 859.745 289.216 V 290.53060000000005 M 856.745 289.216 H 862.745 M 856.745 290.53060000000005 H 862.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 109.46 [109–109.56] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="872" y="290.7546" width="18.49" height="153.24540000000002" fill="#d15a12"/>
+<path d="M 881.245 290.6216 V 291.3958 M 878.245 290.6216 H 884.245 M 878.245 291.3958 H 884.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 120.13 [119.87–120.81] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="893.5" y="275.818" width="18.49" height="168.18200000000002" fill="#2f7d58"/>
+<path d="M 902.745 274.8632 V 276.1848 M 899.745 274.8632 H 905.745 M 899.745 276.1848 H 905.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 118.66 [118.28–119.39] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="915" y="277.8732" width="18.49" height="166.1268" fill="#9055a2"/>
+<path d="M 924.245 276.8526 V 278.4122 M 921.245 276.8526 H 927.245 M 921.245 278.4122 H 927.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 110.62 [109.99–110.96] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="936.5" y="289.13620000000003" width="18.49" height="154.86379999999997" fill="#455b73"/>
+<path d="M 945.745 288.65319999999997 V 290.00980000000004 M 942.745 288.65319999999997 H 948.745 M 942.745 290.00980000000004 H 948.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 109.87 [109.6–113.95] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="958" y="290.1848" width="18.49" height="153.8152" fill="#ad3670"/>
+<path d="M 967.245 284.4672 V 290.55719999999997 M 964.245 284.4672 H 970.245 M 964.245 290.55719999999997 H 970.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 119.82 [119.49–120.16] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="979.5" y="276.252" width="18.49" height="167.748" fill="#8b720c"/>
+<path d="M 988.745 275.7704 V 276.7196 M 985.745 275.7704 H 991.745 M 985.745 276.7196 H 991.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 118.69 [118.55–119.56] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="1001" y="277.83540000000005" width="18.49" height="166.16459999999995" fill="#137f86"/>
+<path d="M 1010.245 276.6118 V 278.03700000000003 M 1007.245 276.6118 H 1013.245 M 1007.245 278.03700000000003 H 1013.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="829" y="488" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+<text x="74" y="532" font-size="13" font-weight="600">4 KiB · 1 条连接</text>
+<text x="74" y="550" font-size="11">单核占用比例（%）</text>
+<line x1="74" x2="504" y1="764" y2="764" stroke="#dce3ec"/>
+<text x="66" y="768" font-size="10" text-anchor="end">0</text>
+<line x1="74" x2="504" y1="711.5" y2="711.5" stroke="#dce3ec"/>
+<text x="66" y="715.5" font-size="10" text-anchor="end">6.25</text>
+<line x1="74" x2="504" y1="659" y2="659" stroke="#dce3ec"/>
+<text x="66" y="663" font-size="10" text-anchor="end">12.5</text>
+<line x1="74" x2="504" y1="606.5" y2="606.5" stroke="#dce3ec"/>
+<text x="66" y="610.5" font-size="10" text-anchor="end">18.75</text>
+<line x1="74" x2="504" y1="554" y2="554" stroke="#dce3ec"/>
+<text x="66" y="558" font-size="10" text-anchor="end">25</text>
+<text x="181.5" y="782" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 16.49 [16.44–16.54] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="95.5" y="625.4588" width="18.49" height="138.5412" fill="#1261a0"/>
+<path d="M 104.745 625.0472 V 625.8788 M 101.745 625.0472 H 107.745 M 101.745 625.8788 H 107.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 16.04 [16–16.1] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="117" y="629.2556" width="18.49" height="134.74440000000004" fill="#d15a12"/>
+<path d="M 126.245 628.7432 V 629.5748 M 123.245 628.7432 H 129.245 M 123.245 629.5748 H 129.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 18.97 [18.9–19.06] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="138.5" y="604.6856" width="18.49" height="159.31439999999998" fill="#2f7d58"/>
+<path d="M 147.745 603.938 V 605.2568 M 144.745 603.938 H 150.745 M 144.745 605.2568 H 150.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 17.57 [17–19.34] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="160" y="616.3784" width="18.49" height="147.62159999999994" fill="#9055a2"/>
+<path d="M 169.245 601.5692 V 621.2 M 166.245 601.5692 H 172.245 M 166.245 621.2 H 172.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 16.73 [16.59–16.83] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="181.5" y="623.51" width="18.49" height="140.49" fill="#455b73"/>
+<path d="M 190.745 622.6448 V 624.6692 M 187.745 622.6448 H 193.745 M 187.745 624.6692 H 193.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 16.27 [16.27–16.46] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="203" y="627.3068000000001" width="18.49" height="136.69319999999993" fill="#ad3670"/>
+<path d="M 212.245 625.7528 V 627.3235999999999 M 209.245 625.7528 H 215.245 M 209.245 627.3235999999999 H 215.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 19.18 [19.06–19.2] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="224.5" y="602.8712" width="18.49" height="161.12879999999996" fill="#8b720c"/>
+<path d="M 233.745 602.7031999999999 V 603.938 M 230.745 602.7031999999999 H 236.745 M 230.745 603.938 H 236.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 17.18 [17.14–17.24] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="246" y="619.7048" width="18.49" height="144.29520000000002" fill="#137f86"/>
+<path d="M 255.245 619.1672 V 619.9988 M 252.245 619.1672 H 258.245 M 252.245 619.9988 H 258.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="396.5" y="782" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 20.85 [20.81–20.9] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="310.5" y="588.902" width="18.49" height="175.09799999999996" fill="#1261a0"/>
+<path d="M 319.745 588.44 V 589.2212 M 316.745 588.44 H 322.745 M 316.745 589.2212 H 322.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 19.04 [18.93–19.12] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="332" y="604.0724" width="18.49" height="159.92759999999998" fill="#d15a12"/>
+<path d="M 341.245 603.3584000000001 V 605.03 M 338.245 603.3584000000001 H 344.245 M 338.245 605.03 H 344.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 22.67 [22.45–22.69] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="353.5" y="573.572" width="18.49" height="190.428" fill="#2f7d58"/>
+<path d="M 362.745 573.3704 V 575.462 M 359.745 573.3704 H 365.745 M 359.745 575.462 H 365.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 20.36 [20.27–20.43] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="375" y="592.9844" width="18.49" height="171.01559999999995" fill="#9055a2"/>
+<path d="M 384.245 592.43 V 593.7488 M 381.245 592.43 H 387.245 M 381.245 593.7488 H 387.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 21.04 [21.03–21.23] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="396.5" y="587.264" width="18.49" height="176.736" fill="#455b73"/>
+<path d="M 405.745 585.668 V 587.3732 M 402.745 585.668 H 408.745 M 402.745 587.3732 H 408.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 19.18 [19.07–19.35] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="418" y="602.8543999999999" width="18.49" height="161.14560000000006" fill="#ad3670"/>
+<path d="M 427.245 601.4936 V 603.8371999999999 M 424.245 601.4936 H 430.245 M 424.245 603.8371999999999 H 430.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 22.74 [22.67–22.92] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="439.5" y="572.9504" width="18.49" height="191.04960000000005" fill="#8b720c"/>
+<path d="M 448.745 571.4888 V 573.5384 M 445.745 571.4888 H 451.745 M 445.745 573.5384 H 451.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 20.61 [20.56–20.65] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="461" y="590.9096" width="18.49" height="173.09040000000005" fill="#137f86"/>
+<path d="M 470.245 590.54 V 591.3128 M 467.245 590.54 H 473.245 M 467.245 591.3128 H 473.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="289" y="808" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+<text x="614" y="532" font-size="13" font-weight="600">4 KiB · 4 条连接</text>
+<text x="614" y="550" font-size="11">单核占用比例（%）</text>
+<line x1="614" x2="1044" y1="764" y2="764" stroke="#dce3ec"/>
+<text x="606" y="768" font-size="10" text-anchor="end">0</text>
+<line x1="614" x2="1044" y1="711.5" y2="711.5" stroke="#dce3ec"/>
+<text x="606" y="715.5" font-size="10" text-anchor="end">37.5</text>
+<line x1="614" x2="1044" y1="659" y2="659" stroke="#dce3ec"/>
+<text x="606" y="663" font-size="10" text-anchor="end">75</text>
+<line x1="614" x2="1044" y1="606.5" y2="606.5" stroke="#dce3ec"/>
+<text x="606" y="610.5" font-size="10" text-anchor="end">112.5</text>
+<line x1="614" x2="1044" y1="554" y2="554" stroke="#dce3ec"/>
+<text x="606" y="558" font-size="10" text-anchor="end">150</text>
+<text x="721.5" y="782" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 89.66 [89.44–89.96] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="635.5" y="638.4788" width="18.49" height="125.52120000000002" fill="#1261a0"/>
+<path d="M 644.745 638.0546 V 638.7798 M 641.745 638.0546 H 647.745 M 641.745 638.7798 H 647.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 82.87 [82.5–82.97] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="657" y="647.9848" width="18.49" height="116.01520000000005" fill="#d15a12"/>
+<path d="M 666.245 647.8462 V 648.4972 M 663.245 647.8462 H 669.245 M 663.245 648.4972 H 669.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 101.22 [101.1–101.38] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="678.5" y="622.299" width="18.49" height="141.70100000000002" fill="#2f7d58"/>
+<path d="M 687.745 622.0638 V 622.46 M 684.745 622.0638 H 690.745 M 684.745 622.46 H 690.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 91.99 [91.46–92.22] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="700" y="635.2154" width="18.49" height="128.78459999999995" fill="#9055a2"/>
+<path d="M 709.245 634.8864 V 635.9532 M 706.245 634.8864 H 712.245 M 706.245 635.9532 H 712.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 89.77 [89.67–90.3] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="721.5" y="638.3262" width="18.49" height="125.67380000000003" fill="#455b73"/>
+<path d="M 730.745 637.5856 V 638.4606 M 727.745 637.5856 H 733.745 M 727.745 638.4606 H 733.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 82.27 [82.16–82.29] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="743" y="648.8192" width="18.49" height="115.18079999999998" fill="#ad3670"/>
+<path d="M 752.245 648.7926 V 648.9802 M 749.245 648.7926 H 755.245 M 749.245 648.9802 H 755.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 101.35 [101.3–101.54] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="764.5" y="622.1086" width="18.49" height="141.89139999999998" fill="#8b720c"/>
+<path d="M 773.745 621.8453999999999 V 622.1772 M 770.745 621.8453999999999 H 776.745 M 770.745 622.1772 H 776.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 92.26 [92.17–92.39] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="786" y="634.8346" width="18.49" height="129.16539999999998" fill="#137f86"/>
+<path d="M 795.245 634.6582 V 634.969 M 792.245 634.6582 H 798.245 M 792.245 634.969 H 798.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="936.5" y="782" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 102.4 [102.35–102.64] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="850.5" y="620.6428" width="18.49" height="143.35720000000003" fill="#1261a0"/>
+<path d="M 859.745 620.311 V 620.7086 M 856.745 620.311 H 862.745 M 856.745 620.7086 H 862.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 94.58 [93.9–95.04] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="872" y="631.5922" width="18.49" height="132.40779999999995" fill="#d15a12"/>
+<path d="M 881.245 630.944 V 632.5386 M 878.245 630.944 H 884.245 M 878.245 632.5386 H 884.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 115.32 [115–115.32] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="893.5" y="602.5534" width="18.49" height="161.4466" fill="#2f7d58"/>
+<path d="M 902.745 602.5464 V 603.0056 M 899.745 602.5464 H 905.745 M 899.745 603.0056 H 905.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 104.77 [104.48–105.09] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="915" y="617.3234" width="18.49" height="146.6766" fill="#9055a2"/>
+<path d="M 924.245 616.8697999999999 V 617.7322 M 921.245 616.8697999999999 H 927.245 M 921.245 617.7322 H 927.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 102.71 [102.59–102.88] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="936.5" y="620.2004" width="18.49" height="143.79960000000005" fill="#455b73"/>
+<path d="M 945.745 619.9638 V 620.3697999999999 M 942.745 619.9638 H 948.745 M 942.745 620.3697999999999 H 948.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 94.99 [94.96–95.49] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="958" y="631.014" width="18.49" height="132.986" fill="#ad3670"/>
+<path d="M 967.245 630.3168000000001 V 631.0616 M 964.245 630.3168000000001 H 970.245 M 964.245 631.0616 H 970.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 115.43 [114.85–115.61] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="979.5" y="602.405" width="18.49" height="161.59500000000003" fill="#8b720c"/>
+<path d="M 988.745 602.146 V 603.2072000000001 M 985.745 602.146 H 991.745 M 985.745 603.2072000000001 H 991.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 104.87 [104.58–104.98] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="1001" y="617.1806" width="18.49" height="146.81939999999997" fill="#137f86"/>
+<path d="M 1010.245 617.0308 V 617.5852 M 1007.245 617.0308 H 1013.245 M 1007.245 617.5852 H 1013.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="829" y="808" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+<text x="74" y="852" font-size="13" font-weight="600">16 KiB · 1 条连接</text>
+<text x="74" y="870" font-size="11">单核占用比例（%）</text>
+<line x1="74" x2="504" y1="1084" y2="1084" stroke="#dce3ec"/>
+<text x="66" y="1088" font-size="10" text-anchor="end">0</text>
+<line x1="74" x2="504" y1="1031.5" y2="1031.5" stroke="#dce3ec"/>
+<text x="66" y="1035.5" font-size="10" text-anchor="end">7.5</text>
+<line x1="74" x2="504" y1="979" y2="979" stroke="#dce3ec"/>
+<text x="66" y="983" font-size="10" text-anchor="end">15</text>
+<line x1="74" x2="504" y1="926.5" y2="926.5" stroke="#dce3ec"/>
+<text x="66" y="930.5" font-size="10" text-anchor="end">22.5</text>
+<line x1="74" x2="504" y1="874" y2="874" stroke="#dce3ec"/>
+<text x="66" y="878" font-size="10" text-anchor="end">30</text>
+<text x="181.5" y="1102" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 16.38 [16.37–16.39] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="95.5" y="969.347" width="18.49" height="114.65300000000002" fill="#1261a0"/>
+<path d="M 104.745 969.27 V 969.417 M 101.745 969.27 H 107.745 M 101.745 969.417 H 107.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 12.79 [12.76–13.36] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="117" y="994.477" width="18.49" height="89.52300000000002" fill="#d15a12"/>
+<path d="M 126.245 990.494 V 994.68 M 123.245 990.494 H 129.245 M 123.245 994.68 H 129.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 23.7 [23.62–23.71] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="138.5" y="918.079" width="18.49" height="165.92100000000005" fill="#2f7d58"/>
+<path d="M 147.745 918.023 V 918.653 M 144.745 918.023 H 150.745 M 144.745 918.653 H 150.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 16.89 [16.75–17.02] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="160" y="965.742" width="18.49" height="118.25800000000004" fill="#9055a2"/>
+<path d="M 169.245 964.832 V 966.729 M 166.245 964.832 H 172.245 M 166.245 966.729 H 172.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 17.04 [17.03–17.21] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="181.5" y="964.727" width="18.49" height="119.27300000000002" fill="#455b73"/>
+<path d="M 190.745 963.544 V 964.762 M 187.745 963.544 H 193.745 M 187.745 964.762 H 193.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 13.3 [12.99–13.34] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="203" y="990.928" width="18.49" height="93.072" fill="#ad3670"/>
+<path d="M 212.245 990.627 V 993.077 M 209.245 990.627 H 215.245 M 209.245 993.077 H 215.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 24.99 [24.95–26.54] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="224.5" y="909.0840000000001" width="18.49" height="174.91599999999994" fill="#8b720c"/>
+<path d="M 233.745 898.22 V 909.371 M 230.745 898.22 H 236.745 M 230.745 909.371 H 236.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 17.37 [16.75–17.5] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="246" y="962.424" width="18.49" height="121.57600000000002" fill="#137f86"/>
+<path d="M 255.245 961.528 V 966.771 M 252.245 961.528 H 258.245 M 252.245 966.771 H 258.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="396.5" y="1102" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 17.55 [17.33–17.74] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="310.5" y="961.178" width="18.49" height="122.822" fill="#1261a0"/>
+<path d="M 319.745 959.792 V 962.669 M 316.745 959.792 H 322.745 M 316.745 962.669 H 322.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 13.96 [13.94–13.97] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="332" y="986.266" width="18.49" height="97.73400000000004" fill="#d15a12"/>
+<path d="M 341.245 986.245 V 986.392 M 338.245 986.245 H 344.245 M 338.245 986.392 H 344.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 23.35 [23.35–23.46] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="353.5" y="920.564" width="18.49" height="163.43600000000004" fill="#2f7d58"/>
+<path d="M 362.745 919.759 V 920.585 M 359.745 919.759 H 365.745 M 359.745 920.585 H 365.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 17.26 [17.05–17.39] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="375" y="963.201" width="18.49" height="120.79899999999998" fill="#9055a2"/>
+<path d="M 384.245 962.242 V 964.685 M 381.245 962.242 H 387.245 M 381.245 964.685 H 387.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 17.43 [17.34–17.81] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="396.5" y="962.004" width="18.49" height="121.99599999999998" fill="#455b73"/>
+<path d="M 405.745 959.309 V 962.648 M 402.745 959.309 H 408.745 M 402.745 962.648 H 408.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 13.98 [13.93–14.42] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="418" y="986.133" width="18.49" height="97.86699999999996" fill="#ad3670"/>
+<path d="M 427.245 983.032 V 986.476 M 424.245 983.032 H 430.245 M 424.245 986.476 H 430.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 23.51 [23.46–23.65] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="439.5" y="919.444" width="18.49" height="164.55600000000004" fill="#8b720c"/>
+<path d="M 448.745 918.45 V 919.787 M 445.745 918.45 H 451.745 M 445.745 919.787 H 451.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 17.44 [17.44–17.82] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="461" y="961.955" width="18.49" height="122.04499999999996" fill="#137f86"/>
+<path d="M 470.245 959.267 V 961.955 M 467.245 959.267 H 473.245 M 467.245 961.955 H 473.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="289" y="1128" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+<text x="614" y="852" font-size="13" font-weight="600">16 KiB · 4 条连接</text>
+<text x="614" y="870" font-size="11">单核占用比例（%）</text>
+<line x1="614" x2="1044" y1="1084" y2="1084" stroke="#dce3ec"/>
+<text x="606" y="1088" font-size="10" text-anchor="end">0</text>
+<line x1="614" x2="1044" y1="1031.5" y2="1031.5" stroke="#dce3ec"/>
+<text x="606" y="1035.5" font-size="10" text-anchor="end">37.5</text>
+<line x1="614" x2="1044" y1="979" y2="979" stroke="#dce3ec"/>
+<text x="606" y="983" font-size="10" text-anchor="end">75</text>
+<line x1="614" x2="1044" y1="926.5" y2="926.5" stroke="#dce3ec"/>
+<text x="606" y="930.5" font-size="10" text-anchor="end">112.5</text>
+<line x1="614" x2="1044" y1="874" y2="874" stroke="#dce3ec"/>
+<text x="606" y="878" font-size="10" text-anchor="end">150</text>
+<text x="721.5" y="1102" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 83.08 [82.94–83.88] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="635.5" y="967.6866" width="18.49" height="116.3134" fill="#1261a0"/>
+<path d="M 644.745 966.5722 V 967.8812 M 641.745 966.5722 H 647.745 M 641.745 967.8812 H 647.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 63.85 [63.73–63.96] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="657" y="994.6058" width="18.49" height="89.39419999999996" fill="#d15a12"/>
+<path d="M 666.245 994.4574 V 994.7724000000001 M 663.245 994.4574 H 669.245 M 663.245 994.7724000000001 H 669.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 111.74 [103.66–119.55] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="678.5" y="927.5654" width="18.49" height="156.43460000000005" fill="#2f7d58"/>
+<path d="M 687.745 916.6342 V 938.8788 M 684.745 916.6342 H 690.745 M 684.745 938.8788 H 690.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 84.58 [84.37–84.93] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="700" y="965.5936" width="18.49" height="118.40639999999996" fill="#9055a2"/>
+<path d="M 709.245 965.0938 V 965.8764 M 706.245 965.0938 H 712.245 M 706.245 965.8764 H 712.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 83.14 [83.12–83.65] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="721.5" y="967.604" width="18.49" height="116.39599999999996" fill="#455b73"/>
+<path d="M 730.745 966.89 V 967.6278 M 727.745 966.89 H 733.745 M 727.745 967.6278 H 733.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 64.14 [64.06–64.66] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="743" y="994.2012" width="18.49" height="89.79880000000003" fill="#ad3670"/>
+<path d="M 752.245 993.4816 V 994.3216 M 749.245 993.4816 H 755.245 M 749.245 994.3216 H 755.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 111.81 [95.72–119.95] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="764.5" y="927.4604" width="18.49" height="156.53959999999995" fill="#8b720c"/>
+<path d="M 773.745 916.0742 V 949.9947999999999 M 770.745 916.0742 H 776.745 M 770.745 949.9947999999999 H 776.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 85.08 [84.4–85.11] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="786" y="964.8838000000001" width="18.49" height="119.11619999999994" fill="#137f86"/>
+<path d="M 795.245 964.8432 V 965.847 M 792.245 964.8432 H 798.245 M 792.245 965.847 H 798.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="936.5" y="1102" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 91.17 [91.08–91.51] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="850.5" y="956.3662" width="18.49" height="127.63379999999995" fill="#1261a0"/>
+<path d="M 859.745 955.893 V 956.4852 M 856.745 955.893 H 862.745 M 856.745 956.4852 H 862.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 70.19 [70.16–70.21] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="872" y="985.7354" width="18.49" height="98.26459999999997" fill="#d15a12"/>
+<path d="M 881.245 985.7032 V 985.7816 M 878.245 985.7032 H 884.245 M 878.245 985.7816 H 884.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 120.33 [119.52–120.41] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="893.5" y="915.5324" width="18.49" height="168.46759999999995" fill="#2f7d58"/>
+<path d="M 902.745 915.4246 V 916.6748 M 899.745 915.4246 H 905.745 M 899.745 916.6748 H 905.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 89.16 [89.08–89.17] 单核占用比例（%）</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="915" y="959.1774" width="18.49" height="124.82259999999997" fill="#9055a2"/>
+<path d="M 924.245 959.169 V 959.288 M 921.245 959.169 H 927.245 M 921.245 959.288 H 927.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 91.48 [91.18–91.91] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="936.5" y="955.928" width="18.49" height="128.072" fill="#455b73"/>
+<path d="M 945.745 955.333 V 956.3424 M 942.745 955.333 H 948.745 M 942.745 956.3424 H 948.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 70.14 [69.94–70.41] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="958" y="985.8026" width="18.49" height="98.19740000000002" fill="#ad3670"/>
+<path d="M 967.245 985.4302 V 986.0896 M 964.245 985.4302 H 970.245 M 964.245 986.0896 H 970.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 111.81 [111.3–120.29] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="979.5" y="927.473" width="18.49" height="156.52700000000004" fill="#8b720c"/>
+<path d="M 988.745 915.5898 V 928.1842 M 985.745 915.5898 H 991.745 M 985.745 928.1842 H 991.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 89.38 [88.67–89.68] 单核占用比例（%）</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="1001" y="958.8736" width="18.49" height="125.12639999999999" fill="#137f86"/>
+<path d="M 1010.245 958.455 V 959.8661999999999 M 1007.245 958.455 H 1013.245 M 1007.245 959.8661999999999 H 1013.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="829" y="1128" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+</g></svg>

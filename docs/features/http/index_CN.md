@@ -1,5 +1,7 @@
 # HTTP 与 HTTPS
 
+需要 Boost.Asio 和 Boost.Beast；不支持 Standalone Asio 配置。
+
 arknet 的 HTTP 客户端、服务端和 Session 交换 Beast HTTP/1 消息。
 启用 `ARKNET_ENABLE_SSL` 后，HTTPS 通过 TLS 提供相同消息接口。
 两种 Asio 依赖方案公开相同类型和回调签名。

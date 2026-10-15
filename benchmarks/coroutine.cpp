@@ -647,7 +647,7 @@ void run(const options& settings, void (*after_connect)() = nullptr) {
     const bool ok = !state.errors && messages > 0 && (settings.warmup == 0 || warmup_messages > 0);
     std::cout << std::setprecision(12) << "{\"schema_version\":1,\"implementation\":\"asio-" << settings.execution
               << "\",\"execution\":\"" << settings.execution << "\",\"backend\":\""
-#ifdef ARKNET_USE_BOOST_ASIO
+#if ARKNET_USE_BOOST_ASIO
               << "boost"
 #else
               << "standalone"

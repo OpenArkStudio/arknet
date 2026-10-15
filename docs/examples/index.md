@@ -1,7 +1,8 @@
 # Examples
 
 The repository includes small C++ applications, and each protocol guide provides
-complete client/server programs. Use the same dependency combination and TLS settings for both peers.
+complete client/server programs. Database guides cover clients and pools.
+Use the same dependency combination and TLS settings for transport peers.
 
 ## Repository applications
 
@@ -10,18 +11,23 @@ complete client/server programs. Use the same dependency combination and TLS set
 | TCP echo server | [echo_server.cpp](../../examples/echo_server.cpp) | `build/examples/arknet_echo_server` |
 | HTTP echo server | [http_echo_server.cpp](../../examples/http_echo_server.cpp) | `build/examples/arknet_http_echo_server` |
 | IPv6 client/server | [ipv6_echo.cpp](../../examples/ipv6_echo.cpp) | `build/examples/arknet_ipv6_echo` |
+| MySQL client | [mysql_client.cpp](../../examples/mysql_client.cpp) | `build/examples/arknet_mysql_client` |
+| MySQL pool | [mysql_pool.cpp](../../examples/mysql_pool.cpp) | `build/examples/arknet_mysql_pool` |
+| Redis client | [redis_client.cpp](../../examples/redis_client.cpp) | `build/examples/arknet_redis_client` |
+| Redis pool | [redis_pool.cpp](../../examples/redis_pool.cpp) | `build/examples/arknet_redis_pool` |
 
 Build from the repository root:
 
 ```sh
 cmake -S . -B build -DARKNET_BUILD_EXAMPLES=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=ON -DARKNET_ENABLE_SSL=ON
 cmake --build build --parallel 3
 ```
 
-For Boost, replace the Asio include argument with `-DARKNET_USE_BOOST_ASIO=ON`.
 For Visual Studio, add `--config Release` and run the `.exe` from `examples/Release/`.
 Read each program's source for its port and shutdown behavior.
+Database examples take an explicit endpoint and a password environment variable;
+see [MySQL](../features/mysql/usage.md) and [Redis](../features/redis/usage.md).
 
 ## Protocol pairs
 

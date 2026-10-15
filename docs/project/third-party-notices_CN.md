@@ -1,16 +1,5 @@
 # 第三方声明
 
-## 内置 Boost 头文件
-
-`include/arknet/bho/` 包含经过适配的 Boost 头文件，包括 Beast 及其使用的
-config、assertion、core、intrusive、metaprogramming、endian 和平台检测组件。
-BHO 指 Boost Header Only。各文件保留原作者和适用的 Boost Software License
-声明。
-
-- [Boost](https://www.boost.org/)
-- [Boost.Beast](https://github.com/boostorg/beast)
-- [Boost Software License 1.0](https://github.com/OpenArkStudio/arknet/blob/main/LICENSE)
-
 ## 内置 Reed–Solomon 编码引擎
 
 `include/arknet/thirdparty/fecpp.hpp` 将 [fecpp](https://github.com/randombit/fecpp)

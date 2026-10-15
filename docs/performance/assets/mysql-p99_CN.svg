@@ -1,0 +1,402 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1112" height="1188" viewBox="0 0 1112 1188" role="img" aria-labelledby="mysql-p99-zh">
+<title id="mysql-p99-zh">MySQL · 查询 RT p99</title>
+<desc>柱为各轮中位数，误差线为最小值到最大值。</desc>
+<rect width="100%" height="100%" fill="#fff"/>
+<g font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" fill="#162538">
+<text x="28" y="32" font-size="21" font-weight="650">MySQL · 查询 RT p99</text>
+<text x="28" y="58" font-size="12">中位数；误差线：各轮最小值—最大值</text>
+<rect x="28" y="73" width="13" height="13" fill="#1261a0"/>
+<text x="48" y="83" font-size="12">Boost.Asio · TCP · 文本</text>
+<rect x="568" y="73" width="13" height="13" fill="#d15a12"/>
+<text x="588" y="83" font-size="12">Boost.Asio · TCP · 预处理</text>
+<rect x="28" y="97" width="13" height="13" fill="#2f7d58"/>
+<text x="48" y="107" font-size="12">Boost.Asio · TLS · 文本</text>
+<rect x="568" y="97" width="13" height="13" fill="#9055a2"/>
+<text x="588" y="107" font-size="12">Boost.Asio · TLS · 预处理</text>
+<rect x="28" y="121" width="13" height="13" fill="#455b73"/>
+<text x="48" y="131" font-size="12">Standalone Asio · TCP · 文本</text>
+<rect x="568" y="121" width="13" height="13" fill="#ad3670"/>
+<text x="588" y="131" font-size="12">Standalone Asio · TCP · 预处理</text>
+<rect x="28" y="145" width="13" height="13" fill="#8b720c"/>
+<text x="48" y="155" font-size="12">Standalone Asio · TLS · 文本</text>
+<rect x="568" y="145" width="13" height="13" fill="#137f86"/>
+<text x="588" y="155" font-size="12">Standalone Asio · TLS · 预处理</text>
+<text x="74" y="212" font-size="13" font-weight="600">1 KiB · 1 条连接</text>
+<text x="74" y="230" font-size="11">微秒</text>
+<line x1="74" x2="504" y1="444" y2="444" stroke="#dce3ec"/>
+<text x="66" y="448" font-size="10" text-anchor="end">0</text>
+<line x1="74" x2="504" y1="391.5" y2="391.5" stroke="#dce3ec"/>
+<text x="66" y="395.5" font-size="10" text-anchor="end">500</text>
+<line x1="74" x2="504" y1="339" y2="339" stroke="#dce3ec"/>
+<text x="66" y="343" font-size="10" text-anchor="end">1,000</text>
+<line x1="74" x2="504" y1="286.5" y2="286.5" stroke="#dce3ec"/>
+<text x="66" y="290.5" font-size="10" text-anchor="end">1,500</text>
+<line x1="74" x2="504" y1="234" y2="234" stroke="#dce3ec"/>
+<text x="66" y="238" font-size="10" text-anchor="end">2,000</text>
+<text x="181.5" y="462" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 95.92 [95.38–97.88] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="95.5" y="433.928715" width="18.49" height="10.071284999999989" fill="#1261a0"/>
+<path d="M 104.745 433.723125 V 433.985625 M 101.745 433.723125 H 107.745 M 101.745 433.985625 H 107.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 98.33 [98.33–100.75] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="117" y="433.675035" width="18.49" height="10.32496500000002" fill="#d15a12"/>
+<path d="M 126.245 433.42125 V 433.675035 M 123.245 433.42125 H 129.245 M 123.245 433.675035 H 129.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 99.75 [99.17–100.42] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="138.5" y="433.52625" width="18.49" height="10.473749999999995" fill="#2f7d58"/>
+<path d="M 147.745 433.456215 V 433.587465 M 144.745 433.456215 H 150.745 M 144.745 433.587465 H 150.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 101.75 [101.25–105.38] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="160" y="433.31625" width="18.49" height="10.683749999999975" fill="#9055a2"/>
+<path d="M 169.245 432.935625 V 433.36875 M 166.245 432.935625 H 172.245 M 166.245 433.36875 H 172.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 96.21 [94.92–96.96] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="181.5" y="433.89816" width="18.49" height="10.101839999999982" fill="#455b73"/>
+<path d="M 190.745 433.81941 V 434.033715 M 187.745 433.81941 H 193.745 M 187.745 434.033715 H 193.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 97.38 [97.29–98.83] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="203" y="433.775625" width="18.49" height="10.224375000000009" fill="#ad3670"/>
+<path d="M 212.245 433.62243 V 433.784445 M 209.245 433.62243 H 215.245 M 209.245 433.784445 H 215.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 101.96 [100.42–105.13] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="224.5" y="433.294305" width="18.49" height="10.705694999999992" fill="#8b720c"/>
+<path d="M 233.745 432.961875 V 433.456215 M 230.745 432.961875 H 236.745 M 230.745 433.456215 H 236.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 110.21 [101.88–110.83] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="246" y="432.428055" width="18.49" height="11.571945000000028" fill="#137f86"/>
+<path d="M 255.245 432.36243 V 433.303125 M 252.245 432.36243 H 258.245 M 252.245 433.303125 H 258.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="396.5" y="462" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 1,357.33 [1,347.96–1,563.58] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="310.5" y="301.480035" width="18.49" height="142.519965" fill="#1261a0"/>
+<path d="M 319.745 279.82367999999997 V 302.46430499999997 M 316.745 279.82367999999997 H 322.745 M 316.745 302.46430499999997 H 322.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 1,326.67 [1,323.96–1,345.29] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="332" y="304.699965" width="18.49" height="139.30003499999998" fill="#d15a12"/>
+<path d="M 341.245 302.744445 V 304.98440999999997 M 338.245 302.744445 H 344.245 M 338.245 304.98440999999997 H 344.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 1,370.58 [1,369.29–1,420.42] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="353.5" y="300.08878500000003" width="18.49" height="143.91121499999997" fill="#2f7d58"/>
+<path d="M 362.745 294.856215 V 300.22434 M 359.745 294.856215 H 365.745 M 359.745 300.22434 H 365.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 1,343.46 [1,311.29–1,602.17] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="375" y="302.93691" width="18.49" height="141.06309" fill="#9055a2"/>
+<path d="M 384.245 275.772465 V 306.314445 M 381.245 275.772465 H 387.245 M 381.245 306.314445 H 387.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 1,356.04 [1,354.71–1,358.63] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="396.5" y="301.615695" width="18.49" height="142.38430499999998" fill="#455b73"/>
+<path d="M 405.745 301.344375 V 301.75566000000003 M 402.745 301.344375 H 408.745 M 402.745 301.75566000000003 H 408.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 1,335.96 [1,334.63–1,350.71] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="418" y="303.72430499999996" width="18.49" height="140.27569500000004" fill="#ad3670"/>
+<path d="M 427.245 302.17566 V 303.864375 M 424.245 302.17566 H 430.245 M 424.245 303.864375 H 430.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 1,373.29 [1,330.46–1,380] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="439.5" y="299.80434" width="18.49" height="144.19565999999998" fill="#8b720c"/>
+<path d="M 448.745 299.1 V 304.30191 M 445.745 299.1 H 451.745 M 445.745 304.30191 H 451.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 1,356.79 [1,344–1,501.96] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="461" y="301.53684" width="18.49" height="142.46316000000002" fill="#137f86"/>
+<path d="M 470.245 286.29440999999997 V 302.88 M 467.245 286.29440999999997 H 473.245 M 467.245 302.88 H 473.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="289" y="488" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+<text x="614" y="212" font-size="13" font-weight="600">1 KiB · 4 条连接</text>
+<text x="614" y="230" font-size="11">微秒</text>
+<line x1="614" x2="1044" y1="444" y2="444" stroke="#dce3ec"/>
+<text x="606" y="448" font-size="10" text-anchor="end">0</text>
+<line x1="614" x2="1044" y1="391.5" y2="391.5" stroke="#dce3ec"/>
+<text x="606" y="395.5" font-size="10" text-anchor="end">625</text>
+<line x1="614" x2="1044" y1="339" y2="339" stroke="#dce3ec"/>
+<text x="606" y="343" font-size="10" text-anchor="end">1,250</text>
+<line x1="614" x2="1044" y1="286.5" y2="286.5" stroke="#dce3ec"/>
+<text x="606" y="290.5" font-size="10" text-anchor="end">1,875</text>
+<line x1="614" x2="1044" y1="234" y2="234" stroke="#dce3ec"/>
+<text x="606" y="238" font-size="10" text-anchor="end">2,500</text>
+<text x="721.5" y="462" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 115.17 [114.46–117.21] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="635.5" y="434.326056" width="18.49" height="9.673944000000006" fill="#1261a0"/>
+<path d="M 644.745 434.154528 V 434.385528 M 641.745 434.154528 H 647.745 M 641.745 434.385528 H 647.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 114.92 [114.21–116.04] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="657" y="434.346972" width="18.49" height="9.653028000000006" fill="#d15a12"/>
+<path d="M 666.245 434.252472 V 434.406528 M 663.245 434.252472 H 669.245 M 663.245 434.406528 H 669.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 128.13 [126.71–133.71] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="678.5" y="433.2375" width="18.49" height="10.762499999999989" fill="#2f7d58"/>
+<path d="M 687.745 432.768528 V 433.356444 M 684.745 432.768528 H 690.745 M 684.745 433.356444 H 690.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 139.17 [130.92–199.5] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="700" y="432.309972" width="18.49" height="11.690027999999984" fill="#9055a2"/>
+<path d="M 709.245 427.242 V 433.002972 M 706.245 427.242 H 712.245 M 706.245 433.002972 H 712.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 115 [114.67–115.67] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="721.5" y="434.34" width="18.49" height="9.660000000000025" fill="#455b73"/>
+<path d="M 730.745 434.283972 V 434.367972 M 727.745 434.283972 H 733.745 M 727.745 434.367972 H 733.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 117.92 [114.5–122.83] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="743" y="434.094972" width="18.49" height="9.905028000000016" fill="#ad3670"/>
+<path d="M 752.245 433.682028 V 434.382 M 749.245 433.682028 H 755.245 M 749.245 434.382 H 755.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 124.54 [124.21–125.38] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="764.5" y="433.538472" width="18.49" height="10.461527999999987" fill="#8b720c"/>
+<path d="M 773.745 433.4685 V 433.566528 M 770.745 433.4685 H 776.745 M 770.745 433.566528 H 776.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 125.67 [125.63–135.21] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="786" y="433.443972" width="18.49" height="10.556028000000026" fill="#137f86"/>
+<path d="M 795.245 432.642528 V 433.4475 M 792.245 432.642528 H 798.245 M 792.245 433.4475 H 798.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="936.5" y="462" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 1,576.46 [1,543.58–1,610.79] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="850.5" y="311.57752800000003" width="18.49" height="132.42247199999997" fill="#1261a0"/>
+<path d="M 859.745 308.693556 V 314.33894399999997 M 856.745 308.693556 H 862.745 M 856.745 314.33894399999997 H 862.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 1,555.71 [1,549–1,574.04] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="872" y="313.32052799999997" width="18.49" height="130.67947200000003" fill="#d15a12"/>
+<path d="M 881.245 311.78055600000005 V 313.884 M 878.245 311.78055600000005 H 884.245 M 878.245 313.884 H 884.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 1,633.71 [1,631.38–1,760.58] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="893.5" y="306.768444" width="18.49" height="137.231556" fill="#2f7d58"/>
+<path d="M 902.745 296.110944 V 306.96450000000004 M 899.745 296.110944 H 905.745 M 899.745 306.96450000000004 H 905.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 1,670.92 [1,639.08–1,806.04] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="915" y="303.643056" width="18.49" height="140.356944" fill="#9055a2"/>
+<path d="M 924.245 292.292472 V 306.316944 M 921.245 292.292472 H 927.245 M 921.245 306.316944 H 927.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 1,550.63 [1,549.58–1,552.17] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="936.5" y="313.7475" width="18.49" height="130.2525" fill="#455b73"/>
+<path d="M 945.745 313.618056 V 313.83502799999997 M 942.745 313.618056 H 948.745 M 942.745 313.83502799999997 H 948.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 1,588.25 [1,550.88–2,127.17] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="958" y="310.587" width="18.49" height="133.413" fill="#ad3670"/>
+<path d="M 967.245 265.31797200000005 V 313.7265 M 964.245 265.31797200000005 H 970.245 M 964.245 313.7265 H 970.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 1,631.5 [1,622.17–1,641.54] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="979.5" y="306.954" width="18.49" height="137.046" fill="#8b720c"/>
+<path d="M 988.745 306.110556 V 307.737972 M 985.745 306.110556 H 991.745 M 985.745 307.737972 H 991.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 1,643.63 [1,640.63–1,683.71] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="1001" y="305.9355" width="18.49" height="138.0645" fill="#137f86"/>
+<path d="M 1010.245 302.568444 V 306.1875 M 1007.245 302.568444 H 1013.245 M 1007.245 306.1875 H 1013.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="829" y="488" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+<text x="74" y="532" font-size="13" font-weight="600">4 KiB · 1 条连接</text>
+<text x="74" y="550" font-size="11">微秒</text>
+<line x1="74" x2="504" y1="764" y2="764" stroke="#dce3ec"/>
+<text x="66" y="768" font-size="10" text-anchor="end">0</text>
+<line x1="74" x2="504" y1="711.5" y2="711.5" stroke="#dce3ec"/>
+<text x="66" y="715.5" font-size="10" text-anchor="end">625</text>
+<line x1="74" x2="504" y1="659" y2="659" stroke="#dce3ec"/>
+<text x="66" y="663" font-size="10" text-anchor="end">1,250</text>
+<line x1="74" x2="504" y1="606.5" y2="606.5" stroke="#dce3ec"/>
+<text x="66" y="610.5" font-size="10" text-anchor="end">1,875</text>
+<line x1="74" x2="504" y1="554" y2="554" stroke="#dce3ec"/>
+<text x="66" y="558" font-size="10" text-anchor="end">2,500</text>
+<text x="181.5" y="782" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 117.75 [116.75–118.17] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="95.5" y="754.109" width="18.49" height="9.890999999999963" fill="#1261a0"/>
+<path d="M 104.745 754.073972 V 754.193 M 101.745 754.073972 H 107.745 M 101.745 754.193 H 107.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 128.54 [127.13–136.17] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="117" y="753.202556" width="18.49" height="10.797444000000041" fill="#d15a12"/>
+<path d="M 126.245 752.562056 V 753.3215 M 123.245 752.562056 H 129.245 M 123.245 753.3215 H 129.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 122.63 [121.38–124.5] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="138.5" y="753.6995" width="18.49" height="10.300500000000056" fill="#2f7d58"/>
+<path d="M 147.745 753.542 V 753.8045 M 144.745 753.542 H 150.745 M 144.745 753.8045 H 150.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 147 [128.83–174.38] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="160" y="751.652" width="18.49" height="12.347999999999956" fill="#9055a2"/>
+<path d="M 169.245 749.3525 V 753.178028 M 166.245 749.3525 H 172.245 M 166.245 753.178028 H 172.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 118.42 [117.29–120] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="181.5" y="754.052972" width="18.49" height="9.947028000000046" fill="#455b73"/>
+<path d="M 190.745 753.92 V 754.147472 M 187.745 753.92 H 193.745 M 187.745 754.147472 H 193.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 127.92 [126.63–137.63] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="203" y="753.255056" width="18.49" height="10.744944000000032" fill="#ad3670"/>
+<path d="M 212.245 752.4395 V 753.3635 M 209.245 752.4395 H 215.245 M 209.245 753.3635 H 215.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 122.63 [121.42–123.17] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="224.5" y="753.6995" width="18.49" height="10.300500000000056" fill="#8b720c"/>
+<path d="M 233.745 753.654056 V 753.801056 M 230.745 753.654056 H 236.745 M 230.745 753.801056 H 236.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 130.75 [130.08–131.13] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="246" y="753.017" width="18.49" height="10.982999999999947" fill="#137f86"/>
+<path d="M 255.245 752.9855 V 753.073028 M 252.245 752.9855 H 258.245 M 252.245 753.073028 H 258.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="396.5" y="782" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 1,564.33 [1,560.71–1,629.13] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="310.5" y="632.5960279999999" width="18.49" height="131.40397200000007" fill="#1261a0"/>
+<path d="M 319.745 627.1535 V 632.900528 M 316.745 627.1535 H 322.745 M 316.745 632.900528 H 322.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 1,674.63 [1,660.04–1,727.71] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="332" y="623.3315" width="18.49" height="140.6685" fill="#d15a12"/>
+<path d="M 341.245 618.872528 V 624.556556 M 338.245 618.872528 H 344.245 M 338.245 624.556556 H 344.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 1,707.67 [1,590.79–1,732.63] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="353.5" y="620.555972" width="18.49" height="143.444028" fill="#2f7d58"/>
+<path d="M 362.745 618.4594999999999 V 630.373556 M 359.745 618.4594999999999 H 365.745 M 359.745 630.373556 H 365.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 1,789.58 [1,691.96–1,920.38] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="375" y="613.674944" width="18.49" height="150.32505600000002" fill="#9055a2"/>
+<path d="M 384.245 602.6885 V 621.875528 M 381.245 602.6885 H 387.245 M 381.245 621.875528 H 387.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 1,558.46 [1,546.42–1,686.63] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="396.5" y="633.089528" width="18.49" height="130.91047200000003" fill="#455b73"/>
+<path d="M 405.745 622.3235 V 634.100972 M 402.745 622.3235 H 408.745 M 402.745 634.100972 H 408.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 1,738.58 [1,642.71–2,162.63] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="418" y="617.959028" width="18.49" height="146.040972" fill="#ad3670"/>
+<path d="M 427.245 582.3395 V 626.012528 M 424.245 582.3395 H 430.245 M 424.245 626.012528 H 430.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 1,661.29 [1,645.33–1,761.83] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="439.5" y="624.451556" width="18.49" height="139.54844400000002" fill="#8b720c"/>
+<path d="M 448.745 616.006028 V 625.792028 M 445.745 616.006028 H 451.745 M 445.745 625.792028 H 451.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 1,759.42 [1,703.88–1,836.38] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="461" y="616.208972" width="18.49" height="147.79102799999998" fill="#137f86"/>
+<path d="M 470.245 609.7445 V 620.8745 M 467.245 609.7445 H 473.245 M 467.245 620.8745 H 473.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="289" y="808" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+<text x="614" y="532" font-size="13" font-weight="600">4 KiB · 4 条连接</text>
+<text x="614" y="550" font-size="11">微秒</text>
+<line x1="614" x2="1044" y1="764" y2="764" stroke="#dce3ec"/>
+<text x="606" y="768" font-size="10" text-anchor="end">0</text>
+<line x1="614" x2="1044" y1="711.5" y2="711.5" stroke="#dce3ec"/>
+<text x="606" y="715.5" font-size="10" text-anchor="end">625</text>
+<line x1="614" x2="1044" y1="659" y2="659" stroke="#dce3ec"/>
+<text x="606" y="663" font-size="10" text-anchor="end">1,250</text>
+<line x1="614" x2="1044" y1="606.5" y2="606.5" stroke="#dce3ec"/>
+<text x="606" y="610.5" font-size="10" text-anchor="end">1,875</text>
+<line x1="614" x2="1044" y1="554" y2="554" stroke="#dce3ec"/>
+<text x="606" y="558" font-size="10" text-anchor="end">2,500</text>
+<text x="721.5" y="782" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 134.71 [134.46–137.13] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="635.5" y="752.684528" width="18.49" height="11.315472" fill="#1261a0"/>
+<path d="M 644.745 752.4815 V 752.7054439999999 M 641.745 752.4815 H 647.745 M 641.745 752.7054439999999 H 647.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 156.67 [149.04–161.71] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="657" y="750.840056" width="18.49" height="13.159943999999996" fill="#d15a12"/>
+<path d="M 666.245 750.416528 V 751.480472 M 663.245 750.416528 H 669.245 M 663.245 751.480472 H 669.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 150.67 [150.42–163.92] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="678.5" y="751.343972" width="18.49" height="12.656027999999992" fill="#2f7d58"/>
+<path d="M 687.745 750.230972 V 751.365056 M 684.745 750.230972 H 690.745 M 684.745 751.365056 H 690.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 164.38 [164.29–167.88] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="700" y="750.1925" width="18.49" height="13.807500000000005" fill="#9055a2"/>
+<path d="M 709.245 749.8985 V 750.199472 M 706.245 749.8985 H 712.245 M 706.245 750.199472 H 712.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 135.42 [135.25–148.33] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="721.5" y="752.625056" width="18.49" height="11.374944000000028" fill="#455b73"/>
+<path d="M 730.745 751.539944 V 752.639 M 727.745 751.539944 H 733.745 M 727.745 752.639 H 733.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 147.13 [144.71–147.42] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="743" y="751.6415" width="18.49" height="12.35850000000005" fill="#ad3670"/>
+<path d="M 752.245 751.617056 V 751.844444 M 749.245 751.617056 H 755.245 M 749.245 751.844444 H 755.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 154.92 [153.5–160] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="764.5" y="750.986972" width="18.49" height="13.013027999999963" fill="#8b720c"/>
+<path d="M 773.745 750.56 V 751.106 M 770.745 750.56 H 776.745 M 770.745 751.106 H 776.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 164.88 [164.79–168.25] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="786" y="750.1505" width="18.49" height="13.849500000000035" fill="#137f86"/>
+<path d="M 795.245 749.867 V 750.157472 M 792.245 749.867 H 798.245 M 792.245 750.157472 H 798.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="936.5" y="782" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 1,843.5 [1,843.08–1,851.92] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="850.5" y="609.146" width="18.49" height="154.85400000000004" fill="#1261a0"/>
+<path d="M 859.745 608.439056 V 609.181028 M 856.745 608.439056 H 862.745 M 856.745 609.181028 H 862.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 2,010.13 [1,988.42–2,023.13] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="872" y="595.1495" width="18.49" height="168.8505" fill="#d15a12"/>
+<path d="M 881.245 594.0575 V 596.973056 M 878.245 594.0575 H 884.245 M 878.245 596.973056 H 884.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 2,023.17 [2,014.79–2,031.79] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="893.5" y="594.053972" width="18.49" height="169.94602799999996" fill="#2f7d58"/>
+<path d="M 902.745 593.329472 V 594.757472 M 899.745 593.329472 H 905.745 M 899.745 594.757472 H 905.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 2,170.29 [2,130.13–2,222.79] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="915" y="581.695472" width="18.49" height="182.304528" fill="#9055a2"/>
+<path d="M 924.245 577.285472 V 585.0695000000001 M 921.245 577.285472 H 927.245 M 921.245 585.0695000000001 H 927.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 1,850.42 [1,849.5–1,856.08] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="936.5" y="608.565056" width="18.49" height="155.43494399999997" fill="#455b73"/>
+<path d="M 945.745 608.089028 V 608.642 M 942.745 608.089028 H 948.745 M 942.745 608.642 H 948.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 2,020.92 [2,005.58–2,052.63] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="958" y="594.242972" width="18.49" height="169.757028" fill="#ad3670"/>
+<path d="M 967.245 591.5795 V 595.530944 M 964.245 591.5795 H 970.245 M 964.245 595.530944 H 970.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 2,014.13 [2,010–2,017] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="979.5" y="594.8135" width="18.49" height="169.18650000000002" fill="#8b720c"/>
+<path d="M 988.745 594.572 V 595.16 M 985.745 594.572 H 991.745 M 985.745 595.16 H 991.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 2,161.29 [2,113.42–2,261.75] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="1001" y="582.451472" width="18.49" height="181.54852800000003" fill="#137f86"/>
+<path d="M 1010.245 574.013 V 586.472972 M 1007.245 574.013 H 1013.245 M 1007.245 586.472972 H 1013.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="829" y="808" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+<text x="74" y="852" font-size="13" font-weight="600">16 KiB · 1 条连接</text>
+<text x="74" y="870" font-size="11">微秒</text>
+<line x1="74" x2="504" y1="1084" y2="1084" stroke="#dce3ec"/>
+<text x="66" y="1088" font-size="10" text-anchor="end">0</text>
+<line x1="74" x2="504" y1="1031.5" y2="1031.5" stroke="#dce3ec"/>
+<text x="66" y="1035.5" font-size="10" text-anchor="end">1,250</text>
+<line x1="74" x2="504" y1="979" y2="979" stroke="#dce3ec"/>
+<text x="66" y="983" font-size="10" text-anchor="end">2,500</text>
+<line x1="74" x2="504" y1="926.5" y2="926.5" stroke="#dce3ec"/>
+<text x="66" y="930.5" font-size="10" text-anchor="end">3,750</text>
+<line x1="74" x2="504" y1="874" y2="874" stroke="#dce3ec"/>
+<text x="66" y="878" font-size="10" text-anchor="end">5,000</text>
+<text x="181.5" y="1102" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 184.25 [182.96–185] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="95.5" y="1076.2615" width="18.49" height="7.738499999999931" fill="#1261a0"/>
+<path d="M 104.745 1076.23 V 1076.315764 M 101.745 1076.23 H 107.745 M 101.745 1076.315764 H 107.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 218.58 [217.42–243.88] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="117" y="1074.819514" width="18.49" height="9.180485999999974" fill="#d15a12"/>
+<path d="M 126.245 1073.75725 V 1074.868486 M 123.245 1073.75725 H 129.245 M 123.245 1074.868486 H 129.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 219.96 [219.96–221.33] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="138.5" y="1074.761722" width="18.49" height="9.238278000000037" fill="#2f7d58"/>
+<path d="M 147.745 1074.703972 V 1074.761764 M 144.745 1074.703972 H 150.745 M 144.745 1074.761764 H 150.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 242.42 [240.17–250.17] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="160" y="1073.818486" width="18.49" height="10.181514000000107" fill="#9055a2"/>
+<path d="M 169.245 1073.493028 V 1073.912986 M 166.245 1073.493028 H 172.245 M 166.245 1073.912986 H 172.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 197.92 [196.08–200.5] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="181.5" y="1075.687528" width="18.49" height="8.31247200000007" fill="#455b73"/>
+<path d="M 190.745 1075.579 V 1075.764472 M 187.745 1075.579 H 193.745 M 187.745 1075.764472 H 193.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 226.25 [222.71–246.33] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="203" y="1074.4975" width="18.49" height="9.502500000000055" fill="#ad3670"/>
+<path d="M 212.245 1073.653972 V 1074.646264 M 209.245 1073.653972 H 215.245 M 209.245 1074.646264 H 215.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 253.75 [252.13–293.75] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="224.5" y="1073.3425" width="18.49" height="10.657500000000027" fill="#8b720c"/>
+<path d="M 233.745 1071.6625 V 1073.41075 M 230.745 1071.6625 H 236.745 M 230.745 1073.41075 H 236.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 249.25 [249.25–250.5] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="246" y="1073.5315" width="18.49" height="10.468499999999949" fill="#137f86"/>
+<path d="M 255.245 1073.479 V 1073.5315 M 252.245 1073.479 H 258.245 M 252.245 1073.5315 H 258.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="396.5" y="1102" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 2,703.58 [2,602.17–2,734.83] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="310.5" y="970.449472" width="18.49" height="113.55052799999999" fill="#1261a0"/>
+<path d="M 319.745 969.137014 V 974.708986 M 316.745 969.137014 H 322.745 M 316.745 974.708986 H 322.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 3,177.88 [3,172.92–3,382.58] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="332" y="950.52925" width="18.49" height="133.47074999999995" fill="#d15a12"/>
+<path d="M 341.245 941.931514 V 950.737486 M 338.245 941.931514 H 344.245 M 338.245 950.737486 H 344.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 3,353.83 [3,302–3,519.33] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="353.5" y="943.139014" width="18.49" height="140.86098600000003" fill="#2f7d58"/>
+<path d="M 362.745 936.1880140000001 V 945.316 M 359.745 936.1880140000001 H 365.745 M 359.745 945.316 H 365.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 3,523.92 [3,504.92–3,696.71] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="375" y="935.995486" width="18.49" height="148.00451399999997" fill="#9055a2"/>
+<path d="M 384.245 928.738222 V 936.793486 M 381.245 928.738222 H 387.245 M 381.245 936.793486 H 387.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 2,671.08 [2,616.13–3,505.79] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="396.5" y="971.814514" width="18.49" height="112.18548599999997" fill="#455b73"/>
+<path d="M 405.745 936.756736 V 974.12275 M 402.745 936.756736 H 408.745 M 402.745 974.12275 H 408.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 3,131.58 [3,109.38–3,405.38] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="418" y="952.473514" width="18.49" height="131.52648599999998" fill="#ad3670"/>
+<path d="M 427.245 940.97425 V 953.40625 M 424.245 940.97425 H 430.245 M 424.245 953.40625 H 430.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 3,414.21 [3,382.63–3,643] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="439.5" y="940.603222" width="18.49" height="143.39677800000004" fill="#8b720c"/>
+<path d="M 448.745 930.994 V 941.92975 M 445.745 930.994 H 451.745 M 445.745 941.92975 H 451.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 3,569.33 [3,554.54–4,333.58] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="461" y="934.087972" width="18.49" height="149.91202799999996" fill="#137f86"/>
+<path d="M 470.245 901.989514 V 934.709236 M 467.245 901.989514 H 473.245 M 467.245 934.709236 H 473.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="289" y="1128" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+<text x="614" y="852" font-size="13" font-weight="600">16 KiB · 4 条连接</text>
+<text x="614" y="870" font-size="11">微秒</text>
+<line x1="614" x2="1044" y1="1084" y2="1084" stroke="#dce3ec"/>
+<text x="606" y="1088" font-size="10" text-anchor="end">0</text>
+<line x1="614" x2="1044" y1="1031.5" y2="1031.5" stroke="#dce3ec"/>
+<text x="606" y="1035.5" font-size="10" text-anchor="end">1,250</text>
+<line x1="614" x2="1044" y1="979" y2="979" stroke="#dce3ec"/>
+<text x="606" y="983" font-size="10" text-anchor="end">2,500</text>
+<line x1="614" x2="1044" y1="926.5" y2="926.5" stroke="#dce3ec"/>
+<text x="606" y="930.5" font-size="10" text-anchor="end">3,750</text>
+<line x1="614" x2="1044" y1="874" y2="874" stroke="#dce3ec"/>
+<text x="606" y="878" font-size="10" text-anchor="end">5,000</text>
+<text x="721.5" y="1102" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP · 文本: 214.46 [210.29–232.54] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="635.5" y="1074.992764" width="18.49" height="9.00723599999992" fill="#1261a0"/>
+<path d="M 644.745 1074.233278 V 1075.167736 M 641.745 1074.233278 H 647.745 M 641.745 1075.167736 H 647.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 263.54 [261.83–264.63] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="657" y="1072.931278" width="18.49" height="11.06872199999998" fill="#d15a12"/>
+<path d="M 666.245 1072.88575 V 1073.003014 M 663.245 1072.88575 H 669.245 M 663.245 1073.003014 H 669.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 296 [285.5–308.75] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="678.5" y="1071.568" width="18.49" height="12.432000000000016" fill="#2f7d58"/>
+<path d="M 687.745 1071.0325 V 1072.009 M 684.745 1071.0325 H 690.745 M 684.745 1072.009 H 690.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 309.29 [307.92–310.63] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="700" y="1071.009736" width="18.49" height="12.990264000000025" fill="#9055a2"/>
+<path d="M 709.245 1070.95375 V 1071.067486 M 706.245 1070.95375 H 712.245 M 706.245 1071.067486 H 712.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 223.42 [214.38–231.29] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="721.5" y="1074.616528" width="18.49" height="9.383471999999983" fill="#455b73"/>
+<path d="M 730.745 1074.285736 V 1074.99625 M 727.745 1074.285736 H 733.745 M 727.745 1074.99625 H 733.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 263.79 [263.63–263.83] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="743" y="1072.920778" width="18.49" height="11.079222000000073" fill="#ad3670"/>
+<path d="M 752.245 1072.918972 V 1072.92775 M 749.245 1072.918972 H 755.245 M 749.245 1072.92775 H 755.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 298.63 [294.29–322.13] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="764.5" y="1071.45775" width="18.49" height="12.542249999999967" fill="#8b720c"/>
+<path d="M 773.745 1070.47075 V 1071.639778 M 770.745 1070.47075 H 776.745 M 770.745 1071.639778 H 776.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 309.83 [308.79–310.21] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="786" y="1070.987014" width="18.49" height="13.012985999999955" fill="#137f86"/>
+<path d="M 795.245 1070.971264 V 1071.030736 M 792.245 1070.971264 H 798.245 M 792.245 1071.030736 H 798.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="936.5" y="1102" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP · 文本: 3,001.79 [2,999.29–3,071] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 文本" x="850.5" y="957.924778" width="18.49" height="126.07522200000005" fill="#1261a0"/>
+<path d="M 859.745 955.018 V 958.029736 M 856.745 955.018 H 862.745 M 856.745 958.029736 H 862.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TCP · 预处理: 3,582.67 [3,582.29–3,701.67] 微秒</title>
+<rect data-series="Boost.Asio · TCP · 预处理" x="872" y="933.528028" width="18.49" height="150.47197200000005" fill="#d15a12"/>
+<path d="M 881.245 928.529986 V 933.543778 M 878.245 928.529986 H 884.245 M 878.245 933.543778 H 884.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 文本: 4,113.71 [3,998.21–4,141.04] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 文本" x="893.5" y="911.224264" width="18.49" height="172.77573600000005" fill="#2f7d58"/>
+<path d="M 902.745 910.076236 V 916.075264 M 899.745 910.076236 H 905.745 M 899.745 916.075264 H 905.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS · 预处理: 4,190.25 [4,176.63–4,196.33] 微秒</title>
+<rect data-series="Boost.Asio · TLS · 预处理" x="915" y="908.0095" width="18.49" height="175.9905" fill="#9055a2"/>
+<path d="M 924.245 907.753972 V 908.58175 M 921.245 907.753972 H 927.245 M 921.245 908.58175 H 927.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 文本: 3,016 [3,003.88–3,224.63] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 文本" x="936.5" y="957.328" width="18.49" height="126.67200000000003" fill="#455b73"/>
+<path d="M 945.745 948.56575 V 957.83725 M 942.745 948.56575 H 948.745 M 942.745 957.83725 H 948.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP · 预处理: 3,591.17 [3,585.63–3,604.29] 微秒</title>
+<rect data-series="Standalone Asio · TCP · 预处理" x="958" y="933.171028" width="18.49" height="150.82897200000002" fill="#ad3670"/>
+<path d="M 967.245 932.619736 V 933.40375 M 964.245 932.619736 H 970.245 M 964.245 933.40375 H 970.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 文本: 4,030.04 [3,985.83–4,434] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 文本" x="979.5" y="914.738278" width="18.49" height="169.26172199999996" fill="#8b720c"/>
+<path d="M 988.745 897.7719999999999 V 916.595014 M 985.745 897.7719999999999 H 991.745 M 985.745 916.595014 H 991.745" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS · 预处理: 4,214.13 [4,208.79–4,216.88] 微秒</title>
+<rect data-series="Standalone Asio · TLS · 预处理" x="1001" y="907.00675" width="18.49" height="176.99325" fill="#137f86"/>
+<path d="M 1010.245 906.89125 V 907.230736 M 1007.245 906.89125 H 1013.245 M 1007.245 907.230736 H 1013.245" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="829" y="1128" text-anchor="middle" font-size="12">每连接尚未完成的查询数</text>
+</g></svg>

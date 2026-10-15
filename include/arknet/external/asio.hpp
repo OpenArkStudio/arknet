@@ -27,10 +27,22 @@ using error_condition = boost::system::error_condition;
 using system_error = boost::system::system_error;
 } // namespace boost::asio
 namespace asio = boost::asio;
-namespace bho = boost;
 #else
 #ifndef ASIO_STANDALONE
 #define ASIO_STANDALONE
+#endif
+
+#if !defined(ASIO_DISABLE_THREAD_KEYWORD_EXTENSION) && !defined(ASIO_HAS_THREAD_KEYWORD_EXTENSION) &&                  \
+    !defined(ASIO_THREAD_KEYWORD) && !defined(ASIO_DETAIL_CONFIG_HPP)
+#include <asio/detail/config.hpp>
+
+#if !defined(ASIO_HAS_THREAD_KEYWORD_EXTENSION)
+// C++20 supplies native thread storage even when Asio's platform detection
+// selects pthread keys, whose static destruction can precede owned IO drain.
+#define ASIO_HAS_THREAD_KEYWORD_EXTENSION 1
+#undef ASIO_THREAD_KEYWORD
+#define ASIO_THREAD_KEYWORD thread_local
+#endif
 #endif
 #include <asio.hpp>
 

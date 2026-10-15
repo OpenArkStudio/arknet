@@ -8,7 +8,7 @@ import { tableScroll } from "@cloudflare/nimbus-docs/markdown";
 const nimbusConfig = defineNimbusConfig({
   site: "https://openarkstudio.github.io",
   title: "arknet",
-  description: "C++20 header-only networking: TCP, UDP, WebSocket, HTTP and TLS.",
+  description: "C++20 header-only networking: TCP, UDP, RUDP, WebSocket, HTTP, TLS and native MySQL/Redis clients.",
   locale: "en",
   github: "https://github.com/OpenArkStudio/arknet",
   socialImageAlt: "arknet documentation",

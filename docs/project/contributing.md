@@ -14,7 +14,6 @@ reproducible checks.
 | `include/arknet/http/` | HTTP/HTTPS, routing and WebSocket implementation |
 | `include/arknet/websocket/` | Public WebSocket headers |
 | `include/arknet/external/` | Asio and Beast provider integration |
-| `include/arknet/bho/` | Bundled third-party Boost headers |
 | `tests/` | doctest cases, integration checks, stress tests and test certificates |
 | `benchmarks/` | Callback/coroutine benchmark programs, matrix runner and report tools |
 | `examples/` | Small applications demonstrating public APIs |
@@ -53,7 +52,7 @@ root, build a development configuration and run the repository check target:
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DARKNET_ENABLE_SSL=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 cmake --build build --parallel 3
 cmake --build build --target arknet_check
 ```
@@ -154,7 +153,7 @@ the commit or pull request; do not retain intermediate debugging history.
 
 The project uses BSL-1.0. New independently written arknet core code uses
 OpenArkStudio's notice. Preserve applicable notices in bundled third-party
-files, including BHO and doctest. Record newly bundled dependencies in both
+files, including fecpp and doctest. Record newly bundled dependencies in both
 [third-party notice pages](third-party-notices.md), including their license files where required.
 
 Changing names, formatting or a language standard does not remove a copied

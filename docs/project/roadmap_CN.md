@@ -1,7 +1,7 @@
 # 路线图与 TODO
 
 当前实现包含 TCP、UDP/cast、WebSocket、HTTP/1.0 与 HTTP/1.1、路由、
-RUDP 与 ARQ／可选 FEC、定时器／重连，以及可选的 TLS/HTTPS/WSS/mTLS。下面的 TODO 尚未提供占位 API，
+RUDP 与 ARQ／可选 FEC、原生单节点 MySQL 和 Redis 客户端、定时器／重连，以及可选的 TLS/HTTPS/WSS/mTLS。下面的 TODO 尚未提供占位 API，
 也没有承诺发布日期。
 
 已实现能力的吞吐量、p99 图表、模型对照和测试机器配置见
@@ -17,8 +17,7 @@ RUDP 与 ARQ／可选 FEC、定时器／重连，以及可选的 TLS/HTTPS/WSS/m
 | Named pipe | TODO | Windows 本地 client/server、消息／字节语义、overlapped IO、访问权限、取消与重启。 |
 | Unix domain socket | TODO | 本地 stream client/server、路径所有权与清理、权限、取消与重启；平台特有的 abstract namespace 和 datagram 单独选型。 |
 | RPC | TODO | 与传输解耦的拆包和编解码、请求 ID、截止时间、取消、有界未完成请求和错误传播。 |
-| MySQL 客户端 | TODO，由 arknet 自主实现 | [单节点范围与验收](../features/database-clients_CN.md)；通过独立服务端互通及异常路径测试后再接入 ark 插件。 |
-| Redis 客户端 | TODO，由 arknet 自主实现 | [单节点范围与验收](../features/database-clients_CN.md)；通过独立服务端互通及异常路径测试后再接入 ark 插件。 |
+| Redis Cluster、Sentinel 与 Pub/Sub | TODO | 拓扑发现、重定向与订阅专用回复处理；独立服务端互通与异常路径测试。 |
 | 公开协程 API | TODO | 可等待的连接／读／写、生命周期与取消；用 IO 和 CPU 负载比较共享与分片执行器。 |
 | WebSocket 压缩 | TODO | permessage-deflate 协商、解压后上限和恶意帧测试。 |
 | DTLS | TODO | 选择可用引擎，定义对端身份、重传和数据报上限。 |
@@ -36,12 +35,11 @@ HTTP/3 需要 QUIC/QPACK 协议栈，具体引擎与依赖形式待定。现有 
 
 ## 数据库客户端
 
-首版单节点范围包含 MySQL 查询、预处理与事务，以及 Redis RESP2／RESP3 命令与流水线。
-两者均需提供认证、TLS、连接池、超时、取消及队列上限。Redis Cluster、Sentinel 与 Pub/Sub 后续开发。
-
-[数据库客户端指南](../features/database-clients_CN.md)说明职责边界、连接绑定的操作、
-写入结果未知的处理、验收与性能报告要求。客户端通过验收后再接入 ark 插件；
-在此之前仍属于开发计划，不提供占位 API。
+原生单节点 [MySQL](../features/mysql/index_CN.md) 与 [Redis](../features/redis/index_CN.md)
+客户端提供认证、验证证书的 TLS、连接池独占租约、时限与请求限额。
+[数据库客户端指南](../features/database-clients_CN.md)说明失败处理与所有权约定。
+Redis Cluster、Sentinel、Pub/Sub 和公开数据库协程接口仍为 TODO。
+ark 插件接入需另行完成应用回归与关闭流程验证。
 
 ## 后续范围
 

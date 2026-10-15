@@ -1,8 +1,8 @@
 # arknet
 
 arknet 是面向客户端与服务端的通用 C++20 header-only 网络库，提供 TCP、UDP、
-RUDP、WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，
-支持 IPv4 和 IPv6，可选择 Standalone Asio 或 Boost.Asio 依赖方案。
+RUDP、WebSocket、HTTP、TLS，以及原生 MySQL 和 Redis 客户端。端点采用 CRTP 继承与组件组合，
+支持 IPv4 和 IPv6，默认依赖 Boost.Asio，也可为支持的能力选择 Standalone Asio。
 
 ## 开始使用
 
@@ -20,8 +20,10 @@ RUDP、WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，
 | WebSocket / WSS | 完整消息与 HTTP Upgrade | [WebSocket](features/websocket/index_CN.md) |
 | HTTP / HTTPS | HTTP/1.1 请求、响应、路由与中间件 | [HTTP](features/http/index_CN.md) |
 | TLS / mTLS | 加密传输与证书校验 | [TLS](features/tls/index_CN.md) |
+| MySQL | 原生查询、预处理参数、事务与独占连接租约 | [MySQL](features/mysql/index_CN.md) |
+| Redis | 二进制安全的 RESP2/RESP3 命令、流水线与独占连接租约 | [Redis](features/redis/index_CN.md) |
 
-每个模块包含客户端与服务端程序、配置、限制和性能入口。
+传输指南包含客户端与服务端程序，服务客户端指南介绍查询、命令和连接池。各指南均说明配置、限制与性能。
 [能力与支持状态](features/index_CN.md)列出依赖与计划中的功能。
 
 ## 使用 arknet
@@ -38,7 +40,7 @@ RUDP、WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，
 
 [项目](project/index_CN.md)包含架构、贡献规范与路线图。HTTP/2、HTTP/3、
 named pipe、Unix domain socket 和 RPC 仍为 TODO。
-[0.1.0 版本](project/releases_CN.md)包含 RUDP 及其三种恢复策略。
+[0.2.0 版本](project/releases_CN.md)新增原生数据库客户端并简化依赖。
 部署容量与耐久验证见[生产验收](project/production-readiness_CN.md)。
 
 [源码](https://github.com/OpenArkStudio/arknet) ·

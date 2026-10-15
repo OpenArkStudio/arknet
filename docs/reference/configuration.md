@@ -7,8 +7,8 @@ Use this page to look up build switches and public defaults. Follow
 
 | Option | Default | Effect |
 | --- | --- | --- |
-| `ARKNET_USE_BOOST_ASIO` | `OFF` | Select Boost.Asio and Boost.Beast |
-| `ARKNET_ENABLE_SSL` | `OFF` | Enable TLS, HTTPS and WSS; link OpenSSL |
+| `ARKNET_USE_BOOST_ASIO` | `ON` | Select Boost.Asio and Boost.Beast |
+| `ARKNET_ENABLE_SSL` | `OFF` | Enable MySQL authentication and secure transports; link OpenSSL |
 | `ARKNET_BUILD_TESTS` | `ON` at the top level, `OFF` when embedded | Build doctest and integration checks |
 | `ARKNET_BUILD_EXAMPLES` | `ON` at the top level, `OFF` when embedded | Build example applications |
 | `ARKNET_BUILD_BENCHMARKS` | `OFF` | Build the permanent benchmark executables |
@@ -17,8 +17,8 @@ Use this page to look up build switches and public defaults. Follow
 
 | Macro | Meaning |
 | --- | --- |
-| `ARKNET_USE_BOOST_ASIO=1` | Select Boost; undefined or `0` selects standalone Asio |
-| `ARKNET_ENABLE_SSL` | Its presence enables secure transports; leave it undefined to disable them |
+| `ARKNET_USE_BOOST_ASIO=1` | Default `1` selects Boost; `0` selects Standalone Asio (TCP, UDP, RUDP, TLS and database clients) |
+| `ARKNET_ENABLE_SSL` | Its presence enables MySQL connections and secure transports; leave it undefined to disable them |
 | `ARKNET_HEADER_ONLY` | Internal provider macro, not a switch for a compiled library |
 | `ARKNET_ENABLE_TIMER_CALLBACK_WHEN_ERROR` | Invoke timer callbacks on errors; inspect `get_last_error()` |
 

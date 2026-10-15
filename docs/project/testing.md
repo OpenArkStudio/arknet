@@ -13,16 +13,18 @@ smoke execution; its shared-runner timing is not the published baseline.
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
-  -DARKNET_ENABLE_SSL=ON -DARKNET_BUILD_BENCHMARKS=ON \
-  -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+  -DARKNET_ENABLE_SSL=ON -DARKNET_BUILD_TESTS=ON \
+  -DARKNET_BUILD_BENCHMARKS=ON -DARKNET_USE_BOOST_ASIO=ON
 cmake --build build --parallel 3
 cmake --build build --target arknet_check
 build/tests/arknet_stress_test --protocol all --seconds 60 \
   --clients 16 --rounds 2 --window 4 --certs tests/certs
 ```
 
-For Boost, replace the Asio include argument with
-`-DARKNET_USE_BOOST_ASIO=ON`. Windows executables have the `.exe` suffix.
+For Standalone Asio, use a separate build directory with
+`-DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include`.
+HTTP and WebSocket checks require Boost.Asio and Boost.Beast; the two
+configurations therefore contain different checks. Windows executables have the `.exe` suffix.
 The repository's TLS certificates are for testing, not production identities.
 
 Tests use doctest 2.5.3, stored under `tests/vendor/doctest`; the framework is
@@ -50,9 +52,12 @@ and `shasum` are not prerequisites for these C++ tests or single benchmarks.
 | ARQ / RUDP | Canonical protocol interop, loss/reordering, bounded memory, handshake retries, IPv4/IPv6, stale SYN handling and shutdown |
 | FEC / RUDP FEC | Independent Reed–Solomon interop, negotiation, CRC rejection, duplicate/replay handling, recovery, partial groups, memory budgets, fixed/adaptive policies and concurrent statistics |
 | Lifecycle / detail / IO pool | Timer/post cancellation, real completion before destruction, mutable listeners, executor serialization, queued work and restart |
+| Process exit / thread storage | Last-owner callback release, nested pools, direct/indirect globals, both multi-TU link orders, late-construction rejection and explicit Asio configuration preservation |
 | Concurrency / keepalive | Send limits, callback completion accounting, concurrent shutdown, TCP keepalive options |
 | TLS | Trust/identity rejection, mTLS, deadlines, WSS and fresh stream on reconnect |
 | IPv6 | TCP, UDP/session/cast, WS/WSS, HTTP/HTTPS, TLS IP identity and handshake Host |
+| MySQL | Packet/authentication/command codecs, verified TLS, queries, prepared statements, transactions, result limits, cancellation, bounded admission and exclusive pool reset/database isolation |
+| Redis | RESP2/RESP3, authentication, TCP/TLS/mTLS, ordered pipelines, cancellation reply draining, bounded admission, unsupported replication commands and exclusive pool reset/authentication/database isolation |
 | Installed consumer | Provider/TLS configuration propagation and installed public headers |
 
 Sustained stress validates content/sequence, completion counts, connection and
@@ -65,18 +70,55 @@ and teardown. Slow receivers test backpressure rather than throughput.
 
 ## Local Verification
 
-Verified on 2026-10-13 using a Mac mini `Mac16,11`, Apple M4 Pro,
+Verified on 2026-10-15 using a Mac mini `Mac16,11`, Apple M4 Pro,
 14 physical/logical cores (10 performance and 4 efficiency cores), 48 GiB RAM,
 macOS 27.0.1 (26A434), Apple Clang 21.0.0, CMake 4.3.3,
 Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
 
-| Dependency | Build | TLS | Checks / doctest cases | Result |
-| --- | --- | --- | ---: | --- |
-| Standalone Asio | Release | ON | 55 / 219 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-standalone.log) |
-| Boost.Asio | Release | ON | 55 / 219 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-boost.log) |
+| Dependency | Build / TLS | Checks | doctest cases | Assertions | Result |
+| --- | --- | ---: | ---: | ---: | --- |
+| Boost.Asio | Release / ON | 75 | 374 | 1,952,026 | Passed |
+| Standalone Asio | Release / ON | 62 | 314 | 976,980 | Passed |
 
 Checks count programs invoked by `arknet_check`; cases count doctest cases.
-The complete checks include benchmark smoke cases and installed-package consumption.
+Both complete runs had zero failed or skipped cases and include benchmark smoke
+cases and installed-package consumption. Real database tests use isolated
+MySQL 8.4.11 and Redis 7.4.2 services; without their environment variables,
+those optional cases are skipped rather than replaced by simulated servers.
+
+### Database Client Sanitizers
+
+Separate LLVM 22.1.7 builds instrument the test framework and arknet code.
+
+| Build | Scope | Cases | Assertions | Result |
+| --- | --- | ---: | ---: | --- |
+| Boost.Asio / TSan | MySQL connection and pool | 51 | 1,899 | Passed, 0 skipped |
+| Standalone Asio / TSan | MySQL connection and pool | 51 | 1,899 | Passed, 0 skipped |
+| Boost.Asio / ASan+UBSan | MySQL connection and pool | 51 | 1,899 | Passed, 0 skipped |
+| Boost.Asio / TSan | Redis client and pool | 35 | 316 | Passed, 0 skipped |
+| Standalone Asio / ASan+UBSan | Redis client and pool | 35 | 316 | Passed, 0 skipped |
+
+The Boost.Asio database TSan executions cover 86 cases and 2,215 assertions in
+total. MySQL's additional Standalone Asio TSan and Boost.Asio ASan+UBSan runs
+cover the same 51 cases and 1,899 assertions separately. No sanitizer diagnostics
+were reported, and no suppressions were used. macOS ASan runs disable leak detection.
+MySQL includes runtime ownership through post return and independent
+invalid-connect/rejected-command destruction cases. Redis includes the RESET
+byte-budget and REPLCONF response-correlation regressions.
+[Scope, environment and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README.md)
+record the exact distinctions. These are database suites, not a full-project
+sanitizer result.
+
+MySQL codec tests include the standard stream header required by MSVC assertion
+diagnostics. Aggregate command admission is tested using encoded request sizes
+whose sum exceeds the budget, independently of string capacity or small-string
+optimization.
+
+### RUDP Interoperability Evidence
+
+The following targeted runs were recorded on 2026-10-13. Their source revisions
+and scope remain in the linked record; their earlier complete-check counts do
+not describe the current project.
 
 | Instrumentation | Scope | Cases | Result |
 | --- | --- | ---: | --- |
@@ -94,10 +136,11 @@ record the source revision and exact scope. The test-only canonical KCP source
 disables `null,object-size` instrumentation; arknet's own code remains fully instrumented.
 RUDP performance has a [separate report](../performance/rudp.md).
 
-<Aside type="note" title="Note: Release scope">
+<Aside type="note" title="Deployment capacity">
 
-RUDP, ARQ and single HTTP requests are included in `v0.1.0`. Their local correctness
-checks have passed; deployment capacity and endurance remain separate acceptance work.
+Local correctness, sanitizer and loopback results do not establish a
+100,000–200,000 cluster PCU capacity. Cross-host load, resource budgets,
+production-duration endurance and ARK workload acceptance require separate tests.
 
 </Aside>
 
@@ -120,7 +163,7 @@ and thread schedules exercised; it does not prove that all errors are absent.
 
 ## CI and Remaining Coverage
 
-CI checks Linux/macOS/Windows with both providers; Linux also runs
+CI checks Linux/macOS/Windows with both dependency configurations; Linux also runs
 ASan/UBSan and TSan. Job names include OS, provider, TLS and check mode.
 Main pushes and PRs are separate triggers; outdated runs are canceled.
 CI uploads test logs and runs benchmark smoke checks, not a performance

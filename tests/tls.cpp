@@ -173,21 +173,27 @@ DOCTEST_TEST_CASE("TLS TCP verifies IP identity without sending SNI") {
     secure_echo<arknet::tcps_server, arknet::tcps_client>("127.0.0.1");
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("TLS WebSocket verifies DNS identity and sends SNI") {
     secure_echo<arknet::wss_server, arknet::wss_client>("localhost");
 }
+#endif
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("TLS WebSocket verifies IP identity without sending SNI") {
     secure_echo<arknet::wss_server, arknet::wss_client>("127.0.0.1");
 }
+#endif
 
 DOCTEST_TEST_CASE("TLS TCP rejects an untrusted server certificate") {
     reject_untrusted<arknet::tcps_server, arknet::tcps_client>();
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("TLS WebSocket rejects an untrusted server certificate") {
     reject_untrusted<arknet::wss_server, arknet::wss_client>();
 }
+#endif
 
 DOCTEST_TEST_CASE("TLS TCP rejects a DNS identity mismatch") {
     reject_identity<arknet::tcps_server, arknet::tcps_client>("localhost");
@@ -197,45 +203,57 @@ DOCTEST_TEST_CASE("TLS TCP rejects an IP identity mismatch") {
     reject_identity<arknet::tcps_server, arknet::tcps_client>("127.0.0.1");
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("TLS WebSocket rejects a DNS identity mismatch") {
     reject_identity<arknet::wss_server, arknet::wss_client>("localhost");
 }
+#endif
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("TLS WebSocket rejects an IP identity mismatch") {
     reject_identity<arknet::wss_server, arknet::wss_client>("127.0.0.1");
 }
+#endif
 
 DOCTEST_TEST_CASE("TLS TCP rejects a server without an identity") {
     reject_missing_identity<arknet::tcps_server>();
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("TLS WebSocket rejects a server without an identity") {
     reject_missing_identity<arknet::wss_server>();
 }
+#endif
 
 DOCTEST_TEST_CASE("TLS TCP rejects a mismatched certificate and private key") {
     reject_mismatched_key<arknet::tcps_server>();
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("TLS WebSocket rejects a mismatched certificate and private key") {
     reject_mismatched_key<arknet::wss_server>();
 }
+#endif
 
 DOCTEST_TEST_CASE("mTLS TCP accepts a trusted client certificate") {
     mutual_echo<arknet::tcps_server, arknet::tcps_client>();
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("mTLS WebSocket accepts a trusted client certificate") {
     mutual_echo<arknet::wss_server, arknet::wss_client>();
 }
+#endif
 
 DOCTEST_TEST_CASE("mTLS TCP rejects a client without a certificate") {
     reject_missing_client_certificate<arknet::tcps_server, arknet::tcps_client>();
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("mTLS WebSocket rejects a client without a certificate") {
     reject_missing_client_certificate<arknet::wss_server, arknet::wss_client>();
 }
+#endif
 
 template<class Server, class Client>
 void secure_reconnect() {
@@ -272,6 +290,8 @@ DOCTEST_TEST_CASE("TLS TCP recreates its stream on automatic reconnect") {
     secure_reconnect<arknet::tcps_server, arknet::tcps_client>();
 }
 
+#if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("TLS WebSocket recreates both protocol streams on automatic reconnect") {
     secure_reconnect<arknet::wss_server, arknet::wss_client>();
 }
+#endif

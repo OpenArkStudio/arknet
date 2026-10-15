@@ -68,7 +68,7 @@ int main()
 <Step title="构建并检查回显">
 
 ```sh
-cmake -S . -B build -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+cmake -S . -B build
 cmake --build build --parallel 3
 ./build/arknet_echo
 ```

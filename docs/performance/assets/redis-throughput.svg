@@ -1,0 +1,406 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1112" height="1140" viewBox="0 0 1112 1140" role="img" aria-labelledby="redis-throughput-en">
+<title id="redis-throughput-en">Redis · Command throughput</title>
+<desc>Bars show round medians; whiskers show minimum to maximum.</desc>
+<rect width="100%" height="100%" fill="#fff"/>
+<g font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" fill="#162538">
+<text x="28" y="32" font-size="21" font-weight="650">Redis · Command throughput</text>
+<text x="28" y="58" font-size="12">Median; whiskers: round minimum–maximum</text>
+<rect x="28" y="73" width="13" height="13" fill="#1261a0"/>
+<text x="48" y="83" font-size="12">Boost.Asio · TCP</text>
+<rect x="568" y="73" width="13" height="13" fill="#d15a12"/>
+<text x="588" y="83" font-size="12">Boost.Asio · TLS</text>
+<rect x="28" y="97" width="13" height="13" fill="#2f7d58"/>
+<text x="48" y="107" font-size="12">Standalone Asio · TCP</text>
+<rect x="568" y="97" width="13" height="13" fill="#9055a2"/>
+<text x="588" y="107" font-size="12">Standalone Asio · TLS</text>
+<text x="74" y="164" font-size="13" font-weight="600">1 KiB · 4 connections · 1 batch/connection</text>
+<text x="74" y="182" font-size="11">commands/s</text>
+<line x1="74" x2="504" y1="396" y2="396" stroke="#dce3ec"/>
+<text x="66" y="400" font-size="10" text-anchor="end">0</text>
+<line x1="74" x2="504" y1="343.5" y2="343.5" stroke="#dce3ec"/>
+<text x="66" y="347.5" font-size="10" text-anchor="end">112,500</text>
+<line x1="74" x2="504" y1="291" y2="291" stroke="#dce3ec"/>
+<text x="66" y="295" font-size="10" text-anchor="end">225,000</text>
+<line x1="74" x2="504" y1="238.5" y2="238.5" stroke="#dce3ec"/>
+<text x="66" y="242.5" font-size="10" text-anchor="end">337,500</text>
+<line x1="74" x2="504" y1="186" y2="186" stroke="#dce3ec"/>
+<text x="66" y="190" font-size="10" text-anchor="end">450,000</text>
+<text x="127.75" y="414" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP: 93,771.1 [87,631.22–95,039.33] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="84.75" y="352.2401510853533" width="18.49" height="43.75984891464668" fill="#1261a0"/>
+<path d="M 93.995 351.64831122121336 V 355.10543065733333 M 90.995 351.64831122121336 H 96.995 M 90.995 355.10543065733333 H 96.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 81,439.22 [81,351.03–81,609.52] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="106.25" y="357.99502865678" width="18.49" height="38.00497134322001" fill="#d15a12"/>
+<path d="M 115.495 357.91555824412666 V 358.03618412274 M 112.495 357.91555824412666 H 118.495 M 112.495 358.03618412274 H 118.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 94,508.09 [93,355.95–94,600.74] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="127.75" y="351.89622664598664" width="18.49" height="44.103773354013356" fill="#2f7d58"/>
+<path d="M 136.995 351.85299027962 V 352.43389162694 M 133.995 351.85299027962 H 139.995 M 133.995 352.43389162694 H 139.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 80,727.17 [80,534.1–81,042.19] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="149.25" y="358.3273185438467" width="18.49" height="37.67268145615333" fill="#9055a2"/>
+<path d="M 158.495 358.1803095068 V 358.41742117282666 M 155.495 358.1803095068 H 161.495 M 155.495 358.41742117282666 H 161.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="235.25" y="414" text-anchor="middle" font-size="11">4</text>
+<g><title>Boost.Asio · TCP: 219,694.29 [219,367.24–220,520.51] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="192.25" y="293.4759990476667" width="18.49" height="102.52400095233332" fill="#1261a0"/>
+<path d="M 201.495 293.0904308278 V 293.62861969159997 M 198.495 293.0904308278 H 204.495 M 198.495 293.62861969159997 H 204.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 192,825.71 [190,492.28–193,757.16] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="213.75" y="306.01467016280003" width="18.49" height="89.98532983719997" fill="#d15a12"/>
+<path d="M 222.995 305.5799913023333 V 307.1036041954667 M 219.995 305.5799913023333 H 225.995 M 219.995 307.1036041954667 H 225.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 215,414.9 [200,750.79–216,798.95] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="235.25" y="295.47304879" width="18.49" height="100.52695121" fill="#2f7d58"/>
+<path d="M 244.495 294.8271581824 V 302.3162992754 M 241.495 294.8271581824 H 247.495 M 241.495 302.3162992754 H 247.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 192,532.09 [192,330.59–193,268.44] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="256.75" y="306.1516903832" width="18.49" height="89.84830961680001" fill="#9055a2"/>
+<path d="M 265.995 305.80806045133335 V 306.2457227622 M 262.995 305.80806045133335 H 268.995 M 262.995 306.2457227622 H 268.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="342.75" y="414" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP: 322,188.92 [319,640.7–322,737.56] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="299.75" y="245.64517088879998" width="18.49" height="150.35482911120002" fill="#1261a0"/>
+<path d="M 308.995 245.3891370268 V 246.83434111113334 M 305.995 245.3891370268 H 311.995 M 305.995 246.83434111113334 H 311.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 277,446.83 [275,398.13–279,351.13] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="321.25" y="266.52481053073336" width="18.49" height="129.47518946926664" fill="#d15a12"/>
+<path d="M 330.495 265.636139996 V 267.4808717482667 M 327.495 265.636139996 H 333.495 M 327.495 267.4808717482667 H 333.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 322,729.57 [320,833.64–323,843.39] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="342.75" y="245.39286911973332" width="18.49" height="150.60713088026668" fill="#2f7d58"/>
+<path d="M 351.995 244.8730858198 V 246.2776348818 M 348.995 244.8730858198 H 354.995 M 348.995 246.2776348818 H 354.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 279,482.47 [277,351.69–279,651.31] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="364.25" y="265.5748485611333" width="18.49" height="130.4251514388667" fill="#9055a2"/>
+<path d="M 373.495 265.49605348673333 V 266.5692106944667 M 370.495 265.49605348673333 H 376.495 M 370.495 266.5692106944667 H 376.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="450.25" y="414" text-anchor="middle" font-size="11">64</text>
+<g><title>Boost.Asio · TCP: 383,950.44 [383,553.04–384,343.71] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="407.25" y="216.8231284442667" width="18.49" height="179.1768715557333" fill="#1261a0"/>
+<path d="M 416.495 216.63960094113332 V 217.00858201886666 M 413.495 216.63960094113332 H 419.495 M 413.495 217.00858201886666 H 419.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 334,296.89 [332,135.7–338,180.7] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="428.75" y="239.9947850428" width="18.49" height="156.0052149572" fill="#d15a12"/>
+<path d="M 437.995 238.18233828826666 V 241.00333914553335 M 434.995 238.18233828826666 H 440.995 M 434.995 241.00333914553335 H 440.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 363,308.77 [363,162.84–370,250] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="450.25" y="226.45590774353334" width="18.49" height="169.54409225646666" fill="#2f7d58"/>
+<path d="M 459.495 223.2166668505333 V 226.5240096580667 M 456.495 223.2166668505333 H 462.495 M 456.495 226.5240096580667 H 462.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 337,511.19 [334,990.61–338,390.12] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="471.75" y="238.49477715626668" width="18.49" height="157.50522284373332" fill="#9055a2"/>
+<path d="M 480.995 238.08461241339998 V 239.67104798533333 M 477.995 238.08461241339998 H 483.995 M 477.995 239.67104798533333 H 483.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="289" y="440" text-anchor="middle" font-size="12">Commands per pipeline batch</text>
+<text x="614" y="164" font-size="13" font-weight="600">1 KiB · 4 connections · 4 batches/connection</text>
+<text x="614" y="182" font-size="11">commands/s</text>
+<line x1="614" x2="1044" y1="396" y2="396" stroke="#dce3ec"/>
+<text x="606" y="400" font-size="10" text-anchor="end">0</text>
+<line x1="614" x2="1044" y1="343.5" y2="343.5" stroke="#dce3ec"/>
+<text x="606" y="347.5" font-size="10" text-anchor="end">112,500</text>
+<line x1="614" x2="1044" y1="291" y2="291" stroke="#dce3ec"/>
+<text x="606" y="295" font-size="10" text-anchor="end">225,000</text>
+<line x1="614" x2="1044" y1="238.5" y2="238.5" stroke="#dce3ec"/>
+<text x="606" y="242.5" font-size="10" text-anchor="end">337,500</text>
+<line x1="614" x2="1044" y1="186" y2="186" stroke="#dce3ec"/>
+<text x="606" y="190" font-size="10" text-anchor="end">450,000</text>
+<text x="667.75" y="414" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP: 205,768.14 [203,511.27–209,539.7] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="624.75" y="299.9748689062667" width="18.49" height="96.02513109373331" fill="#1261a0"/>
+<path d="M 633.995 298.214808461 V 301.02807442886666 M 630.995 298.214808461 H 636.995 M 630.995 301.02807442886666 H 636.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 178,333.3 [175,335.11–178,435.19] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="646.25" y="312.777793716" width="18.49" height="83.22220628399998" fill="#d15a12"/>
+<path d="M 655.495 312.7302429974 V 314.1769477072 M 652.495 312.7302429974 H 658.495 M 652.495 314.1769477072 H 658.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 209,150.96 [204,499.92–211,744.26] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="667.75" y="298.39621937693335" width="18.49" height="97.60378062306665" fill="#2f7d58"/>
+<path d="M 676.995 297.1860117046 V 300.5667034428 M 673.995 297.1860117046 H 679.995 M 673.995 300.5667034428 H 679.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 176,416.18 [174,277.53–176,961.88] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="689.25" y="313.67244873133336" width="18.49" height="82.32755126866664" fill="#9055a2"/>
+<path d="M 698.495 313.4177885022 V 314.670483683 M 695.495 313.4177885022 H 701.495 M 695.495 314.670483683 H 701.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="775.25" y="414" text-anchor="middle" font-size="11">4</text>
+<g><title>Boost.Asio · TCP: 414,659.72 [410,592.04–414,949.87] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="732.25" y="202.49213083326669" width="18.49" height="193.50786916673331" fill="#1261a0"/>
+<path d="M 741.495 202.35672571353334 V 204.39038152466668 M 738.495 202.35672571353334 H 744.495 M 738.495 204.39038152466668 H 744.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 322,773.09 [321,458.44–323,331.71] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="753.75" y="245.37255984893332" width="18.49" height="150.62744015106668" fill="#d15a12"/>
+<path d="M 762.995 245.11186705900002 V 245.98606100246667 M 759.995 245.11186705900002 H 765.995 M 759.995 245.98606100246667 H 765.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 415,810.32 [415,077.73–415,834.29] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="775.25" y="201.95518426413335" width="18.49" height="194.04481573586665" fill="#2f7d58"/>
+<path d="M 784.495 201.94399642686668 V 202.29705771726668 M 781.495 201.94399642686668 H 787.495 M 781.495 202.29705771726668 H 787.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 317,590.56 [316,483.91–322,719.09] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="796.75" y="247.79107123933332" width="18.49" height="148.20892876066668" fill="#9055a2"/>
+<path d="M 805.995 245.39775654306666 V 248.3075077296 M 802.995 245.39775654306666 H 808.995 M 802.995 248.3075077296 H 808.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="882.75" y="414" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP: 387,555.62 [387,111.77–387,633.53] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="839.75" y="215.14070915606663" width="18.49" height="180.85929084393337" fill="#1261a0"/>
+<path d="M 848.995 215.10435224013332 V 215.34784278626665 M 845.995 215.10435224013332 H 851.995 M 845.995 215.34784278626665 H 851.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 337,043.25 [336,934.95–337,632.7] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="861.25" y="238.71314961406665" width="18.49" height="157.28685038593335" fill="#d15a12"/>
+<path d="M 870.495 238.43807201639999 V 238.76368850106667 M 867.495 238.43807201639999 H 873.495 M 867.495 238.76368850106667 H 873.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 387,877.71 [382,656.46–388,815.2] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="882.75" y="214.99040390493334" width="18.49" height="181.00959609506666" fill="#2f7d58"/>
+<path d="M 891.995 214.55290672173334 V 217.42698687146665 M 888.995 214.55290672173334 H 894.995 M 888.995 217.42698687146665 H 894.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 336,694.35 [333,935.93–336,723.48] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="904.25" y="238.87597096739998" width="18.49" height="157.12402903260002" fill="#9055a2"/>
+<path d="M 913.495 238.86237598133334 V 240.16323313706667 M 910.495 238.86237598133334 H 916.495 M 910.495 240.16323313706667 H 916.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="990.25" y="414" text-anchor="middle" font-size="11">64</text>
+<g><title>Boost.Asio · TCP: 408,665.38 [407,333.88–409,103.87] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="947.25" y="205.28948827353332" width="18.49" height="190.71051172646668" fill="#1261a0"/>
+<path d="M 956.495 205.08486262713333 V 205.91085651566667 M 953.495 205.08486262713333 H 959.495 M 953.495 205.91085651566667 H 959.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 351,318.71 [345,350.36–354,600.33] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="968.75" y="232.0512688916" width="18.49" height="163.9487311084" fill="#d15a12"/>
+<path d="M 977.995 230.51984389999998 V 234.8364972853333 M 974.995 230.51984389999998 H 980.995 M 974.995 234.8364972853333 H 980.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 408,466.93 [407,865.85–409,054.24] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="990.25" y="205.38210096059998" width="18.49" height="190.61789903940002" fill="#2f7d58"/>
+<path d="M 999.495 205.10802278 V 205.6626022152 M 996.495 205.10802278 H 1002.495 M 996.495 205.6626022152 H 1002.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 350,430.29 [347,981.16–353,031.79] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="1011.75" y="232.46586293393332" width="18.49" height="163.53413706606668" fill="#9055a2"/>
+<path d="M 1020.995 231.25183365826666 V 233.60879298700002 M 1017.995 231.25183365826666 H 1023.995 M 1017.995 233.60879298700002 H 1023.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="829" y="440" text-anchor="middle" font-size="12">Commands per pipeline batch</text>
+<text x="74" y="484" font-size="13" font-weight="600">4 KiB · 4 connections · 1 batch/connection</text>
+<text x="74" y="502" font-size="11">commands/s</text>
+<line x1="74" x2="504" y1="716" y2="716" stroke="#dce3ec"/>
+<text x="66" y="720" font-size="10" text-anchor="end">0</text>
+<line x1="74" x2="504" y1="663.5" y2="663.5" stroke="#dce3ec"/>
+<text x="66" y="667.5" font-size="10" text-anchor="end">37,500</text>
+<line x1="74" x2="504" y1="611" y2="611" stroke="#dce3ec"/>
+<text x="66" y="615" font-size="10" text-anchor="end">75,000</text>
+<line x1="74" x2="504" y1="558.5" y2="558.5" stroke="#dce3ec"/>
+<text x="66" y="562.5" font-size="10" text-anchor="end">112,500</text>
+<line x1="74" x2="504" y1="506" y2="506" stroke="#dce3ec"/>
+<text x="66" y="510" font-size="10" text-anchor="end">150,000</text>
+<text x="127.75" y="734" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP: 56,855.81 [56,810.55–57,010.08] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="84.75" y="636.40187036212" width="18.49" height="79.59812963787999" fill="#1261a0"/>
+<path d="M 93.995 636.1858905722199 V 636.465229937 M 90.995 636.1858905722199 H 96.995 M 90.995 636.465229937 H 96.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 49,630.35 [49,604.62–49,929.42] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="106.25" y="646.51750696326" width="18.49" height="69.48249303674004" fill="#d15a12"/>
+<path d="M 115.495 646.09881343388 V 646.55352766658 M 112.495 646.09881343388 H 118.495 M 112.495 646.55352766658 H 118.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 57,163.75 [57,004.9–57,360.35] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="127.75" y="635.97074545336" width="18.49" height="80.02925454664" fill="#2f7d58"/>
+<path d="M 136.995 635.69551603806 V 636.19313611836 M 133.995 635.69551603806 H 139.995 M 133.995 636.19313611836 H 139.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 49,944.62 [49,932.65–49,958.49] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="149.25" y="646.07753586092" width="18.49" height="69.92246413908003" fill="#9055a2"/>
+<path d="M 158.495 646.0581134176 V 646.09429144032 M 155.495 646.0581134176 H 161.495 M 155.495 646.09429144032 H 161.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="235.25" y="734" text-anchor="middle" font-size="11">4</text>
+<g><title>Boost.Asio · TCP: 84,638.68 [84,542.53–84,653.55] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="192.25" y="597.5058430412" width="18.49" height="118.49415695879998" fill="#1261a0"/>
+<path d="M 201.495 597.4850270975201 V 597.64045361044 M 198.495 597.4850270975201 H 204.495 M 198.495 597.64045361044 H 204.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 72,581.01 [72,477.52–72,712.14] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="213.75" y="614.3865887748" width="18.49" height="101.61341122520003" fill="#d15a12"/>
+<path d="M 222.995 614.20300874418 V 614.53146646482 M 219.995 614.20300874418 H 225.995 M 219.995 614.53146646482 H 225.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 84,830 [84,429.96–84,889.56] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="235.25" y="597.2379957307" width="18.49" height="118.76200426929995" fill="#2f7d58"/>
+<path d="M 244.495 597.15461857054 V 597.79805125666 M 241.495 597.15461857054 H 247.495 M 241.495 597.79805125666 H 247.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 72,283.5 [72,271.27–72,416.86] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="256.75" y="614.8031029141" width="18.49" height="101.19689708589999" fill="#9055a2"/>
+<path d="M 265.995 614.61638917472 V 614.820216141 M 262.995 614.61638917472 H 268.995 M 262.995 614.820216141 H 268.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="342.75" y="734" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP: 95,236.62 [95,097.8–99,623.42] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="299.75" y="582.6687320455001" width="18.49" height="133.33126795449994" fill="#1261a0"/>
+<path d="M 308.995 576.527208969 V 582.8630762881801 M 305.995 576.527208969 H 311.995 M 305.995 582.8630762881801 H 311.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 86,307.63 [86,166.53–86,483.3] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="321.25" y="595.1693130594" width="18.49" height="120.8306869406" fill="#d15a12"/>
+<path d="M 330.495 594.92338573384 V 595.36685204118 M 327.495 594.92338573384 H 333.495 M 327.495 595.36685204118 H 333.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 101,155.74 [95,511.09–101,342.87] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="342.75" y="574.381963839" width="18.49" height="141.61803616099996" fill="#2f7d58"/>
+<path d="M 351.995 574.119982847 V 582.2844721241399 M 348.995 574.119982847 H 354.995 M 348.995 582.2844721241399 H 354.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 85,858.47 [83,600.79–86,337.98] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="364.25" y="595.79814458286" width="18.49" height="120.20185541714" fill="#9055a2"/>
+<path d="M 373.495 595.12682349382 V 598.95888925288 M 370.495 595.12682349382 H 376.495 M 370.495 598.95888925288 H 376.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="450.25" y="734" text-anchor="middle" font-size="11">64</text>
+<g><title>Boost.Asio · TCP: 105,550.64 [105,415.83–105,622.81] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="407.25" y="568.2290982642" width="18.49" height="147.77090173579995" fill="#1261a0"/>
+<path d="M 416.495 568.1280704632 V 568.4178314228 M 413.495 568.1280704632 H 419.495 M 413.495 568.4178314228 H 419.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 91,753.63 [91,541.85–91,882.68] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="428.75" y="587.54491117192" width="18.49" height="128.45508882807997" fill="#d15a12"/>
+<path d="M 437.995 587.36424378068 V 587.84140303402 M 434.995 587.36424378068 H 440.995 M 434.995 587.84140303402 H 440.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 105,622.76 [105,488.67–105,650.75] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="450.25" y="568.1281380398" width="18.49" height="147.87186196020002" fill="#2f7d58"/>
+<path d="M 459.495 568.0889541846 V 568.3158645844001 M 456.495 568.0889541846 H 462.495 M 456.495 568.3158645844001 H 462.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 91,802.2 [91,672.63–91,900.65] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="471.75" y="587.4769233439" width="18.49" height="128.5230766561" fill="#9055a2"/>
+<path d="M 480.995 587.33909025004 V 587.6583183617599 M 477.995 587.33909025004 H 483.995 M 477.995 587.6583183617599 H 483.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="289" y="760" text-anchor="middle" font-size="12">Commands per pipeline batch</text>
+<text x="614" y="484" font-size="13" font-weight="600">4 KiB · 4 connections · 4 batches/connection</text>
+<text x="614" y="502" font-size="11">commands/s</text>
+<line x1="614" x2="1044" y1="716" y2="716" stroke="#dce3ec"/>
+<text x="606" y="720" font-size="10" text-anchor="end">0</text>
+<line x1="614" x2="1044" y1="663.5" y2="663.5" stroke="#dce3ec"/>
+<text x="606" y="667.5" font-size="10" text-anchor="end">37,500</text>
+<line x1="614" x2="1044" y1="611" y2="611" stroke="#dce3ec"/>
+<text x="606" y="615" font-size="10" text-anchor="end">75,000</text>
+<line x1="614" x2="1044" y1="558.5" y2="558.5" stroke="#dce3ec"/>
+<text x="606" y="562.5" font-size="10" text-anchor="end">112,500</text>
+<line x1="614" x2="1044" y1="506" y2="506" stroke="#dce3ec"/>
+<text x="606" y="510" font-size="10" text-anchor="end">150,000</text>
+<text x="667.75" y="734" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP: 108,746.42 [108,605.13–109,045.25] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="624.75" y="563.7550173592" width="18.49" height="152.2449826408" fill="#1261a0"/>
+<path d="M 633.995 563.3366470306 V 563.952818147 M 630.995 563.3366470306 H 636.995 M 630.995 563.952818147 H 636.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 83,859.05 [83,612.28–84,340.42] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="646.25" y="598.5973270264" width="18.49" height="117.40267297360003" fill="#d15a12"/>
+<path d="M 655.495 597.92340537254 V 598.9428020668 M 652.495 597.92340537254 H 658.495 M 652.495 598.9428020668 H 658.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 109,057.92 [108,682.14–109,247.35] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="667.75" y="563.3189144206" width="18.49" height="152.68108557940002" fill="#2f7d58"/>
+<path d="M 676.995 563.053703133 V 563.8450018482 M 673.995 563.053703133 H 679.995 M 673.995 563.8450018482 H 679.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 84,103.59 [83,808.99–84,135.19] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="689.25" y="598.25497499806" width="18.49" height="117.74502500194001" fill="#9055a2"/>
+<path d="M 698.495 598.2107371099601 V 598.66741906352 M 695.495 598.2107371099601 H 701.495 M 695.495 598.66741906352 H 701.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="775.25" y="734" text-anchor="middle" font-size="11">4</text>
+<g><title>Boost.Asio · TCP: 102,248.75 [101,896.75–102,312.71] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="732.25" y="572.8517485426" width="18.49" height="143.14825145739997" fill="#1261a0"/>
+<path d="M 741.495 572.762212314 V 573.3445475234 M 738.495 572.762212314 H 744.495 M 738.495 573.3445475234 H 744.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 86,659.14 [86,523.09–87,061.58] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="753.75" y="594.6772069037401" width="18.49" height="121.32279309625994" fill="#d15a12"/>
+<path d="M 762.995 594.11378735292 V 594.8676698238 M 759.995 594.11378735292 H 765.995 M 759.995 594.8676698238 H 765.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 102,185.65 [102,066.28–102,256.8] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="775.25" y="572.9400839842" width="18.49" height="143.0599160158" fill="#2f7d58"/>
+<path d="M 784.495 572.8404823744 V 573.1072085572 M 781.495 572.8404823744 H 787.495 M 781.495 573.1072085572 H 787.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 86,922.74 [86,725.83–86,937.26] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="796.75" y="594.30816960434" width="18.49" height="121.69183039565996" fill="#9055a2"/>
+<path d="M 805.995 594.28783178362 V 594.5838402094801 M 802.995 594.28783178362 H 808.995 M 802.995 594.5838402094801 H 808.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="882.75" y="734" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP: 105,837.87 [105,445.14–106,284.41] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="839.75" y="567.8269766114" width="18.49" height="148.17302338859997" fill="#1261a0"/>
+<path d="M 848.995 567.2018326752 V 568.3768060118 M 845.995 567.2018326752 H 851.995 M 845.995 568.3768060118 H 851.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 89,467.66 [88,778.41–90,450.31] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="861.25" y="590.7452709860399" width="18.49" height="125.25472901396006" fill="#d15a12"/>
+<path d="M 870.495 589.36956363946 V 591.71022367768 M 867.495 589.36956363946 H 873.495 M 867.495 591.71022367768 H 873.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 106,032.26 [106,018.92–106,039.82] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="882.75" y="567.5548374112" width="18.49" height="148.44516258880003" fill="#2f7d58"/>
+<path d="M 891.995 567.5442482172 V 567.5735187186 M 888.995 567.5442482172 H 894.995 M 888.995 567.5735187186 H 894.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 89,640.31 [89,398.71–89,839.38] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="904.25" y="590.503561233" width="18.49" height="125.49643876699997" fill="#9055a2"/>
+<path d="M 913.495 590.22486781296 V 590.84181068314 M 910.495 590.22486781296 H 916.495 M 910.495 590.84181068314 H 916.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="990.25" y="734" text-anchor="middle" font-size="11">64</text>
+<g><title>Boost.Asio · TCP: 108,015.97 [107,768.48–108,538.81] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="947.25" y="564.777639648" width="18.49" height="151.222360352" fill="#1261a0"/>
+<path d="M 956.495 564.0456603468 V 565.124130765 M 953.495 564.0456603468 H 959.495 M 953.495 565.124130765 H 959.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 93,400.65 [93,287.2–93,627.11] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="968.75" y="585.23909267302" width="18.49" height="130.76090732698003" fill="#d15a12"/>
+<path d="M 977.995 584.9220402985 V 585.3979241153 M 974.995 584.9220402985 H 980.995 M 974.995 585.3979241153 H 980.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 107,217.61 [107,037.23–107,578.29] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="990.25" y="565.8953511156" width="18.49" height="150.10464888440004" fill="#2f7d58"/>
+<path d="M 999.495 565.390391347 V 566.1478826928001 M 996.495 565.390391347 H 1002.495 M 996.495 566.1478826928001 H 1002.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 93,627.03 [93,580.47–93,913.08] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="1011.75" y="584.92215927078" width="18.49" height="131.07784072922004" fill="#9055a2"/>
+<path d="M 1020.995 584.52168552662 V 584.98733597636 M 1017.995 584.52168552662 H 1023.995 M 1017.995 584.98733597636 H 1023.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="829" y="760" text-anchor="middle" font-size="12">Commands per pipeline batch</text>
+<text x="74" y="804" font-size="13" font-weight="600">16 KiB · 4 connections · 1 batch/connection</text>
+<text x="74" y="822" font-size="11">commands/s</text>
+<line x1="74" x2="504" y1="1036" y2="1036" stroke="#dce3ec"/>
+<text x="66" y="1040" font-size="10" text-anchor="end">0</text>
+<line x1="74" x2="504" y1="983.5" y2="983.5" stroke="#dce3ec"/>
+<text x="66" y="987.5" font-size="10" text-anchor="end">7,500</text>
+<line x1="74" x2="504" y1="931" y2="931" stroke="#dce3ec"/>
+<text x="66" y="935" font-size="10" text-anchor="end">15,000</text>
+<line x1="74" x2="504" y1="878.5" y2="878.5" stroke="#dce3ec"/>
+<text x="66" y="882.5" font-size="10" text-anchor="end">22,500</text>
+<line x1="74" x2="504" y1="826" y2="826" stroke="#dce3ec"/>
+<text x="66" y="830" font-size="10" text-anchor="end">30,000</text>
+<text x="127.75" y="1054" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP: 21,544.78 [21,516.52–21,561.11] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="84.75" y="885.1865591268" width="18.49" height="150.81344087319997" fill="#1261a0"/>
+<path d="M 93.995 885.0721991202 V 885.3843934025999 M 90.995 885.0721991202 H 96.995 M 90.995 885.3843934025999 H 96.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 17,514.6 [17,418.93–17,556.79] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="106.25" y="913.3977913536" width="18.49" height="122.60220864639996" fill="#d15a12"/>
+<path d="M 115.495 913.1024493269 V 914.0674601268 M 112.495 913.1024493269 H 118.495 M 112.495 914.0674601268 H 118.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 21,567.87 [21,456.6–21,584.31] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="127.75" y="885.0249165996" width="18.49" height="150.97508340039997" fill="#2f7d58"/>
+<path d="M 136.995 884.9098043834999 V 885.803806097 M 133.995 884.9098043834999 H 139.995 M 133.995 885.803806097 H 139.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 17,583.3 [17,576.19–17,601.26] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="149.25" y="912.9168678896" width="18.49" height="123.08313211040002" fill="#9055a2"/>
+<path d="M 158.495 912.7912024455 V 912.9666367234 M 155.495 912.7912024455 H 161.495 M 155.495 912.9666367234 H 161.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="235.25" y="1054" text-anchor="middle" font-size="11">4</text>
+<g><title>Boost.Asio · TCP: 23,565.63 [23,509.3–24,702.01] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="192.25" y="871.0406233655" width="18.49" height="164.95937663450002" fill="#1261a0"/>
+<path d="M 201.495 863.0859005244 V 871.4348975045 M 198.495 863.0859005244 H 204.495 M 198.495 871.4348975045 H 204.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 21,246.52 [20,997.23–21,294.73] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="213.75" y="887.2743603206" width="18.49" height="148.72563967940005" fill="#d15a12"/>
+<path d="M 222.995 886.9368600757 V 889.0193824918 M 219.995 886.9368600757 H 225.995 M 219.995 889.0193824918 H 225.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 25,067.19 [25,056.13–25,108.38] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="235.25" y="860.5296579747" width="18.49" height="175.47034202530006" fill="#2f7d58"/>
+<path d="M 244.495 860.2413647156 V 860.6070588262 M 241.495 860.2413647156 H 247.495 M 241.495 860.6070588262 H 247.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 21,327.6 [21,277.14–21,337.19] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="256.75" y="886.7068202545" width="18.49" height="149.29317974549997" fill="#9055a2"/>
+<path d="M 265.995 886.6396374213 V 887.0600462087 M 262.995 886.6396374213 H 268.995 M 262.995 887.0600462087 H 268.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="342.75" y="1054" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP: 26,289.79 [26,251.71–26,345.72] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="299.75" y="851.9714913857" width="18.49" height="184.0285086143" fill="#1261a0"/>
+<path d="M 308.995 851.5799470304 V 852.23801565 M 305.995 851.5799470304 H 311.995 M 305.995 852.23801565 H 311.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 23,069.59 [23,066.19–23,091.67] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="321.25" y="874.5128627984" width="18.49" height="161.48713720160004" fill="#d15a12"/>
+<path d="M 330.495 874.3582873437999 V 874.5366787493 M 327.495 874.3582873437999 H 333.495 M 327.495 874.5366787493 H 333.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 26,351.63 [26,299.25–26,385.05] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="342.75" y="851.5386096868" width="18.49" height="184.4613903132" fill="#2f7d58"/>
+<path d="M 351.995 851.3046576048 V 851.9052173667001 M 348.995 851.3046576048 H 354.995 M 348.995 851.9052173667001 H 354.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 22,893.83 [22,854.28–23,031.69] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="364.25" y="875.7431695103" width="18.49" height="160.25683048969995" fill="#9055a2"/>
+<path d="M 373.495 874.778173983 V 876.0200361177999 M 370.495 874.778173983 H 376.495 M 370.495 876.0200361177999 H 376.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="450.25" y="1054" text-anchor="middle" font-size="11">64</text>
+<g><title>Boost.Asio · TCP: 27,065.15 [27,046.49–27,087.21] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="407.25" y="846.5439728382" width="18.49" height="189.45602716179997" fill="#1261a0"/>
+<path d="M 416.495 846.3894951799 V 846.6745552272 M 413.495 846.3894951799 H 419.495 M 413.495 846.6745552272 H 419.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 23,457.73 [23,428.93–23,489.1] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="428.75" y="871.7959021359" width="18.49" height="164.20409786410005" fill="#d15a12"/>
+<path d="M 437.995 871.5762920277 V 871.997505106 M 434.995 871.5762920277 H 440.995 M 434.995 871.997505106 H 440.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 27,085.38 [27,057.51–27,096.33] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="450.25" y="846.402328912" width="18.49" height="189.59767108799997" fill="#2f7d58"/>
+<path d="M 459.495 846.3256760175 V 846.5974331709999 M 456.495 846.3256760175 H 462.495 M 456.495 846.5974331709999 H 462.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 23,532.65 [23,459.26–23,593.04] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="471.75" y="871.2714410253" width="18.49" height="164.72855897470004" fill="#9055a2"/>
+<path d="M 480.995 870.8487413416 V 871.785148206 M 477.995 870.8487413416 H 483.995 M 477.995 871.785148206 H 483.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="289" y="1080" text-anchor="middle" font-size="12">Commands per pipeline batch</text>
+<text x="614" y="804" font-size="13" font-weight="600">16 KiB · 4 connections · 4 batches/connection</text>
+<text x="614" y="822" font-size="11">commands/s</text>
+<line x1="614" x2="1044" y1="1036" y2="1036" stroke="#dce3ec"/>
+<text x="606" y="1040" font-size="10" text-anchor="end">0</text>
+<line x1="614" x2="1044" y1="983.5" y2="983.5" stroke="#dce3ec"/>
+<text x="606" y="987.5" font-size="10" text-anchor="end">7,500</text>
+<line x1="614" x2="1044" y1="931" y2="931" stroke="#dce3ec"/>
+<text x="606" y="935" font-size="10" text-anchor="end">15,000</text>
+<line x1="614" x2="1044" y1="878.5" y2="878.5" stroke="#dce3ec"/>
+<text x="606" y="882.5" font-size="10" text-anchor="end">22,500</text>
+<line x1="614" x2="1044" y1="826" y2="826" stroke="#dce3ec"/>
+<text x="606" y="830" font-size="10" text-anchor="end">30,000</text>
+<text x="667.75" y="1054" text-anchor="middle" font-size="11">1</text>
+<g><title>Boost.Asio · TCP: 26,195.52 [26,187.22–26,236.5] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="624.75" y="852.6313647145" width="18.49" height="183.36863528549998" fill="#1261a0"/>
+<path d="M 633.995 852.3444715464 V 852.6894406821 M 630.995 852.3444715464 H 636.995 M 630.995 852.6894406821 H 636.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 20,977.21 [20,939–21,056.68] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="646.25" y="889.1595537608" width="18.49" height="146.8404462392" fill="#d15a12"/>
+<path d="M 655.495 888.6032298038 V 889.4270085225 M 652.495 888.6032298038 H 658.495 M 652.495 889.4270085225 H 658.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 26,248.7 [25,931.41–26,260.81] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="667.75" y="852.2591134035999" width="18.49" height="183.74088659640006" fill="#2f7d58"/>
+<path d="M 676.995 852.1742972127 V 854.4801201804 M 673.995 852.1742972127 H 679.995 M 673.995 854.4801201804 H 679.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 20,959.05 [20,947.85–21,017.54] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="689.25" y="889.2866194156" width="18.49" height="146.71338058440006" fill="#9055a2"/>
+<path d="M 698.495 888.8772197823 V 889.3650762325 M 695.495 888.8772197823 H 701.495 M 695.495 889.3650762325 H 701.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="775.25" y="1054" text-anchor="middle" font-size="11">4</text>
+<g><title>Boost.Asio · TCP: 26,408.95 [26,390.39–26,477] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="732.25" y="851.1373222604" width="18.49" height="184.86267773960003" fill="#1261a0"/>
+<path d="M 741.495 850.6610218827 V 851.2672715463 M 738.495 850.6610218827 H 744.495 M 738.495 851.2672715463 H 744.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 21,839.04 [21,355.34–22,203.5] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="753.75" y="883.1267227783001" width="18.49" height="152.87327722169994" fill="#d15a12"/>
+<path d="M 762.995 880.5754776973 V 886.5126438 M 759.995 880.5754776973 H 765.995 M 759.995 886.5126438 H 765.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 26,446 [26,393.08–26,603.11] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="775.25" y="850.8779650329" width="18.49" height="185.12203496710003" fill="#2f7d58"/>
+<path d="M 784.495 849.7782584718 V 851.2484629985 M 781.495 849.7782584718 H 787.495 M 781.495 851.2484629985 H 787.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 22,249.38 [21,986.43–22,256.75] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="796.75" y="880.2543702659" width="18.49" height="155.74562973410002" fill="#9055a2"/>
+<path d="M 805.995 880.2027582754 V 882.094974607 M 802.995 880.2027582754 H 808.995 M 802.995 882.094974607 H 808.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="882.75" y="1054" text-anchor="middle" font-size="11">16</text>
+<g><title>Boost.Asio · TCP: 26,883.7 [26,842.26–26,940.54] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="839.75" y="847.8140701891" width="18.49" height="188.1859298109" fill="#1261a0"/>
+<path d="M 848.995 847.4161926419 V 848.1041472617001 M 845.995 847.4161926419 H 851.995 M 845.995 848.1041472617001 H 851.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 23,337.51 [22,860.73–23,411.88] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="861.25" y="872.6374085723" width="18.49" height="163.36259142769995" fill="#d15a12"/>
+<path d="M 870.495 872.1168638552999 V 875.9748650583 M 867.495 872.1168638552999 H 873.495 M 867.495 875.9748650583 H 873.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 27,010.26 [26,926.78–27,053.69] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="882.75" y="846.9282112851" width="18.49" height="189.07178871489998" fill="#2f7d58"/>
+<path d="M 891.995 846.6241448469 V 847.512549184 M 888.995 846.6241448469 H 894.995 M 888.995 847.512549184 H 894.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 23,428.05 [23,284.85–23,449.85] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="904.25" y="872.0036253523" width="18.49" height="163.9963746477" fill="#9055a2"/>
+<path d="M 913.495 871.8510847872 V 873.0060420781 M 910.495 871.8510847872 H 916.495 M 910.495 873.0060420781 H 916.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="990.25" y="1054" text-anchor="middle" font-size="11">64</text>
+<g><title>Boost.Asio · TCP: 27,187.01 [27,128.5–27,223.12] commands/s</title>
+<rect data-series="Boost.Asio · TCP" x="947.25" y="845.6909391952" width="18.49" height="190.30906080479997" fill="#1261a0"/>
+<path d="M 956.495 845.4381618402999 V 846.1005165361 M 953.495 845.4381618402999 H 959.495 M 953.495 846.1005165361 H 959.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Boost.Asio · TLS: 24,174.63 [24,133.09–24,227.39] commands/s</title>
+<rect data-series="Boost.Asio · TLS" x="968.75" y="866.7775552982" width="18.49" height="169.2224447018" fill="#d15a12"/>
+<path d="M 977.995 866.4083044232 V 867.0683783993 M 974.995 866.4083044232 H 980.995 M 974.995 867.0683783993 H 980.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TCP: 27,105.86 [27,086.52–27,153.23] commands/s</title>
+<rect data-series="Standalone Asio · TCP" x="990.25" y="846.2590091872" width="18.49" height="189.74099081279996" fill="#2f7d58"/>
+<path d="M 999.495 845.9274162248 V 846.3943829957 M 996.495 845.9274162248 H 1002.495 M 996.495 846.3943829957 H 1002.495" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<g><title>Standalone Asio · TLS: 23,582.93 [23,438.27–24,070.23] commands/s</title>
+<rect data-series="Standalone Asio · TLS" x="1011.75" y="870.9194647293" width="18.49" height="165.0805352707" fill="#9055a2"/>
+<path d="M 1020.995 867.5083821278 V 871.9321054199 M 1017.995 867.5083821278 H 1023.995 M 1017.995 871.9321054199 H 1023.995" stroke="#17202a" fill="none" stroke-width="1.1"/></g>
+<text x="829" y="1080" text-anchor="middle" font-size="12">Commands per pipeline batch</text>
+</g></svg>

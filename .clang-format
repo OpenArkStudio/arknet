@@ -62,14 +62,14 @@ ForEachMacros:
 IncludeBlocks: Regroup
 IncludeIsMainRegex: "a^"
 IncludeCategories:
-  - Regex: '^["<](arknet/bho/|vendor/|asio([/.]|>)|boost/|openssl/|spdlog/|doctest/)'
+  - Regex: '^["<](vendor/|asio([/.]|>)|boost/|openssl/|spdlog/|doctest/)'
     Priority: 2
     SortPriority: 3
   # Windows SDK headers such as psapi.h require windows.h first.
   - Regex: '^<windows\.h>$'
     Priority: 1
     SortPriority: 1
-  - Regex: '^<([[:alnum:]_]+|(assert|ctype|errno|fenv|float|inttypes|iso646|limits|locale|math|setjmp|signal|std[a-z]+|string|tgmath|threads|time|uchar|wchar|wctype|unistd|fcntl|pthread|poll|windows|winsock2|ws2tcpip|mstcpip|psapi|targetconditionals)\.h|(arpa|net|netinet|sys|mach|mach-o|linux)/.*)>$'
+  - Regex: '^<([[:alnum:]_]+|(assert|ctype|errno|fenv|float|inttypes|iso646|limits|locale|math|setjmp|signal|std[a-z]+|string|tgmath|threads|time|uchar|wchar|wctype|unistd|fcntl|pthread|poll|windows|winsock2|ws2tcpip|mstcpip|psapi|dbghelp|targetconditionals)\.h|(arpa|net|netinet|sys|mach|mach-o|linux)/.*)>$'
     Priority: 1
     SortPriority: 2
   - Regex: '^<arknet/'

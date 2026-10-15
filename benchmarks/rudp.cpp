@@ -808,7 +808,7 @@ bool output(const options& settings, const std::vector<std::shared_ptr<round_sta
     std::cout << std::setprecision(12)
               << "{\"schema_version\":1,\"protocol\":\"rudp\",\"wire_protocol\":\"kcp\",\"api\":\"callback\","
                  "\"backend\":";
-#ifdef ARKNET_USE_BOOST_ASIO
+#if ARKNET_USE_BOOST_ASIO
     std::cout << "\"boost\"";
 #else
     std::cout << "\"standalone\"";

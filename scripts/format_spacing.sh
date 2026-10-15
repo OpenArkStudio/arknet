@@ -11,7 +11,7 @@ shift
 if [[ $# -eq 0 ]]; then
     while IFS= read -r -d '' file; do
         case "$file" in
-            include/arknet/bho/*|include/arknet/thirdparty/*|tests/vendor/*|tests/results/*|benchmarks/results/*) continue ;;
+            include/arknet/thirdparty/*|tests/vendor/*|tests/results/*|benchmarks/results/*) continue ;;
         esac
         case "$file" in
             *.cpp|*.hpp|*.h) set -- "$@" "$file" ;;
