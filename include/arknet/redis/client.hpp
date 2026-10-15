@@ -445,7 +445,18 @@ private:
         }
 
         void connected(arknet::error_code error) {
-            if (terminal || close_requested)
+            if (terminal)
+            {
+                // The transport connect event can finish after Redis shutdown
+                // closed an earlier socket. Retire that late-opened transport
+                // without completing the Redis request a second time.
+                arknet::error_code ignored;
+                transport->socket().cancel(ignored);
+                transport->socket().close(ignored);
+                transport->stop();
+                return;
+            }
+            if (close_requested)
             {
                 shutdown(client_errc::closed);
                 return;
@@ -806,6 +817,21 @@ private:
             }
         }
 
+        // Called only after the owned or borrowing pool runtime has joined.
+        // Keep its context alive until every socket/TLS/timer has retired.
+        void retire_context_resources() {
+            slots.clear();
+            connect_handler = {};
+            connect_timer.reset();
+            push = {};
+            decoder = detail::resp_decoder{};
+            connection = {};
+            options = {};
+            transport.reset();
+            std::lock_guard lock(publishing_mutex);
+            runtime.reset();
+        }
+
         bool close_and_wait() {
             {
                 std::unique_lock lock(publishing_mutex);
@@ -841,18 +867,7 @@ private:
                 // Only the finalizer owns these resources after worker join.
                 // Keep the context alive until timers, sockets and TLS objects
                 // and all retained user callables have actually been destroyed.
-                slots.clear();
-                connect_handler = {};
-                connect_timer.reset();
-                push = {};
-                decoder = detail::resp_decoder{};
-                connection = {};
-                options = {};
-                transport.reset();
-                {
-                    std::lock_guard lock(publishing_mutex);
-                    runtime.reset();
-                }
+                retire_context_resources();
                 scheduler.reset();
                 {
                     std::lock_guard lock(publishing_mutex);

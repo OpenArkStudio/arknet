@@ -4,13 +4,17 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstddef>
 #include <deque>
+#include <exception>
 #include <functional>
+#include <future>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -39,6 +43,66 @@ class basic_pool
     using client_type = basic_client<Transport>;
     struct waiter;
 
+    struct publication_gate
+    {
+        std::mutex mutex;
+        std::condition_variable changed;
+        std::size_t publishers{};
+        bool terminating{};
+        bool terminated{};
+        std::thread::id finalizer;
+        std::exception_ptr failure;
+    };
+
+    class publication
+    {
+        inline static thread_local publication* current_{};
+        publication_gate* owner_{};
+        publication* previous_{};
+
+    public:
+        explicit publication(publication_gate& gate) {
+            std::lock_guard lock(gate.mutex);
+            if (!gate.terminating)
+            {
+                ++gate.publishers;
+                owner_ = &gate;
+                previous_ = current_;
+                current_ = this;
+            }
+        }
+
+        publication(const publication&) = delete;
+        publication& operator=(const publication&) = delete;
+
+        ~publication() {
+            if (owner_)
+            {
+                current_ = previous_;
+                {
+                    std::lock_guard lock(owner_->mutex);
+                    --owner_->publishers;
+                }
+                owner_->changed.notify_all();
+            }
+        }
+
+        explicit operator bool() const noexcept {
+            return owner_ != nullptr;
+        }
+
+        static bool active_on_this_thread(const publication_gate& gate) noexcept {
+            for (auto* current = current_; current; current = current->previous_)
+            {
+                if (current->owner_ == &gate)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    };
+
     enum class entry_phase
     {
         connecting,
@@ -57,6 +121,7 @@ class basic_pool
     struct lease_control
     {
         std::shared_ptr<entry> connection;
+        std::shared_ptr<publication_gate> gate;
         std::function<void(std::shared_ptr<entry>, bool)> return_connection;
         std::mutex mutex;
         std::size_t pending{};
@@ -64,12 +129,13 @@ class basic_pool
         bool discard{};
 
         void finish() {
+            publication publishing(*gate);
             std::function<void(std::shared_ptr<entry>, bool)> returning;
             bool unhealthy{};
             {
                 std::lock_guard lock(mutex);
                 --pending;
-                if (released && !pending)
+                if (publishing && released && !pending)
                 {
                     returning = std::exchange(return_connection, {});
                     unhealthy = discard;
@@ -82,13 +148,14 @@ class basic_pool
         }
 
         void release(bool unhealthy = false) {
+            publication publishing(*gate);
             std::function<void(std::shared_ptr<entry>, bool)> returning;
             bool discard_connection{};
             {
                 std::lock_guard lock(mutex);
                 released = true;
                 discard = discard || unhealthy;
-                if (!pending)
+                if (publishing && !pending)
                 {
                     returning = std::exchange(return_connection, {});
                     discard_connection = discard;
@@ -151,6 +218,11 @@ public:
                 }
                 return 0;
             }
+            publication publishing(*control->gate);
+            if (!publishing)
+            {
+                return client_type::reject_terminated(std::move(handler));
+            }
             std::unique_lock lock(control->mutex);
             if (control->released)
             {
@@ -194,27 +266,35 @@ public:
         }
 
         void cancel(request_id id) {
-            if (control_)
+            const auto control = control_;
+            if (control)
             {
-                std::lock_guard lock(control_->mutex);
-                if (!control_->released)
+                publication publishing(*control->gate);
+                if (!publishing)
                 {
-                    control_->connection->client->cancel(id);
+                    return;
+                }
+                std::lock_guard lock(control->mutex);
+                if (!control->released)
+                {
+                    control->connection->client->cancel(id);
                 }
             }
         }
 
         void release() {
-            if (control_)
+            const auto control = control_;
+            if (control)
             {
-                control_->release();
+                control->release();
             }
         }
 
         void discard() {
-            if (control_)
+            const auto control = control_;
+            if (control)
             {
-                control_->release(true);
+                control->release(true);
             }
         }
 
@@ -257,9 +337,14 @@ private:
     {
         pool_options options;
         std::shared_ptr<arknet::detail::io_pool> runtime;
+        std::shared_ptr<publication_gate> gate{std::make_shared<publication_gate>()};
         std::deque<std::shared_ptr<waiter>> queue;
         std::unordered_map<request_id, std::shared_ptr<waiter>> pending;
         std::vector<std::shared_ptr<entry>> entries;
+        // Weak history includes discarded connections still retained by leases.
+        // It owns neither an executor nor a past connection's runtime.
+        std::vector<std::weak_ptr<typename client_type::state>> children;
+        std::vector<std::weak_ptr<lease_control>> controls;
         std::atomic<request_id> next_id{1};
         std::atomic_size_t admitted{};
         std::atomic_bool close_requested{};
@@ -333,9 +418,11 @@ private:
         }
 
         lease make_lease(const std::shared_ptr<entry>& connection) {
+            std::erase_if(controls, [](const auto& current) { return current.expired(); });
             connection->phase = entry_phase::leased;
             auto control = std::make_shared<lease_control>();
             control->connection = connection;
+            control->gate = gate;
             control->return_connection = [weak = this->weak_from_this()](
                                              std::shared_ptr<entry> current, bool unhealthy) {
                 if (auto self = weak.lock())
@@ -348,6 +435,7 @@ private:
                     current->client->close();
                 }
             };
+            controls.push_back(control);
             return lease(std::move(control));
         }
 
@@ -402,6 +490,7 @@ private:
         }
 
         void pump() {
+            std::erase_if(children, [](const auto& current) { return current.expired(); });
             while (!closed && !close_requested && !queue.empty())
             {
                 auto request = queue.front();
@@ -454,6 +543,7 @@ private:
                 connection->waiting = request;
                 request->assigned = connection;
                 entries.push_back(connection);
+                children.push_back(connection->client->state_);
                 connection->client->async_connect(
                     options.connection, [weak = this->weak_from_this(), connection](result response) mutable {
                         if (auto self = weak.lock(); self && self->contains(connection))
@@ -543,6 +633,124 @@ private:
                 connection->client->close();
             }
         }
+
+        bool close_and_wait() {
+            {
+                std::unique_lock lock(gate->mutex);
+                if ((runtime && runtime->running_in_threads()) || publication::active_on_this_thread(*gate) ||
+                    gate->finalizer == std::this_thread::get_id())
+                {
+                    arknet::set_last_error(asio::error::operation_not_supported);
+                    return false;
+                }
+                if (gate->terminating)
+                {
+                    gate->changed.wait(lock, [&] { return gate->terminated || gate->failure; });
+                    if (gate->failure)
+                    {
+                        std::rethrow_exception(gate->failure);
+                    }
+                    arknet::clear_last_error();
+                    return true;
+                }
+                gate->terminating = true;
+                gate->finalizer = std::this_thread::get_id();
+                gate->changed.wait(lock, [&] { return gate->publishers == 0; });
+            }
+            try
+            {
+                close_requested = true;
+                // Only the pool actor creates children/leases. The closing
+                // flags and same-lane fence prevent any later catalog writer.
+                using retirement = std::pair<std::vector<std::shared_ptr<typename client_type::state>>,
+                    std::vector<std::weak_ptr<lease_control>>>;
+                auto completion = std::make_shared<std::promise<retirement>>();
+                auto ready = completion->get_future();
+                const auto self = this->shared_from_this();
+                asio::post(executor(), [self, completion] {
+                    try
+                    {
+                        // Pin before shutdown can release the last entry or
+                        // invoke a callback that destroys its lease/facade.
+                        std::vector<std::shared_ptr<typename client_type::state>> children;
+                        for (auto& weak : self->children)
+                        {
+                            if (auto child = weak.lock())
+                            {
+                                children.push_back(std::move(child));
+                            }
+                        }
+                        self->shutdown();
+                        self->children.clear();
+                        completion->set_value({std::move(children), std::move(self->controls)});
+                    }
+                    catch (...)
+                    { completion->set_exception(std::current_exception()); }
+                });
+                auto [children, controls] = ready.get();
+                for (auto& child : children)
+                {
+                    {
+                        std::unique_lock lock(child->publishing_mutex);
+                        child->terminating = true;
+                        child->finalizer = std::this_thread::get_id();
+                        child->publishing_changed.wait(lock, [&] { return child->publishers == 0; });
+                    }
+                    child->request_close();
+                }
+                auto owned_runtime = runtime;
+                owned_runtime->stop();
+
+                // Accepted outer Asio handlers/captures have retired. Retained
+                // leases become inert without keeping TLS, timers or contexts.
+                for (auto& child : children)
+                {
+                    child->retire_context_resources();
+                    {
+                        std::lock_guard lock(child->publishing_mutex);
+                        child->terminated = true;
+                        child->finalizer = {};
+                    }
+                    child->publishing_changed.notify_all();
+                }
+                for (auto& weak : controls)
+                {
+                    if (auto control = weak.lock())
+                    {
+                        std::lock_guard lock(control->mutex);
+                        control->released = true;
+                        control->return_connection = {};
+                    }
+                }
+                queue.clear();
+                pending.clear();
+                entries.clear();
+                options = {};
+                {
+                    std::lock_guard lock(gate->mutex);
+                    runtime.reset();
+                }
+                owned_runtime.reset();
+                {
+                    std::lock_guard lock(gate->mutex);
+                    gate->terminated = true;
+                    gate->finalizer = {};
+                }
+                gate->changed.notify_all();
+                arknet::clear_last_error();
+                return true;
+            }
+            catch (...)
+            {
+                {
+                    std::lock_guard lock(gate->mutex);
+                    gate->failure = std::current_exception();
+                    gate->finalizer = {};
+                }
+                gate->changed.notify_all();
+                throw;
+            }
+        }
     };
 
 public:
@@ -559,6 +767,15 @@ public:
     request_id async_acquire(
         completion_handler handler, std::chrono::milliseconds timeout = std::chrono::milliseconds::zero()) {
         auto self = state_;
+        publication publishing(*self->gate);
+        if (!publishing)
+        {
+            if (handler)
+            {
+                handler(acquire_result{client_errc::closed});
+            }
+            return 0;
+        }
         auto request = std::make_shared<waiter>();
         request->id = self->next_id.fetch_add(1);
         request->handler = std::move(handler);
@@ -591,6 +808,11 @@ public:
 
     void cancel(request_id id) {
         auto self = state_;
+        publication publishing(*self->gate);
+        if (!publishing)
+        {
+            return;
+        }
         asio::post(self->executor(), [self, id] {
             if (auto found = self->pending.find(id); found != self->pending.end())
             {
@@ -601,10 +823,23 @@ public:
 
     void close() {
         auto self = state_;
+        publication publishing(*self->gate);
+        if (!publishing)
+        {
+            return;
+        }
         if (!self->close_requested.exchange(true))
         {
             asio::dispatch(self->executor(), [self] { self->shutdown(); });
         }
+    }
+
+    // Permanently closes admission, retires accepted callbacks and captures,
+    // joins this pool's owned worker and makes retained leases inert. Call only
+    // from a non-library-IO thread; ordinary close() remains asynchronous.
+    bool close_and_wait() {
+        const auto self = state_;
+        return self->close_and_wait();
     }
 
 private:

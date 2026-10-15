@@ -60,6 +60,8 @@ pool.async_acquire([](arknet::redis::pool::acquire_result response) {
 
 Keep one lease for a complete `WATCH`/`MULTI`/`EXEC` sequence. Returning it waits for pending callbacks and ordered reply draining, then resets the connection and restores the pool's authentication, protocol and selected database before another borrower receives it. A failed or unsupported reset causes replacement, not reuse.
 
+During application shutdown, stop producers and call `pool.close_and_wait()` from the main thread. A successful return waits for accepted callbacks and captures, joins the pool's shared worker, and retires every live child transport, including discarded connections retained by old leases. Retained leases then reject submissions synchronously with `closed` and request ID 0. It refuses the pool's IO worker and reentrant calls; check the return value and follow the [shutdown contract](configuration.md#execution-and-shutdown).
+
 ## TLS and mTLS
 
 Both examples accept `HOST PORT --tls [CA_FILE]`:
