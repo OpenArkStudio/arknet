@@ -48,7 +48,7 @@ Check `statement.parameter_count()` and result status. A statement belongs to it
 
 Call `async_begin`, submit the transaction's commands in order, then call `async_commit` or `async_rollback`. A bare connection does not prevent another producer from inserting commands into that sequence; applications must control ownership and ordering for the entire transaction.
 
-The complete program waits on promises from the main thread. Each callback owns a shared promise so that a timeout or early return cannot leave it referring to a destroyed stack object. Callbacks run on the library's IO thread and must not throw or block. In particular, do not wait on these futures inside a callback.
+The complete program waits on promises from the main thread. Each callback owns a shared promise so that a timeout or early return cannot leave it referring to a destroyed stack object. Callbacks for accepted operations run on the library's IO thread and must not throw or block. In particular, do not wait on these futures inside a callback.
 
 A failed commit with `status.outcome_unknown == true` may already have committed on the server. Do not retry the transaction automatically. See [cancellation and outcomes](configuration.md#cancellation-and-unknown-outcomes).
 
@@ -71,9 +71,10 @@ captures have been destroyed, retained statement cleanup has been disabled, and
 this connection's IO worker has exited and been joined. Concurrent waiters observe
 the same completed shutdown. Ordinary `close()` retains its existing semantics.
 
-The permanent submission gate closes before waiting. Later `async_*` calls reject
-synchronously on their caller with `not_connected` and return request ID 0;
-`async_connect` also completes synchronously. These rejection handlers may propagate
+The permanent submission gate closes before waiting. Later `async_*` calls invoke
+their rejection handler synchronously on the caller with `not_connected`. Command
+APIs that return a request ID return 0; `async_connect` returns `void` and invokes
+its rejection handler synchronously. These rejection handlers may propagate
 exceptions. `cancel()` and `close()` then do nothing. Before termination, accepted
 callbacks continue to run on the IO lane and must not throw. Allocation or system
 exceptions from shutdown propagate; they do not indicate a completed barrier.
