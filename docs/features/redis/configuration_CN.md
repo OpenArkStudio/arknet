@@ -51,6 +51,10 @@
 
 重复调用 `release()` 无害。已归还租约上的提交会报告 `closed`；空租约或已移动租约没有执行器，会同步拒绝并返回请求 ID 0。`discard()` 归还租约但不允许复用连接。连接池共用库管理的 IO 资源，`max_connections` 不是线程数。
 
+内部租约归还提交抛出异常时，连接池保留已完成命令的结果，并将会话标记为待丢弃。`pool::diagnostics()` 返回线程安全的 `redis::pool_diagnostics` 快照：`return_submission_failures` 为饱和计数器，`last_return_submission_exception` 只保留最近一次异常。新建连接池的计数为 0，异常指针为空。
+
+后续获取、取消或调度过程会先关闭失败会话，再补充连接。若关闭提交也失败，连接池保留该条目并记录诊断；每次调度对每个失败条目最多尝试一次。已有获取请求保留原始截止时间。恢复需要后续调度活动，不会新增后台重试定时器，也不会重放命令。
+
 ## TLS 选项
 
 启用 `ARKNET_ENABLE_SSL=ON` 后，使用 `redis::tls_client` 或 `redis::tls_pool`：

@@ -6,10 +6,12 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <exception>
 #include <functional>
 #include <future>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -32,6 +34,12 @@ struct pool_options
     connect_options connection;
     client_options client_configuration;
     std::string certificate_authority;
+};
+
+struct pool_diagnostics
+{
+    std::uint64_t return_submission_failures{};
+    std::exception_ptr last_return_submission_exception;
 };
 
 // Exclusive leases preserve transactions and connection state. Returning a lease runs RESET,
@@ -108,7 +116,8 @@ class basic_pool
         connecting,
         idle,
         leased,
-        resetting
+        resetting,
+        retiring
     };
 
     struct entry
@@ -116,6 +125,27 @@ class basic_pool
         std::shared_ptr<client_type> client;
         entry_phase phase{entry_phase::connecting};
         std::weak_ptr<waiter> waiting;
+        std::atomic_bool failed_return{};
+    };
+
+    struct return_diagnostics
+    {
+        mutable std::mutex mutex;
+        pool_diagnostics info;
+
+        void record(std::exception_ptr error) noexcept {
+            std::lock_guard lock(mutex);
+            if (info.return_submission_failures != (std::numeric_limits<std::uint64_t>::max)())
+            {
+                ++info.return_submission_failures;
+            }
+            info.last_return_submission_exception = std::move(error);
+        }
+
+        pool_diagnostics snapshot() const {
+            std::lock_guard lock(mutex);
+            return info;
+        }
     };
 
     struct lease_control
@@ -348,6 +378,8 @@ private:
         std::atomic<request_id> next_id{1};
         std::atomic_size_t admitted{};
         std::atomic_bool close_requested{};
+        std::shared_ptr<return_diagnostics> diagnostics = std::make_shared<return_diagnostics>();
+        bool recovering_returns{};
         bool closed{};
 
         explicit state(pool_options configuration)
@@ -385,7 +417,42 @@ private:
         }
 
         bool contains(const std::shared_ptr<entry>& connection) const {
-            return std::find(entries.begin(), entries.end(), connection) != entries.end();
+            return connection->phase != entry_phase::retiring &&
+                   std::find(entries.begin(), entries.end(), connection) != entries.end();
+        }
+
+        void recover_failed_returns() {
+            if (closed || close_requested || recovering_returns)
+            {
+                return;
+            }
+            recovering_returns = true;
+            // Only the existing bounded entry set is scanned. Keep failed closes
+            // tracked, and leave their next attempt to a later actor pass.
+            for (std::size_t index{}, remaining = entries.size(); remaining && index < entries.size(); --remaining)
+            {
+                auto connection = entries[index];
+                if (!connection->failed_return.load())
+                {
+                    ++index;
+                    continue;
+                }
+                // close() can synchronously complete a connect/reset callback.
+                // Suppress membership before calling it without losing ownership
+                // if its executor submission throws.
+                connection->phase = entry_phase::retiring;
+                try
+                {
+                    connection->client->close();
+                    std::erase(entries, connection);
+                }
+                catch (...)
+                {
+                    diagnostics->record(std::current_exception());
+                    ++index;
+                }
+            }
+            recovering_returns = false;
         }
 
         void discard(const std::shared_ptr<entry>& connection) {
@@ -423,16 +490,27 @@ private:
             auto control = std::make_shared<lease_control>();
             control->connection = connection;
             control->gate = gate;
-            control->return_connection = [weak = this->weak_from_this()](
-                                             std::shared_ptr<entry> current, bool unhealthy) {
-                if (auto self = weak.lock())
+            control->return_connection = [weak = this->weak_from_this(), diagnostics = diagnostics](
+                                             std::shared_ptr<entry> current, bool unhealthy) noexcept {
+                auto self = weak.lock();
+                try
                 {
-                    asio::post(self->executor(),
-                        [self, current = std::move(current), unhealthy] { self->returned(current, unhealthy); });
+                    if (self)
+                    {
+                        // Keep current pinned across post: a throwing submission
+                        // may already have consumed its handler's moved captures.
+                        asio::post(
+                            self->executor(), [self, current, unhealthy] { self->returned(current, unhealthy); });
+                    }
+                    else
+                    {
+                        current->client->close();
+                    }
                 }
-                else
+                catch (...)
                 {
-                    current->client->close();
+                    current->failed_return = true;
+                    diagnostics->record(std::current_exception());
                 }
             };
             controls.push_back(control);
@@ -441,6 +519,7 @@ private:
 
         void acquire(std::shared_ptr<waiter> request, std::chrono::steady_clock::time_point deadline) {
             request->deadline = deadline;
+            recover_failed_returns();
             if (closed || close_requested)
             {
                 complete(request, acquire_result{client_errc::closed});
@@ -449,11 +528,13 @@ private:
             if (!request->admitted)
             {
                 complete(request, acquire_result{client_errc::queue_full});
+                pump(false);
                 return;
             }
             if (std::chrono::steady_clock::now() >= deadline)
             {
                 complete(request, acquire_result{client_errc::timeout});
+                pump(false);
                 return;
             }
             request->timer = std::make_shared<asio::steady_timer>(executor());
@@ -473,12 +554,14 @@ private:
                 });
             pending.emplace(request->id, request);
             queue.push_back(request);
-            pump();
+            pump(false);
         }
 
         void cancel(std::shared_ptr<waiter> request, client_errc reason) {
+            recover_failed_returns();
             if (request->completed)
             {
+                pump(false);
                 return;
             }
             if (auto assigned = request->assigned.lock())
@@ -486,10 +569,14 @@ private:
                 discard(assigned);
             }
             complete(request, acquire_result{reason});
-            pump();
+            pump(false);
         }
 
-        void pump() {
+        void pump(bool recover = true) {
+            if (recover)
+            {
+                recover_failed_returns();
+            }
             std::erase_if(children, [](const auto& current) { return current.expired(); });
             while (!closed && !close_requested && !queue.empty())
             {
@@ -505,8 +592,9 @@ private:
                     complete(request, acquire_result{client_errc::timeout});
                     continue;
                 }
-                auto idle = std::find_if(entries.begin(), entries.end(),
-                    [](const auto& connection) { return connection->phase == entry_phase::idle; });
+                auto idle = std::find_if(entries.begin(), entries.end(), [](const auto& connection) {
+                    return connection->phase == entry_phase::idle && !connection->failed_return.load();
+                });
                 if (idle != entries.end())
                 {
                     auto connection = *idle;
@@ -584,6 +672,11 @@ private:
         }
 
         void returned(const std::shared_ptr<entry>& connection, bool unhealthy) {
+            if (connection->failed_return.load())
+            {
+                pump();
+                return;
+            }
             if (!contains(connection))
             {
                 connection->client->close();
@@ -818,7 +911,15 @@ public:
             {
                 self->cancel(found->second, client_errc::cancelled);
             }
+            else
+            {
+                self->pump();
+            }
         });
+    }
+
+    pool_diagnostics diagnostics() const {
+        return state_->diagnostics->snapshot();
     }
 
     void close() {

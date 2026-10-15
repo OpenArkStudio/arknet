@@ -51,6 +51,10 @@ Keep a lease across a complete transaction or other connection-local operation. 
 
 Calling `release()` twice is harmless. Submissions on a released lease fail with `closed`; an empty or moved-from lease has no executor and rejects synchronously with request ID 0. `discard()` returns the lease without permitting reuse. Pool connections share library-owned IO resources; `max_connections` is not a thread count.
 
+If internal lease-return submission throws, the pool keeps the completed command result and marks that session for disposal. `pool::diagnostics()` returns a thread-safe `redis::pool_diagnostics` snapshot: `return_submission_failures` is a saturating counter, and `last_return_submission_exception` retains only the most recent exception. A new pool reports zero and an empty exception pointer.
+
+A later acquisition, cancellation or scheduling pass closes the failed session before replacing it. If close submission also fails, the entry stays tracked and the diagnostic records that failure; each pass attempts each failed entry at most once. Existing acquisitions retain their original deadlines. No background retry timer is added, so recovery requires later scheduling activity. Commands are never replayed.
+
 ## TLS options
 
 Use `redis::tls_client` or `redis::tls_pool` with `ARKNET_ENABLE_SSL=ON`:
