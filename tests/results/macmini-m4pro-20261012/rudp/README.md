@@ -25,7 +25,7 @@ TSan checks target the new network modules; this record does not represent a
 fresh run of the entire historical TSan suite.
 
 The complete documentation programs for the RUDP server/client, single HTTP
-request and matching HTTP server were also compiled and run with both backends.
+request and matching HTTP server were also compiled and run with both dependency configurations.
 Both pairs returned the expected echo and stopped normally. The English and
 Chinese pages contain identical C++ source blocks.
 

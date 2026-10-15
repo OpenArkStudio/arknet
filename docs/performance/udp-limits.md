@@ -3,13 +3,13 @@
 Measured on 2026-10-12. [Test machine and receive-buffer diagnosis](udp-update.md).
 
 Release IPv4 loopback on the Mac mini M4 Pro: 16 clients, one context/one
-thread, no extra computation, 1 s measurement and 0.25 s warmup. Each backend
+thread, no extra computation, 1 s measurement and 0.25 s warmup. Each dependency combination
 runs six payloads × three windows × three repetitions: **36 pass, 18 fail**.
 
 ![IPv4 UDP lost echoes by payload and request window](assets/udp-limits-loss.svg)
 
 Cells show measured-phase lost echoes per run. All three repetitions have
-identical loss counts, and both backends match. Warmup errors remain in the
+identical loss counts, and both dependency combinations match. Warmup errors remain in the
 raw JSON; failed configurations are excluded from throughput comparisons.
 
 - Every payload passes at window 1, including **65,507 bytes**. The 1,472-byte
@@ -39,12 +39,12 @@ payload sizing must use the actual path MTU.
 
 ## Kernel Evidence
 
-| Backend | Full socket buffers before → after | Increase | IPv4 fragmentation / reassembly increase |
+| Dependency | Full socket buffers before → after | Increase | IPv4 fragmentation / reassembly increase |
 | --- | ---: | ---: | ---: |
 | Standalone Asio | 89,059 → 112,837 | 23,778 | 0 / 0 |
 | Boost.Asio | 126,672 → 150,450 | 23,778 | 0 / 0 |
 
-Each backend records 11,889 lost echoes in the measurement phase. The kernel
+Each dependency combination records 11,889 lost echoes in the measurement phase. The kernel
 counts cover the whole stage, including warmup, and are system-wide. They
 record receive-buffer overflow during the bursts; there is no recorded IPv4
 fragmentation supporting fragmentation as the explanation for these losses.

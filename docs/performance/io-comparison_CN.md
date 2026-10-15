@@ -10,7 +10,7 @@
 
 ![不同 IO 模型下的原生 Asio 协程批次 p99 RTT](assets/coroutine-work0-latency.svg)
 
-- 两种后端都以 1 个 io_context、4 个线程的吞吐量中位数最高，1 个 io_context、2 个线程的批次 p99 中位数最低。
+- 两种依赖方案都以 1 个 io_context、4 个线程的吞吐量中位数最高，1 个 io_context、2 个线程的批次 p99 中位数最低。
 - Standalone Asio 的 1 个 io_context、2 个线程与 1 个 io_context、4 个线程的批次 p99 运行范围重叠，不能据此确认稳定的尾延迟优势。
 
 ### 每次回显增加 10,000 次确定性运算
@@ -19,8 +19,8 @@
 
 ![加入计算后的原生 Asio 协程批次 p99 RTT](assets/coroutine-work10000-latency.svg)
 
-- 两种后端都以 4 个 io_context 各 1 个线程的吞吐量中位数最高、批次 p99 中位数最低。
-- 1 个 io_context、4 个线程与 4 个 io_context 各 1 个线程的批次 p99 运行范围在两种后端中均有重叠。
+- 两种依赖方案都以 4 个 io_context 各 1 个线程的吞吐量中位数最高、批次 p99 中位数最低。
+- 1 个 io_context、4 个线程与 4 个 io_context 各 1 个线程的批次 p99 运行范围在两种依赖方案中均有重叠。
 
 [完整协程基线报告](coroutine_CN.md) · [包体、批量与执行方式对比](dimensions_CN.md#native-tcp)
 
@@ -50,7 +50,7 @@ build-perf/benchmarks/arknet_coroutine_benchmark \
 表示每个线程使用独立 io_context。设置 `--io-threads 1` 可测试单 context、单线程；
 `--execution callback` 运行匹配的原生回调模式。`--work 10000` 表示每次回显增加 10,000 次
 确定性运算，`0` 表示无额外业务计算。这是模拟负载，不代表真实解析器或加密算法。
-只比较同一测试程序、后端、负载大小、并发配置和计算量下的不同拓扑。
+只比较同一测试程序、依赖方案、负载大小、并发配置和计算量下的不同拓扑。
 Asio 协程测试程序按固定大小批次发送和接收；`--window` 大于一时记录批次 RTT。
 arknet 回调测试程序持续补充窗口，记录单条消息 RTT。两者的吞吐量和延迟
 不能用来断言协程相对回调的加速比。

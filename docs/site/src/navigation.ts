@@ -6,7 +6,7 @@ type Group = { en: string; zh: string; children: Entry[]; open?: boolean; badge?
 type Entry = Page | Group;
 const protocols: Page[] = [
   ["tcp", "TCP", "TCP"], ["udp", "UDP", "UDP"],
-  ["rudp", "RUDP", "RUDP", { en: "Implemented", zh: "已实现", variant: "success" }],
+  ["rudp", "RUDP", "RUDP"],
   ["websocket", "WebSocket / WSS", "WebSocket / WSS"],
   ["http", "HTTP / HTTPS", "HTTP / HTTPS"], ["tls", "TLS / mTLS", "TLS / mTLS"],
 ];

@@ -5,7 +5,7 @@
 
 ## RUDP 测量
 
-[RUDP FEC 报告](rudp_CN.md)：两种 Asio 后端共 96 组配置、276 次测量，覆盖
+[RUDP FEC 报告](rudp_CN.md)：两种 Asio 依赖方案共 96 组配置、276 次测量，覆盖
 三种 IO 模型、仅 ARQ／固定／自适应策略、包体、在途请求与丢包条件。
 SVG 图表对比吞吐量、p99 RTT、CPU、网络开销、恢复、重传与保留内存。
 当前 RUDP 公共 API 使用回调，RUDP 协程仍为 TODO。
@@ -13,7 +13,7 @@ SVG 图表对比吞吐量、p99 RTT、CPU、网络开销、恢复、重传与保
 ## UDP 测量
 
 [UDP 性能报告](udp-update_CN.md)包含 504 次矩阵测量、
-21 次缓冲探测，以及两种后端各 60 秒的持续测试。
+21 次缓冲探测，以及两种依赖方案各 60 秒的持续测试。
 
 - [IO 模型](udp_CN.md)：单 context 单线程、单 context 多线程与多 context 分片。
 - [包体与在途数量](dimensions-udp_CN.md)：各配置重复测量，保留失败组。

@@ -16,19 +16,19 @@ arknet 是 header-only 网络库，没有需要编译或链接的二进制库。
 <Aside type="note" title="说明：Asio 版本要求">
 
 Asio 版本下限包含 macOS 多线程 IO 所需的 kqueue descriptor 发布同步修复。
-CMake 和直接包含头文件的构建都会拒绝较旧后端。修复记录见
+CMake 和直接包含头文件的构建都会拒绝较旧依赖版本。修复记录见
 [Asio 版本历史](https://think-async.com/Asio/asio-1.38.2/doc/asio/history.html)。
 
 </Aside>
 
-## 选择 Asio 后端
+## 选择 Asio 依赖方案
 
 | 配置 | IO 实现 | HTTP 和 WebSocket 实现 |
 | --- | --- | --- |
 | `ARKNET_USE_BOOST_ASIO=OFF`（默认） | Standalone Asio | 基于 Boost 1.84 适配的内置 BHO Beast |
 | `ARKNET_USE_BOOST_ASIO=ON` | Boost.Asio | 官方 Boost.Beast |
 
-两种配置提供相同的 arknet API。配置 CMake 前，安装所选后端的依赖。
+两种配置提供相同的 arknet API。配置 CMake 前，安装对应的依赖库。
 Standalone Asio 模式会查找 `asio.hpp`；如果头文件不在搜索路径内，设置
 `ARKNET_ASIO_INCLUDE_DIR`。Boost 或 OpenSSL 安装在自定义前缀时，使用
 `CMAKE_PREFIX_PATH`；OpenSSL 也支持 `OPENSSL_ROOT_DIR`。
@@ -40,7 +40,7 @@ BHO 是 **Boost Header Only** 的缩写。`include/arknet/bho/` 目录存放使�
 standalone Asio 无须单独安装 Boost 即可使用 HTTP 和 WebSocket。
 
 官方 Boost.Beast 使用 Boost.Asio socket 类型。内置 BHO Beast 适配了 standalone
-Asio；Boost 模式使用官方 Boost.Beast。BHO 是内置兼容代码，不是第三种后端，也
+Asio；Boost 模式使用官方 Boost.Beast。BHO 是内置兼容代码，不是第三种依赖方案，也
 无须安装额外软件包。许可证声明见
 [第三方声明](../project/third-party-notices_CN.md)。
 
@@ -50,15 +50,15 @@ Asio；Boost 模式使用官方 Boost.Beast。BHO 是内置兼容代码，不是
 
 <Steps>
 
-<Step title="安装所选依赖">
+<Step title="安装依赖库">
 
-按上表选择并安装一种 Asio 后端。需要 TLS 时，同时安装 OpenSSL。
+按上表选择并安装一种 Asio 依赖方案。需要 TLS 时，同时安装 OpenSSL。
 
 </Step>
 
 <Step title="配置项目">
 
-在仓库根目录执行所选后端的配置命令：
+在仓库根目录执行对应依赖方案的配置命令：
 
 ```sh
 # Standalone Asio
@@ -97,13 +97,13 @@ target_link_libraries(my_app PRIVATE arknet::arknet)
 对 `INTERFACE` 目标，`target_link_libraries()` 用于传递使用该库所需的构建配置。
 它不会向链接器添加 arknet 的 `.a`、`.so`、`.dylib` 或 `.lib` 文件。
 
-在 `add_subdirectory()` 前设置后端和 TLS 选项，或通过 CMake 命令行传入。
+在 `add_subdirectory()` 前设置依赖方案和 TLS 选项，或通过 CMake 命令行传入。
 嵌入构建默认关闭测试和示例。代码可以包含 `<arknet/arknet.hpp>` 或所需协议的头文件。
 接入后继续阅读[快速开始](first-application_CN.md)。
 
 ## 安装和 find_package
 
-使用应用所需的后端和 TLS 配置生成安装包，然后安装头文件和 CMake 包：
+使用应用所需的依赖方案和 TLS 配置生成安装包，然后安装头文件和 CMake 包：
 
 ```sh
 cmake -S . -B build-install -DARKNET_BUILD_TESTS=OFF -DARKNET_BUILD_EXAMPLES=OFF \
@@ -118,8 +118,8 @@ find_package(arknet CONFIG REQUIRED)
 target_link_libraries(my_app PRIVATE arknet::arknet)
 ```
 
-配置应用时传入 `-DCMAKE_PREFIX_PATH=/path/to/prefix`。安装包会保留安装时的后端
-和 TLS 配置，并在使用端查找这些依赖。需要不同后端或 TLS 配置时，使用不同安装前缀。
+配置应用时传入 `-DCMAKE_PREFIX_PATH=/path/to/prefix`。安装包会保留安装时的依赖方案
+和 TLS 配置，并在使用端查找这些依赖。需要不同依赖方案或 TLS 配置时，使用不同安装前缀。
 
 ## 使用 vcpkg
 
@@ -141,17 +141,17 @@ cmake --build build-vcpkg --parallel 3
 
 ## 直接使用头文件
 
-将 `include/` 和所选后端的头文件目录加入编译器搜索路径，以 C++20 编译，并链接
+将 `include/` 和所选依赖库的头文件目录加入编译器搜索路径，以 C++20 编译，并链接
 平台的 socket 和线程依赖。安全传输还需要 OpenSSL 头文件和库。Windows 下链接
 `ws2_32` 和 `mswsock`。CMake 目标还会为 MSVC 添加 `/bigobj`。
 
-在包含 arknet 或后端头文件前定义配置宏：
+在包含 arknet 或依赖库头文件前定义配置宏：
 
 宏的含义见[直接使用头文件时的宏](../reference/configuration_CN.md#直接使用头文件时的宏)。
 
 <Aside type="caution" title="注意：保持构建配置一致">
 
-同一程序的全部翻译单元必须使用相同的后端、TLS 和行为宏。使用 CMake 时，优先
+同一程序的全部翻译单元必须使用相同的依赖方案、TLS 和行为宏。使用 CMake 时，优先
 使用 `arknet::arknet` 接口目标，由目标统一传递配置。
 
 </Aside>

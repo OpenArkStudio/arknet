@@ -47,15 +47,15 @@ Apple ASan 不提供本次泄漏检测。
 
 ## 基准入口验证
 
-每种后端的 `*-protocol-probes.json` 包含 TCP、UDP、WebSocket、TLS、WSS、
+每种依赖方案的 `*-protocol-probes.json` 包含 TCP、UDP、WebSocket、TLS、WSS、
 HTTP 和 HTTPS 七次探测；`*-native-probes.json` 包含回调／协程、单 context
 四线程／四个 context 各一线程、无业务计算／10,000 次运算共八次探测。
-两后端共 30 次均通过。每次测量 0.2 秒、预热 0.1 秒，仅用于检查 IPv6
+两种依赖方案共 30 次均通过。每次测量 0.2 秒、预热 0.1 秒，仅用于检查 IPv6
 参数和 CPU 占用率公式，不用于性能结论。JSON 保留完整命令、机器配置和源码哈希。
 
 CPU 百分比检查为 `CPU 时间 / cpu_elapsed_seconds × 100`，允许输出舍入误差
 小于 0.001 个百分点。`address_family` 均为 `ipv6`；TLS 使用独立 IPv6 身份。
-两后端的 `arknet_ipv6_echo` 示例也已编译并运行成功。
+两种依赖方案的 `arknet_ipv6_echo` 示例也已编译并运行成功。
 
 这些检查仅覆盖本机 IPv6 回环，不涵盖外部 IPv6 路由、带作用域的链路本地
 地址、DNS 地址族回退或双栈通配监听。`v6_only` 沿用操作系统默认值。

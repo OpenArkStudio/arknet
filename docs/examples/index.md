@@ -1,7 +1,7 @@
 # Examples
 
 The repository includes small C++ applications, and each protocol guide provides
-complete client/server programs. Use the same backend and TLS settings for both peers.
+complete client/server programs. Use the same dependency combination and TLS settings for both peers.
 
 ## Repository applications
 

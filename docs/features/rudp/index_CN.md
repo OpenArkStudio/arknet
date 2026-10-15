@@ -22,7 +22,7 @@ FEC 需要两端协商，仍由 ARQ 保证完整消息交付。
 | 能力 | 行为 |
 | --- | --- |
 | 端点 | `rudp_client`、`rudp_server`、`rudp_session` 及 CRTP 变体 |
-| 地址与后端 | IPv4/IPv6；Standalone Asio 或 Boost.Asio |
+| 地址与依赖库 | IPv4/IPv6；Standalone Asio 或 Boost.Asio |
 | 消息 | 空消息、二进制消息、分片与有序重组 |
 | 可靠性 | ACK、超时重传、快速重传与有限重试 |
 | 可选恢复 | Reed–Solomon 固定或自适应 FEC；未恢复数据由 ARQ 重传 |

@@ -53,8 +53,8 @@ UDP 发送失败时保留 socket 错误码，完成回调报告 0 字节。永�
 [上一轮 CI](https://github.com/OpenArkStudio/arknet/actions/runs/38044247191)
 发现排队的取消回调通过共享状态保留 context，形成循环引用。回调现使用弱引用。
 永久回归用例覆盖 strand／直接执行器，以及尚未运行／已停止的 context：修复前
-4 个 context 均未释放；修复后，两种后端的 4 个 context 均已释放。上述完整本地
-检查包含该用例。两种后端的 Linux LeakSanitizer 也已通过下方的跨平台 CI 检查。
+4 个 context 均未释放；修复后，两种依赖方案的 4 个 context 均已释放。上述完整本地
+检查包含该用例。两种依赖方案的 Linux LeakSanitizer 也已通过下方的跨平台 CI 检查。
 
 Windows job 还超过了 35 分钟限时。UDP 测试在
 [standalone](windows-udp-before-standalone.log) 和 [Boost](windows-udp-before-boost.log)

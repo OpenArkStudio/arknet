@@ -4,7 +4,7 @@
 
 首个正式发行版包含 TCP、原生 UDP、RUDP、WebSocket/WSS、HTTP/HTTPS 与路由，
 以及可选的 TLS/mTLS。arknet 保持 C++20 和 header-only，支持 Standalone Asio
-与 Boost.Asio 两种后端。
+与 Boost.Asio 两种依赖方案。
 
 RUDP 提供仅 ARQ、固定 Reed–Solomon FEC 与自适应 FEC 三种策略。
 协商、有序交付、丢失恢复、资源限额、重连与旧 zephyr 对端互通均通过本机检查。

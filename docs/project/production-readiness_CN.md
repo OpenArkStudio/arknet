@@ -26,10 +26,10 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 
 | 范围 | 截至 2026-10-13 的证据 |
 | --- | --- |
-| 本机完整检查 | 两种 Release + TLS 后端：每种 55 项检查、219 个 doctest 用例 |
+| 本机完整检查 | 两种 Release + TLS 依赖方案：每种 55 项检查、219 个 doctest 用例 |
 | 并发与内存检查 | 指定 ASan/UBSan 测试组：109 个用例；指定 TSan 测试组：86 个用例 |
-| 跨平台 CI | [13 项任务全部通过](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095)：两种 Asio 后端、Linux/macOS/Windows、无 TLS 构建、ASan/UBSan、TSan、安装后使用及格式检查 |
-| 真实旧库对端 | 两种后端：每种 12 组进程场景、16 个会话、512 条消息及回显 |
+| 跨平台 CI | [13 项任务全部通过](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095)：两种 Asio 依赖方案、Linux/macOS/Windows、无 TLS 构建、ASan/UBSan、TSan、安装后使用及格式检查 |
+| 真实旧库对端 | 两种依赖方案：每种 12 组进程场景、16 个会话、512 条消息及回显 |
 | RUDP/FEC 实测负载 | 96 组配置、276 次测量、7,960,439 次成功消息往返；六组 120 秒持续运行 |
 | ARK 替换 | 已在 [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38) 合并直接替换；业务回归与部署验收待完成 |
 | 生产部署 | 目标网络跨主机容量、生产时长耐久及部署访问控制待完成 |

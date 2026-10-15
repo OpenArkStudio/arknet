@@ -8,7 +8,7 @@ Mac mini Mac16,11, Apple M4 Pro (14 cores), 48 GiB, macOS 27.0.1, Apple Clang 21
 | `*-dimensions.json` | 216 | 186 / 30 |
 | `limits/*.json` | 108 | 72 / 36 |
 | `buffer-probes/*.json` | 21 | 9 / 12 |
-| `*-stress.log` | 60 seconds per backend | Both passed |
+| `*-stress.log` | 60 seconds per dependency configuration | Both passed |
 
 Each matrix JSON records settings, commands, host, source/executable hashes and failures. All six matrix files use source SHA-256 `0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`.
 

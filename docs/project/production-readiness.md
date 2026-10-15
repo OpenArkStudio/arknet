@@ -28,10 +28,10 @@ acceptance requires the remaining evidence below.
 
 | Scope | Evidence as of 2026-10-13 |
 | --- | --- |
-| Complete local checks | Both Release + TLS backends: 55 checks and 219 doctest cases each |
+| Complete local checks | Both Release + TLS dependency configurations: 55 checks and 219 doctest cases each |
 | Concurrency and memory checks | Selected ASan/UBSan suites: 109 cases; selected TSan suites: 86 cases |
-| Cross-platform CI | [All 13 jobs passed](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095): both Asio backends, Linux/macOS/Windows, builds without TLS, ASan/UBSan, TSan, installed consumers and formatting |
-| Real legacy peers | Both backends: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each |
+| Cross-platform CI | [All 13 jobs passed](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095): both Asio dependency configurations, Linux/macOS/Windows, builds without TLS, ASan/UBSan, TSan, installed consumers and formatting |
+| Real legacy peers | Both dependency configurations: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each |
 | Measured RUDP/FEC load | 96 configurations, 276 runs, 7,960,439 successful message round trips; six 120-second sustained runs |
 | ARK replacement | Direct replacement merged in [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38); business regression and deployment acceptance pending |
 | Production deployment | Target-network cross-host capacity, production-duration endurance and deployment access control pending |

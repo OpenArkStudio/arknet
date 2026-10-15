@@ -70,7 +70,7 @@ Verified on 2026-10-13 using a Mac mini `Mac16,11`, Apple M4 Pro,
 macOS 27.0.1 (26A434), Apple Clang 21.0.0, CMake 4.3.3,
 Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
 
-| Backend | Build | TLS | Checks / doctest cases | Result |
+| Dependency | Build | TLS | Checks / doctest cases | Result |
 | --- | --- | --- | ---: | --- |
 | Standalone Asio | Release | ON | 55 / 219 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-standalone.log) |
 | Boost.Asio | Release | ON | 55 / 219 | [Passed](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-boost.log) |
@@ -84,8 +84,8 @@ The complete checks include benchmark smoke cases and installed-package consumpt
 | TSan | Standalone Asio: FEC, reference FEC interop, RUDP/FEC, lifecycle, detail and concurrency | 86 | Passed |
 
 The RUDP FEC endpoint suite passed 11 cases and 2,564 assertions in both Release
-backends and the separate ASan/UBSan and TSan builds. Real zephyr/arknet process
-pairs passed all 12 scenarios per backend, including reconnect, ARK-style binary
+dependency configurations and the separate ASan/UBSan and TSan builds. Real zephyr/arknet process
+pairs passed all 12 scenarios per dependency configuration, including reconnect, ARK-style binary
 headers, 4096-byte bodies, ARQ packet loss and reordering. The relay preserves
 SYN/ACK/FIN; this does not establish reliable shutdown when FIN is lost.
 
@@ -132,6 +132,6 @@ capacity or WAN latency. Descriptor exhaustion, production-duration endurance
 and [ARK business acceptance](production-readiness.md) remain to be validated.
 
 All 14 independent client/server usage programs were also built with both
-backends. The seven protocol pairs per backend verified echo contents and all
+dependency configurations. The seven protocol pairs per dependency configuration verified echo contents and all
 28 processes exited normally. [Build/run logs and reproduction scripts](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/usage/README.md)
 retain this check separately from timed performance measurements.

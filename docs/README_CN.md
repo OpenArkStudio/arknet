@@ -2,7 +2,7 @@
 
 arknet 是面向客户端与服务端的通用 C++20 header-only 网络库，提供 TCP、UDP、
 RUDP、WebSocket、HTTP 和 TLS。端点采用 CRTP 继承与组件组合，
-支持 IPv4 和 IPv6，可选择 Standalone Asio 或 Boost.Asio 后端。
+支持 IPv4 和 IPv6，可选择 Standalone Asio 或 Boost.Asio 依赖方案。
 
 ## 开始使用
 

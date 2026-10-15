@@ -17,13 +17,13 @@ RUDP/FEC 不包含在 `v0.1.0-rc.1` 中。
 | Boost.Asio，Release + TLS | 55 项检查／219 个 doctest 用例 | [通过](arknet-rudp-fec-check-boost.log) |
 | ASan/UBSan，Standalone Asio | 10 个指定测试组／109 个用例 | [日志](arknet-rudp-final-asan/) |
 | TSan，Standalone Asio | 8 个指定测试组／86 个用例 | [日志](arknet-rudp-final-tsan/) |
-| 真实 zephyr/arknet 对端，每种后端 | 12 组进程／16 个会话／512 条消息及回显 | [证据](interop/arknet-zephyr-interop-final.md) |
+| 真实 zephyr/arknet 对端，每种依赖方案 | 12 组进程／16 个会话／512 条消息及回显 | [证据](interop/arknet-zephyr-interop-final.md) |
 | 格式与排除规则 | 146 个项目 C++ 文件；排除第三方实现 | [检查](arknet-rudp-fec-format.log)、[脚本](arknet-rudp-fec-format-runner.log) |
 | 报告生成器 | 数据结构与计数、SVG 链接、XML 和渲染 | [日志](arknet-rudp-report-verification.log) |
 | 中英文文档 | 构建、路由、本地链接与 AI Markdown 导出 | [日志](arknet-rudp-fec-docs-check.log) |
 
 完整检查包含安装包消费项目和基准冒烟用例；冒烟计时不作为性能结果。
-RUDP FEC 在两种 Release 后端及两种 Sanitizer 构建中均通过 11 个用例、2,564 项断言。
+RUDP FEC 在两种 Release 依赖方案及两种 Sanitizer 构建中均通过 11 个用例、2,564 项断言。
 ASan/UBSan 覆盖 ARQ、独立 ARQ/FEC 实现互通、RUDP/FEC、lifecycle、detail 与 concurrency；
 TSan 覆盖 FEC、独立 FEC 实现互通、RUDP/FEC、lifecycle、detail 与 concurrency。
 本记录不代表本机执行了全部历史测试组的 Sanitizer 检查。

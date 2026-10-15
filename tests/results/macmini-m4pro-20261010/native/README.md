@@ -16,7 +16,7 @@ The permanent tests check cancellation after an injected failure, batch content
 with windows 1/64, and the maximum payload of 65,507 bytes with 64 messages per
 batch. Both execution modes and both multi-thread context topologies are tested.
 
-`arknet-native-final-probes.log` records 136 successful checks on both backends
+`arknet-native-final-probes.log` records 136 successful checks on both dependency configurations
 and execution modes:
 
 - 96 checks: 64-byte messages, 4 clients, windows 1/4/16/64, and 0/10,000 CPU
@@ -27,7 +27,7 @@ and execution modes:
 - 8 checks: 65,507-byte messages, window 64, 4 clients, and both four-thread
   context topologies.
 
-Each probe validates execution/backend metadata, content and IO error counts,
+Each probe validates execution/dependency configuration metadata, content and IO error counts,
 message count = batch observation count × window, RTT sample/percentile order,
 positive warmup traffic, elapsed duration, and process CPU time. Window 1 reports
 message RTT; larger windows report batch RTT. These are functional probes;

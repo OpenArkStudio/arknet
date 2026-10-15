@@ -10,9 +10,9 @@ Release 本机回环测试：1024 字节二进制消息、16 个客户端、窗�
 
 ![不同 IO 模型下的 WebSocket p99 RTT](../../performance/assets/websocket-work0-latency.svg)
 
-- 两种后端都以 4 个 io_context 各 1 个线程的吞吐量中位数最高。
+- 两种依赖方案都以 4 个 io_context 各 1 个线程的吞吐量中位数最高。
 - Standalone Asio 的最低 p99 中位数出现在 4 个 io_context 各 1 个线程；Boost 则是 2 个 io_context 各 1 个线程，且运行范围与 4 个 io_context 各 1 个线程重叠。
-- 单客户端、窗口 1 时，两种后端使用 1 个 io_context、4 个线程的吞吐量中位数均低于 1 个 io_context、1 个线程。
+- 单客户端、窗口 1 时，两种依赖方案使用 1 个 io_context、4 个线程的吞吐量中位数均低于 1 个 io_context、1 个线程。
 
 ### WSS
 
@@ -20,7 +20,7 @@ Release 本机回环测试：1024 字节二进制消息、16 个客户端、窗�
 
 ![不同 IO 模型下的 WSS p99 RTT](../../performance/assets/wss-work0-latency.svg)
 
-- 两种后端都以 4 个 io_context 各 1 个线程的吞吐量中位数最高、p99 中位数最低。
+- 两种依赖方案都以 4 个 io_context 各 1 个线程的吞吐量中位数最高、p99 中位数最低。
 - 同一负载与线程模型下，WSS 的吞吐量中位数低于明文 WebSocket。
 
 [完整 WebSocket 报告](../../performance/websocket_CN.md) · [完整 WSS 报告](../../performance/wss_CN.md)
@@ -56,6 +56,6 @@ build-perf/benchmarks/arknet_loopback_benchmark \
 
 启用 TLS 后使用 `--protocol wss --certs tests/certs`。WSS 校验测试证书，结果见 [WSS 报告](../../performance/wss_CN.md)，构建方法见 [TLS 性能](../tls/performance_CN.md)。
 
-测试在升级连接后测量二进制回显，未覆盖浏览器调度、升级速率、空闲连接、压缩、ping/pong、认证、广播或慢对端。两种后端的 Asio/Beast 版本不同，不能把差异仅归因于后端选择。
+测试在升级连接后测量二进制回显，未覆盖浏览器调度、升级速率、空闲连接、压缩、ping/pong、认证、广播或慢对端。两种依赖方案的 Asio/Beast 版本不同，不能把差异仅归因于依赖方案选择。
 
 另见[测试](../../project/testing_CN.md)、[WebSocket 测试](https://github.com/OpenArkStudio/arknet/blob/main/tests/websocket.cpp)及[基准源码](https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/loopback.cpp)。

@@ -9,8 +9,8 @@
 | 现象 | 先检查 | 处理方式 |
 | --- | --- | --- |
 | 找不到 `asio.hpp` | 确认选择了 standalone 模式，并查找已安装的头文件 | 将 `ARKNET_ASIO_INCLUDE_DIR` 设置为包含 `asio.hpp` 的目录，再重新配置；见[安装](../get-started/installation_CN.md) |
-| CMake 找不到 Boost 或 OpenSSL | 检查要求的版本、已安装软件包和 CMake 前缀 | 设置 `CMAKE_PREFIX_PATH` 或 `OPENSSL_ROOT_DIR`；切换后端时使用独立构建目录 |
-| Asio 和 Beast 的 socket 类型不匹配 | 查看详细构建输出中的编译宏，以及更早包含的后端头文件 | 全部翻译单元使用同一后端，通过 `arknet::arknet` 接口目标传递配置宏 |
+| CMake 找不到 Boost 或 OpenSSL | 检查要求的版本、已安装软件包和 CMake 前缀 | 设置 `CMAKE_PREFIX_PATH` 或 `OPENSSL_ROOT_DIR`；切换依赖方案时使用独立构建目录 |
+| Asio 和 Beast 的 socket 类型不匹配 | 查看详细构建输出中的编译宏，以及更早包含的依赖头文件 | 全部翻译单元使用同一依赖方案，通过 `arknet::arknet` 接口目标传递配置宏 |
 | 安全传输头文件或 OpenSSL 符号不可用 | 检查 `ARKNET_ENABLE_SSL`、OpenSSL 头文件和链接库 | 在 CMake 中启用 TLS 并使用导出的接口目标；直接使用头文件时，定义宏并提供 OpenSSL 依赖 |
 | TLS 握手拒绝证书 | 记录回调错误，检查信任链、证书有效期和请求的 DNS/IP 身份 | 加载所需 CA，使用证书 subject alternative names 中的名称或地址连接，并检查系统时钟 |
 | TLS 服务端启动失败，或报告 `invalid_argument` | 加载证书和私钥后，立即检查错误 | 启动前加载可用证书及匹配的私钥；mTLS 还需配置客户端 CA 和服务端验证模式 |
@@ -75,7 +75,7 @@ npm run check
 
 - 源码版本，以及最小客户端、服务端或测试用例。
 - 操作系统、架构、编译器和依赖版本。
-- Asio 后端、TLS 配置和 CMake 配置命令。
+- Asio 依赖方案、TLS 配置和 CMake 配置命令。
 - 内置或外部 IO、context 和通道数量，以及调用 `run()` 的线程数量。
 - 在错误发生处记录的错误 category、数值和消息。
 - 发送问题所涉及的有效载荷大小、拆包方式、队列上限和完成字节数。

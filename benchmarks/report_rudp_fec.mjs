@@ -266,7 +266,7 @@ export function chartSVG(report, metric, title, unit, divisor = 1) {
   const fragments = ['<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height +
     '" viewBox="0 0 ' + width + " " + height + '" role="img" aria-labelledby="title description">',
     "<title id=\"title\">" + escapeXML(title) + "</title>",
-    "<desc id=\"description\">All endpoint IO models and both backends. Bars are medians; whiskers are actual minimum and maximum repeated results.</desc>",
+    "<desc id=\"description\">All endpoint IO models and both dependency configurations. Bars are medians; whiskers are actual minimum and maximum repeated results.</desc>",
     '<rect width="100%" height="100%" fill="#ffffff"/>',
     '<g font-family="Arial, Helvetica, sans-serif" fill="#20252b">',
     text(width / 2, 28, title, 20),
@@ -451,8 +451,8 @@ export function documentation(report, zh = false) {
     "", zh ? "### 随机丢包下的资源数值" : "### Resource Values Under Random Loss", "",
     zh ? "1024 B、窗口 16、1 个 io_context／1 个端点线程；采样峰值使用三轮中位数。" :
       "1,024 B; window 16; one io_context / one endpoint thread. Sampled peaks are medians across three rounds.",
-    "", zh ? "| 后端／策略 | 恢复／1000 往返 | 重传／1000 往返 | FEC 保留／KiB | 中继路由峰值和／KiB | 进程 RSS／MiB | 观测最大校验数 |" :
-      "| Backend / Policy | Restored / 1,000 | Retransmitted / 1,000 | FEC Retained / KiB | Relay Route Peaks Sum / KiB | Process RSS / MiB | Max Observed Parity |",
+    "", zh ? "| 依赖方案／策略 | 恢复／1000 往返 | 重传／1000 往返 | FEC 保留／KiB | 中继路由峰值和／KiB | 进程 RSS／MiB | 观测最大校验数 |" :
+      "| Dependency / Policy | Restored / 1,000 | Retransmitted / 1,000 | FEC Retained / KiB | Relay Route Peaks Sum / KiB | Process RSS / MiB | Max Observed Parity |",
     "| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
   for (const backend of BACKENDS) for (const policy of POLICIES) {
     const row = main.find(row => row.backend === backend && row.profile === "random" && row.policy === policy &&
@@ -486,8 +486,8 @@ export function documentation(report, zh = false) {
     "", zh ? "## 120 秒持续测试" : "## 120-Second Sustained Runs", "",
     zh ? "每组仅测一次，不绘制重复测量的误差线。所有消息校验通过；表中内存仍使用上文的统计口径，不能仅凭峰值宣称不存在长期泄漏。" :
       "Each case has one measured run, so no repeated-run whiskers are shown. All message checks passed. Memory uses the definitions above; peaks alone do not establish the absence of long-term leaks.",
-    "", zh ? "| 后端／策略 | 消息往返数 | 往返/s | p99／ms | CPU／% | 网络开销／% | FEC 采样峰值／KiB |" :
-      "| Backend / Policy | Message Round Trips | Round Trips/s | p99 / ms | CPU / % | Wire Overhead / % | FEC Sampled Peak / KiB |",
+    "", zh ? "| 依赖方案／策略 | 消息往返数 | 往返/s | p99／ms | CPU／% | 网络开销／% | FEC 采样峰值／KiB |" :
+      "| Dependency / Policy | Message Round Trips | Round Trips/s | p99 / ms | CPU / % | Wire Overhead / % | FEC Sampled Peak / KiB |",
     "| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
   for (const row of soak)
     lines.push("| " + labelBackend(row.backend) + " / " + labelPolicy(row.policy, zh) + " | " +
@@ -498,8 +498,8 @@ export function documentation(report, zh = false) {
   lines.push("", zh ? "## 结果与选型" : "## Results and Policy Selection", "",
     zh ? "以下仅比较主矩阵的 1 个 io_context／1 个端点线程，避免把不同线程配置混成策略排名。" :
       "The following compares main-matrix cases with one io_context / one endpoint thread, keeping IO models separate from policy ranking.",
-    "", zh ? "| 后端 | 网络条件 | 最高往返吞吐量 | 最低 p99 RTT |" :
-      "| Backend | Network Condition | Highest Round-Trip Throughput | Lowest p99 RTT |",
+    "", zh ? "| 依赖方案 | 网络条件 | 最高往返吞吐量 | 最低 p99 RTT |" :
+      "| Dependency | Network Condition | Highest Round-Trip Throughput | Lowest p99 RTT |",
     "| --- | --- | ---: | ---: |");
   for (const backend of BACKENDS) for (const profile of NETWORKS) {
     const candidates = main.filter(row => row.backend === backend && row.profile === profile &&
@@ -522,11 +522,11 @@ export function documentation(report, zh = false) {
   const randomFec = comparable.filter(row => row.profile === "random" && row.policy !== "off");
   const small = dimensions.filter(row => row.payload === 64 && row.window === 1);
   lines.push("",
-    zh ? "以下范围为两个后端的三轮中位数范围：" : "The ranges below span the two backends' three-run medians:", "",
+    zh ? "以下范围为两个依赖方案的三轮中位数范围：" : "The ranges below span the two dependency configurations' three-run medians:", "",
     (zh ? "- 无主动丢包：仅 ARQ 达到 " : "- No injected loss: ARQ only reached ") +
       range(cleanArq, "roundtrips_per_second", 1, 0) + (zh ? " 往返/s，p99 为 " : " round trips/s, with p99 ") +
-      range(cleanArq, "rtt_p99_us", 1000, 2) + (zh ? " ms；两个后端的吞吐量和 p99 均优于本次测量的 FEC 策略。" :
-        " ms. Both throughput and p99 favored ARQ-only over the measured FEC policies on both backends."),
+      range(cleanArq, "rtt_p99_us", 1000, 2) + (zh ? " ms；两个依赖方案的吞吐量和 p99 均优于本次测量的 FEC 策略。" :
+        " ms. Both throughput and p99 favored ARQ-only over the measured FEC policies on both dependency configurations."),
     (zh ? "- 随机丢包：FEC 的吞吐量为 " : "- Random loss: FEC throughput was ") +
       range(randomFec, "roundtrips_per_second", 1, 0) + (zh ? " 往返/s，仅 ARQ 为 " : " round trips/s versus ") +
       range(randomArq, "roundtrips_per_second", 1, 0) +
