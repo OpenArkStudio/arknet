@@ -147,7 +147,7 @@ protected:
         object.is_stop_connect_timeout_timer_called_ = false;
         object.is_disconnect_called_ = false;
 #endif
-        if (object.state_.load() != state_t::starting)
+        if (object.is_iopool_stop_requested() || object.state_.load() != state_t::starting)
         {
             object._handle_connect(
                 asio::error::operation_aborted, std::move(owner), std::move(options), std::move(chain));
@@ -202,7 +202,7 @@ protected:
     void _post_connect(error_code error, std::unique_ptr<endpoints_type> endpoints, endpoints_iterator position,
         std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
-        if (object.state_.load() != state_t::starting)
+        if (object.is_iopool_stop_requested() || object.state_.load() != state_t::starting)
         {
             object._handle_connect(
                 asio::error::operation_aborted, std::move(owner), std::move(options), std::move(chain));
@@ -243,6 +243,12 @@ protected:
             object._do_init(options);
             object._fire_init();
         }
+        if (object.is_iopool_stop_requested())
+        {
+            object._handle_connect(
+                asio::error::operation_aborted, std::move(owner), std::move(options), std::move(chain));
+            return;
+        }
         const auto endpoint = position->endpoint();
         socket.async_connect(endpoint,
             make_allocator(object.rallocator(),
@@ -270,8 +276,10 @@ protected:
         {
             object.remote_endpoint_ = endpoint;
         }
-        object._handle_connect(
-            object.state_.load() == state_t::starting ? error : error_code(asio::error::operation_aborted),
+        // A stop queued after init must fence protocol handshakes too.
+        object._handle_connect(object.state_.load() == state_t::starting && !object.is_iopool_stop_requested()
+                                   ? error
+                                   : error_code(asio::error::operation_aborted),
             std::move(owner), std::move(options), std::move(chain));
     }
 
@@ -292,6 +300,10 @@ protected:
             {
                 error = asio::error::timed_out;
             }
+        }
+        else if (object.is_iopool_stop_requested())
+        {
+            error = asio::error::operation_aborted;
         }
         else if (!object.connect_timeout_timer_)
         {

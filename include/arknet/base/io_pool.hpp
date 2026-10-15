@@ -800,6 +800,11 @@ protected:
         return iopool_->started();
     }
 
+    bool is_iopool_stop_requested() {
+        std::lock_guard lock(wait_mutex_);
+        return stop_requested_;
+    }
+
     bool is_iopool_stopped() const noexcept {
         return iopool_->stopped();
     }

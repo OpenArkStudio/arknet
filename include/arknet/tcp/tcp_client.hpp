@@ -146,6 +146,11 @@ protected:
             auto& owner = this->derived();
             defer_event finish{[completion](event_queue_guard<Derived>) { completion->set_value(get_last_error()); },
                 std::move(guard)};
+            if (owner.is_iopool_stop_requested())
+            {
+                set_last_error(asio::error::operation_aborted);
+                return;
+            }
             auto expected = state_t::stopped;
             if (!owner.state_.compare_exchange_strong(expected, state_t::starting))
             {
