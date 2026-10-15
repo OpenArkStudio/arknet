@@ -269,10 +269,12 @@ private:
             : options(std::move(configuration))
             , runtime(new arknet::detail::io_pool(1),
                   [](arknet::detail::io_pool* pool) { arknet::detail::iopool_deleter{}(pool); }) {
-            if (!options.max_connections || !options.max_waiters || options.acquire_timeout.count() <= 0 ||
-                options.reset_timeout.count() <= 0)
+            const auto now = std::chrono::steady_clock::now();
+            if (!options.max_connections || !options.max_waiters ||
+                !arknet::detail::checked_deadline(now, options.acquire_timeout) ||
+                !arknet::detail::checked_deadline(now, options.reset_timeout))
             {
-                throw std::invalid_argument("Redis pool limits and deadlines must be positive");
+                throw std::invalid_argument("Redis pool limits and deadlines must be positive and representable");
             }
             arknet::detail::pool_cleanup();
             if (!runtime->start())
@@ -560,12 +562,21 @@ public:
         auto request = std::make_shared<waiter>();
         request->id = self->next_id.fetch_add(1);
         request->handler = std::move(handler);
-        request->admitted = self->reserve();
-        auto deadline =
-            std::chrono::steady_clock::now() + (timeout.count() > 0 ? timeout : self->options.acquire_timeout);
+        const auto deadline = arknet::detail::checked_deadline(std::chrono::steady_clock::now(),
+            timeout == std::chrono::milliseconds::zero() ? self->options.acquire_timeout : timeout);
+        request->admitted = deadline && self->reserve();
         try
         {
-            asio::post(self->executor(), [self, request, deadline] { self->acquire(request, deadline); });
+            asio::post(self->executor(), [self, request, deadline] {
+                if (!deadline)
+                {
+                    self->complete(request, acquire_result{client_errc::invalid_command});
+                }
+                else
+                {
+                    self->acquire(request, *deadline);
+                }
+            });
         }
         catch (...)
         {

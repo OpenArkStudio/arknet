@@ -17,6 +17,66 @@
 
 using namespace redis_test;
 
+DOCTEST_TEST_CASE("Redis configured deadlines reject nonpositive and unrepresentable durations") {
+    for (const auto timeout : {0ms, -1ms, std::chrono::milliseconds::max()})
+    {
+        for (int setting = 0; setting < 3; ++setting)
+        {
+            arknet::redis::client_options options;
+            if (setting == 0)
+            {
+                options.connect_timeout = timeout;
+            }
+            else if (setting == 1)
+            {
+                options.command_timeout = timeout;
+            }
+            else
+            {
+                options.drain_timeout = timeout;
+            }
+            DOCTEST_CHECK_THROWS_AS(client{options}, std::invalid_argument);
+        }
+    }
+}
+
+DOCTEST_TEST_CASE("Redis invalid command deadlines reject on the IO lane without sending or consuming quota") {
+    server endpoint([](peer& remote) {
+        remote.hello();
+        remote.expect({"PING"});
+        remote.send("+PONG\r\n");
+        remote.wait_closed();
+    });
+    arknet::redis::client_options options;
+    options.max_pending_commands = 1;
+    client connection(options);
+    check(connect(connection, endpoint.port()), "connected");
+    const auto caller = std::this_thread::get_id();
+    for (const auto timeout : {-1ms, std::chrono::milliseconds::min(), std::chrono::milliseconds::max()})
+    {
+        std::promise<result> completed;
+        auto response = completed.get_future();
+        const auto id = connection.async_execute(
+            {"SET", "must-not-send", "value"},
+            [&](result reply) {
+                check(std::this_thread::get_id() != caller, "invalid deadline completes on the IO lane");
+                completed.set_value(std::move(reply));
+            },
+            timeout);
+        check(id != 0, "rejection has a request ID");
+        const auto rejected = await(response);
+        check(rejected.error == client_errc::invalid_command && !rejected.command_may_have_run,
+            "invalid duration is rejected before sending");
+    }
+    std::promise<result> completed;
+    auto response = completed.get_future();
+    connection.async_execute({"PING"}, [&](result reply) { completed.set_value(std::move(reply)); }, 0ms);
+    const auto valid = await(response);
+    check(valid && valid.replies.front().text == "PONG", "zero keeps the configured default and quota remains free");
+    connection.close();
+    endpoint.finish();
+}
+
 DOCTEST_TEST_CASE("Redis RESP3 handshake and fragmented binary pipeline keep pushes separate") {
     const std::string binary("a\0\r\nb", 5);
     server endpoint([&](peer& remote) {

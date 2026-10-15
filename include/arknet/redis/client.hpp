@@ -15,6 +15,7 @@
 #include <utility>
 #include <vector>
 
+#include <arknet/base/detail/deadline.hpp>
 #include <arknet/redis/detail/resp.hpp>
 #include <arknet/tcp/tcp_client.hpp>
 
@@ -153,11 +154,13 @@ private:
                                       [](arknet::detail::io_pool* pool) { arknet::detail::iopool_deleter{}(pool); }))
             , transport(std::make_shared<Transport>(*runtime))
             , decoder(options.response_limits) {
+            const auto now = std::chrono::steady_clock::now();
             if (!options.max_pending_commands || !options.max_pending_bytes || !options.max_pipeline_response_bytes ||
-                options.connect_timeout.count() <= 0 || options.command_timeout.count() <= 0 ||
-                options.drain_timeout.count() <= 0)
+                !arknet::detail::checked_deadline(now, options.connect_timeout) ||
+                !arknet::detail::checked_deadline(now, options.command_timeout) ||
+                !arknet::detail::checked_deadline(now, options.drain_timeout))
             {
-                throw std::invalid_argument("Redis queue limits and timeouts must be positive");
+                throw std::invalid_argument("Redis queue limits and timeouts must be positive and representable");
             }
             const auto& authority =
                 certificate_authority.empty() ? options.tls_certificate_authority : certificate_authority;
@@ -499,7 +502,14 @@ private:
                 return;
             }
             // Do not remove sent slots or free their admission budget: later replies must still be drained in order.
-            operation->timer->expires_after(options.drain_timeout);
+            const auto deadline =
+                arknet::detail::checked_deadline(std::chrono::steady_clock::now(), options.drain_timeout);
+            if (!deadline)
+            {
+                shutdown(client_errc::invalid_command);
+                return;
+            }
+            operation->timer->expires_at(*deadline);
             operation->timer->async_wait(
                 [weak = this->weak_from_this(), operation = std::weak_ptr(operation)](arknet::error_code error) {
                     if (!error)
@@ -723,10 +733,21 @@ public:
 
     void async_connect(connect_options options, completion_handler handler) {
         auto self = state_;
-        auto deadline = std::chrono::steady_clock::now() + self->options.connect_timeout;
+        const auto deadline =
+            arknet::detail::checked_deadline(std::chrono::steady_clock::now(), self->options.connect_timeout);
         asio::post(
             self->executor(), [self, options = std::move(options), handler = std::move(handler), deadline]() mutable {
-                self->connect(std::move(options), std::move(handler), deadline);
+                if (!deadline)
+                {
+                    if (handler)
+                    {
+                        handler(result{client_errc::invalid_command});
+                    }
+                }
+                else
+                {
+                    self->connect(std::move(options), std::move(handler), *deadline);
+                }
             });
     }
 
@@ -744,17 +765,20 @@ public:
         operation->id = self->next_id.fetch_add(1, std::memory_order_relaxed);
         operation->commands = operation->remaining = commands.size();
         operation->handler = std::move(handler);
-        auto deadline =
-            std::chrono::steady_clock::now() + (timeout.count() > 0 ? timeout : self->options.command_timeout);
+        const auto deadline = arknet::detail::checked_deadline(std::chrono::steady_clock::now(),
+            timeout == std::chrono::milliseconds::zero() ? self->options.command_timeout : timeout);
         std::string bytes;
-        client_errc error = client_errc::none;
+        client_errc error = deadline ? client_errc::none : client_errc::invalid_command;
         try
         {
-            bytes = state::encode(commands, self->options.max_pending_bytes);
-            operation->wire_bytes = bytes.size();
-            if (!self->reserve(operation))
+            if (deadline)
             {
-                error = client_errc::queue_full;
+                bytes = state::encode(commands, self->options.max_pending_bytes);
+                operation->wire_bytes = bytes.size();
+                if (!self->reserve(operation))
+                {
+                    error = client_errc::queue_full;
+                }
             }
         }
         catch (const std::length_error&)
@@ -768,16 +792,24 @@ public:
             // A rejected submission must not retain its large payload in the IO callback queue.
             std::string{}.swap(bytes);
         }
-        asio::post(self->executor(), [self, operation, bytes = std::move(bytes), deadline, error]() mutable {
-            if (error != client_errc::none)
-            {
-                self->complete(operation, result{error});
-            }
-            else
-            {
-                self->submit(operation, std::move(bytes), deadline);
-            }
-        });
+        try
+        {
+            asio::post(self->executor(), [self, operation, bytes = std::move(bytes), deadline, error]() mutable {
+                if (error != client_errc::none)
+                {
+                    self->complete(operation, result{error});
+                }
+                else
+                {
+                    self->submit(operation, std::move(bytes), *deadline);
+                }
+            });
+        }
+        catch (...)
+        {
+            self->release(operation);
+            throw;
+        }
         return operation->id;
     }
 
@@ -827,8 +859,16 @@ private:
     // Its deadline covers the old replies and re-establishing protocol/authentication/database.
     void async_reset(completion_handler handler, std::chrono::milliseconds timeout) {
         auto self = state_;
-        const auto deadline = std::chrono::steady_clock::now() + timeout;
+        const auto deadline = arknet::detail::checked_deadline(std::chrono::steady_clock::now(), timeout);
         asio::post(self->executor(), [self, handler = std::move(handler), deadline]() mutable {
+            if (!deadline)
+            {
+                if (handler)
+                {
+                    handler(result{client_errc::invalid_command});
+                }
+                return;
+            }
             if (self->terminal || !self->ready)
             {
                 handler(result{client_errc::closed});
@@ -837,7 +877,7 @@ private:
             self->ready = false;
             self->connect_handler = std::move(handler);
             self->connect_timer = std::make_shared<asio::steady_timer>(self->executor());
-            self->connect_timer->expires_at(deadline);
+            self->connect_timer->expires_at(*deadline);
             self->connect_timer->async_wait([weak = std::weak_ptr(self)](arknet::error_code error) {
                 if (!error)
                 {

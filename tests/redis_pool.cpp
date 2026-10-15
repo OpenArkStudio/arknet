@@ -1,5 +1,6 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
 #include <atomic>
+#include <chrono>
 #include <cstdlib>
 #include <future>
 #include <memory>
@@ -40,6 +41,58 @@ result pipeline(Connection& connection, std::vector<command> commands) {
 }
 
 } // namespace
+
+DOCTEST_TEST_CASE("Redis pool configured deadlines reject nonpositive and unrepresentable durations") {
+    for (const auto timeout : {0ms, -1ms, std::chrono::milliseconds::max()})
+    {
+        for (const bool acquire_timeout : {false, true})
+        {
+            arknet::redis::pool_options options;
+            if (acquire_timeout)
+            {
+                options.acquire_timeout = timeout;
+            }
+            else
+            {
+                options.reset_timeout = timeout;
+            }
+            DOCTEST_CHECK_THROWS_AS(pool{options}, std::invalid_argument);
+        }
+    }
+}
+
+DOCTEST_TEST_CASE("Redis pool invalid acquire deadlines preserve waiter capacity and default acquisition") {
+    server endpoint([](peer& remote) {
+        remote.hello();
+        remote.expect({"PING"});
+        remote.send("+PONG\r\n");
+        remote.wait_closed();
+    });
+    arknet::redis::pool_options options;
+    options.max_connections = 1;
+    options.max_waiters = 1;
+    options.connection.port = endpoint.port();
+    pool connections(options);
+    const auto caller = std::this_thread::get_id();
+    for (const auto timeout : {-1ms, std::chrono::milliseconds::min(), std::chrono::milliseconds::max()})
+    {
+        std::promise<pool::acquire_result> completed;
+        auto response = completed.get_future();
+        const auto id = connections.async_acquire(
+            [&](auto reply) {
+                check(std::this_thread::get_id() != caller, "invalid acquire completes on the IO lane");
+                completed.set_value(std::move(reply));
+            },
+            timeout);
+        check(id != 0, "rejection has an acquire ID");
+        check(await(response).error == client_errc::invalid_command, "invalid acquire duration rejected");
+    }
+    auto leased = acquire(connections);
+    check(leased, "invalid requests do not consume the single waiter slot");
+    check(execute(leased.connection, {"PING"}).replies.front().text == "PONG", "default command deadline preserved");
+    connections.close();
+    endpoint.finish();
+}
 
 DOCTEST_TEST_CASE("Redis pool reuses a connection only after RESET and a complete new handshake") {
     server endpoint([](peer& remote) {
