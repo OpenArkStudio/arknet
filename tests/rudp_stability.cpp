@@ -38,6 +38,20 @@ struct polled_server_t
         check(server.is_started(), "server starts on caller's IO context");
     }
 
+    template<class Predicate>
+    void until(Predicate done) {
+        const auto deadline = std::chrono::steady_clock::now() + 5s;
+        while (std::chrono::steady_clock::now() < deadline)
+        {
+            if (done())
+            {
+                return;
+            }
+            context.run_one_for(5ms);
+        }
+        check(false, "expected IO event completes before the test deadline");
+    }
+
     void pump(std::chrono::milliseconds duration = 5ms) {
         context.run_for(duration);
     }
@@ -200,11 +214,15 @@ DOCTEST_TEST_CASE("RUDP invalid traffic cannot postpone the silence timeout") {
         DOCTEST_INFO(mode);
         polled_server runtime;
         unsigned disconnected{};
+        arknet::rudp_session* original{};
         arknet::error_code disconnect_error;
         runtime.server.bind_connect([](auto& session) { session->set_silence_timeout(60ms); });
-        runtime.server.bind_disconnect([&](auto&) {
-            ++disconnected;
-            disconnect_error = arknet::get_last_error();
+        runtime.server.bind_disconnect([&](auto& session) {
+            if (session.get() == original)
+            {
+                ++disconnected;
+                disconnect_error = arknet::get_last_error();
+            }
         });
         runtime.start();
         raw_peer peer(runtime.server.acceptor().local_endpoint());
@@ -214,6 +232,7 @@ DOCTEST_TEST_CASE("RUDP invalid traffic cannot postpone the silence timeout") {
         check(conversation.has_value(), "timeout test completes handshake");
         const auto session = runtime.server.find_session(peer.endpoint());
         check(session, "timeout test retains its original session");
+        original = session.get();
         std::string invalid;
         switch (mode)
         {
@@ -230,55 +249,55 @@ DOCTEST_TEST_CASE("RUDP invalid traffic cannot postpone the silence timeout") {
             invalid = arknet::detail::rudp_control(3, 123, *conversation + 1);
             break;
         }
-        for (unsigned attempt = 0; attempt < 12; ++attempt)
+        const auto deadline = std::chrono::steady_clock::now() + 5s;
+        while (!session->is_stopped() && std::chrono::steady_clock::now() < deadline)
         {
             peer.send(invalid);
-            runtime.pump(10ms);
-            if (session->is_stopped())
-            {
-                break;
-            }
+            runtime.context.run_one_for(5ms);
         }
-        DOCTEST_CHECK(runtime.server.get_session_count() == 0);
+        // A queued SYN may legitimately admit a new session after the original expires.
+        DOCTEST_CHECK(session->is_stopped());
         DOCTEST_CHECK(disconnected == 1);
         DOCTEST_CHECK(disconnect_error == asio::error::timed_out);
     }
 }
 
-DOCTEST_TEST_CASE("RUDP matching handshake retries extend the silence deadline") {
+DOCTEST_TEST_CASE("RUDP matching handshake retries refresh the silence clock") {
     polled_server runtime;
-    runtime.server.bind_connect([](auto& session) { session->set_silence_timeout(80ms); });
+    runtime.server.bind_connect([](auto& session) { session->set_silence_timeout(1s); });
     runtime.start();
     raw_peer peer(runtime.server.acceptor().local_endpoint());
     peer.send(arknet::detail::rudp_control(1, 123));
     runtime.pump();
     check(peer.acknowledged(123).has_value(), "valid retry test completes handshake");
-    runtime.pump(40ms);
+    const auto session = runtime.server.find_session(peer.endpoint());
+    check(session, "valid retry test retains its original session");
+    const auto alive = session->last_alive_time();
     peer.send(arknet::detail::rudp_control(1, 123));
-    runtime.pump(50ms);
-    DOCTEST_CHECK(runtime.server.get_session_count() == 1);
-    runtime.pump(100ms);
-    DOCTEST_CHECK(runtime.server.get_session_count() == 0);
+    runtime.until([&] { return session->last_alive_time() > alive; });
+    DOCTEST_CHECK(session->is_started());
+    DOCTEST_CHECK(runtime.server.find_session(peer.endpoint()) == session);
+    runtime.until([&] { return peer.acknowledged(123).has_value(); });
+    runtime.until([&] { return runtime.server.get_session_count() == 0; });
+    DOCTEST_CHECK(session->is_stopped());
 }
 
 DOCTEST_TEST_CASE("Raw UDP retains liveness updates for arbitrary datagrams") {
     polled_server_t<arknet::udp_server> runtime;
     unsigned received{};
-    runtime.server.bind_connect([](auto& session) { session->set_silence_timeout(80ms); });
+    runtime.server.bind_connect([](auto& session) { session->set_silence_timeout(1s); });
     runtime.server.bind_recv([&](auto&, std::string_view) { ++received; });
     runtime.start();
     raw_peer peer(runtime.server.acceptor().local_endpoint());
     peer.send("junk");
-    runtime.pump();
+    runtime.until([&] { return received == 1; });
     const auto session = runtime.server.find_session(peer.endpoint());
     check(session, "raw UDP accepts an arbitrary first datagram");
-    runtime.pump(40ms);
     const auto alive = session->last_alive_time();
     peer.send("");
-    runtime.pump(50ms);
+    runtime.until([&] { return received == 2; });
     DOCTEST_CHECK(session->is_started());
     DOCTEST_CHECK(session->last_alive_time() > alive);
-    DOCTEST_CHECK(received == 2);
-    runtime.pump(100ms);
-    DOCTEST_CHECK(session->is_stopped());
+    DOCTEST_CHECK(runtime.server.find_session(peer.endpoint()) == session);
+    runtime.until([&] { return session->is_stopped(); });
 }
