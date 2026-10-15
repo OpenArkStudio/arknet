@@ -422,12 +422,29 @@ DOCTEST_TEST_CASE("MySQL result bounds close the socket before an incomplete res
         mysql_peer peer([](mysql_peer& server) -> asio::awaitable<void> {
             co_await authenticate(server);
             co_await receive_command(server);
-            co_await server.send(std::string(1, '\1'));
-            co_await server.send(column_packet("value"));
-            co_await server.send(eof_packet);
-            co_await server.send(std::string("\x02"
-                                             "42",
-                3));
+            const std::array<std::string, 4> packets{std::string(1, '\1'), column_packet("value"), eof_packet,
+                std::string("\x02"
+                            "42",
+                    3)};
+            std::string response;
+            for (const auto& packet : packets)
+            {
+                std::string encoded;
+                REQUIRE(wire::encode_message(packet, server.sequence, encoded));
+                response += encoded;
+            }
+            try
+            { co_await server.write_raw(std::move(response)); }
+            catch (const arknet::system_error& error)
+            {
+                // The client may reject metadata and close before the entire
+                // response is written. Other peer failures remain test errors.
+                if (error.code() != asio::error::broken_pipe && error.code() != asio::error::connection_reset &&
+                    error.code() != asio::error::eof)
+                {
+                    throw;
+                }
+            }
             co_await server.wait_for_eof();
         });
         connection client;
