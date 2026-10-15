@@ -48,6 +48,7 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 | ARQ／RUDP | 原版协议互通、丢失／乱序、内存上限、握手重试、IPv4／IPv6、旧 SYN 处理和关闭 |
 | FEC／RUDP FEC | 独立 Reed–Solomon 实现互通、协商、CRC 拒绝、重复与重放、恢复、不完整分组、内存预算、固定／自适应策略和并发统计 |
 | lifecycle／detail／IO pool | timer／post 取消、实际完成后销毁、mutable 监听器、执行器串行化、排队任务和重启 |
+| 进程退出／线程存储 | 回调释放最后一个所有者、嵌套线程池、直接及间接全局所有权、两种跨编译单元链接顺序、退出后拒绝构造及保留显式 Asio 配置 |
 | concurrency／keepalive | 发送配额、回调完成计数、并发停止和 TCP keepalive |
 | TLS | 信任／身份拒绝、mTLS、截止时间、WSS 和重连时创建新 stream |
 | IPv6 | TCP、UDP/session/cast、WS/WSS、HTTP/HTTPS、TLS IP 身份验证和握手 Host |

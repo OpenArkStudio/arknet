@@ -17,8 +17,8 @@ for throughput and p99 charts, model comparisons and machine specifications.
 | Named pipe | TODO | Windows local client/server, message/byte semantics, overlapped IO, access control, cancellation and restart. |
 | Unix domain socket | TODO | Local stream client/server, path ownership and cleanup, permission policy, cancellation and restart. Platform-specific abstract namespace/datagrams require separate decisions. |
 | RPC | TODO | Transport-independent framing and codec selection, request IDs, deadlines, cancellation, bounded inflight work and error propagation. |
-| MySQL client | TODO; implement in arknet | The single-node scope is agreed; see Database clients below. Require independent-server interoperability and failure-path tests before ark plugin integration. |
-| Redis client | TODO; implement in arknet | The single-node scope is agreed; see Database clients below. Require independent-server interoperability and failure-path tests before ark plugin integration. |
+| MySQL client | TODO; implement in arknet | [Single-node scope and acceptance](../features/database-clients.md); independent-server interoperability and failure-path tests before ark plugin integration. |
+| Redis client | TODO; implement in arknet | [Single-node scope and acceptance](../features/database-clients.md); independent-server interoperability and failure-path tests before ark plugin integration. |
 | Public coroutine API | TODO | Awaitable connect/read/write and cancellation integrated with lifecycle; compare shared and sharded executors under IO and CPU work. |
 | WebSocket compression | TODO | Negotiate permessage-deflate; enforce decompressed limits and test adversarial frames. |
 | DTLS | TODO | Select a supported engine; define peer identity, retransmission and datagram limits. |
@@ -37,32 +37,15 @@ HTTP/1 transports remain independently usable.
 
 ## Database clients
 
-The first version targets single-node clients. Its scope is agreed, but it is not
-yet released as an available capability. Implement the clients in arknet without
-Boost.MySQL or Boost.Redis. arknet owns protocol communication and IO lifetime;
-ark plugins integrate configuration, module services and business callbacks. The
-C++ implementation remains header-only; TLS uses the existing OpenSSL dependency.
+MySQL queries, prepared statements and transactions, together with Redis
+RESP2/RESP3 commands and pipelines, form the agreed single-node scope. Both
+clients require authentication, TLS, pools, timeouts, cancellation and queue
+limits. Redis Cluster, Sentinel and Pub/Sub follow later.
 
-| Component | First-version scope |
-| --- | --- |
-| MySQL | Queries, parameterized prepared statements and transactions |
-| Redis | Generic commands, RESP2/RESP3 and pipelining |
-| Shared capabilities | Authentication, TLS, connection pools, timeouts, cancellation and queue limits |
-| Later capabilities | Redis Cluster, Sentinel and Pub/Sub are excluded from this version |
-
-Acceptance proceeds through codecs, single connections, pools and ark integration:
-
-1. Codecs: fragmented input, combined replies, binary content, malformed lengths, nesting and memory limits.
-2. Connections: independent MySQL/Redis server interoperability, authentication, TLS certificate validation, timeouts, cancellation, disconnects and reply ordering.
-3. Pools: acquisition timeouts, full queues, draining on shutdown, concurrency and sustained-load tests. Record actual server versions and machine specifications.
-4. Plugins: replace existing ark database calls only after client acceptance in arknet.
-
-After Redis cancellation or timeout, already-sent replies must still be consumed,
-or the connection closed, to preserve response correlation. MySQL prepared
-statements and transactions belong to a connection; transactions retain a lease.
-Never automatically replay a sent write; a disconnect during commit must preserve
-an unknown-outcome result. Publish APIs after implementation and validation,
-without placeholder interfaces.
+The [database client guide](../features/database-clients.md) defines ownership,
+connection-bound operations, uncertain write outcomes, validation and performance
+report requirements. The clients remain planned until that acceptance is complete;
+ark plugin integration follows client validation. No placeholder API is published.
 
 ## Future Scope
 
