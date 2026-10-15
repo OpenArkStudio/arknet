@@ -276,6 +276,7 @@ function report(groups, metadata, dataset_hash, chinese) {
   }
   lines.push("", "</details>", "", chinese ? "## 复现与来源" : "## Reproduction and provenance", "",
     `[${chinese ? "编译并运行基准程序" : "Build and run the benchmark"}](../../../benchmarks/${protocol}${suffix}.md) · [${chinese ? "接口使用" : "API usage"}](usage${suffix}.md)`, "",
+    ...(metadata.raw_data_archive ? [`[${chinese ? "下载原始测量数据与元数据" : "Download raw measurements and metadata"}](<${metadata.raw_data_archive}>)`, ""] : []),
     `${chinese ? "原始数据集合 SHA-256" : "Raw dataset SHA-256"}: \`${dataset_hash}\``, "",
     `| ${chinese ? "测量源码 | SHA-256" : "Measured source | SHA-256"} |`, "| --- | --- |");
   for (const [path, digest] of Object.entries(metadata.source_sha256).sort(([left], [right]) => left.localeCompare(right))) {
@@ -307,13 +308,21 @@ Writes only features/<protocol>/performance{,_CN}.md and performance/assets/<pro
 Raw inputs remain external. Node is only needed to generate reports, not to run compiled benchmarks.
 Metadata JSON fields: rounds (>=3), expected_groups ({redis:96} or mysql count), warmup_seconds, seconds,
 topology ({en,zh}), environment ([{en,zh,value}, ...] with machine/OS/compiler/server/dependency settings),
-source_sha256 ({"benchmarks/redis.cpp":"64 hex characters", ...}; include runtime and client source hashes).`);
+source_sha256 ({"benchmarks/redis.cpp":"64 hex characters", ...}; include runtime and client source hashes),
+raw_data_archive (optional HTTPS download URL; the tool does not fetch it).`);
     return;
   }
   const metadata = JSON.parse(await readFile(options["--metadata"], "utf8"));
   integer(metadata.rounds, "metadata rounds", 3);
   finite(metadata.warmup_seconds, "metadata warmup");
   finite(metadata.seconds, "metadata duration", Number.MIN_VALUE);
+  if (metadata.raw_data_archive !== undefined) {
+    const archive = new URL(metadata.raw_data_archive);
+    if (archive.protocol !== "https:" || archive.username || archive.password) {
+      throw new Error("Raw data archive must use HTTPS without URL credentials");
+    }
+    metadata.raw_data_archive = archive.href;
+  }
   if (!Array.isArray(metadata.environment) || !metadata.environment.length ||
       metadata.environment.some(item => !item.en || !item.zh || item.value == null) ||
       !metadata.topology?.en || !metadata.topology?.zh || !metadata.source_sha256 ||

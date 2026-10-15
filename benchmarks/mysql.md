@@ -72,9 +72,13 @@ JSONL matrix into bilingual Markdown and SVG charts. The compiled benchmark does
 not need Node. Keep raw data outside the repository and provide measurement
 metadata, expected group counts and measured source hashes; see `--help`.
 
+The [measurement archive](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.0/arknet-0.2.0-benchmark-data.tar.gz) contains the published JSONL rounds, metadata, commands and source hashes, without executables. Extract it outside the checkout, for example under `/tmp`, then render its recorded measurements:
+
 ```sh
-node benchmarks/report_database_clients.mjs --input /tmp/mysql-rounds \
-  --metadata /tmp/mysql-measurement.json --out-dir /tmp/database-report
+node benchmarks/report_database_clients.mjs \
+  --input /tmp/arknet-0.2.0-benchmark-data/mysql/rows \
+  --metadata /tmp/arknet-0.2.0-benchmark-data/mysql/metadata.json \
+  --out-dir /tmp/database-report
 node --test benchmarks/report_database_clients.test.mjs
 ```
 

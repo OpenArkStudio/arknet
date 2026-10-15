@@ -18,6 +18,7 @@ function metadata(protocol) {
     rounds: 3, expected_groups: { [protocol]: 1 }, warmup_seconds: 0.1, seconds: 1,
     environment: [{ en: "Machine", zh: "机器", value: "Synthetic <host> & test" }],
     topology: { en: "Synthetic test data only.", zh: "仅为合成测试数据。" },
+    raw_data_archive: "https://example.com/benchmark-data.tar.gz",
     source_sha256: Object.fromEntries(sources.map(path => [path, "a".repeat(64)])),
   };
 }
@@ -71,6 +72,7 @@ for (const protocol of ["redis", "mysql"]) {
       const page = await readFile(join(output, "features", protocol, "performance.md"), "utf8");
       assert.match(page, /Synthetic &lt;host&gt; &amp; test/);
       assert.match(page, /Raw dataset SHA-256.*[a-f0-9]{64}/);
+      assert.match(page, /Download raw measurements and metadata.*https:\/\/example.com\/benchmark-data.tar.gz/);
       assert.match(page, /RSS is the process lifetime peak/);
       assert.match(page, protocol === "redis" ? /entire pipeline batch/ : /Query RT includes client queueing/);
       assert.match(page, /\| 200 \| 20 \| 40 \| 100 \| 2 \| 3 \|/);
@@ -130,6 +132,10 @@ test("matrix completeness, source provenance and IO-model mismatches fail before
     delete missing_source.source_sha256["include/arknet/base/detail/deadline.hpp"];
     await writeFile(details, JSON.stringify(missing_source));
     await assert.rejects(run, /Missing measured source SHA/);
+    await writeFile(details, JSON.stringify(metadata("redis")));
+    const invalid_archive = { ...metadata("redis"), raw_data_archive: "file:///tmp/benchmark-data.tar.gz" };
+    await writeFile(details, JSON.stringify(invalid_archive));
+    await assert.rejects(run, /Raw data archive must use HTTPS/);
     await writeFile(details, JSON.stringify(metadata("redis")));
     await writeFile(input, rows.map(value => JSON.stringify({ ...value, io_threads: 4 })).join("\n"));
     await assert.rejects(run, /unexpected IO thread count/);

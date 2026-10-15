@@ -166,6 +166,8 @@ Every group retains at least 4374 latency samples per round. Bounded sampling es
 
 [Build and run the benchmark](../../../benchmarks/mysql.md) · [API usage](usage.md)
 
+[Download raw measurements and metadata](<https://github.com/OpenArkStudio/arknet/releases/download/v0.2.0/arknet-0.2.0-benchmark-data.tar.gz>)
+
 Raw dataset SHA-256: `4a99356008598a27bb4c418963e5a48072da998d73dcbe18d6139a040c001b04`
 
 | Measured source | SHA-256 |

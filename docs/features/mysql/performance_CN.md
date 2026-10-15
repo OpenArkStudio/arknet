@@ -166,6 +166,8 @@ CPU 为客户端进程占用比例，以一个核心 100% 为基准，可超过 
 
 [编译并运行基准程序](../../../benchmarks/mysql_CN.md) · [接口使用](usage_CN.md)
 
+[下载原始测量数据与元数据](<https://github.com/OpenArkStudio/arknet/releases/download/v0.2.0/arknet-0.2.0-benchmark-data.tar.gz>)
+
 原始数据集合 SHA-256: `4a99356008598a27bb4c418963e5a48072da998d73dcbe18d6139a040c001b04`
 
 | 测量源码 | SHA-256 |

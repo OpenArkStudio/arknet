@@ -2,6 +2,8 @@
 
 The compiled `arknet_redis_benchmark` measures the native Redis client against a separately running Redis server. Every command is a binary `ECHO`; the program verifies the type, count, and exact contents of every reply. The payload includes zero bytes and all byte values when its size is at least 256 bytes. It does not change Redis keys.
 
+The [local performance report](../docs/features/redis/performance.md) records the 96-group, three-round matrix and its measured source hashes. Its server is Valkey 8.0.11 using the Redis protocol; the [configuration guide](../docs/features/redis/configuration.md#server-tls-retry-issue) distinguishes that measurement from Redis 7.4.2 interoperability and its observed TLS retry problem.
+
 ## Build and run
 
 ```sh
@@ -58,9 +60,13 @@ This tool measures the callback API and the one-context/one-thread-per-connectio
 
 The optional Node tool `benchmarks/report_database_clients.mjs` converts completed JSONL results into bilingual Markdown and SVG charts. Node is needed for this reporting step, not for the benchmark executable. Keep raw data outside the repository and provide measurement metadata, expected group counts and measured source hashes; `--help` lists the fields.
 
+The [measurement archive](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.0/arknet-0.2.0-benchmark-data.tar.gz) contains the published JSONL rounds, metadata, commands and source hashes, without executables. Extract it outside the checkout, for example under `/tmp`, then render its recorded measurements:
+
 ```sh
-node benchmarks/report_database_clients.mjs --input /tmp/redis-rounds \
-  --metadata /tmp/redis-measurement.json --out-dir /tmp/database-report
+node benchmarks/report_database_clients.mjs \
+  --input /tmp/arknet-0.2.0-benchmark-data/redis/rows \
+  --metadata /tmp/arknet-0.2.0-benchmark-data/redis/metadata.json \
+  --out-dir /tmp/database-report
 node --test benchmarks/report_database_clients.test.mjs
 ```
 

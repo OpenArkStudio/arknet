@@ -2,6 +2,8 @@
 
 `arknet_redis_benchmark` 是可独立编译运行的 C++ 程序，用于测试原生 Redis 客户端，Redis 服务端需要单独启动。程序发送二进制 `ECHO`，逐条验证回复类型、数量和内容。包体达到 256 字节时会包含零字节及所有字节值，不修改 Redis 键。
 
+[本地性能报告](../docs/features/redis/performance_CN.md)记录 96 组、每组 3 轮的矩阵及实测源码哈希，服务端使用支持 Redis 协议的 Valkey 8.0.11。[配置指南](../docs/features/redis/configuration_CN.md#服务端-tls-重试问题)区分该测量与 Redis 7.4.2 的互通验证及其 TLS 重试问题。
+
 ## 编译与运行
 
 ```sh
@@ -58,9 +60,13 @@ CPU 和内存指标不包含外部 Redis 服务端；平台不支持的指标输
 
 可选的 Node 工具 `benchmarks/report_database_clients.mjs` 将完整 JSONL 结果转换为双语 Markdown 与 SVG 图表。只有生成报告需要 Node，基准程序本身不需要。原始数据保存在仓库外，另行提供测试元数据、预期组合数和实测源码哈希；字段见 `--help`。
 
+[测量数据包](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.0/arknet-0.2.0-benchmark-data.tar.gz)包含报告对应的 JSONL 轮次、元数据、命令与源码哈希，不包含可执行文件。将其解压到仓库外，例如 `/tmp`，即可渲染已记录的测量结果：
+
 ```sh
-node benchmarks/report_database_clients.mjs --input /tmp/redis-rounds \
-  --metadata /tmp/redis-measurement.json --out-dir /tmp/database-report
+node benchmarks/report_database_clients.mjs \
+  --input /tmp/arknet-0.2.0-benchmark-data/redis/rows \
+  --metadata /tmp/arknet-0.2.0-benchmark-data/redis/metadata.json \
+  --out-dir /tmp/database-report
 node --test benchmarks/report_database_clients.test.mjs
 ```
 

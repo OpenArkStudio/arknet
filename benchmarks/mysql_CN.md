@@ -57,9 +57,13 @@ CPU 指标不包含服务端。发布结果时应记录服务端版本和配置�
 
 可选的 Node 工具 `benchmarks/report_database_clients.mjs` 将完整 JSONL 矩阵转换为双语 Markdown 与 SVG 图表。编译得到的基准程序不需要 Node。原始数据保存在仓库外，另行提供测试元数据、预期组合数和实测源码哈希；字段见 `--help`。
 
+[测量数据包](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.0/arknet-0.2.0-benchmark-data.tar.gz)包含报告对应的 JSONL 轮次、元数据、命令与源码哈希，不包含可执行文件。将其解压到仓库外，例如 `/tmp`，即可渲染已记录的测量结果：
+
 ```sh
-node benchmarks/report_database_clients.mjs --input /tmp/mysql-rounds \
-  --metadata /tmp/mysql-measurement.json --out-dir /tmp/database-report
+node benchmarks/report_database_clients.mjs \
+  --input /tmp/arknet-0.2.0-benchmark-data/mysql/rows \
+  --metadata /tmp/arknet-0.2.0-benchmark-data/mysql/metadata.json \
+  --out-dir /tmp/database-report
 node --test benchmarks/report_database_clients.test.mjs
 ```
 
