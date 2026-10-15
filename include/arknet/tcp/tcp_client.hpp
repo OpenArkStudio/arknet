@@ -60,7 +60,7 @@ public:
         : tcp_client_impl_t(tcp_frame_size, max_buffer_size, std::forward<Scheduler>(scheduler)) {}
 
     ~tcp_client_impl_t() {
-        stop();
+        this->stop_before_destroy(*this);
     }
 
     template<class Host, class Port, class... Options>

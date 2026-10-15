@@ -578,6 +578,41 @@ public:
     }
 };
 
+// A callback can release the last endpoint owner on one of its own workers.
+// Keep the pool alive until another thread can drain and join those workers.
+class owned_pool_cleanup
+{
+    asio::thread_pool executor_{1};
+
+public:
+    ~owned_pool_cleanup() {
+        executor_.join();
+    }
+
+    void release(iopool_base* pool) {
+        asio::post(executor_, [pool] { delete pool; });
+    }
+};
+
+inline owned_pool_cleanup& pool_cleanup() {
+    static owned_pool_cleanup cleanup;
+    return cleanup;
+}
+
+struct iopool_deleter
+{
+    void operator()(iopool_base* pool) const {
+        if (pool->owns_context() && pool->running_in_threads())
+        {
+            pool_cleanup().release(pool);
+        }
+        else
+        {
+            delete pool;
+        }
+    }
+};
+
 template<class Derived, class Args = void>
 class iopool_cp
 {
@@ -651,7 +686,7 @@ class iopool_cp
     }
 
 protected:
-    std::unique_ptr<iopool_base> iopool_;
+    std::unique_ptr<iopool_base, iopool_deleter> iopool_;
     std::vector<std::shared_ptr<io_t>> iots_;
 
     std::shared_ptr<io_t> _get_io(std::size_t index = std::size_t(-1)) noexcept {
@@ -695,6 +730,19 @@ protected:
         iopool_->stop();
     }
 
+    template<class Endpoint>
+    void stop_before_destroy(Endpoint& endpoint) {
+        // A completed close must not publish new callbacks against a dying object.
+        if (endpoint.is_stopped() && iopool_->running_in_threads())
+        {
+            stop_iopool();
+        }
+        else
+        {
+            endpoint.stop();
+        }
+    }
+
     void destroy_iopool() noexcept {
         iopool_->destroy();
         iots_.clear();
@@ -705,11 +753,13 @@ public:
     explicit iopool_cp(T&& scheduler) {
         if constexpr (std::integral<std::remove_cvref_t<T>>)
         {
-            iopool_ = std::make_unique<io_pool>(static_cast<std::size_t>(scheduler));
+            // Construct cleanup before an owned endpoint starts its workers.
+            pool_cleanup();
+            iopool_.reset(new io_pool(static_cast<std::size_t>(scheduler)));
         }
         else
         {
-            iopool_ = std::make_unique<user_iopool>(to_iots(std::forward<T>(scheduler)));
+            iopool_.reset(new user_iopool(to_iots(std::forward<T>(scheduler))));
         }
         for (std::size_t index = 0; index < iopool_->size(); ++index)
         {

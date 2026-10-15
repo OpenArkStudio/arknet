@@ -35,8 +35,6 @@ concurrent builds/tests may affect their timings. They are not formal
 performance measurements.
 
 Both servers read and echo full batches, applying the simulated CPU load to
-each payload-sized message. This removes the opposing-write dependency
-documented in the [pre-fix diagnostic](../../../../benchmarks/results/diagnostics/native-batch-flow-control/README.md).
 
 The `*-build.log` and `*-test.log` files preserve all four build/test results.
 Sanitizers used `halt_on_error=1`; no sanitizer error was reported.
