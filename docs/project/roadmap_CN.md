@@ -17,8 +17,8 @@ RUDP 与 ARQ／可选 FEC、定时器／重连，以及可选的 TLS/HTTPS/WSS/m
 | Named pipe | TODO | Windows 本地 client/server、消息／字节语义、overlapped IO、访问权限、取消与重启。 |
 | Unix domain socket | TODO | 本地 stream client/server、路径所有权与清理、权限、取消与重启；平台特有的 abstract namespace 和 datagram 单独选型。 |
 | RPC | TODO | 与传输解耦的拆包和编解码、请求 ID、截止时间、取消、有界未完成请求和错误传播。 |
-| MySQL 客户端 | TODO，由 arknet 自主实现 | 首版单节点范围已确定，见下方「数据库客户端」；通过独立服务端互通及异常路径测试后再接入 ark 插件。 |
-| Redis 客户端 | TODO，由 arknet 自主实现 | 首版单节点范围已确定，见下方「数据库客户端」；通过独立服务端互通及异常路径测试后再接入 ark 插件。 |
+| MySQL 客户端 | TODO，由 arknet 自主实现 | [单节点范围与验收](../features/database-clients_CN.md)；通过独立服务端互通及异常路径测试后再接入 ark 插件。 |
+| Redis 客户端 | TODO，由 arknet 自主实现 | [单节点范围与验收](../features/database-clients_CN.md)；通过独立服务端互通及异常路径测试后再接入 ark 插件。 |
 | 公开协程 API | TODO | 可等待的连接／读／写、生命周期与取消；用 IO 和 CPU 负载比较共享与分片执行器。 |
 | WebSocket 压缩 | TODO | permessage-deflate 协商、解压后上限和恶意帧测试。 |
 | DTLS | TODO | 选择可用引擎，定义对端身份、重传和数据报上限。 |
@@ -36,27 +36,12 @@ HTTP/3 需要 QUIC/QPACK 协议栈，具体引擎与依赖形式待定。现有 
 
 ## 数据库客户端
 
-首版实现单节点客户端，范围已经确定；当前尚未作为可用能力发布。客户端在 arknet 中自主实现，
-不采用 Boost.MySQL 或 Boost.Redis。arknet 负责协议通信与 IO 生命周期，ark 插件负责框架配置、
-模块服务和业务回调接入。C++ 实现保持 header-only，TLS 使用现有 OpenSSL 依赖。
+首版单节点范围包含 MySQL 查询、预处理与事务，以及 Redis RESP2／RESP3 命令与流水线。
+两者均需提供认证、TLS、连接池、超时、取消及队列上限。Redis Cluster、Sentinel 与 Pub/Sub 后续开发。
 
-| 部分 | 首版范围 |
-| --- | --- |
-| MySQL | 查询、参数化预处理、事务 |
-| Redis | 通用命令、RESP2／RESP3、流水线请求 |
-| 公共能力 | 认证、TLS、连接池、超时、取消、队列上限 |
-| 后续能力 | Redis Cluster、Sentinel、Pub/Sub，首版不提供 |
-
-验收按协议编解码、单连接、连接池、ark 插件接入依次推进：
-
-1. 编解码：分段输入、合并回复、二进制内容、畸形长度、嵌套深度与内存上限测试。
-2. 单连接：独立 MySQL／Redis 服务端互通，验证认证、TLS 证书、超时、取消、断线及回复顺序。
-3. 连接池：租用超时、队列满、关闭排空、并发和长期负载测试；记录实际服务端版本与机器配置。
-4. 插件接入：客户端在 arknet 中通过验收后，再替换 ark 数据库插件的现有调用。
-
-Redis 取消或超时后仍需消费已经发出的命令回复，或关闭连接，避免后续命令收到错误的回复。
-MySQL 的预处理语句与事务绑定到同一连接，事务期间保留连接租约。对已发出的写操作不自动重放；
-提交时断线必须保留「结果未知」的语义。公开 API 随实现验证后提供，不添加占位接口。
+[数据库客户端指南](../features/database-clients_CN.md)说明职责边界、连接绑定的操作、
+写入结果未知的处理、验收与性能报告要求。客户端通过验收后再接入 ark 插件；
+在此之前仍属于开发计划，不提供占位 API。
 
 ## 后续范围
 

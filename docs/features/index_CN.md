@@ -22,5 +22,7 @@
 - [单次 HTTP 请求](http/requests_CN.md)支持完成通知、超时与取消。
 - 公共协程端点、HTTP/2、HTTP/3、named pipe、Unix domain socket、RPC、
   DTLS 和 WebSocket 压缩列在[路线图](../project/roadmap_CN.md)中。
+- MySQL 与 Redis 原生客户端列入开发计划；[数据库客户端指南](database-clients_CN.md)
+  说明单节点范围、失败处理与验收条件。
 
 [安装](../get-started/installation_CN.md) · [公共概念](../concepts/index_CN.md) · [API 索引](../reference/api_CN.md)
