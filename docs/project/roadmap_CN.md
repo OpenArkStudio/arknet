@@ -17,6 +17,8 @@ RUDP 与 ARQ／可选 FEC、定时器／重连，以及可选的 TLS/HTTPS/WSS/m
 | Named pipe | TODO | Windows 本地 client/server、消息／字节语义、overlapped IO、访问权限、取消与重启。 |
 | Unix domain socket | TODO | 本地 stream client/server、路径所有权与清理、权限、取消与重启；平台特有的 abstract namespace 和 datagram 单独选型。 |
 | RPC | TODO | 与传输解耦的拆包和编解码、请求 ID、截止时间、取消、有界未完成请求和错误传播。 |
+| MySQL 客户端 | TODO，由 arknet 自主实现 | 自主实现协议编解码、认证和异步通信。实现前确认首版支持的服务端版本、命令与结果类型、TLS、超时、取消和连接上限；通过独立 MySQL 服务端互通验证后再接入 ark 插件。 |
+| Redis 客户端 | TODO，由 arknet 自主实现 | 自主实现协议编解码、认证和异步通信。实现前确认 RESP 版本、命令范围、流水线请求、TLS、超时、取消和连接上限；通过独立 Redis 服务端互通验证后再接入 ark 插件。 |
 | 公开协程 API | TODO | 可等待的连接／读／写、生命周期与取消；用 IO 和 CPU 负载比较共享与分片执行器。 |
 | WebSocket 压缩 | TODO | permessage-deflate 协商、解压后上限和恶意帧测试。 |
 | DTLS | TODO | 选择可用引擎，定义对端身份、重传和数据报上限。 |
@@ -40,5 +42,9 @@ HTTP/3 需要 QUIC/QPACK 协议栈，具体引擎与依赖形式待定。现有 
 [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38) 使用 arknet；生产时长验证
 仍需在部署验收中完成。
 
-MQTT、数据库协议和 proxy 暂无开发计划，出现具体使用方与验收要求后再评估。
+MySQL、Redis 客户端计划用于 ark 的官方数据库插件。客户端由 arknet 自主实现，
+不采用 Boost.MySQL 或 Boost.Redis。arknet 负责数据库协议通信，ark 插件负责框架配置、
+模块服务和业务回调接入。首版协议范围与验收要求仍待确认，暂不提供占位 API。
+
+MQTT 和 proxy 暂无开发计划，出现具体使用方与验收要求后再评估。
 ARK 接入采用直接替换调用方与业务回归；生产部署前完成[部署验收](production-readiness_CN.md)。

@@ -17,6 +17,8 @@ for throughput and p99 charts, model comparisons and machine specifications.
 | Named pipe | TODO | Windows local client/server, message/byte semantics, overlapped IO, access control, cancellation and restart. |
 | Unix domain socket | TODO | Local stream client/server, path ownership and cleanup, permission policy, cancellation and restart. Platform-specific abstract namespace/datagrams require separate decisions. |
 | RPC | TODO | Transport-independent framing and codec selection, request IDs, deadlines, cancellation, bounded inflight work and error propagation. |
+| MySQL client | TODO; implement in arknet | Implement protocol encoding/decoding, authentication and asynchronous communication within arknet. Confirm the initial server versions, command/result types, TLS, timeouts, cancellation and connection limits before implementation. Verify against an independent MySQL server before ark plugin integration. |
+| Redis client | TODO; implement in arknet | Implement protocol encoding/decoding, authentication and asynchronous communication within arknet. Confirm RESP versions, commands, pipelining, TLS, timeouts, cancellation and connection limits before implementation. Verify against an independent Redis server before ark plugin integration. |
 | Public coroutine API | TODO | Awaitable connect/read/write and cancellation integrated with lifecycle; compare shared and sharded executors under IO and CPU work. |
 | WebSocket compression | TODO | Negotiate permessage-deflate; enforce decompressed limits and test adversarial frames. |
 | DTLS | TODO | Select a supported engine; define peer identity, retransmission and datagram limits. |
@@ -42,7 +44,13 @@ The release covers KCP message-mode interoperability, retry/queue limits and loc
 measurement. ARK's RDP workflow now uses arknet through [ARK PR #38](https://github.com/OpenArkStudio/ARK/pull/38);
 production-duration validation remains to be verified for deployment adoption.
 
-MQTT, database protocols and proxies are not scheduled. Add them only when a
-concrete consumer and acceptance criteria exist. ARK integration proceeds through
+MySQL and Redis clients are planned for ark's official database plugins. The
+clients will be implemented in arknet rather than using Boost.MySQL or Boost.Redis.
+arknet owns database protocol communication; ark plugins integrate framework
+configuration, module services and business callbacks. Initial protocol scope and
+acceptance criteria remain to be agreed; no public placeholder API is provided.
+
+MQTT and proxies are not scheduled. Add them only when a concrete consumer and
+acceptance criteria exist. ARK integration proceeds through
 a direct caller replacement with business regression tests; production deployment
 requires [deployment acceptance](production-readiness.md).
