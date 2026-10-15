@@ -13,6 +13,7 @@ and IO scheduling conventions; service clients document their request and reply 
 | [HTTP / HTTPS](http/index.md) | [Create](http/server.md) | [Create](http/client.md) | [Messages and Keep-Alive](http/configuration.md) | [Results](http/performance.md) |
 | [TLS / mTLS](tls/index.md) | [Create](tls/server.md) | [Create](tls/client.md) | [Certificates and mutual authentication](tls/configuration.md) | [Results](tls/performance.md) |
 | [MySQL](mysql/index.md) | External MySQL service | [Queries and pool](mysql/usage.md) | [TLS, limits and leases](mysql/configuration.md) | [Benchmark](mysql/performance.md) |
+| [Redis](redis/index.md) | External Redis service | [Client and pool](redis/usage.md) | [Limits, authentication and leases](redis/configuration.md) | [Benchmark](redis/performance.md) |
 
 ## Availability
 

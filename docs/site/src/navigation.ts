@@ -41,6 +41,12 @@ const tree: Entry[] = [
       ["features/mysql/configuration", "Configuration and limits", "配置与限额"],
       ["features/mysql/performance", "Performance", "性能"],
     ] },
+    { en: "Redis", zh: "Redis", children: [
+      ["features/redis", "Overview", "概览"],
+      ["features/redis/usage", "Client and connection pool", "客户端与连接池"],
+      ["features/redis/configuration", "Configuration and limits", "配置与限额"],
+      ["features/redis/performance", "Performance", "性能"],
+    ] },
     ["features/database-clients", "Database clients", "数据库客户端"],
   ] },
   { en: "Guides", zh: "使用指南", children: [

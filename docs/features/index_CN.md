@@ -13,6 +13,7 @@
 | [HTTP / HTTPS](http/index_CN.md) | [创建](http/server_CN.md) | [创建](http/client_CN.md) | [消息与 Keep-Alive](http/configuration_CN.md) | [结果](http/performance_CN.md) |
 | [TLS / mTLS](tls/index_CN.md) | [创建](tls/server_CN.md) | [创建](tls/client_CN.md) | [证书与双向认证](tls/configuration_CN.md) | [结果](tls/performance_CN.md) |
 | [MySQL](mysql/index_CN.md) | 外部 MySQL 服务 | [查询与连接池](mysql/usage_CN.md) | [TLS、限额与租约](mysql/configuration_CN.md) | [性能测试](mysql/performance_CN.md) |
+| [Redis](redis/index_CN.md) | 外部 Redis 服务 | [客户端与连接池](redis/usage_CN.md) | [限额、认证与租约](redis/configuration_CN.md) | [性能测试](redis/performance_CN.md) |
 
 ## 支持状态
 
