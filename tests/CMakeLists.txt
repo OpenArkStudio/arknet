@@ -30,7 +30,7 @@ function(arknet_configure_check_target)
         USES_TERMINAL)
 endfunction()
 
-set(arknet_test_names tcp udp lifecycle detail concurrency io_pool keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec)
+set(arknet_test_names tcp udp lifecycle detail concurrency io_pool keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec mysql_wire mysql_handshake mysql_command)
 if(ARKNET_USE_BOOST_ASIO)
     list(APPEND arknet_test_names websocket http router httprequest)
 endif()
@@ -94,6 +94,19 @@ target_compile_definitions(arknet_stress_test PRIVATE
 arknet_add_check(stress 180 arknet_stress_test --protocol all --seconds 1
     --clients 16 --rounds 2 --window 4 --certs ${CMAKE_CURRENT_SOURCE_DIR}/certs)
 if(ARKNET_ENABLE_SSL)
+    add_executable(arknet_mysql_auth_test mysql_auth.cpp test_main.cpp)
+    target_link_libraries(arknet_mysql_auth_test PRIVATE arknet::arknet arknet_test_framework)
+    arknet_add_check(mysql_auth 30 arknet_mysql_auth_test)
+    add_executable(arknet_mysql_connection_test mysql_connection.cpp test_main.cpp)
+    target_link_libraries(arknet_mysql_connection_test PRIVATE arknet::arknet arknet_test_framework)
+    target_compile_definitions(arknet_mysql_connection_test PRIVATE
+        ARKNET_TEST_CERT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs")
+    arknet_add_check(mysql_connection 60 arknet_mysql_connection_test)
+    add_executable(arknet_mysql_pool_test mysql_pool.cpp test_main.cpp)
+    target_link_libraries(arknet_mysql_pool_test PRIVATE arknet::arknet arknet_test_framework)
+    target_compile_definitions(arknet_mysql_pool_test PRIVATE
+        ARKNET_TEST_CERT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs")
+    arknet_add_check(mysql_pool 60 arknet_mysql_pool_test)
     add_executable(arknet_tls_test tls.cpp test_main.cpp)
     target_link_libraries(arknet_tls_test PRIVATE arknet::arknet arknet_test_framework)
     target_compile_definitions(arknet_tls_test PRIVATE

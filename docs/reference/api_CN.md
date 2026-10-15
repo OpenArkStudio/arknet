@@ -1,7 +1,7 @@
 # 公共 API 索引
 
-包含 `<arknet/arknet.hpp>` 可使用所有已启用能力，也可以只包含特定的公开头文件。
-安全传输头文件需要启用 `ARKNET_ENABLE_SSL`。
+包含 `<arknet/arknet.hpp>` 可使用已启用的传输能力，也可以只包含特定的公开头文件。
+数据库客户端需要显式包含对应头文件。安全传输头文件和 MySQL 连接需要启用 `ARKNET_ENABLE_SSL`。
 
 ## 公开类型
 
@@ -17,6 +17,7 @@
 | TLS TCP | `tcps_client` | `tcps_server`、`tcps_session` | [TLS](../features/tls/index_CN.md) |
 | HTTPS | `https_client` | `https_server`、`https_session` | [HTTP](../features/http/index_CN.md) |
 | 安全 WebSocket | `wss_client` | `wss_server`、`wss_session` | [TLS](../features/tls/index_CN.md) |
+| MySQL | `mysql::connection`、`mysql::pool` | 连接池独占租约；显式包含 `<arknet/mysql/connection.hpp>` 或 `<arknet/mysql/pool.hpp>` | [MySQL](../features/mysql/index_CN.md) |
 | 调度 | `timer`、`io_pool`、`io_t` | `iopool` 是 `io_pool` 的别名 | [运行时](../concepts/lifecycle_CN.md)、[IO 模型](../concepts/io-models_CN.md) |
 
 协议指南说明 CRTP 变体与公开头文件路径。UDP 的端点 Session 共享服务端
