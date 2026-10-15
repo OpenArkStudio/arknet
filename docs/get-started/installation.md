@@ -3,14 +3,14 @@
 arknet is header-only and has no binary library to build or link.
 The `arknet::arknet` CMake interface target supplies include paths, C++20 requirements,
 compile definitions and dependencies. Applications link the platform's socket and
-thread libraries, plus OpenSSL when TLS is enabled.
+thread libraries, plus OpenSSL for MySQL authentication or TLS.
 
 ## Requirements
 
 - CMake 3.21 or newer.
 - A compiler and standard library with C++20 support.
-- Standalone Asio 1.38 or newer, or Boost 1.90 or newer with Asio and Beast.
-- OpenSSL 1.1.1 or newer for TLS, HTTPS and WSS.
+- Boost 1.90 or newer with Asio and Beast (default), or Standalone Asio 1.38 or newer for its supported capabilities.
+- OpenSSL 1.1.1 or newer for MySQL authentication and secure transports.
 
 The configured minimum TLS version is 1.2. Tested dependency and compiler
 versions are recorded in [Testing](../project/testing.md).
@@ -27,8 +27,8 @@ reject older providers. See [Asio's revision history](https://think-async.com/As
 
 | Configuration | IO dependencies | Available protocols |
 | --- | --- | --- |
-| `ARKNET_USE_BOOST_ASIO=ON` (default) | Boost.Asio + Boost.Beast | TCP, UDP, RUDP, HTTP, WebSocket; optional TLS, HTTPS, WSS |
-| `ARKNET_USE_BOOST_ASIO=OFF` | Standalone Asio | TCP, UDP, RUDP; optional TLS |
+| `ARKNET_USE_BOOST_ASIO=ON` (default) | Boost.Asio + Boost.Beast | TCP, UDP, RUDP, HTTP, WebSocket, Redis; optional MySQL, TLS, HTTPS, WSS |
+| `ARKNET_USE_BOOST_ASIO=OFF` | Standalone Asio | TCP, UDP, RUDP, Redis; optional MySQL and TLS |
 
 HTTP, WebSocket and rate-limited TCP streams require official Boost.Beast and
 the Boost configuration. These interfaces are unavailable with Standalone Asio;
@@ -45,7 +45,7 @@ See the [configuration reference](../reference/configuration.md#cmake-options) f
 
 <Step title="Install the selected dependencies">
 
-Install one Asio provider and OpenSSL if you need TLS. Choose a provider using the table above.
+Install one Asio provider and OpenSSL if you need MySQL or TLS. Choose a provider using the table above.
 
 </Step>
 
@@ -141,7 +141,7 @@ cmake --build build-vcpkg --parallel 3
 
 Add `include/` and the chosen provider's include directory to your compiler
 search paths, compile as C++20, and link platform socket/thread dependencies.
-Secure transports also require OpenSSL's headers and libraries. On Windows,
+MySQL connections and secure transports also require OpenSSL's headers and libraries. On Windows,
 link `ws2_32` and `mswsock`. The CMake target additionally sets `/bigobj`
 for MSVC.
 

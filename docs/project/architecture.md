@@ -25,8 +25,15 @@ extra virtual interface. Servers accept a session type. Components own
 specific behavior: lifecycle, timers, reconnect, match conditions, event
 sequencing and send admission/data ownership.
 
-Boost.Asio and official Boost.Beast are the default dependencies for all protocols. Standalone Asio supports TCP, UDP, RUDP and TLS. The two socket types cannot be mixed within one program. HTTP/2 and HTTP/3
+Boost.Asio and official Boost.Beast are the default dependencies for all protocols.
+Standalone Asio supports TCP, UDP, RUDP, TLS and native database clients.
+The two socket types cannot be mixed within one program. HTTP/2 and HTTP/3
 require distinct protocol engines; see the [roadmap](roadmap.md).
+
+MySQL and Redis implement their wire protocols directly over the selected Asio
+dependency, with library-owned IO resources, bounded request queues and exclusive
+pool leases. They do not use Beast or external database drivers. Their request,
+result and shutdown contracts are described in [database clients](../features/database-clients.md).
 
 ## Extend a Session
 

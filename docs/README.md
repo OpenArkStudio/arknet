@@ -1,9 +1,9 @@
 # arknet
 
 arknet is a general-purpose C++20 header-only networking library for clients and
-servers using TCP, UDP, RUDP, WebSocket, HTTP and TLS. It combines
+servers using TCP, UDP, RUDP, WebSocket, HTTP and TLS, with native MySQL and Redis clients. It combines
 CRTP endpoints with reusable components, supports IPv4 and IPv6, and runs on
-Standalone Asio or Boost.Asio.
+Boost.Asio by default or Standalone Asio for supported capabilities.
 
 ## Get started
 
@@ -22,6 +22,7 @@ target supplies headers, compile settings and dependencies; arknet has no compil
 | HTTP / HTTPS | HTTP/1.1 requests, responses, routing and middleware | [HTTP](features/http/index.md) |
 | TLS / mTLS | Encrypted transport and certificate verification | [TLS](features/tls/index.md) |
 | MySQL | Native queries, prepared parameters, transactions and exclusive leases | [MySQL](features/mysql/index.md) |
+| Redis | Binary-safe RESP2/RESP3 commands, pipelines and exclusive leases | [Redis](features/redis/index.md) |
 
 Transport guides include client and server programs; service guides cover clients and pools.
 Each guide records configuration, limits and performance.
@@ -42,7 +43,7 @@ records correctness checks and their coverage.
 
 [Project](project/index.md) covers architecture, contribution guidelines and the
 roadmap. HTTP/2, HTTP/3, named pipes, Unix domain sockets and RPC remain TODO.
-[Version 0.1.0](project/releases.md) includes RUDP and its three recovery policies.
+[Version 0.2.0](project/releases.md) adds native database clients and simplifies dependencies.
 Deployment capacity and endurance are covered by [production acceptance](project/production-readiness.md).
 
 [Source](https://github.com/OpenArkStudio/arknet) ·

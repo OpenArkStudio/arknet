@@ -17,15 +17,16 @@ and IO scheduling conventions; service clients document their request and reply 
 
 ## Availability
 
-- Both Standalone Asio and Boost.Asio expose the same callback-based arknet API.
-- TLS, HTTPS and WSS require `ARKNET_ENABLE_SSL` and OpenSSL.
+- Boost.Asio is the default dependency. Standalone Asio supports TCP, UDP, RUDP,
+  TLS and database clients through the same callback API; HTTP and WebSocket require Boost.Beast.
+- MySQL authentication and secure transports require `ARKNET_ENABLE_SSL` and OpenSSL.
 - IPv4 and IPv6 share the endpoint API; listening policy is explicit.
 - HTTP currently implements HTTP/1.1. Native UDP does not add retransmission or segmentation.
 - RUDP includes ARQ-only, fixed FEC and adaptive FEC in `v0.1.0`; local validation is complete. See [deployment acceptance](../project/production-readiness.md).
 - [Single HTTP requests](http/requests.md) support completion, timeout and cancellation.
 - Public coroutine endpoints, HTTP/2, HTTP/3, named pipes, Unix domain sockets,
   RPC, DTLS and WebSocket compression are [planned](../project/roadmap.md).
-- Native MySQL and Redis clients are planned; the [database client guide](database-clients.md)
-  defines their single-node scope, failure handling and acceptance criteria.
+- The [database client guide](database-clients.md) covers native single-node MySQL
+  and Redis clients, exclusive pool leases and failure handling.
 
 [Installation](../get-started/installation.md) · [Common concepts](../concepts/index.md) · [API index](../reference/api.md)

@@ -1,105 +1,105 @@
 # Database clients
 
-The planned MySQL and Redis clients connect applications to independent database
-servers. The first version targets single-node deployments, with native protocol
-implementations in arknet and framework integration in ark plugins.
+arknet provides native, header-only MySQL and Redis clients for independent single-node database services. Both support Boost.Asio and Standalone Asio, own their IO resources, and provide bounded connection pools. Neither requires Boost.MySQL, Boost.Redis or a database client driver.
 
-<Aside type="note" title="Development status">
-MySQL and Redis clients are not part of the published API. Their scope is agreed;
-connection, pool and independent-server acceptance must finish before release.
-Protocol codec tests cover only one part of that acceptance. Usage programs and
-API reference will accompany the validated clients.
-</Aside>
+| Capability | MySQL | Redis |
+| --- | --- | --- |
+| Protocol | MySQL Classic Protocol | RESP2 or RESP3; RESP3 by default |
+| Operations | Text queries, typed prepared parameters/results, explicit transactions | Binary-safe commands and ordered pipelines |
+| Authentication | `caching_sha2_password`, `mysql_native_password` and supported switches | Password authentication and ACL usernames |
+| Transport security | Verified TLS, required by default | Plain or verified TLS; optional mTLS |
+| Pools | `mysql::pool`, exclusive move-only leases | `redis::pool`, `redis::tls_pool`, exclusive move-only leases |
+| Control | Deadlines, cancellation, queue and result limits | Deadlines, cancellation, queue, parser and reply limits |
 
-## First-version scope
+## Build and run
 
-| Client | Planned operations |
+OpenSSL is required for MySQL authentication even when a connection explicitly disables TLS. Enable `ARKNET_ENABLE_SSL` to use MySQL or secure Redis. Plain Redis does not need OpenSSL.
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+  -DARKNET_ENABLE_SSL=ON -DARKNET_BUILD_EXAMPLES=ON
+cmake --build build --target arknet_mysql_client arknet_mysql_pool \
+  arknet_redis_client arknet_redis_pool --config Release
+```
+
+Boost is selected by default. Standalone Asio uses `ARKNET_USE_BOOST_ASIO=OFF` and, if necessary, `ARKNET_ASIO_INCLUDE_DIR`. The examples and benchmarks are independent C++ executables; running them does not require Python or Ruby.
+
+| Guide | Complete programs | Configuration |
+| --- | --- | --- |
+| [MySQL](mysql/index.md) | [Queries, prepared parameters and transactions](mysql/usage.md) | [Authentication, limits and pool reset](mysql/configuration.md) |
+| [Redis](redis/index.md) | [Client, pipelines and pool leases](redis/usage.md) | [RESP modes, TLS and reply handling](redis/configuration.md) |
+
+The examples require an explicit service endpoint. Supply passwords through their documented environment variables. TLS examples keep certificate-chain and DNS/IP identity verification enabled; private CAs require the appropriate trust file.
+
+## Connections and pool leases
+
+An independent MySQL connection or Redis client owns one IO context and thread. A database pool shares library-owned IO resources among its connections; its connection limit is not a thread count. MySQL pools expose `io_threads`; Redis pools use one IO context and thread.
+
+`async_acquire` returns an exclusive lease. Keep the same lease for the complete MySQL transaction or Redis `WATCH`/`MULTI`/`EXEC` sequence. Submit operations through the lease, then call `release()` or let it leave scope. Use `discard()` when reuse must be forbidden.
+
+Returning a lease starts asynchronous processing. The pool waits for submitted callbacks and pending replies before resetting the session. Another borrower cannot use that connection during return processing.
+
+| Return behavior | MySQL | Redis |
+| --- | --- | --- |
+| Reset | `COM_RESET_CONNECTION` | `RESET`, followed by configured protocol/authentication/database setup |
+| Database restoration | Quoted `USE` restores the configured database | The configured database is selected again |
+| Empty configured database | Returned connections are discarded; reset cannot restore an unselected database after a borrower selects one | The configured startup database is restored |
+| Reset failure or expiry | Discard the connection | Discard the connection |
+
+MySQL prepared statements belong to one connection generation and session. Reset, reconnect or return invalidates them; a handle cannot be used by another borrower. Bare-connection transaction helpers do not prevent another producer from submitting an intervening command, so use a lease or enforce ownership for the entire transaction.
+
+## Cancellation and uncertain outcomes
+
+Cancellation cannot retract a command that has already been sent. Neither client automatically reconnects or replays failed commands.
+
+| Situation | MySQL | Redis |
+| --- | --- | --- |
+| Queued, unsent cancellation | Remove that request without consuming another response | Remove that request without consuming another response |
+| Sent cancellation or timeout | Close the session; report an unknown outcome when execution may have occurred | Complete the caller, retain ordered response slots and admission budget while replies drain; close on drain expiry |
+| Diagnostic flag | `connection_result.outcome_unknown` | `result.command_may_have_run` |
+
+A failed MySQL commit may already have committed. A failed Redis pipeline may contain replies received before failure and may have executed later sent commands. Decide retries from application semantics and durable operation identifiers.
+
+Redis server errors are typed `error` or `bulk_error` replies; `bool(result)` checks the client status, so inspect individual replies too. RESP3 pushes use a separate handler and never consume ordinary response slots. MySQL preserves available server error code, SQLSTATE and message; a complete normal ERR response differs from a broken protocol boundary.
+
+## Limits and callback ownership
+
+Both clients reserve bounded work before posting it to their IO lane. Configure command count and byte limits, result/parser limits, pool connection/waiter limits and deadlines for the intended workload. These limits do not cap caller-owned storage or total process RSS.
+
+Timeouts must be positive and representable by the monotonic clock. A zero Redis command-timeout override or either pool's acquisition-timeout override selects its configured default. MySQL `query_options.timeout` must be positive. Negative or overflowing overrides are rejected. Queue wait is included in operation deadlines.
+
+Results own their values. MySQL buffers rows within its configured result limits; it does not provide row streaming. Redis pipelines buffer their owned replies within the pipeline limit. Check field/value types before accessing them.
+
+Live-object completions run on the associated library IO lane and must not block or throw. An empty or moved-from lease has no executor and rejects inline with request ID 0. Capture application state with sufficient ownership through completion.
+
+`close()` asynchronously requests closure; its return is not a callback-drain barrier.
+Redis clients and both pools close terminally. A standalone MySQL connection can
+explicitly reconnect after closing its session. See [process shutdown](../concepts/lifecycle.md#process-shutdown)
+for owned runtimes and global owners.
+
+## Supported scope and TODOs
+
+| Area | Scope |
 | --- | --- |
-| MySQL | Queries, parameterized prepared statements and transactions |
-| Redis | Generic commands, RESP2/RESP3 and pipelining |
-| Both | Authentication, TLS, connection pools, timeouts, cancellation and bounded queues |
+| MySQL | One Classic Protocol result per command; no multi-statement/multiple-result execution, `LOCAL INFILE`, compression, cursors, query attributes or arbitrary authentication plugins |
+| MySQL password exchange | No plaintext full-password fallback, RSA key exchange, `mysql_clear_password`, `sha256_password` or MFA; unsupported exchanges fail explicitly |
+| Redis | One configured endpoint; commands that suppress replies or require a different response model are rejected |
+| Redis TODO | Cluster redirection, Sentinel discovery, Pub/Sub subscriptions, replication and `MONITOR` |
+| Shared TODO | Public coroutine database APIs; workload-specific deployment acceptance |
 
-Redis Cluster, Sentinel and Pub/Sub remain future work. Supported server versions,
-authentication methods, build dependencies and API names will be recorded with
-the accepted implementation. The clients will be implemented in arknet, without
-Boost.MySQL or Boost.Redis. The C++ implementation remains header-only; the
-existing TLS facilities use OpenSSL.
+HTTP/2, HTTP/3, named pipes, Unix domain sockets and RPC remain separate items on the [roadmap](../project/roadmap.md). RESP3 push delivery does not constitute a Pub/Sub subscription API.
 
-## Library and application responsibilities
+## Validation and measurement
 
-| Layer | Responsibility |
-| --- | --- |
-| arknet | Protocol framing and parsing, connection IO, authentication, TLS, reply correlation, pools and shutdown |
-| ark database plugin | Framework configuration, module services and business callback integration |
-| Application | Queries and commands, transaction boundaries, retry decisions and handling uncertain write outcomes |
+Independent-server checks include MySQL Community Server 8.4.11 and Redis 7.4.2. Client and pool suites cover successful operations, authentication/TLS rejection, malformed or partial responses, queue saturation, cancellation, session reset, lease isolation and shutdown. Protocol-codec and IO-runtime tests provide separate coverage.
 
-Clients first pass acceptance in arknet. The ark plugins can then replace their
-existing database drivers directly, with application regression tests.
+| Client and pool suites | Cases | Assertions |
+| --- | ---: | ---: |
+| MySQL | 49 | 1355 |
+| Redis | 33 | 284 |
 
-## MySQL connection and transaction behavior
+Deadline tests include nonpositive durations, integer extremes and clock-addition boundaries. Correctness and sanitizer checks are separate from local Release measurements; test counts are not throughput or capacity figures.
 
-The intended flow is connection and authentication, pool acquisition, query or
-prepared-statement execution, and connection return after the reply is consumed.
-A prepared statement belongs to its connection. A transaction keeps the same
-pool lease through commit or rollback; the pool must not lend that connection
-to another operation in the meantime.
+The [MySQL](mysql/performance.md) and [Redis](redis/performance.md) performance pages describe their compilable benchmarks, workload dimensions and reports. Record the machine/server configuration, payload, queue/pipeline depth, connections, repeated rounds, operations/s, RT percentiles and CPU percentage. Capacity requires [deployment acceptance](../project/production-readiness.md).
 
-An interrupted operation must reach a known protocol boundary or discard its
-connection before reuse. If the connection fails after a write or commit was
-sent, the result may be unknown. Report that outcome to the caller; never
-automatically replay the operation.
-
-## Redis command and pipeline behavior
-
-The intended flow is connection and authentication, command admission, ordered
-reply consumption, and completion delivery. Pipeline commands share a connection;
-their replies must remain associated with the commands that produced them.
-RESP3 push messages must not consume ordinary command completion slots.
-
-A queued command can be cancelled before it is sent. Once a command has been
-sent, cancellation or timeout must still consume its reply or close the
-connection before it serves later commands. A write without a definitive reply
-must retain an uncertain-outcome result rather than be replayed automatically.
-
-## Acceptance before release
-
-| Area | Required evidence |
-| --- | --- |
-| Codecs | Fragmented input, combined replies, binary values, malformed lengths, nesting and memory limits |
-| Connections | Independent MySQL/Redis servers; authentication, TLS certificate and hostname verification, disconnects and reply ordering |
-| Operations | MySQL query, prepare/execute and transaction results; Redis RESP2/RESP3 commands and pipelines |
-| Cancellation | Unsent cancellation, in-flight timeout, completion exactly once, and correct handling of the next reply |
-| Pools | Acquisition timeout, queue rejection, connection-bound transactions/statements, and shutdown with queued or in-flight work |
-| Concurrency | Supported IO models, shared pool access and separate ASan/UBSan and TSan checks |
-| Sustained load | Completion counts, bounded queue/pool memory and resource recovery over a recorded duration |
-
-Record the actual server versions and configuration for interoperability tests.
-Test authentication and TLS failures, server restart, partial replies, queue
-saturation and shutdown as well as successful requests. A codec test result does
-not complete the connection or pool acceptance rows.
-
-ark plugin integration follows client acceptance. It separately verifies existing
-plugin calls, configuration, business results and module shutdown after direct
-driver replacement.
-
-## Performance reports
-
-Database client measurements have not been published. Add compilable C++
-benchmarks under `benchmarks/` before publishing results; shell scripts can run
-measurement batches without introducing a Python or Ruby requirement.
-
-| Dimension | Report content |
-| --- | --- |
-| Environment | Client/server machines, operating systems, database versions/configuration, compiler, build mode and dependency versions |
-| Workload | Operation and payload sizes, connections, pool size, in-flight work and Redis pipeline depth |
-| Execution | One IO context/one thread, one context/multiple threads and one context per thread; callback/coroutine comparisons only when both APIs exist |
-| Results | Successful operations/s, p50/p99 end-to-end operation latency, client/server CPU utilization, memory, queue rejections and errors |
-| Reproducibility | Committed benchmark program and command, repeated process runs, duration and raw measurements supporting the final report |
-
-Keep database-server cost separate from client cost and record whether traffic
-uses loopback or separate hosts. State the CPU percentage normalization and use
-labeled SVG charts with units and measurement variation for final comparisons.
-Deployment capacity requires its own
-[production acceptance](../project/production-readiness.md).
-
-[Roadmap](../project/roadmap.md) · [Release preparation](../project/releases.md) · [Testing](../project/testing.md)
+arknet owns protocol IO, authentication, reply correlation, pools and shutdown. ark database plugins own framework configuration and module integration; applications own transaction boundaries, business results and retry decisions. Client release does not establish ark plugin compatibility without application regression tests.

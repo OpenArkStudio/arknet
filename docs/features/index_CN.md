@@ -17,15 +17,16 @@
 
 ## 支持状态
 
-- Standalone Asio 与 Boost.Asio 提供相同的 arknet 回调 API。
-- TLS、HTTPS 和 WSS 需要启用 `ARKNET_ENABLE_SSL` 并提供 OpenSSL。
+- 默认依赖 Boost.Asio。Standalone Asio 通过相同的回调 API 支持 TCP、UDP、RUDP、
+  TLS 和数据库客户端；HTTP 与 WebSocket 需要 Boost.Beast。
+- MySQL 认证与安全传输需要启用 `ARKNET_ENABLE_SSL` 并提供 OpenSSL。
 - IPv4 和 IPv6 共用端点 API，监听策略需要显式配置。
 - HTTP 当前实现 HTTP/1.1。原生 UDP 不增加重传或自动切包。
 - RUDP 提供仅 ARQ、固定 FEC 与自适应 FEC，包含在 `v0.1.0` 中；部署采用需完成[生产验收](../project/production-readiness_CN.md)。
 - [单次 HTTP 请求](http/requests_CN.md)支持完成通知、超时与取消。
 - 公共协程端点、HTTP/2、HTTP/3、named pipe、Unix domain socket、RPC、
   DTLS 和 WebSocket 压缩列在[路线图](../project/roadmap_CN.md)中。
-- MySQL 与 Redis 原生客户端列入开发计划；[数据库客户端指南](database-clients_CN.md)
-  说明单节点范围、失败处理与验收条件。
+- [数据库客户端指南](database-clients_CN.md)介绍原生单节点 MySQL 与 Redis 客户端、
+  连接池独占租约与失败处理。
 
 [安装](../get-started/installation_CN.md) · [公共概念](../concepts/index_CN.md) · [API 索引](../reference/api_CN.md)

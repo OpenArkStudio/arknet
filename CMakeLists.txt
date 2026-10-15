@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.21)
-project(arknet VERSION 0.1.0 LANGUAGES CXX)
+project(arknet VERSION 0.2.0 LANGUAGES CXX)
 include(GNUInstallDirs)
 
 option(ARKNET_USE_BOOST_ASIO "Use Boost.Asio and Boost.Beast" ON)
-option(ARKNET_ENABLE_SSL "Enable TLS, HTTPS and secure WebSocket support" OFF)
+option(ARKNET_ENABLE_SSL "Enable MySQL authentication and secure transports" OFF)
 option(ARKNET_BUILD_TESTS "Build loopback tests" ${PROJECT_IS_TOP_LEVEL})
 option(ARKNET_BUILD_EXAMPLES "Build examples" ${PROJECT_IS_TOP_LEVEL})
-option(ARKNET_BUILD_BENCHMARKS "Build loopback performance benchmarks" OFF)
+option(ARKNET_BUILD_BENCHMARKS "Build transport and database performance benchmarks" OFF)
 
 set(_ARKNET_DEPENDENCIES_REQUIRED REQUIRED)
 include(cmake/arknetDependencies.cmake)

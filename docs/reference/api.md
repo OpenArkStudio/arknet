@@ -19,6 +19,7 @@ Secure transport headers and MySQL connections require `ARKNET_ENABLE_SSL`.
 | HTTPS | `https_client` | `https_server`, `https_session` | [HTTP](../features/http/index.md) |
 | Secure WebSocket | `wss_client` | `wss_server`, `wss_session` | [TLS](../features/tls/index.md) |
 | MySQL | `mysql::connection`, `mysql::pool` | Exclusive pool leases; explicitly include `<arknet/mysql/connection.hpp>` or `<arknet/mysql/pool.hpp>` | [MySQL](../features/mysql/index.md) |
+| Redis | `redis::client`, `redis::pool`; secure `redis::tls_client`, `redis::tls_pool` | Exclusive pool leases; explicitly include `<arknet/redis/client.hpp>` or `<arknet/redis/pool.hpp>` | [Redis](../features/redis/index.md) |
 | Scheduling | `timer`, `io_pool`, `io_t` | `iopool` is an alias for `io_pool` | [Runtime](../concepts/lifecycle.md), [IO models](../concepts/io-models.md) |
 
 The protocol guides cover CRTP variants and public include paths. UDP endpoint
@@ -26,6 +27,9 @@ sessions share the server datagram socket. HTTP request/response types live
 in `arknet::http`; WebSocket protocol types live in `arknet::websocket`.
 
 ## Common Operations
+
+The following operations describe transport endpoints. Database clients use
+their own request, result and shutdown contracts in the [database guide](../features/database-clients.md).
 
 | Area | API | Contract |
 | --- | --- | --- |

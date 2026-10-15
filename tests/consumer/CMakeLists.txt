@@ -7,7 +7,7 @@ set(public_headers
     base/io_pool.hpp base/timer.hpp
     tcp/tcp_client.hpp tcp/tcp_server.hpp tcp/tcp_session.hpp
     udp/udp_client.hpp udp/udp_server.hpp udp/udp_session.hpp udp/udp_cast.hpp
-    arq/core.hpp fec/transport.hpp
+    arq/core.hpp fec/transport.hpp redis/client.hpp redis/pool.hpp
     rudp/rudp_client.hpp rudp/rudp_server.hpp rudp/rudp_session.hpp
     util/spin_lock.hpp util/string.hpp)
 if(ARKNET_USE_BOOST_ASIO)
@@ -17,7 +17,8 @@ if(ARKNET_USE_BOOST_ASIO)
 endif()
 if(ARKNET_ENABLE_SSL)
     list(APPEND public_headers
-        tcp/tcps_client.hpp tcp/tcps_server.hpp tcp/tcps_session.hpp)
+        tcp/tcps_client.hpp tcp/tcps_server.hpp tcp/tcps_session.hpp
+        mysql/connection.hpp mysql/pool.hpp)
     if(ARKNET_USE_BOOST_ASIO)
         list(APPEND public_headers websocket/wss_client.hpp websocket/wss_server.hpp websocket/wss_session.hpp
         http/https_client.hpp http/https_server.hpp http/https_session.hpp)

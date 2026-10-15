@@ -2,14 +2,14 @@
 
 arknet 是 header-only 网络库，没有需要编译或链接的二进制库。
 `arknet::arknet` CMake 接口目标传递头文件路径、C++20 要求、编译宏和依赖。
-应用仍需链接平台的 socket 库和线程库；启用 TLS 时还需链接 OpenSSL。
+应用仍需链接平台的 socket 库和线程库；MySQL 认证与 TLS 还需链接 OpenSSL。
 
 ## 环境要求
 
 - CMake 3.21 或更新版本。
 - 支持 C++20 的编译器和标准库。
-- Standalone Asio 1.38 或更新版本，或包含 Asio 和 Beast 的 Boost 1.90 或更新版本。
-- TLS、HTTPS 和 WSS 需要 OpenSSL 1.1.1 或更新版本。
+- 默认使用包含 Asio 和 Beast 的 Boost 1.90 或更新版本；部分能力也可使用 Standalone Asio 1.38 或更新版本。
+- MySQL 认证与安全传输需要 OpenSSL 1.1.1 或更新版本。
 
 库配置的最低 TLS 版本为 1.2。已验证的依赖和编译器版本见[测试](../project/testing_CN.md)。
 
@@ -25,8 +25,8 @@ CMake 和直接包含头文件的构建都会拒绝较旧依赖版本。修复�
 
 | 配置 | IO 实现 | 可用协议 |
 | --- | --- | --- |
-| `ARKNET_USE_BOOST_ASIO=ON`（默认） | Boost.Asio + Boost.Beast | TCP、UDP、RUDP、HTTP、WebSocket；可选 TLS、HTTPS、WSS |
-| `ARKNET_USE_BOOST_ASIO=OFF` | Standalone Asio | TCP、UDP、RUDP；可选 TLS |
+| `ARKNET_USE_BOOST_ASIO=ON`（默认） | Boost.Asio + Boost.Beast | TCP、UDP、RUDP、HTTP、WebSocket、Redis；可选 MySQL、TLS、HTTPS、WSS |
+| `ARKNET_USE_BOOST_ASIO=OFF` | Standalone Asio | TCP、UDP、RUDP、Redis；可选 MySQL 和 TLS |
 
 HTTP、WebSocket 和 TCP 限速流需要官方 Boost.Beast，因此必须选择 Boost。
 Standalone Asio 不提供这些接口；直接包含相关头文件会给出编译错误。
@@ -42,7 +42,7 @@ Standalone Asio 不提供这些接口；直接包含相关头文件会给出编�
 
 <Step title="安装依赖库">
 
-按上表选择并安装一种 Asio 依赖方案。需要 TLS 时，同时安装 OpenSSL。
+按上表选择并安装一种 Asio 依赖方案。需要 MySQL 或 TLS 时，同时安装 OpenSSL。
 
 </Step>
 
@@ -131,7 +131,7 @@ cmake --build build-vcpkg --parallel 3
 ## 直接使用头文件
 
 将 `include/` 和所选依赖库的头文件目录加入编译器搜索路径，以 C++20 编译，并链接
-平台的 socket 和线程依赖。安全传输还需要 OpenSSL 头文件和库。Windows 下链接
+平台的 socket 和线程依赖。MySQL 连接与安全传输还需要 OpenSSL 头文件和库。Windows 下链接
 `ws2_32` 和 `mswsock`。CMake 目标还会为 MSVC 添加 `/bigobj`。
 
 在包含 arknet 或依赖库头文件前定义配置宏：

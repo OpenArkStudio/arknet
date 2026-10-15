@@ -12,6 +12,16 @@ in-flight requests and injected loss. SVG charts compare throughput, p99 RTT,
 CPU, wire overhead, recovery, retransmissions and retained memory.
 The public RUDP API currently uses callbacks; RUDP coroutines remain TODO.
 
+## Database clients
+
+- [MySQL](../features/mysql/performance.md): read-only text and prepared queries,
+  payloads, connections and client queue depth; query RT, throughput, CPU and memory.
+- [Redis](../features/redis/performance.md): binary ECHO with pipeline sizes and
+  in-flight batches; whole-batch RT, command throughput, CPU and memory.
+
+Both reports compare Boost.Asio and Standalone Asio, plain TCP and verified TLS.
+They use callback clients; connection pools and database coroutines are outside these measurements.
+
 ## UDP measurements
 
 [UDP performance report](udp-update.md) includes 504 matrix runs, 21 buffer probes and

@@ -10,6 +10,14 @@
 SVG 图表对比吞吐量、p99 RTT、CPU、网络开销、恢复、重传与保留内存。
 当前 RUDP 公共 API 使用回调，RUDP 协程仍为 TODO。
 
+## 数据库客户端
+
+- [MySQL](../features/mysql/performance_CN.md)：只读文本与预处理查询，比较包体、连接数与客户端排队深度；记录查询 RT、吞吐量、CPU 和内存。
+- [Redis](../features/redis/performance_CN.md)：二进制 ECHO，比较流水线大小与在途批数；记录整批 RT、命令吞吐量、CPU 和内存。
+
+两份报告均对照 Boost.Asio、Standalone Asio、明文 TCP 与验证证书的 TLS。
+测量使用回调客户端，不包含连接池或数据库协程。
+
 ## UDP 测量
 
 [UDP 性能报告](udp-update_CN.md)包含 504 次矩阵测量、

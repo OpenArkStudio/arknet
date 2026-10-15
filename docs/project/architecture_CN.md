@@ -24,8 +24,12 @@ CRTP 允许自定义客户端和 Session 扩展协议行为，不需要额外的
 服务端接受 Session 类型。组件分别负责生命周期、定时器、重连、消息匹配、
 事件顺序和发送配额／数据所有权。
 
-默认使用 Boost.Asio 和官方 Boost.Beast，支持全部协议。Standalone Asio 支持 TCP、UDP、RUDP 和 TLS。同一程序中不能混用两种 socket 类型。HTTP/2 与 HTTP/3 需要不同的协议引擎，
+默认使用 Boost.Asio 和官方 Boost.Beast，支持全部协议。Standalone Asio 支持 TCP、UDP、RUDP、TLS 和原生数据库客户端。同一程序中不能混用两种 socket 类型。HTTP/2 与 HTTP/3 需要不同的协议引擎，
 见[路线图](roadmap_CN.md)。
+
+MySQL 与 Redis 直接在所选 Asio 依赖库上实现报文协议，由库管理 IO 资源、请求队列限额和
+连接池独占租约，不使用 Beast 或其他数据库驱动。请求、结果与关闭约定见
+[数据库客户端指南](../features/database-clients_CN.md)。
 
 ## 扩展 Session
 
