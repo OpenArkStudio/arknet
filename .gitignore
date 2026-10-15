@@ -5,3 +5,7 @@
 .DS_Store
 *.user
 __pycache__/
+
+# Local benchmark and test output; only published report datasets are versioned.
+/benchmarks/local-results/
+/tests/local-results/
