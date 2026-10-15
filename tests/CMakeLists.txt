@@ -30,7 +30,7 @@ function(arknet_configure_check_target)
         USES_TERMINAL)
 endfunction()
 
-set(arknet_test_names tcp udp lifecycle detail concurrency io_pool socket_metadata keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec mysql_wire mysql_handshake mysql_command redis_resp redis_client redis_pool)
+set(arknet_test_names tcp udp lifecycle detail concurrency io_pool manual_runtime socket_metadata keepalive coroutine_shutdown ipv6 arq_core rudp rudp_stability fec rudp_fec mysql_wire mysql_handshake mysql_command redis_resp redis_client redis_pool)
 if(ARKNET_USE_BOOST_ASIO)
     list(APPEND arknet_test_names websocket http router httprequest)
 endif()

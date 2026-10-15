@@ -67,6 +67,34 @@ strand。详见 [发送与生命周期](sending_CN.md)。
 首版 arknet 端点提供回调接口；协程基准使用原生 Asio `awaitable` 和
 `co_spawn` 比较调度模型。公开协程端点 API 延后提供。
 
+## 由调用方驱动执行
+
+`arknet::manual_runtime` 在库内持有 context 和 work guard，不启动执行用户 handler 的工作线程。
+Asio 的平台服务仍可能使用内部辅助线程，例如 Windows 定时器或 DNS 解析。
+由创建线程调用 `poll(max_handlers)`，例如在应用的 update 循环中派发。
+其他线程可以通过标准 Asio executor 投递完成通知：
+
+```cpp
+#include <arknet/base/manual_runtime.hpp>
+
+arknet::manual_runtime runtime;
+asio::post(runtime.get_executor(), [] { /* 在调用 poll 的线程中执行。 */ });
+runtime.poll(64); // 最多执行 64 个就绪的 Asio handler，不等待新工作。
+```
+
+将 `co_spawn` 和 timer 绑定到 `runtime.get_executor()`，协程便在同一线程执行。
+操作尚未完成时，持续调用 poll。空闲时 poll 返回 0，后续投递仍可执行，无需重启 runtime。
+
+`poll(0)` 不执行工作。其他线程调用或重入 poll 会抛出 `std::logic_error`；
+handler 抛出的异常向调用方传播，后续仍可继续 poll。
+上限统计 Asio handler 个数，不代表执行时间，也不限制 handler 内的内联调用或投递队列容量。
+
+executor 不持有 context 的所有权。请先完成或取消外部操作并停止其投递方，再由拥有者线程销毁 runtime。
+正在执行的 poll 会将 context 固定到本次调用返回；释放 runtime 不会取消其 handler。
+析构释放尚未执行的捕获，**不构成** IO 排空、线程退出或动态库卸载屏障。
+请使用 runtime 的 poll 入口，不自行运行或停止其内部 context。
+原生端点回调仍由各自的 executor 执行；只有显式转交到该 executor，才会改变回调线程。
+
 ## Asio 参考文档
 
 - [线程模型](https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/core/threads.html)
