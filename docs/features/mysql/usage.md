@@ -133,3 +133,20 @@ waiting owner thread. There is no timeout that implies successful teardown.
 Application callers and their objects must still be stopped and destroyed before
 unloading code; this is not a process cleanup-worker or dynamic-library unload
 barrier.
+
+### Return submission diagnostics
+
+`pool::diagnostics()` returns a thread-safe, bounded `pool_diagnostics` snapshot:
+
+- `return_submission_failures`: a saturating count of failed internal return or recovery-close submissions.
+- `last_return_submission_exception`: the last captured exception; empty before any such failure.
+
+A failed submission makes that session ineligible for reuse. A later acquisition,
+acquire timeout/cancellation, or already queued return handler may discard it and
+restore capacity. A further close-publication failure leaves it indexed and
+unusable for a later scheduling pass. Existing acquire deadlines are preserved;
+there is no immediate recovery guarantee without later scheduling activity.
+
+These failures do not change a SQL result already delivered or replay a statement.
+This containment covers internal return and recovery-close publication; it does
+not guarantee progress after arbitrary allocation failures or throwing user handlers.

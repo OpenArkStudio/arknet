@@ -120,6 +120,13 @@ if(ARKNET_ENABLE_SSL)
     target_compile_definitions(arknet_mysql_shutdown_test PRIVATE
         ARKNET_TEST_CERT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs")
     arknet_add_check(mysql_shutdown 60 arknet_mysql_shutdown_test)
+    add_executable(arknet_mysql_pool_return_failure_test mysql_pool_return_failure.cpp scoped_allocation_failure.cpp test_main.cpp)
+    target_link_libraries(arknet_mysql_pool_return_failure_test PRIVATE arknet::arknet arknet_test_framework)
+    target_compile_definitions(arknet_mysql_pool_return_failure_test PRIVATE
+        ARKNET_TEST_CERT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs"
+        BOOST_ASIO_DISABLE_SMALL_BLOCK_RECYCLING BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC BOOST_ASIO_DISABLE_BOOST_ALIGN
+        ASIO_DISABLE_SMALL_BLOCK_RECYCLING ASIO_DISABLE_STD_ALIGNED_ALLOC ASIO_DISABLE_BOOST_ALIGN)
+    arknet_add_check(mysql_pool_return_failure 60 arknet_mysql_pool_return_failure_test)
     add_executable(arknet_mysql_pool_shutdown_test mysql_pool_shutdown.cpp test_main.cpp)
     target_link_libraries(arknet_mysql_pool_shutdown_test PRIVATE arknet::arknet arknet_test_framework)
     target_compile_definitions(arknet_mysql_pool_shutdown_test PRIVATE

@@ -6,10 +6,12 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <exception>
 #include <functional>
 #include <future>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -35,6 +37,14 @@ struct pool_options
     connect_options connection;
 };
 
+// Internal return-publication failures do not change the result already
+// delivered to the caller. A bounded snapshot retains only the last exception.
+struct pool_diagnostics
+{
+    std::uint64_t return_submission_failures{};
+    std::exception_ptr last_return_submission_exception;
+};
+
 // Each lease exclusively owns a connection until all its submitted callbacks
 // have returned and COM_RESET_CONNECTION succeeds. Failed resets discard the
 // connection. The configured initial database is restored with a quoted USE;
@@ -55,6 +65,7 @@ class pool
         bool terminated = false;
         std::thread::id finalizer;
         std::exception_ptr failure;
+        pool_diagnostics diagnostics;
     };
 
     class publication
@@ -122,7 +133,19 @@ class pool
         std::weak_ptr<waiter> waiting;
         std::shared_ptr<asio::steady_timer> return_deadline;
         std::uint64_t return_generation = 0;
+        std::atomic<bool> failed_return{};
     };
+
+    static void record_return_failure(const std::shared_ptr<entry>& session,
+        const std::shared_ptr<publication_gate>& gate, std::exception_ptr exception) {
+        session->failed_return = true;
+        std::lock_guard lock(gate->mutex);
+        if (gate->diagnostics.return_submission_failures != (std::numeric_limits<std::uint64_t>::max)())
+        {
+            ++gate->diagnostics.return_submission_failures;
+        }
+        gate->diagnostics.last_return_submission_exception = std::move(exception);
+    }
 
     struct lease_control
     {
@@ -482,13 +505,46 @@ private:
             return std::find(entries.begin(), entries.end(), session) != entries.end();
         }
 
-        void discard(std::shared_ptr<entry> session) {
+        bool discard(std::shared_ptr<entry> session, bool retry_failed = false) {
+            if (!contains(session))
+            {
+                return true;
+            }
+            if (session->failed_return && !retry_failed)
+            {
+                return false;
+            }
+            try
+            {
+                // Preserve membership until close has actually been published.
+                session->client->close();
+            }
+            catch (...)
+            {
+                record_return_failure(session, gate, std::current_exception());
+                return false;
+            }
             std::erase(entries, session);
             if (session->return_deadline)
             {
                 session->return_deadline->cancel();
             }
-            session->client->close();
+            return true;
+        }
+
+        // At most one attempt for each existing failed entry on this actor
+        // entrance. A second allocation failure leaves it indexed and unusable;
+        // another ordinary actor entrance, not a retry loop, may make progress.
+        void recover_failed_returns() {
+            for (std::size_t index = 0; index != entries.size();)
+            {
+                const auto session = entries[index];
+                if (session->failed_return && discard(session, true))
+                {
+                    continue;
+                }
+                ++index;
+            }
         }
 
         void complete(std::shared_ptr<waiter> request, acquire_result response) {
@@ -526,32 +582,61 @@ private:
                 const auto self = weak.lock();
                 return self && !self->close_requested.load();
             };
-            control->begin_return = [weak = weak_from_this()](std::shared_ptr<entry> current, auto deadline) {
-                if (auto self = weak.lock())
+            control->begin_return = [weak = weak_from_this(), gate = gate](
+                                        std::shared_ptr<entry> current, auto deadline) {
+                if (current->failed_return)
                 {
-                    asio::post(self->executor, [self, current, deadline] { self->begin_return(current, deadline); });
+                    return;
                 }
-                else
+                const auto self = weak.lock();
+                try
                 {
-                    current->client->close();
+                    if (self)
+                    {
+                        asio::post(
+                            self->executor, [self, current, deadline] { self->begin_return(current, deadline); });
+                    }
+                    else
+                    {
+                        current->client->close();
+                    }
+                }
+                catch (...)
+                {
+                    const auto failure = std::current_exception();
+                    record_return_failure(current, gate, failure);
                 }
             };
-            control->drained = [weak = weak_from_this()](
+            control->drained = [weak = weak_from_this(), gate = gate](
                                    std::shared_ptr<entry> current, bool unhealthy, auto deadline) {
-                if (auto self = weak.lock())
+                if (current->failed_return)
                 {
-                    asio::post(self->executor,
-                        [self, current, unhealthy, deadline] { self->returned(current, unhealthy, deadline); });
+                    return;
                 }
-                else
+                const auto self = weak.lock();
+                try
                 {
-                    current->client->close();
+                    if (self)
+                    {
+                        asio::post(self->executor,
+                            [self, current, unhealthy, deadline] { self->returned(current, unhealthy, deadline); });
+                    }
+                    else
+                    {
+                        current->client->close();
+                    }
+                }
+                catch (...)
+                {
+                    const auto failure = std::current_exception();
+                    record_return_failure(current, gate, failure);
                 }
             };
             return lease(std::move(control));
         }
 
         void acquire(const std::shared_ptr<waiter>& request) {
+            recover_failed_returns();
             if (closed || close_requested)
             {
                 complete(request, {failure(connection_errc::cancelled, "MySQL pool closed"), {}});
@@ -560,6 +645,7 @@ private:
             if (!request->admitted)
             {
                 complete(request, {failure(connection_errc::queue_full, "MySQL pool waiter limit exceeded"), {}});
+                pump();
                 return;
             }
             if (std::chrono::steady_clock::now() >= request->deadline)
@@ -567,6 +653,7 @@ private:
                 complete(request,
                     {failure(connection_errc::timeout, "MySQL pool acquire deadline exceeded", asio::error::timed_out),
                         {}});
+                pump();
                 return;
             }
             request->timer = std::make_shared<asio::steady_timer>(executor);
@@ -589,8 +676,10 @@ private:
         }
 
         void cancel(std::shared_ptr<waiter> request, connection_errc reason) {
+            recover_failed_returns();
             if (request->completed)
             {
+                pump();
                 return;
             }
             if (auto assigned = request->assigned.lock(); assigned && assigned->phase == entry_phase::connecting)
@@ -639,13 +728,16 @@ private:
                     continue;
                 }
                 const auto idle = std::find_if(entries.begin(), entries.end(),
-                    [](const auto& session) { return session->phase == entry_phase::idle; });
+                    [](const auto& session) { return session->phase == entry_phase::idle && !session->failed_return; });
                 if (idle != entries.end())
                 {
                     auto session = *idle;
                     if (!session->client->is_open())
                     {
-                        discard(session);
+                        if (!discard(session))
+                        {
+                            return;
+                        }
                         continue;
                     }
                     auto request = queue.front();
@@ -705,9 +797,14 @@ private:
         }
 
         void begin_return(const std::shared_ptr<entry>& session, std::chrono::steady_clock::time_point deadline) {
+            if (session->failed_return)
+            {
+                recover_failed_returns();
+                pump();
+                return;
+            }
             if (!contains(session))
             {
-                session->client->close();
                 return;
             }
             if (session->phase != entry_phase::leased)
@@ -734,7 +831,14 @@ private:
                                 session && self->contains(session) && session->return_generation == return_generation &&
                                 (session->phase == entry_phase::returning || session->phase == entry_phase::resetting))
                             {
-                                self->discard(session);
+                                if (session->failed_return)
+                                {
+                                    self->recover_failed_returns();
+                                }
+                                else
+                                {
+                                    self->discard(session);
+                                }
                                 self->pump();
                             }
                         }
@@ -744,9 +848,14 @@ private:
 
         void returned(
             const std::shared_ptr<entry>& session, bool unhealthy, std::chrono::steady_clock::time_point deadline) {
+            if (session->failed_return)
+            {
+                recover_failed_returns();
+                pump();
+                return;
+            }
             if (!contains(session))
             {
-                session->client->close();
                 return;
             }
             if (closed || close_requested || unhealthy || !session->client->is_open() ||
@@ -848,19 +957,16 @@ private:
             auto waiting = std::move(pending);
             pending.clear();
             queue.clear();
-            auto sessions = std::move(entries);
-            entries.clear();
             for (auto& [id, request] : waiting)
             {
                 complete(request, {failure(connection_errc::cancelled, "MySQL pool closed"), {}});
             }
-            for (auto& session : sessions)
+            for (std::size_t index = 0; index != entries.size();)
             {
-                if (session->return_deadline)
+                if (!discard(entries[index], true))
                 {
-                    session->return_deadline->cancel();
+                    ++index;
                 }
-                session->client->close();
             }
         }
 
@@ -1066,6 +1172,11 @@ public:
             {
                 self->cancel(found->second, connection_errc::cancelled);
             }
+            else
+            {
+                self->recover_failed_returns();
+                self->pump();
+            }
         });
     }
 
@@ -1080,6 +1191,12 @@ public:
         {
             asio::post(self->executor, [self] { self->shutdown(); });
         }
+    }
+
+    pool_diagnostics diagnostics() const {
+        const auto self = state_;
+        std::lock_guard lock(self->gate->mutex);
+        return self->gate->diagnostics;
     }
 
     // Permanently closes admission, retires accepted callbacks and joins this
