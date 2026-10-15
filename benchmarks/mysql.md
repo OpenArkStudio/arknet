@@ -3,6 +3,8 @@
 Compile the standalone C++ executable and run it against a MySQL server. It only
 selects a constant binary value; it does not create tables or write application data.
 
+The [performance report](../docs/features/mysql/performance.md) records the machine, source hashes and all 96 combinations of dependency, transport, query mode, connection count, payload and queue window.
+
 ```sh
 cmake -S . -B build-mysql -DCMAKE_BUILD_TYPE=Release \
   -DARKNET_USE_BOOST_ASIO=ON -DARKNET_ENABLE_SSL=ON \

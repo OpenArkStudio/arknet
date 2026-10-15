@@ -2,6 +2,8 @@
 
 编译并运行独立 C++ 程序，连接待测 MySQL 服务。程序只查询常量二进制值，不建表，也不写入业务数据。
 
+[性能报告](../docs/features/mysql/performance_CN.md)记录测试机器、源码哈希，以及依赖库、传输方式、查询接口、连接数、包体和排队窗口的全部 96 组组合。
+
 ```sh
 cmake -S . -B build-mysql -DCMAKE_BUILD_TYPE=Release \
   -DARKNET_USE_BOOST_ASIO=ON -DARKNET_ENABLE_SSL=ON \
