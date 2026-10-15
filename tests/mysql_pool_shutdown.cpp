@@ -1,5 +1,7 @@
+#include <array>
 #include <atomic>
 #include <cstdint>
+#include <exception>
 #include <future>
 #include <latch>
 #include <memory>
@@ -365,6 +367,83 @@ DOCTEST_TEST_CASE("MySQL ordinary pool close followed by permanent shutdown pres
     acquired.connection.release();
     CHECK(pool.close_and_wait());
     CHECK(calls == 1);
+    CHECK_FALSE(acquired.connection);
+    peer.finish();
+}
+
+DOCTEST_TEST_CASE("MySQL ordinary pool close retires queued waiters before their reentrant submissions") {
+    mysql_peer peer([](mysql_peer& server) -> asio::awaitable<void> {
+        co_await authenticate(server);
+        co_await server.wait_for_eof();
+    });
+    mysql_pool pool(pooled_options(peer));
+    std::promise<mysql_pool::acquire_result> initial_completion;
+    auto initial = initial_completion.get_future();
+    std::array<std::promise<connection_errc>, 3> completions;
+    std::array<std::future<connection_errc>, 3> ready{
+        completions[0].get_future(), completions[1].get_future(), completions[2].get_future()};
+    std::array<std::atomic<unsigned>, 3> calls{};
+    std::array<arknet::mysql::request_id, 2> ids{};
+    std::atomic<unsigned> destroyed{};
+    auto capture = std::make_shared<destruction_probe>(destroyed);
+    std::promise<void> queued;
+    auto fenced = queued.get_future();
+    auto retire = [](mysql_pool* owner) noexcept {
+        try
+        {
+            if (!owner->close_and_wait())
+            {
+                std::terminate();
+            }
+        }
+        catch (...)
+        { std::terminate(); }
+    };
+    std::unique_ptr<mysql_pool, decltype(retire)> retirement(&pool, retire);
+    pool.async_acquire([&](auto response) { initial_completion.set_value(std::move(response)); });
+    REQUIRE(initial.wait_for(5s) == std::future_status::ready);
+    auto acquired = initial.get();
+    REQUIRE(bool(acquired));
+    for (std::size_t index = 0; index != ids.size(); ++index)
+    {
+        ids[index] = pool.async_acquire([&, capture, index](auto result) {
+            CHECK_FALSE(result.connection);
+            ++calls[index];
+            if (index == 0)
+            {
+                pool.close();
+                pool.cancel(ids[1]);
+                pool.async_acquire([&, capture](auto rejected) {
+                    CHECK_FALSE(rejected.connection);
+                    ++calls[2];
+                    completions[2].set_value(rejected.status.code);
+                });
+            }
+            completions[index].set_value(result.status.code);
+        });
+    }
+    pool.async_acquire(
+        [&](auto result) {
+            CHECK(result.status.code == connection_errc::invalid_options);
+            queued.set_value();
+        },
+        -1ms);
+    REQUIRE(fenced.wait_for(5s) == std::future_status::ready);
+    CHECK(ready[0].wait_for(0ms) == std::future_status::timeout);
+    CHECK(ready[1].wait_for(0ms) == std::future_status::timeout);
+    capture.reset();
+    pool.close();
+    for (auto& completion : ready)
+    {
+        REQUIRE(completion.wait_for(5s) == std::future_status::ready);
+        CHECK(completion.get() == connection_errc::cancelled);
+    }
+    CHECK(pool.close_and_wait());
+    for (const auto& count : calls)
+    {
+        CHECK(count == 1);
+    }
+    CHECK(destroyed == 1);
     CHECK_FALSE(acquired.connection);
     peer.finish();
 }

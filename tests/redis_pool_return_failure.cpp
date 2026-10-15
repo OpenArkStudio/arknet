@@ -4,6 +4,7 @@
 
 #endif
 
+#include <array>
 #include <atomic>
 #include <future>
 #include <latch>
@@ -42,8 +43,13 @@ void actor_barrier(pool& connections) {
     DOCTEST_CHECK(await(future) == client_errc::invalid_command);
 }
 
-void check_diagnostics(const pool& connections, std::uint64_t expected) {
+void check_diagnostics(
+    const pool& connections, std::uint64_t expected, arknet::redis::pool_diagnostics* retained = nullptr) {
     const auto info = connections.diagnostics();
+    if (retained)
+    {
+        *retained = info;
+    }
     DOCTEST_CHECK(info.return_submission_failures == expected);
     DOCTEST_REQUIRE(bool(info.last_return_submission_exception));
     DOCTEST_CHECK_THROWS_AS(std::rethrow_exception(info.last_return_submission_exception), std::bad_alloc);
@@ -173,6 +179,10 @@ DOCTEST_TEST_CASE("Redis pool retains repeated close-publication failures "
     pool connections(options_for(endpoint));
     std::atomic_bool coherent{true};
     std::latch reader_started(1);
+    // Keep each inspected exception alive through the concurrent reader's
+    // join. Count, coherence and exception-type checks still run concurrently;
+    // only final exception-object release is ordered after the reader exits.
+    std::array<arknet::redis::pool_diagnostics, 5> retained;
     std::jthread observer([&](std::stop_token stop) {
         std::uint64_t previous{};
         reader_started.count_down();
@@ -199,7 +209,7 @@ DOCTEST_TEST_CASE("Redis pool retains repeated close-publication failures "
         held.reset();
     }
     DOCTEST_CHECK(scoped_allocation_failure::injections == before + 1);
-    check_diagnostics(connections, 1);
+    check_diagnostics(connections, 1, &retained[0]);
     auto completion = std::make_shared<std::promise<pool::acquire_result>>();
     auto future = completion->get_future();
     arm_on_actor_before(connections, [&] {
@@ -207,14 +217,14 @@ DOCTEST_TEST_CASE("Redis pool retains repeated close-publication failures "
     });
     actor_barrier(connections);
     DOCTEST_CHECK(scoped_allocation_failure::injections == before + 2);
-    check_diagnostics(connections, 2);
+    check_diagnostics(connections, 2, &retained[1]);
     DOCTEST_CHECK(future.wait_for(0ms) != std::future_status::ready);
     for (unsigned attempt = 0; attempt != 2; ++attempt)
     {
         arm_on_actor_before(connections, [&] { connections.cancel(0); });
         actor_barrier(connections);
         DOCTEST_CHECK(scoped_allocation_failure::injections == before + 3 + attempt);
-        check_diagnostics(connections, 3 + attempt);
+        check_diagnostics(connections, 3 + attempt, &retained[2 + attempt]);
         DOCTEST_CHECK(future.wait_for(0ms) != std::future_status::ready);
     }
     DOCTEST_CHECK(scoped_allocation_failure::injections == before + 4);
@@ -222,7 +232,7 @@ DOCTEST_TEST_CASE("Redis pool retains repeated close-publication failures "
     auto fresh = await(future);
     DOCTEST_REQUIRE(bool(fresh));
     DOCTEST_CHECK(execute(fresh.connection, {"PING"}).replies.front().text == "SECOND");
-    check_diagnostics(connections, 4);
+    check_diagnostics(connections, 4, &retained[4]);
     observer.request_stop();
     observer.join();
     DOCTEST_CHECK(coherent);

@@ -712,13 +712,12 @@ private:
             {
                 return;
             }
-            auto waiting = std::move(pending);
-            pending.clear();
             queue.clear();
             auto connections = std::move(entries);
             entries.clear();
-            for (const auto& [id, request] : waiting)
+            while (!pending.empty())
             {
+                auto request = pending.begin()->second;
                 complete(request, acquire_result{client_errc::closed});
             }
             for (const auto& connection : connections)

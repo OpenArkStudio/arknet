@@ -1,6 +1,8 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
+#include <array>
 #include <atomic>
 #include <chrono>
+#include <exception>
 #include <functional>
 #include <future>
 #include <latch>
@@ -557,6 +559,86 @@ DOCTEST_TEST_CASE("Redis pool ordinary close can be followed by permanent worker
     connections.close();
     CHECK(connections.close_and_wait());
     CHECK(leased.connection.async_execute({"PING"}, {}) == 0);
+    endpoint.finish();
+}
+
+DOCTEST_TEST_CASE("Redis pool ordinary close retires queued waiters before their reentrant submissions") {
+    server endpoint([](peer& remote) {
+        remote.hello();
+        remote.wait_closed();
+    });
+    arknet::redis::pool_options options;
+    options.max_connections = 1;
+    options.connection.port = endpoint.port();
+    pool connections(options);
+    std::promise<pool::acquire_result> initial_completion;
+    auto initial = initial_completion.get_future();
+    std::array<std::promise<client_errc>, 3> completions;
+    std::array<std::future<client_errc>, 3> ready{
+        completions[0].get_future(), completions[1].get_future(), completions[2].get_future()};
+    std::array<std::atomic<unsigned>, 3> calls{};
+    std::array<arknet::redis::request_id, 2> ids{};
+    std::atomic<unsigned> destroyed{};
+    auto capture = std::make_shared<capture_probe>(destroyed);
+    std::promise<void> queued;
+    auto fenced = queued.get_future();
+    auto retire = [](pool* owner) noexcept {
+        try
+        {
+            if (!owner->close_and_wait())
+            {
+                std::terminate();
+            }
+        }
+        catch (...)
+        { std::terminate(); }
+    };
+    std::unique_ptr<pool, decltype(retire)> retirement(&connections, retire);
+    connections.async_acquire([&](auto response) { initial_completion.set_value(std::move(response)); });
+    REQUIRE(initial.wait_for(5s) == std::future_status::ready);
+    auto leased = initial.get();
+    REQUIRE(leased);
+    for (std::size_t index = 0; index != ids.size(); ++index)
+    {
+        ids[index] = connections.async_acquire([&, capture, index](auto response) {
+            CHECK_FALSE(response.connection);
+            ++calls[index];
+            if (index == 0)
+            {
+                connections.close();
+                connections.cancel(ids[1]);
+                connections.async_acquire([&, capture](auto rejected) {
+                    CHECK_FALSE(rejected.connection);
+                    ++calls[2];
+                    completions[2].set_value(rejected.error);
+                });
+            }
+            completions[index].set_value(response.error);
+        });
+    }
+    connections.async_acquire(
+        [&](auto response) {
+            CHECK(response.error == client_errc::invalid_command);
+            queued.set_value();
+        },
+        -1ms);
+    REQUIRE(fenced.wait_for(5s) == std::future_status::ready);
+    CHECK(ready[0].wait_for(0ms) == std::future_status::timeout);
+    CHECK(ready[1].wait_for(0ms) == std::future_status::timeout);
+    capture.reset();
+    connections.close();
+    for (auto& completion : ready)
+    {
+        REQUIRE(completion.wait_for(5s) == std::future_status::ready);
+        CHECK(completion.get() == client_errc::closed);
+    }
+    CHECK(connections.close_and_wait());
+    for (const auto& count : calls)
+    {
+        CHECK(count == 1);
+    }
+    CHECK(destroyed == 1);
+    CHECK_FALSE(leased.connection);
     endpoint.finish();
 }
 

@@ -954,11 +954,10 @@ private:
             {
                 return;
             }
-            auto waiting = std::move(pending);
-            pending.clear();
             queue.clear();
-            for (auto& [id, request] : waiting)
+            while (!pending.empty())
             {
+                auto request = pending.begin()->second;
                 complete(request, {failure(connection_errc::cancelled, "MySQL pool closed"), {}});
             }
             for (std::size_t index = 0; index != entries.size();)
