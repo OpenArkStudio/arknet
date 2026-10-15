@@ -75,10 +75,11 @@ and teardown. Slow receivers test backpressure rather than throughput.
 The complete-suite source snapshot is `6c8418e`; its networking changes are
 included in measured revision `2aa5bc0`. The separate test-only snapshot
 `25bb9f8` covers allocation-failure portability and native-connect ordering below.
+Pool-shutdown coverage identifies its separate source snapshot `550fb58`.
 [PR #16](https://github.com/OpenArkStudio/arknet/pull/16) records the candidate
 review and cross-platform CI; local results do not substitute for its checks.
 
-Validation date: 2026-10-15. The machine is a Mac mini `Mac16,11`, Apple M4 Pro, 14 physical/logical cores
+Validation dates: 2026-10-15–16. The machine is a Mac mini `Mac16,11`, Apple M4 Pro, 14 physical/logical cores
 (10 performance and 4 efficiency cores), 48 GiB RAM, macOS 27.0.1 (26A434).
 Dependencies are Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
 Ordinary builds use Apple Clang 21.0.0; sanitizer builds use LLVM 22.1.7.
@@ -155,6 +156,35 @@ filter are not environment skips. These runs are additional to the complete
 snapshot, not a complete-suite run of the test-only changes. The MSVC-specific
 CRT allocation path is covered by the Windows CI jobs; this macOS validation
 does not execute it.
+
+### Pool Shutdown Checks
+
+Snapshot `550fb58` retires queued acquire requests in place in both pools,
+avoiding allocation-dependent unordered-map move construction. Its formal
+regressions cover two queued waiters, reentrant close/cancel/acquire, once-only
+completion and capture retirement. Owner-side guards keep test state alive
+through permanent closure on fatal assertion paths.
+
+| Dependency / instrumentation | MySQL shutdown cases / assertions | Redis shutdown cases / assertions |
+| --- | ---: | ---: |
+| Boost.Asio / ASan+UBSan | 14 / 1,067 | 19 / 596 |
+| Standalone Asio / ASan+UBSan | 14 / 1,067 | 19 / 596 |
+| Boost.Asio / TSan | 14 / 1,067 | 19 / 595 |
+| Standalone Asio / TSan | 14 / 1,066 | 19 / 595 |
+
+All eight target runs pass with zero failures, skips or sanitizer reports.
+The four configurations also pass unchanged MySQL return-failure tests
+(5 cases / 222 assertions) and Redis return-failure tests (4 / 107).
+Those return-failure runs preceded the guard-only test edit; their tested
+source files and both pool headers match this snapshot. These are focused
+checks, not a complete-suite run of this snapshot.
+
+Redis diagnostic tests retain inspected exception snapshots until their
+concurrent observer joins. The original Linux TSan and Windows fault-injection
+failures, source mapping and focused logs remain in the validation archive.
+The pool correction removes one allocation boundary; it does not guarantee
+that every child-close path can recover from heap exhaustion. Performance
+measurements remain tied to `2aa5bc0`, before this shutdown-only correction.
 
 ASan leak checking is disabled on this macOS host. The complete-suite ASan runs
 also disable online symbolization to avoid a diagnosed symbolizer hang; memory
