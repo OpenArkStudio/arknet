@@ -1,6 +1,7 @@
 #include <array>
 #include <cstdint>
 #include <limits>
+#include <ostream>
 #include <random>
 #include <string>
 #include <string_view>
