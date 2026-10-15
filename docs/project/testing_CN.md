@@ -71,8 +71,8 @@ Apple Clang 21.0.0、CMake 4.3.3、Standalone Asio 1.38.2、Boost 1.90.0、OpenS
 
 | 依赖方案 | 构建／TLS | 检查数 | doctest 用例数 | 断言数 | 结果 |
 | --- | --- | ---: | ---: | ---: | --- |
-| Boost.Asio | Release／ON | 75 | 372 | 1,980,155 | 通过 |
-| Standalone Asio | Release／ON | 62 | 312 | 978,483 | 通过 |
+| Boost.Asio | Release／ON | 75 | 374 | 1,952,026 | 通过 |
+| Standalone Asio | Release／ON | 62 | 314 | 976,980 | 通过 |
 
 检查数是 `arknet_check` 执行的程序数，用例数是 doctest 用例总数。
 两套完整检查均无失败或跳过的用例，并包含基准冒烟和安装包使用检查。
@@ -85,15 +85,22 @@ Apple Clang 21.0.0、CMake 4.3.3、Standalone Asio 1.38.2、Boost 1.90.0、OpenS
 
 | 构建 | 范围 | 用例数 | 断言数 | 结果 |
 | --- | --- | ---: | ---: | --- |
-| Boost.Asio／TSan | MySQL connection 与 pool | 49 | 1,355 | 通过，0 跳过 |
+| Boost.Asio／TSan | MySQL connection 与 pool | 51 | 1,899 | 通过，0 跳过 |
+| Standalone Asio／TSan | MySQL connection 与 pool | 51 | 1,899 | 通过，0 跳过 |
+| Boost.Asio／ASan+UBSan | MySQL connection 与 pool | 51 | 1,899 | 通过，0 跳过 |
 | Boost.Asio／TSan | Redis client 与 pool | 35 | 316 | 通过，0 跳过 |
 | Standalone Asio／ASan+UBSan | Redis client 与 pool | 35 | 316 | 通过，0 跳过 |
 
-两次 TSan 执行合计 84 个用例、1,671 项断言，没有 Sanitizer 诊断，也没有使用抑制规则。
-MySQL 在整合前的实现工作树中还通过了 Boost.Asio ASan+UBSan 的 49 个用例、1,355 项断言；
-这份证据与整合源的 TSan 执行分开记录。Redis 包含 RESET 字节预算与 REPLCONF 回复关联回归。
+Boost.Asio 数据库 TSan 执行合计 86 个用例、2,215 项断言。
+MySQL 的 Standalone Asio TSan 与 Boost.Asio ASan+UBSan 分别覆盖相同的 51 个用例、1,899 项断言。
+没有 Sanitizer 诊断，也没有使用抑制规则。macOS ASan 执行关闭了泄漏检测。
+MySQL 包含投递返回前的运行时所有权，以及独立的无效连接参数／命令拒绝销毁用例；
+Redis 包含 RESET 字节预算与 REPLCONF 回复关联回归。
 [检查范围、环境与复现命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README_CN.md)
 记录了各项区别。这些结果覆盖数据库测试组，不代表全项目都执行过 Sanitizer 检查。
+
+MySQL 编解码测试包含 MSVC 断言诊断所需的标准流头文件。
+命令聚合准入回归使用编码后合计超过预算的请求大小，不依赖字符串容量或小字符串优化（SSO）。
 
 ### RUDP 互通专项证据
 

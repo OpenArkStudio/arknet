@@ -35,9 +35,19 @@ Each translation unit declaring a global owner must include the relevant IO head
 
 Database deadline checks reject nonpositive and unrepresentable durations before clock arithmetic. Documented zero per-call overrides continue to select the configured default. Queue admission is rolled back if posting accepted work throws.
 
+MySQL keeps its runtime alive until asynchronous posting returns, even when a
+completion destroys the connection. Command timers are released before their
+runtime owner. Dedicated invalid-connect and rejected-command destruction
+regressions complement successful and cancelled completion cases.
+
 ### Validation and scope
 
-Client and pool correctness suites contain 49 MySQL cases / 1355 assertions and 35 Redis cases / 316 assertions. Independent-server checks include MySQL Community Server 8.4.11 and Redis 7.4.2. Protocol codecs, clock boundaries and process-exit ordering have separate tests; sanitizer results and local Release measurements are recorded in [testing](testing.md) and the [performance reports](../performance/index.md).
+Client and pool correctness suites contain 51 MySQL cases / 1,899 assertions and 35 Redis cases / 316 assertions. Independent-server checks include MySQL Community Server 8.4.11 and Redis 7.4.2. Protocol codecs, clock boundaries and process-exit ordering have separate tests; sanitizer results and local Release measurements are recorded in [testing](testing.md) and the [performance reports](../performance/index.md).
+
+MySQL codec assertion diagnostics explicitly include the standard stream header
+needed by MSVC. The aggregate admission regression exceeds its byte budget by
+encoded request sizes, independently of small-string optimization or string
+capacity growth.
 
 MySQL supports one Classic Protocol result per command, without multi-result execution, `LOCAL INFILE`, compression, cursors or arbitrary authentication plugins. Redis Cluster, Sentinel and Pub/Sub remain TODO. Public database coroutine APIs, HTTP/2, HTTP/3, named pipes, Unix domain sockets and RPC are separate [roadmap](roadmap.md) items.
 

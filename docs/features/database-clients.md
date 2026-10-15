@@ -95,10 +95,16 @@ Independent-server checks include MySQL Community Server 8.4.11 and Redis 7.4.2.
 
 | Client and pool suites | Cases | Assertions |
 | --- | ---: | ---: |
-| MySQL | 49 | 1355 |
+| MySQL | 51 | 1,899 |
 | Redis | 35 | 316 |
 
 Deadline tests include nonpositive durations, integer extremes and clock-addition boundaries. Correctness and sanitizer checks are separate from local Release measurements; test counts are not throughput or capacity figures.
+
+MySQL retains its runtime while asynchronous posting returns, including when a
+completion destroys the connection. Separate invalid-connect and rejected-command
+destruction cases cover these immediate completion paths. MySQL connection/pool
+suites pass TSan with both Asio dependencies and ASan+UBSan with Boost.Asio;
+the [testing record](../project/testing.md) identifies their scope and counts.
 
 The [MySQL](mysql/performance.md) and [Redis](redis/performance.md) performance pages describe their compilable benchmarks, workload dimensions and reports. Record the machine/server configuration, payload, queue/pipeline depth, connections, repeated rounds, operations/s, RT percentiles and CPU percentage. Capacity requires [deployment acceptance](../project/production-readiness.md).
 

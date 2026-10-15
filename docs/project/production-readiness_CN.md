@@ -25,8 +25,9 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 
 | 范围 | 截至 2026-10-15 的证据 |
 | --- | --- |
-| 本机完整检查 | Release + TLS：Boost.Asio 为 75 项检查／372 个用例／1,980,155 项断言；Standalone Asio 为 62／312／978,483；均无失败或跳过 |
-| 数据库正确性与并发 | 真实 MySQL 8.4.11 和 Redis 7.4.2；原生客户端／连接池 TSan 为 84 个用例／1,671 项断言；Standalone Asio Redis ASan+UBSan 为 35／316；无失败、跳过或诊断；[范围与命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README_CN.md) |
+| 本机完整检查 | Release + TLS：Boost.Asio 为 75 项检查／374 个用例／1,952,026 项断言；Standalone Asio 为 62／314／976,980；均无失败或跳过 |
+| 数据库正确性 | 真实 MySQL 8.4.11 和 Redis 7.4.2；MySQL 客户端／连接池为 51 个用例／1,899 项断言，Redis 为 35／316 |
+| 数据库内存与并发 | Boost.Asio 数据库 TSan 为 86 个用例／2,215 项断言；MySQL Standalone Asio TSan 与 Boost.Asio ASan+UBSan 分别为 51／1,899；Redis Standalone Asio ASan+UBSan 为 35／316；无失败、跳过、诊断或抑制；[范围与命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README_CN.md) |
 | RUDP 内存／并发专项，2026-10-13 | 指定 ASan/UBSan 测试组：109 个用例；指定 TSan 测试组：86 个用例；不代表当前全项目 Sanitizer 执行 |
 | 跨平台 CI，v0.1.0 历史证据 | [13 项任务通过](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095)：两种 Asio 依赖方案、Linux/macOS/Windows、无 TLS 构建、ASan/UBSan、TSan、安装后使用及格式检查；这次执行不验证 v0.2.0 |
 | 跨平台发布条件 | 合并前须通过全部 14 项必需检查：[CI 记录](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml)；本机结果不代替发行候选自身的检查 |

@@ -28,8 +28,9 @@ evidence below.
 
 | Scope | Evidence as of 2026-10-15 |
 | --- | --- |
-| Complete local checks | Release + TLS: Boost.Asio 75 checks / 372 cases / 1,980,155 assertions; Standalone Asio 62 / 312 / 978,483; no failures or skipped cases |
-| Database correctness and concurrency | Real MySQL 8.4.11 and Redis 7.4.2; native client/pool TSan: 84 cases / 1,671 assertions; Standalone Asio Redis ASan+UBSan: 35 / 316, no failures, skips or diagnostics; [scope and commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README.md) |
+| Complete local checks | Release + TLS: Boost.Asio 75 checks / 374 cases / 1,952,026 assertions; Standalone Asio 62 / 314 / 976,980; no failures or skipped cases |
+| Database correctness | Real MySQL 8.4.11 and Redis 7.4.2; MySQL client/pool 51 cases / 1,899 assertions, Redis 35 / 316 |
+| Database memory and concurrency | Boost.Asio database TSan: 86 cases / 2,215 assertions; MySQL Standalone Asio TSan and Boost.Asio ASan+UBSan: 51 / 1,899 each; Redis Standalone Asio ASan+UBSan: 35 / 316; no failures, skips, diagnostics or suppressions; [scope and commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README.md) |
 | RUDP memory/concurrency evidence, 2026-10-13 | Selected ASan/UBSan suites: 109 cases; selected TSan suites: 86 cases; not a complete current-project sanitizer run |
 | Cross-platform CI, v0.1.0 historical evidence | [13 jobs passed](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095): both Asio dependency configurations, Linux/macOS/Windows, builds without TLS, ASan/UBSan, TSan, installed consumers and formatting; this run does not validate v0.2.0 |
 | Cross-platform release gate | All 14 required checks must pass before merge: [CI runs](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml); local results do not substitute for the release candidate's own checks |

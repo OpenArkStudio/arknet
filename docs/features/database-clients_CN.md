@@ -94,10 +94,15 @@ HTTP/2、HTTP/3、named pipe、Unix domain socket 与 RPC 仍是[路线图](../p
 
 | 客户端与连接池测试 | 用例 | 断言 |
 | --- | ---: | ---: |
-| MySQL | 49 | 1355 |
+| MySQL | 51 | 1,899 |
 | Redis | 35 | 316 |
 
 时限测试覆盖非正时长、整数极值与时钟相加边界。正确性及 sanitizer 检查与本地 Release 性能测量分别进行；测试数量不代表吞吐量或容量。
+
+MySQL 在异步投递返回前保留运行时持有者，允许完成回调销毁连接。
+独立的无效连接参数和命令拒绝回归覆盖这些快速完成路径。
+MySQL 连接与连接池测试在两种 Asio 依赖下通过 TSan，并在 Boost.Asio 下通过 ASan+UBSan；
+[测试记录](../project/testing_CN.md)列出范围与计数。
 
 [MySQL](mysql/performance_CN.md) 与 [Redis](redis/performance_CN.md) 性能页提供可编译的基准程序、负载维度和报告入口。报告需记录机器与服务端配置、包体、排队或流水线深度、连接数、重复轮次、每秒操作数、RT 分位数和 CPU 占用比例。容量需经过[部署验收](../project/production-readiness_CN.md)。
 

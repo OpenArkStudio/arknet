@@ -23,8 +23,8 @@
 
 | 依赖方案 | 检查数 | doctest 用例数 | 断言数 | 失败／跳过 |
 | --- | ---: | ---: | ---: | --- |
-| Boost.Asio | 75 | 372 | 1,980,155 | 0／0 |
-| Standalone Asio | 62 | 312 | 978,483 | 0／0 |
+| Boost.Asio | 75 | 374 | 1,952,026 | 0／0 |
+| Standalone Asio | 62 | 314 | 976,980 | 0／0 |
 
 HTTP 和 WebSocket 依赖 Boost.Beast，两种配置的协议覆盖因此不同；Standalone Asio
 还有独立的线程存储配置检查。检查数按执行的程序计数，用例与断言仅统计 doctest 输出。
@@ -32,20 +32,23 @@ HTTP 和 WebSocket 依赖 Boost.Beast，两种配置的协议覆盖因此不同�
 
 | 检测工具／依赖方案 | 目标 | 用例数 | 断言数 | 失败／跳过 |
 | --- | --- | ---: | ---: | --- |
-| TSan／Boost.Asio | MySQL connection | 32 | 944 | 0／0 |
+| TSan／Boost.Asio | MySQL connection | 34 | 1,488 | 0／0 |
 | TSan／Boost.Asio | MySQL pool | 17 | 411 | 0／0 |
+| TSan／Standalone Asio | MySQL connection | 34 | 1,488 | 0／0 |
+| TSan／Standalone Asio | MySQL pool | 17 | 411 | 0／0 |
+| ASan+UBSan／Boost.Asio | MySQL connection | 34 | 1,488 | 0／0 |
+| ASan+UBSan／Boost.Asio | MySQL pool | 17 | 411 | 0／0 |
 | TSan／Boost.Asio | Redis client | 21 | 183 | 0／0 |
 | TSan／Boost.Asio | Redis pool | 14 | 133 | 0／0 |
 | ASan+UBSan／Standalone Asio | Redis client | 21 | 183 | 0／0 |
 | ASan+UBSan／Standalone Asio | Redis pool | 14 | 133 | 0／0 |
 
-四个 TSan 目标合计 **84 个用例、1,671 项断言**。MySQL 与 Redis 分别执行，
-对应下文记录的产品头文件，并非同时运行的服务负载测试。没有 Sanitizer 诊断，
-也没有使用抑制规则。Standalone Asio 的 Redis ASan+UBSan 合计 **35 个用例、316 项断言**。
-
-MySQL 在加入截止时间检查后，还在实现工作树中通过了 Boost.Asio ASan+UBSan 的
-**49 个用例、1,355 项断言**。这次执行早于最终整合，不作为另一份整合源 Sanitizer 结果。
-ASan 执行关闭了泄漏检测，不能代表 Linux LeakSanitizer 检查。
+Boost.Asio 的四个 TSan 目标合计 **86 个用例、2,215 项断言**。
+MySQL 的 Standalone Asio TSan 与 Boost.Asio ASan+UBSan 分别通过
+**51 个用例、1,899 项断言**；Standalone Asio 的 Redis ASan+UBSan 通过
+**35 个用例、316 项断言**。MySQL 与 Redis 分别执行，对应下文记录的产品头文件，
+并非同时运行的服务负载测试。没有 Sanitizer 诊断，也没有使用抑制规则。
+macOS ASan 执行关闭了泄漏检测，不能代表 Linux LeakSanitizer 检查。
 
 ## 检查范围
 
@@ -53,6 +56,7 @@ ASan 执行关闭了泄漏检测，不能代表 Linux LeakSanitizer 检查。
 | --- | --- |
 | MySQL 连接 | TLS 验证与错误身份／密码拒绝；握手／认证分片及序号校验；native 与 caching-SHA2 认证；查询、预处理／二进制结果、事务、结果上限及物理报文边界续包 |
 | MySQL 取消／连接池 | 投递前预留数量与字节配额；包含排队时间的截止时间；已发送请求中断后报告结果不确定且不重放；FIFO 独占租约、回调排空、实际重置、恢复配置的数据库及拒绝失效语句句柄 |
+| MySQL 投递生命周期 | 异步投递返回前保留运行时持有者，命令定时器先于运行时持有者释放，覆盖正常、取消、无效连接参数及命令拒绝回调中的连接销毁 |
 | Redis 客户端 | RESP2/RESP3 认证、真实 TCP/TLS/mTLS、二进制流水线、回复顺序、同步准入、取消后保留回复位置与配额，以及有界回复排空 |
 | Redis 连接池 | 独占租约、获取取消／截止时间、回调计数、RESET 后恢复协议／认证／数据库、失败连接丢弃与替换 |
 | 边界回归 | 无法表示的超时；14 字节预算可以编码 RESP2 PING，而 RESET 需要 15 字节；本地拒绝 REPLCONF，不发送命令、不改变后续回复关联 |
@@ -61,6 +65,11 @@ RESET 回归要求首次获取与 PING 成功，归还时安全丢弃连接，�
 REPLCONF 回归检查 IO 线程中的拒绝回调恰好执行一次、不占用后续配额，以及下一条 ECHO 的准确结果。
 正式 C++ 用例分别位于 [redis_pool.cpp](../../../redis_pool.cpp)
 和 [redis_client.cpp](../../../redis_client.cpp)。
+
+[mysql_connection.cpp](../../../mysql_connection.cpp) 独立覆盖无效连接参数和命令拒绝回调中的连接销毁。
+聚合准入用例使用两条编码后各至少 33 字节的查询，合计超过 64 字节预算，
+不依赖小字符串优化（SSO）或特定字符串容量。MySQL 编解码测试显式包含 `<ostream>`，
+满足 MSVC 断言诊断的头文件要求。
 
 [2026-10-13 RUDP/FEC 记录](../../macmini-m4pro-20261013/rudp-fec/README_CN.md)
 保留互通和 Sanitizer 专项证据。其中 55 项检查、219 个用例的完整执行总数对应当时的源码，
@@ -132,15 +141,19 @@ build-tsan/tests/arknet_redis_pool_test
 
 RelWithDebInfo 的实际参数包含 `-O2 -g -DNDEBUG -std=gnu++20`。额外的 `-include cfloat`
 用于处理 LLVM 22／macOS SDK／doctest 的 `DBL_EPSILON` 头文件顺序问题，并非 Sanitizer
-抑制。Redis ASan+UBSan 使用 `-fsanitize=address,undefined` 编译与链接，依赖 Standalone Asio，
-运行参数为 `ASAN_OPTIONS=detect_leaks=0` 和 `UBSAN_OPTIONS=halt_on_error=1`。
+抑制。MySQL Boost.Asio 与 Redis Standalone Asio 的 ASan+UBSan 构建使用
+`-fsanitize=address,undefined` 编译与链接，实际优化级别为 `-O2`。
+两者运行参数均包含 `ASAN_OPTIONS=detect_leaks=0` 和 `UBSAN_OPTIONS=halt_on_error=1`，
+MySQL 另外启用 `print_stacktrace=1`。
+使用 Standalone Asio TSan 时，在独立构建目录设置 `ARKNET_USE_BOOST_ASIO=OFF`
+和 `ARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include`，再以相同服务环境运行两个 MySQL 目标。
 不同 Sanitizer 与 Release 性能测量使用独立构建目录。
 
 ## 产品头文件 SHA-256
 
 | 头文件 | SHA-256 |
 | --- | --- |
-| `mysql/connection.hpp` | `77488fb4326945589fd63e1cb672bb71067ee253ea27c2d5d59f18b168a784ce` |
+| `mysql/connection.hpp` | `8e88c222abe98b7cc1e5e1aa27053cef8c080ea5c8b9ef01852372e4dca7d1c0` |
 | `mysql/pool.hpp` | `44e56ac33457dad19dcd80fccef10cd657acddb35a10ca9d7035435aeeb419bb` |
 | `redis/client.hpp` | `952d403284598bbcaeece7373459190bb2773b7c60d46bb95eb66e8b49f1f849` |
 | `redis/pool.hpp` | `8cf76f81a872efb477861541580f57a0bb97cb2174cd77995308a6353ae63a47` |

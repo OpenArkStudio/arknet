@@ -35,9 +35,16 @@ MySQL 认证需要 OpenSSL，即使显式禁用 TLS 也不例外；MySQL 连接�
 
 数据库时限在时钟运算前检查，拒绝非正值和无法表示的时长。文档允许的单次覆盖值为零时，继续使用配置的默认值。已获准的任务在提交执行器时抛异常，会退回预留的队列额度。
 
+MySQL 在异步投递返回前保留运行时持有者，即使完成回调销毁连接也不会提前释放运行时。
+命令定时器先于对应的运行时持有者释放。独立的无效连接参数和命令拒绝销毁回归，
+与正常完成、取消回调的销毁用例共同覆盖生命周期。
+
 ### 验证与范围
 
-客户端和连接池正确性测试包含 MySQL 49 个用例、1355 项断言，以及 Redis 35 个用例、316 项断言。独立服务端验证包含 MySQL Community Server 8.4.11 与 Redis 7.4.2。协议编解码、时钟边界和进程退出顺序另有测试；sanitizer 结果与本地 Release 测量分别记录在[测试](testing_CN.md)和[性能报告](../performance/index_CN.md)中。
+客户端和连接池正确性测试包含 MySQL 51 个用例、1,899 项断言，以及 Redis 35 个用例、316 项断言。独立服务端验证包含 MySQL Community Server 8.4.11 与 Redis 7.4.2。协议编解码、时钟边界和进程退出顺序另有测试；sanitizer 结果与本地 Release 测量分别记录在[测试](testing_CN.md)和[性能报告](../performance/index_CN.md)中。
+
+MySQL 编解码测试显式包含 MSVC 断言诊断所需的标准流头文件。
+聚合准入回归按编码请求大小超过字节预算，不依赖小字符串优化（SSO）或字符串容量增长方式。
 
 MySQL 每条命令支持一个 Classic Protocol 结果，不提供多结果执行、`LOCAL INFILE`、压缩、游标或任意认证插件。Redis Cluster、Sentinel 与 Pub/Sub 仍为 TODO。公开数据库协程接口、HTTP/2、HTTP/3、named pipe、Unix domain socket 和 RPC 是[路线图](roadmap_CN.md)中的独立事项。
 

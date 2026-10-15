@@ -77,8 +77,8 @@ Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
 
 | Dependency | Build / TLS | Checks | doctest cases | Assertions | Result |
 | --- | --- | ---: | ---: | ---: | --- |
-| Boost.Asio | Release / ON | 75 | 372 | 1,980,155 | Passed |
-| Standalone Asio | Release / ON | 62 | 312 | 978,483 | Passed |
+| Boost.Asio | Release / ON | 75 | 374 | 1,952,026 | Passed |
+| Standalone Asio | Release / ON | 62 | 314 | 976,980 | Passed |
 
 Checks count programs invoked by `arknet_check`; cases count doctest cases.
 Both complete runs had zero failed or skipped cases and include benchmark smoke
@@ -92,18 +92,27 @@ Separate LLVM 22.1.7 builds instrument the test framework and arknet code.
 
 | Build | Scope | Cases | Assertions | Result |
 | --- | --- | ---: | ---: | --- |
-| Boost.Asio / TSan | MySQL connection and pool | 49 | 1,355 | Passed, 0 skipped |
+| Boost.Asio / TSan | MySQL connection and pool | 51 | 1,899 | Passed, 0 skipped |
+| Standalone Asio / TSan | MySQL connection and pool | 51 | 1,899 | Passed, 0 skipped |
+| Boost.Asio / ASan+UBSan | MySQL connection and pool | 51 | 1,899 | Passed, 0 skipped |
 | Boost.Asio / TSan | Redis client and pool | 35 | 316 | Passed, 0 skipped |
 | Standalone Asio / ASan+UBSan | Redis client and pool | 35 | 316 | Passed, 0 skipped |
 
-The two TSan executions cover 84 cases and 1,671 assertions in total, with no
-sanitizer diagnostics or suppressions. MySQL also passed 49 cases and 1,355
-assertions under Boost.Asio ASan+UBSan in its implementation worktree before
-final integration; that evidence is separate from the final integration TSan
-runs. Redis includes the RESET byte-budget and REPLCONF response-correlation
-regressions. [Scope, environment and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README.md)
+The Boost.Asio database TSan executions cover 86 cases and 2,215 assertions in
+total. MySQL's additional Standalone Asio TSan and Boost.Asio ASan+UBSan runs
+cover the same 51 cases and 1,899 assertions separately. No sanitizer diagnostics
+were reported, and no suppressions were used. macOS ASan runs disable leak detection.
+MySQL includes runtime ownership through post return and independent
+invalid-connect/rejected-command destruction cases. Redis includes the RESET
+byte-budget and REPLCONF response-correlation regressions.
+[Scope, environment and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README.md)
 record the exact distinctions. These are database suites, not a full-project
 sanitizer result.
+
+MySQL codec tests include the standard stream header required by MSVC assertion
+diagnostics. Aggregate command admission is tested using encoded request sizes
+whose sum exceeds the budget, independently of string capacity or small-string
+optimization.
 
 ### RUDP Interoperability Evidence
 

@@ -24,8 +24,8 @@ smoke cases. They are not performance measurements.
 
 | Dependency | Checks | doctest cases | Assertions | Failed / skipped |
 | --- | ---: | ---: | ---: | --- |
-| Boost.Asio | 75 | 372 | 1,980,155 | 0 / 0 |
-| Standalone Asio | 62 | 312 | 978,483 | 0 / 0 |
+| Boost.Asio | 75 | 374 | 1,952,026 | 0 / 0 |
+| Standalone Asio | 62 | 314 | 976,980 | 0 / 0 |
 
 HTTP and WebSocket require Boost.Beast and account for different protocol
 coverage; Standalone Asio also has its own thread-storage configuration checks.
@@ -35,23 +35,25 @@ separate from the database targets below.
 
 | Instrumentation / dependency | Target | Cases | Assertions | Failed / skipped |
 | --- | --- | ---: | ---: | --- |
-| TSan / Boost.Asio | MySQL connection | 32 | 944 | 0 / 0 |
+| TSan / Boost.Asio | MySQL connection | 34 | 1,488 | 0 / 0 |
 | TSan / Boost.Asio | MySQL pool | 17 | 411 | 0 / 0 |
+| TSan / Standalone Asio | MySQL connection | 34 | 1,488 | 0 / 0 |
+| TSan / Standalone Asio | MySQL pool | 17 | 411 | 0 / 0 |
+| ASan+UBSan / Boost.Asio | MySQL connection | 34 | 1,488 | 0 / 0 |
+| ASan+UBSan / Boost.Asio | MySQL pool | 17 | 411 | 0 / 0 |
 | TSan / Boost.Asio | Redis client | 21 | 183 | 0 / 0 |
 | TSan / Boost.Asio | Redis pool | 14 | 133 | 0 / 0 |
 | ASan+UBSan / Standalone Asio | Redis client | 21 | 183 | 0 / 0 |
 | ASan+UBSan / Standalone Asio | Redis pool | 14 | 133 | 0 / 0 |
 
-The four TSan targets total **84 cases / 1,671 assertions**. MySQL and Redis
-were executed separately against the recorded product headers; they were not
-one simultaneous service-load run. No sanitizer diagnostics were reported, and
-no suppressions were used. The Standalone Asio Redis ASan+UBSan total is **35 / 316**.
-
-MySQL separately passed **49 cases / 1,355 assertions** under Boost.Asio
-ASan+UBSan in its implementation worktree after the deadline guards were added.
-That run preceded final integration and is not presented as another final
-integration sanitizer run. ASan runs disabled leak detection; they do not
-establish Linux LeakSanitizer coverage.
+The four Boost.Asio TSan targets total **86 cases / 2,215 assertions**.
+Standalone Asio MySQL TSan and Boost.Asio MySQL ASan+UBSan each pass
+**51 cases / 1,899 assertions**. Standalone Asio Redis ASan+UBSan passes
+**35 cases / 316 assertions**. MySQL and Redis were executed separately against
+the recorded product headers, not as one simultaneous service-load run.
+No sanitizer diagnostics were reported, and no suppressions were used.
+macOS ASan runs disabled leak detection; they do not establish Linux
+LeakSanitizer coverage.
 
 ## Scope
 
@@ -59,6 +61,7 @@ establish Linux LeakSanitizer coverage.
 | --- | --- |
 | MySQL connection | Verified TLS and wrong identity/password rejection; greeting/authentication fragmentation and sequence validation; native and caching-SHA2 authentication; query, prepared/binary results, transactions, result limits and exact physical-packet continuation |
 | MySQL cancellation / pool | Pre-post count/byte admission, deadlines including queue time, sent-request unknown outcomes without replay, FIFO exclusive leases, callback drain, real reset, configured database restoration and stale-statement rejection |
+| MySQL posting lifetime | Runtime ownership until asynchronous posting returns, command timers released before runtime owners, completion-driven destruction for successful, cancelled, invalid-connect and rejected-command paths |
 | Redis client | RESP2/RESP3 authentication, real TCP/TLS/mTLS, binary pipelines, reply ordering, synchronous admission, cancellation tombstones retaining reply slots/budgets and bounded reply drain |
 | Redis pool | Exclusive leases, acquire cancellation/deadlines, callback accounting, RESET plus protocol/authentication/database restoration, failure discard and replacement |
 | Boundary regressions | Unrepresentable timeouts; RESP2 PING fitting a 14-byte budget while RESET needs 15; local REPLCONF rejection without sending or shifting subsequent replies |
@@ -68,6 +71,13 @@ return and a successful replacement acquire/PING. The REPLCONF regression checks
 exactly-once IO-lane rejection, no quota poisoning and the exact following ECHO
 result. These are formal C++ cases in [redis_pool.cpp](../../../redis_pool.cpp)
 and [redis_client.cpp](../../../redis_client.cpp).
+
+[mysql_connection.cpp](../../../mysql_connection.cpp) independently covers
+connection destruction from invalid-connect and rejected-command callbacks.
+The aggregate admission case uses two encoded queries of at least 33 bytes
+against a 64-byte budget; it does not assume small-string optimization or a
+specific string capacity. MySQL codec tests explicitly include `<ostream>`
+for MSVC's assertion diagnostics.
 
 The [2026-10-13 RUDP/FEC record](../../macmini-m4pro-20261013/rudp-fec/README.md)
 retains its own interoperability and sanitizer scope. Its 55-check / 219-case
@@ -144,16 +154,20 @@ build-tsan/tests/arknet_redis_pool_test
 
 RelWithDebInfo supplied effective `-O2 -g -DNDEBUG -std=gnu++20`. The additional
 `-include cfloat` handles the LLVM 22/macOS SDK/doctest `DBL_EPSILON` include-order
-issue; it is not a sanitizer suppression. The final Redis ASan+UBSan build
-used `-fsanitize=address,undefined` for compilation/linking, Standalone Asio,
-`ASAN_OPTIONS=detect_leaks=0` and `UBSAN_OPTIONS=halt_on_error=1`.
+issue; it is not a sanitizer suppression. MySQL Boost.Asio and Redis Standalone
+Asio ASan+UBSan builds use `-fsanitize=address,undefined` for compilation/linking
+and effective `-O2`. Both use `ASAN_OPTIONS=detect_leaks=0` and
+`UBSAN_OPTIONS=halt_on_error=1`; MySQL also enables `print_stacktrace=1`.
+For Standalone Asio TSan, use a separate build directory with
+`ARKNET_USE_BOOST_ASIO=OFF` and `ARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include`,
+and run the two MySQL targets with the same service environment.
 Use separate build directories for sanitizers and for Release performance runs.
 
 ## Product Header SHA-256
 
 | Header | SHA-256 |
 | --- | --- |
-| `mysql/connection.hpp` | `77488fb4326945589fd63e1cb672bb71067ee253ea27c2d5d59f18b168a784ce` |
+| `mysql/connection.hpp` | `8e88c222abe98b7cc1e5e1aa27053cef8c080ea5c8b9ef01852372e4dca7d1c0` |
 | `mysql/pool.hpp` | `44e56ac33457dad19dcd80fccef10cd657acddb35a10ca9d7035435aeeb419bb` |
 | `redis/client.hpp` | `952d403284598bbcaeece7373459190bb2773b7c60d46bb95eb66e8b49f1f849` |
 | `redis/pool.hpp` | `8cf76f81a872efb477861541580f57a0bb97cb2174cd77995308a6353ae63a47` |
