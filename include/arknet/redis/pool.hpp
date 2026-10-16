@@ -421,6 +421,31 @@ private:
                    std::find(entries.begin(), entries.end(), connection) != entries.end();
         }
 
+        bool retire_entry(const std::shared_ptr<entry>& connection) {
+            // Keep the slot and Redis state owned until native stop submission
+            // succeeds. Suppress membership before callbacks can reenter.
+            connection->phase = entry_phase::retiring;
+            auto child = connection->client->state_;
+            std::exception_ptr failure;
+            if (child->terminal)
+            {
+                failure = child->reconcile_close_on_lane();
+            }
+            else
+            {
+                child->close_on_lane();
+                failure = child->native_cleanup_failure;
+            }
+            if (failure)
+            {
+                connection->failed_return = true;
+                diagnostics->record(std::move(failure));
+                return false;
+            }
+            std::erase(entries, connection);
+            return true;
+        }
+
         void recover_failed_returns() {
             if (closed || close_requested || recovering_returns)
             {
@@ -437,18 +462,8 @@ private:
                     ++index;
                     continue;
                 }
-                // close() can synchronously complete a connect/reset callback.
-                // Suppress membership before calling it without losing ownership
-                // if its executor submission throws.
-                connection->phase = entry_phase::retiring;
-                try
+                if (!retire_entry(connection))
                 {
-                    connection->client->close();
-                    std::erase(entries, connection);
-                }
-                catch (...)
-                {
-                    diagnostics->record(std::current_exception());
                     ++index;
                 }
             }
@@ -456,10 +471,7 @@ private:
         }
 
         void discard(const std::shared_ptr<entry>& connection) {
-            std::erase(entries, connection);
-            // close() can synchronously complete the connect handler on this IO lane.
-            // Remove membership first so that late completion cannot win cancellation.
-            connection->client->close();
+            retire_entry(connection);
         }
 
         void complete(std::shared_ptr<waiter> request, acquire_result response) {
@@ -637,8 +649,10 @@ private:
                         if (auto self = weak.lock(); self && self->contains(connection))
                         {
                             auto request = connection->waiting.lock();
+                            bool discarded{};
                             if (!response || self->closed || self->close_requested)
                             {
+                                discarded = true;
                                 self->discard(connection);
                                 if (request)
                                 {
@@ -652,6 +666,7 @@ private:
                             {
                                 if (std::chrono::steady_clock::now() >= request->deadline)
                                 {
+                                    discarded = true;
                                     self->discard(connection);
                                     self->complete(request, acquire_result{client_errc::timeout});
                                 }
@@ -665,7 +680,7 @@ private:
                             {
                                 connection->phase = entry_phase::idle;
                             }
-                            self->pump();
+                            self->pump(!discarded);
                         }
                     });
             }
@@ -685,7 +700,7 @@ private:
             if (closed || unhealthy || !connection->client->is_connected())
             {
                 discard(connection);
-                pump();
+                pump(false);
                 return;
             }
             connection->phase = entry_phase::resetting;
@@ -693,7 +708,8 @@ private:
                 [weak = this->weak_from_this(), connection](result response) {
                     if (auto self = weak.lock(); self && self->contains(connection))
                     {
-                        if (!response || self->closed || self->close_requested)
+                        const bool discarded = !response || self->closed || self->close_requested;
+                        if (discarded)
                         {
                             self->discard(connection);
                         }
@@ -701,7 +717,7 @@ private:
                         {
                             connection->phase = entry_phase::idle;
                         }
-                        self->pump();
+                        self->pump(!discarded);
                     }
                 },
                 options.reset_timeout);
@@ -713,16 +729,20 @@ private:
                 return;
             }
             queue.clear();
-            auto connections = std::move(entries);
-            entries.clear();
+            // Suppress reentrant membership without dropping failed children.
+            // The closed pool retains this bounded set through finalization.
+            for (const auto& connection : entries)
+            {
+                connection->phase = entry_phase::retiring;
+            }
             while (!pending.empty())
             {
                 auto request = pending.begin()->second;
                 complete(request, acquire_result{client_errc::closed});
             }
-            for (const auto& connection : connections)
+            for (const auto& connection : entries)
             {
-                connection->client->close();
+                connection->client->state_->close_on_lane();
             }
         }
 
@@ -788,10 +808,45 @@ private:
                         child->finalizer = std::this_thread::get_id();
                         child->publishing_changed.wait(lock, [&] { return child->publishers == 0; });
                     }
-                    child->request_close();
                 }
+                // Every child borrows this one lane. Complete accepted logical
+                // work and retry each failed native cleanup before parent join.
+                auto cleaned = std::make_shared<std::promise<void>>();
+                auto cleanup_ready = cleaned->get_future();
+                asio::post(executor(), [children, cleaned] {
+                    try
+                    {
+                        std::exception_ptr failure;
+                        for (const auto& child : children)
+                        {
+                            auto current = child->reconcile_close_on_lane();
+                            if (!failure)
+                            {
+                                failure = std::move(current);
+                            }
+                        }
+                        if (failure)
+                        {
+                            cleaned->set_exception(std::move(failure));
+                        }
+                        else
+                        {
+                            cleaned->set_value();
+                        }
+                    }
+                    catch (...)
+                    { cleaned->set_exception(std::current_exception()); }
+                });
+                cleanup_ready.get();
                 auto owned_runtime = runtime;
                 owned_runtime->stop();
+                for (const auto& child : children)
+                {
+                    if (child->native_cleanup_pending)
+                    {
+                        std::rethrow_exception(child->native_cleanup_failure);
+                    }
+                }
 
                 // Accepted outer Asio handlers/captures have retired. Retained
                 // leases become inert without keeping TLS, timers or contexts.

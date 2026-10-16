@@ -149,6 +149,8 @@ private:
         std::atomic<request_id> next_id{1};
         bool started{};
         bool terminal{};
+        bool native_cleanup_pending{};
+        std::exception_ptr native_cleanup_failure;
         std::mutex admission_mutex;
         std::size_t pending_commands{};
         std::size_t pending_bytes{};
@@ -450,10 +452,7 @@ private:
                 // The transport connect event can finish after Redis shutdown
                 // closed an earlier socket. Retire that late-opened transport
                 // without completing the Redis request a second time.
-                arknet::error_code ignored;
-                transport->socket().cancel(ignored);
-                transport->socket().close(ignored);
-                transport->stop();
+                cleanup_transport();
                 return;
             }
             if (close_requested)
@@ -764,6 +763,23 @@ private:
             }
         }
 
+        // Only native cleanup is contained here. Protocol handlers are invoked
+        // outside this boundary and retain their documented no-throw contract.
+        void cleanup_transport() noexcept {
+            native_cleanup_pending = true;
+            try
+            {
+                arknet::error_code ignored;
+                transport->socket().cancel(ignored);
+                transport->socket().close(ignored);
+                transport->stop();
+                native_cleanup_pending = false;
+                native_cleanup_failure = {};
+            }
+            catch (...)
+            { native_cleanup_failure = std::current_exception(); }
+        }
+
         void shutdown(client_errc reason, arknet::error_code error = {}) {
             if (terminal)
             {
@@ -774,10 +790,7 @@ private:
             cancel_timer(connect_timer);
             auto pending = std::move(slots);
             slots.clear();
-            arknet::error_code ignored;
-            transport->socket().cancel(ignored);
-            transport->socket().close(ignored);
-            transport->stop();
+            cleanup_transport();
             auto connecting = std::exchange(connect_handler, {});
             if (connecting)
             {
@@ -792,15 +805,29 @@ private:
             }
         }
 
+        void close_on_lane() {
+            close_requested = true;
+            close_started = true;
+            shutdown(client_errc::closed);
+        }
+
+        // An explicit permanent-close fence makes one further attempt after a
+        // failed native stop. Successful submission is followed by runtime join.
+        std::exception_ptr reconcile_close_on_lane() {
+            close_on_lane();
+            if (native_cleanup_pending)
+            {
+                cleanup_transport();
+            }
+            return native_cleanup_failure;
+        }
+
         void request_close() {
             if (!close_requested.exchange(true))
             {
                 try
                 {
-                    asio::dispatch(executor(), [self = this->shared_from_this()] {
-                        self->close_started = true;
-                        self->shutdown(client_errc::closed);
-                    });
+                    asio::dispatch(executor(), [self = this->shared_from_this()] { self->close_on_lane(); });
                 }
                 catch (...)
                 {
@@ -857,12 +884,35 @@ private:
             }
             try
             {
-                // Every preceding API publication has enqueued its actor work.
-                // Join retires outer Asio handlers and captures as well as the
-                // visible protocol completion callback.
-                request_close();
+                // The permanent gate has sealed every API publication. Reconcile
+                // failed native cleanup on its lane before joining the runtime.
+                auto completion = std::make_shared<std::promise<void>>();
+                auto ready = completion->get_future();
+                const auto self = this->shared_from_this();
+                asio::post(executor(), [self, completion] {
+                    try
+                    {
+                        if (auto failure = self->reconcile_close_on_lane())
+                        {
+                            completion->set_exception(std::move(failure));
+                        }
+                        else
+                        {
+                            completion->set_value();
+                        }
+                    }
+                    catch (...)
+                    { completion->set_exception(std::current_exception()); }
+                });
+                ready.get();
                 auto scheduler = runtime;
                 scheduler->stop();
+                // A late connect callback can attempt native cleanup after the
+                // fence. The joined lane makes its final status safe to inspect.
+                if (native_cleanup_pending)
+                {
+                    std::rethrow_exception(native_cleanup_failure);
+                }
 
                 // Only the finalizer owns these resources after worker join.
                 // Keep the context alive until timers, sockets and TLS objects
