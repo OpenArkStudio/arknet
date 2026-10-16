@@ -111,6 +111,11 @@ Stdout is JSON Lines: a server `ready` event, periodic `sample` events and one f
 | `rtt_p50_upper_us`, `rtt_p95_upper_us`, `rtt_p99_upper_us` | Client Echo round-trip bucket upper bounds in microseconds, including generation, validation, queues and transport. Null when no Echo observations exist. No one-way or real-business latency is measured. |
 | `rtt_buckets`, `latency_observations` | All observed RTTs retained as 513 fixed counters; memory does not grow with request count. |
 | `cpu_percent`, `peak_rss_bytes` | This process's user+system CPU and lifetime RSS high-water mark. CPU 100% means one logical core; it may exceed 100%. Sample CPU covers the preceding sample interval; final CPU covers the entire run including ramp and cleanup. It excludes the other process. Missing OS metrics are null. |
+| `current_rss_bytes`, `fd_count`, `handle_count`, `thread_count` | Current resident bytes/Windows working set, POSIX file descriptors, Windows handles and native threads in this process. FDs and handles are different metrics; the unsupported one is null. |
+| `resource_sample_elapsed_s`, `resource_cpu_interval_s` | CPU-query midpoint relative to the start of this run, and the actual interval used for its CPU percentage. The interval is null when CPU percentage is unavailable. Neither is a cross-host timestamp. |
+| `resource_phase` | `running` for periodic observations during ramp/hold/protocol drain; `after_cleanup` for the final resource reading, after endpoints and IO workers have stopped. Final current memory/counts are not load-time values. |
+| `resource_unavailable` | Object mapping each missing resource field to its diagnostic reason. A real zero stays numeric; reasons are diagnostic text, not stable error codes. |
+| `sample_interval_ms` | Requested sampling cadence, included in the final result. Actual CPU intervals are reported separately. |
 | `content_errors`, `sequence_errors`, `send_errors`, `timeouts`, `resource_rejections` | Validation, transport, deadline or configured-budget failures. `shutdown_cancelled_sends` is separate from normal send errors. |
 | `clean_shutdown`, `outcome`, `first_error` | Cleanup status and `target_complete`, `observation_complete` or `failed`. Clean shutdown alone does not imply delivery success or a target was reached. |
 
@@ -118,8 +123,14 @@ Bucket 0 contains 0 µs. For positive integer microseconds, the remaining bucket
 
 Normal exit codes: 0 for completed target/observation with clean shutdown, 1 for a runtime/validation/deadline failure, and 2 for invalid arguments or startup exceptions. Watchdog termination is code 124 on Windows and signal 9 on POSIX; native supervisors should inspect the signal status, while shells commonly show 137. Failed runs are evidence to diagnose, not throughput results to silently discard or retry over.
 
+The resource metrics use independent interval and whole-run samplers, called serially by the main thread. Each CPU interval uses the real monotonic query times, not the nominal cadence or an unweighted mean of samples. The default cadence remains one second; FD enumeration and OS thread queries have a cost that is included in the measured process. Queries and connection counters do not form an atomic snapshot. A run shorter than the cadence can have no periodic event and still have a valid whole-run CPU percentage. Final RSS/FD/handle/thread readings are explicitly after cleanup; use periodic samples to observe the load phase. Unsupported OS counters remain null, including Windows thread counts when the compilation target does not support the required API. The metrics do not change OS limits or impose an RSS cap.
+
+The JSON changes are additive; existing fields retain their types and measurement phases. Record source/executable identity and `sample_interval_ms` when comparing runs: added resource collection and more precise CPU timestamps do not make old and new numbers identical. Other benchmark programs retain their existing output.
+
 ## Small correctness checks
 
 Configure with `-DARKNET_BUILD_TESTS=ON` to also build `arknet_connection_protocol_test`. It checks identity preservation, corrupted/truncated frame rejection, overflow and mergeable RTT bucket bounds. `arknet_check` includes those checks and `--help`; the POSIX full-output-pipe process check verifies watchdog termination without relying on output consumption. Deployment load runs remain local/manual.
+
+`arknet_connection_resources_test` checks the actual resource output fields, numeric zero versus missing metrics and reasons, diagnostic escaping, and independent periodic/whole-run time windows. The standalone [process resource probe](process_resources.md) covers the platform counters themselves.
 
 Before increasing scale, run both idle and traffic with a few connections, IPv4 and IPv6, and inspect both final results. Also verify a refused connection, mismatched run ID, target deadline, duplicate identity and an invalid buffer/window budget fail with a nonzero exit. Keep the command lines, executable/source identity, machine configuration, all failures and both process logs with each measurement. This tool's test protocol does not replace an ark application, authentication, reconnect recovery or cross-machine production acceptance.

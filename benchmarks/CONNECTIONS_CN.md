@@ -111,6 +111,11 @@ Stdout 使用 JSON Lines：服务端的 `ready`、定期 `sample` 和最终 `res
 | `rtt_p50_upper_us`、`rtt_p95_upper_us`、`rtt_p99_upper_us` | 客户端 Echo 往返延迟桶的上界，单位 µs，包含内容生成与校验、队列和网络传输。没有 Echo 时为 null；不测单向或真实业务延迟。 |
 | `rtt_buckets`、`latency_observations` | 用 513 个固定计数器保留全部 RTT 的分布，存储量不随请求数增长。 |
 | `cpu_percent`、`peak_rss_bytes` | 本进程全部线程的用户态与系统态 CPU，以及进程生命周期 RSS 高水位。CPU 100% 表示一个逻辑核，可以超过 100%；sample CPU 对应上个采样区间，最终 CPU 对应包含建连和清理的整次运行，不包含另一进程。系统指标不可用时为 null。 |
+| `current_rss_bytes`、`fd_count`、`handle_count`、`thread_count` | 本进程当前驻留内存（Windows 工作集）、POSIX 文件描述符、Windows 句柄和原生线程数。文件描述符与句柄是不同指标，不支持的指标为 null。 |
+| `resource_sample_elapsed_s`、`resource_cpu_interval_s` | CPU 查询中点相对本次运行开始的秒数，以及 CPU 占用率实际使用的区间长度。CPU 占用率不可用时，区间为 null；这些值不能作为跨机器时间戳。 |
+| `resource_phase` | 周期记录为 `running`，可能处于建连、保持或协议排空阶段；最终记录为 `after_cleanup`，在端点和 IO 工作线程停止后读取。最终内存和数量指标不是负载阶段的值。 |
+| `resource_unavailable` | 以缺失资源字段名为键、诊断原因为值的对象。真实零值仍是数字；原因文本用于诊断，不是稳定错误码。 |
+| `sample_interval_ms` | 最终结果中的计划采样间隔。实际 CPU 采样区间单独报告。 |
 | `content_errors`、`sequence_errors`、`send_errors`、`timeouts`、`resource_rejections` | 内容、序号、发送、期限或预算失败；停止过程中取消的发送单独记为 `shutdown_cancelled_sends`。 |
 | `clean_shutdown`、`outcome`、`first_error` | 清理状态，以及 `target_complete`、`observation_complete` 或 `failed`。清理完成本身不代表交付成功或达到连接目标。 |
 
@@ -118,8 +123,14 @@ Stdout 使用 JSON Lines：服务端的 `ready`、定期 `sample` 和最终 `res
 
 正常退出码：0 表示完成目标或观测且清理成功；1 表示运行、校验或期限失败；2 表示参数不合法或启动异常。清理监控终止在 Windows 下为退出码 124，在 POSIX 下为信号 9；原生进程管理器应检查信号状态，shell 通常显示为 137。失败记录用于诊断，不能静默丢弃，或反复运行覆盖后仅保留吞吐较好的结果。
 
+资源指标由独立的周期与全程采样器收集，均在主线程串行调用。CPU 使用实际单调时钟查询时间计算，不用计划间隔或采样百分比的算术平均值代替。默认间隔仍为一秒；文件描述符枚举和系统线程查询有开销，计入被测进程。系统查询与连接计数不是原子快照。短于采样间隔的运行可以没有周期记录，同时仍有有效的全程 CPU 占用率。最终 RSS、文件描述符、句柄和线程数明确属于清理后阶段，负载期间的值应查看周期记录。不支持的系统指标仍为 null，包括编译目标不支持相关 API 时的 Windows 线程数。采样不会修改系统限制，也不会设置 RSS 上限。
+
+JSON 只新增字段，原有字段的类型和测量阶段保持不变。对比运行时应记录源码、可执行文件身份和 `sample_interval_ms`；资源收集开销与更精确的 CPU 时间戳意味着新旧结果不会完全相同。其他基准程序的输出保持原样。
+
 ## 小规模正确性检查
 
 配置 `-DARKNET_BUILD_TESTS=ON` 后可以构建 `arknet_connection_protocol_test`，检查身份保真、损坏与截断消息拒绝、长度溢出及可合并延迟桶边界。`arknet_check` 包含这些检查及 `--help`；POSIX 的满输出管道进程用例会检查监控线程在无人读取输出时仍可终止。部署负载仍在本地手动运行。
+
+`arknet_connection_resources_test` 检查实际资源输出字段、真实零值与缺失指标及其原因、诊断文本转义，以及周期和全程时间范围的独立性。系统计数器本身由独立的[进程资源检查程序](process_resources_CN.md)验证。
 
 扩大规模之前，先用少量连接检查 idle、traffic、IPv4 和 IPv6 的双端最终计数，再验证拒绝连接、错误运行标识、目标期限、重复身份及非法缓冲或窗口预算均非零退出。每次测量保留命令、可执行文件与源码身份、机器配置、全部失败和双端日志。本工具的测试协议不能替代 ark 应用、鉴权、重连恢复或跨机器生产验收。
