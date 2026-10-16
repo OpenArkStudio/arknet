@@ -37,7 +37,7 @@
 #include <arknet/tcp/tcp_server.hpp>
 #include <arknet/version.hpp>
 #include "connections_protocol.hpp"
-#include "resources.hpp"
+#include "connections_resources.hpp"
 
 namespace {
 
@@ -389,12 +389,12 @@ private:
 class observation
 {
 public:
-    observation(const options& settings, counters& values)
+    observation(const options& settings, counters& values, clock_type::time_point began)
         : settings_(settings)
         , values_(values)
         , started_(clock_type::now())
         , sampled_(started_)
-        , cpu_(process_cpu()) {}
+        , resources_(began) {}
 
     void sample() {
         const auto now = clock_type::now();
@@ -402,30 +402,13 @@ public:
         {
             return;
         }
-        const auto cpu = process_cpu();
+        const auto resources = resources_.sample();
         std::cout << "{\"event\":\"sample\",\"role\":" << quoted(settings_.role)
                   << ",\"elapsed_s\":" << std::chrono::duration<double>(now - started_).count()
                   << ",\"active\":" << values_.active << ",\"ready\":" << values_.ready
-                  << ",\"pending_send_bytes\":" << values_.pending_bytes << ",\"cpu_percent\":";
-        if (cpu && cpu_)
-        {
-            std::cout << 100 * (*cpu - *cpu_) / std::chrono::duration<double>(now - sampled_).count();
-        }
-        else
-        {
-            std::cout << "null";
-        }
-        std::cout << ",\"peak_rss_bytes\":";
-        if (const auto rss = peak_rss())
-        {
-            std::cout << *rss;
-        }
-        else
-        {
-            std::cout << "null";
-        }
+                  << ",\"pending_send_bytes\":" << values_.pending_bytes;
+        connection_load::write_resource_fields(std::cout, resources, false);
         std::cout << "}\n" << std::flush;
-        cpu_ = cpu;
         sampled_ = now;
     }
 
@@ -433,7 +416,7 @@ private:
     const options& settings_;
     counters& values_;
     clock_type::time_point started_, sampled_;
-    std::optional<double> cpu_;
+    connection_load::resource_observer resources_;
 };
 
 template<class Endpoint, class Completion>
@@ -942,7 +925,8 @@ private:
 };
 
 void result(const options& settings, const counters& values, std::string_view outcome, bool clean, double elapsed,
-    double measurement, double cpu_start, std::uint64_t active_before_stop, std::size_t actual_port) {
+    double measurement, const connection_load::resource_snapshot& resources, std::uint64_t active_before_stop,
+    std::size_t actual_port) {
     const auto work_seconds = values.work_end > values.work_begin && values.work_begin > 0
                                   ? double(values.work_end - values.work_begin) / 1e9
                                   : 0;
@@ -979,25 +963,9 @@ void result(const options& settings, const counters& values, std::string_view ou
         << ",\"max_connections\":" << settings.maximum << ",\"payload_bytes\":" << settings.payload
         << ",\"window\":" << settings.window << ",\"max_buffer_bytes\":" << settings.maximum_buffer
         << ",\"max_inflight_bytes\":" << settings.inflight_limit
-        << ",\"buffer_budget_bytes\":" << settings.buffer_budget
-        << ",\"peak_pending_send_bytes\":" << values.peak_pending_bytes << ",\"cpu_percent\":";
-    if (const auto cpu = process_cpu(); cpu && cpu_start >= 0)
-    {
-        std::cout << 100 * (*cpu - cpu_start) / elapsed;
-    }
-    else
-    {
-        std::cout << "null";
-    }
-    std::cout << ",\"peak_rss_bytes\":";
-    if (const auto rss = peak_rss())
-    {
-        std::cout << *rss;
-    }
-    else
-    {
-        std::cout << "null";
-    }
+        << ",\"buffer_budget_bytes\":" << settings.buffer_budget << ",\"sample_interval_ms\":" << settings.sample_ms
+        << ",\"peak_pending_send_bytes\":" << values.peak_pending_bytes;
+    connection_load::write_resource_fields(std::cout, resources, true);
     std::cout << ",\"first_error\":" << quoted(values.first_error)
               << ",\"latency_observations\":" << values.latency.total();
     for (const auto percent : {50, 95, 99})
@@ -1030,9 +998,9 @@ int run(const options& settings) {
                                       std::chrono::duration<double>(settings.deadline_seconds));
     cleanup_watchdog watchdog(deadline + std::chrono::duration_cast<clock_type::duration>(
                                              std::chrono::duration<double>(settings.cleanup_seconds)));
-    const auto cpu = process_cpu();
+    connection_load::resource_observer overall_resources(began);
     counters values;
-    observation samples(settings, values);
+    observation samples(settings, values, began);
     arknet::io_pool runtime(settings.threads);
     if (!runtime.start())
     {
@@ -1164,8 +1132,9 @@ int run(const options& settings) {
     {
         outcome = "failed";
     }
+    const auto resources = overall_resources.sample();
     const auto elapsed = std::chrono::duration<double>(clock_type::now() - began).count();
-    result(settings, values, outcome, clean, elapsed, measurement, cpu.value_or(-1), active_before_stop, actual_port);
+    result(settings, values, outcome, clean, elapsed, measurement, resources, active_before_stop, actual_port);
     return values.failed ? 1 : 0;
 }
 
