@@ -17,19 +17,23 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <psapi.h>
+
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0603
 #include <processsnapshot.h>
+
 #endif
 #elif defined(__APPLE__)
 #include <sys/resource.h>
 #include <unistd.h>
 
 #include <libproc.h>
+
 #elif defined(__linux__)
 #include <sys/resource.h>
 #include <unistd.h>
 
 #include <dirent.h>
+
 #endif
 
 namespace arknet::benchmark {
