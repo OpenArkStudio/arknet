@@ -79,6 +79,7 @@ jobs:
           -DARKNET_USE_BOOST_ASIO=${{ matrix.boost }}
           -DARKNET_ENABLE_SSL=${{ matrix.ssl }}
           -DARKNET_BUILD_BENCHMARKS=${{ matrix.sanitize != 'OFF' && 'OFF' || 'ON' }}
+          ${{ matrix.sanitize != 'OFF' && '"-DCMAKE_CXX_FLAGS_DEBUG=-O0 -g1"' || '' }}
           ${{ matrix.sanitize == 'ON' && '"-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"' || matrix.sanitize == 'THREAD' && '"-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=thread"' || '' }}
       - run: cmake --build build --parallel ${{ matrix.sanitize == 'ON' && '1' || matrix.sanitize == 'THREAD' && '2' || '3' }}
       - name: Test
