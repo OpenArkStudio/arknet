@@ -14,6 +14,11 @@ branch or worktree when the existing checkout contains uncommitted changes.
 - Examples: `feat(redis): support ordered command pipelines`,
   `fix(benchmarks): include Winsock 2 before Windows headers`,
   `docs(releases): summarize user-visible changes`.
+- Name new topic branches `type/short-kebab-case`, matching the change, for example
+  `feat/database-coroutines`, `fix/windows-includes` or `docs/readme-maintainers`.
+  Do not use the `codex/` prefix or generic `xxx-branch` names. Existing published
+  branches do not need renaming solely to adopt this rule. Use lowercase names
+  for new GitHub repositories.
 - Mark incompatible public changes with `!` and explain them in a
   `BREAKING CHANGE:` footer. Describe migration steps in the PR and release notes.
 - Keep each PR focused on one functional module or related change. Publish
