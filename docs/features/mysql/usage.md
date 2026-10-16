@@ -48,9 +48,46 @@ Check `statement.parameter_count()` and result status. A statement belongs to it
 
 Call `async_begin`, submit the transaction's commands in order, then call `async_commit` or `async_rollback`. A bare connection does not prevent another producer from inserting commands into that sequence; applications must control ownership and ordering for the entire transaction.
 
-The complete program waits on promises from the main thread. Each callback owns a shared promise so that a timeout or early return cannot leave it referring to a destroyed stack object. Callbacks run on the library's IO thread and must not throw or block. In particular, do not wait on these futures inside a callback.
+The complete program waits on promises from the main thread. Each callback owns a shared promise so that a timeout or early return cannot leave it referring to a destroyed stack object. Callbacks for accepted operations run on the library's IO thread and must not throw or block. In particular, do not wait on these futures inside a callback.
 
 A failed commit with `status.outcome_unknown == true` may already have committed on the server. Do not retry the transaction automatically. See [cancellation and outcomes](configuration.md#cancellation-and-unknown-outcomes).
+
+## Permanent shutdown of an independent connection
+
+`close()` cancels the current session and permits a later `async_connect`.
+For an independently constructed `connection`, call `close_and_wait()` from a
+non-IO owner thread when the object will no longer be used:
+
+```cpp
+// First stop application producers. Do not hold locks required by callbacks.
+if (!client.close_and_wait())
+{
+    // Called on its own IO worker: get_last_error() is operation_not_supported.
+}
+```
+
+Success means accepted operations have completed once, their library-held handler
+captures have been destroyed, retained statement cleanup has been disabled, and
+this connection's IO worker has exited and been joined. Concurrent waiters observe
+the same completed shutdown. Ordinary `close()` retains its existing semantics.
+
+The permanent submission gate closes before waiting. Later `async_*` calls invoke
+their rejection handler synchronously on the caller with `not_connected`. Command
+APIs that return a request ID return 0; `async_connect` returns `void` and invokes
+its rejection handler synchronously. These rejection handlers may propagate
+exceptions. `cancel()` and `close()` then do nothing. Before termination, accepted
+callbacks continue to run on the IO lane and must not throw. Allocation or system
+exceptions from shutdown propagate; they do not indicate a completed barrier.
+
+Calling from its own IO worker, a pool-owned child, or a reentrant publication or
+finalization returns false with `operation_not_supported` without starting permanent
+shutdown. Never wait from another library IO worker either: that restriction is a
+calling contract, not a global worker check. A handler that never returns can prevent
+shutdown from completing; there is no timeout that implies safe teardown.
+
+This operation does not stop another connection or a pool. It is not a process
+cleanup-worker or dynamic-library unload barrier. The host must still stop and wait
+for application callers and destroy their objects before unloading code.
 
 ## Connection pool
 
@@ -61,3 +98,56 @@ Include `<arknet/mysql/pool.hpp>`, set `pool_options.connection`, and call `asyn
 `release()` or lease destruction starts return processing. Pending command callbacks must finish before the connection is reset and restored to the configured database. `discard()` forbids reuse. A returned lease cannot submit useful work, and prepared handles cannot escape to another borrower. An empty configured database causes returned connections to be discarded because reset cannot clear a database selected by a previous borrower. Set `pool_options.connection.database` when reusable pooled sessions are required.
 
 See [pool limits and reset](configuration.md#pool-limits-and-reset) for deadlines, database isolation and IO ownership.
+
+
+### Permanent pool shutdown
+
+Ordinary `pool::close()` requests cancellation asynchronously. For the pool-owned
+IO boundary, stop application producers and call `pool::close_and_wait()` from a
+non-library-IO owner thread:
+
+```cpp
+if (!connections.close_and_wait())
+{
+    // Own IO worker or reentrant call: operation_not_supported.
+}
+```
+
+Success means accepted acquisitions and lease operations have delivered their
+terminal callbacks, callback captures have retired, and all pool-owned IO workers
+have exited and been joined. Children removed by an earlier discard are included.
+Retained leases and prepared statements are made inert: they retain no child
+executor, timer, SSL stream or automatic-cleanup callable. An individual lease
+never stops the shared runtime; discarding it leaves other leases usable.
+
+The permanent gate covers acquisition, cancellation, lease submission and return.
+Later `async_acquire` and lease `async_*` calls reject synchronously on their caller
+with `not_connected` and request ID 0. Rejection handlers may throw to the caller.
+Later cancellation and return calls do not post work. Concurrent waiters observe
+the same completed shutdown; shutdown exceptions propagate and do not indicate a
+completed boundary. Accepted IO callbacks must return without throwing.
+
+Waiting on a pool worker or reentrantly during publication/finalization returns
+false with `operation_not_supported`. Do not wait on another library IO worker,
+hold a lock needed by a callback, or wait for a callback that itself needs the
+waiting owner thread. There is no timeout that implies successful teardown.
+Application callers and their objects must still be stopped and destroyed before
+unloading code; this is not a process cleanup-worker or dynamic-library unload
+barrier.
+
+### Return submission diagnostics
+
+`pool::diagnostics()` returns a thread-safe, bounded `pool_diagnostics` snapshot:
+
+- `return_submission_failures`: a saturating count of failed internal return or recovery-close submissions.
+- `last_return_submission_exception`: the last captured exception; empty before any such failure.
+
+A failed submission makes that session ineligible for reuse. A later acquisition,
+acquire timeout/cancellation, or already queued return handler may discard it and
+restore capacity. A further close-publication failure leaves it indexed and
+unusable for a later scheduling pass. Existing acquire deadlines are preserved;
+there is no immediate recovery guarantee without later scheduling activity.
+
+These failures do not change a SQL result already delivered or replay a statement.
+This containment covers internal return and recovery-close publication; it does
+not guarantee progress after arbitrary allocation failures or throwing user handlers.

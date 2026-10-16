@@ -8,6 +8,8 @@
 性能测量在这些检查通过后于本机执行，使用不带 Sanitizer 的 Release 构建。
 CI 用于回归和冒烟执行，共享 runner 的时间不作为发布的性能基线。
 
+下载[验证日志与源码对应关系](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz)及 [SHA256 校验和](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz.sha256)。归档包含双语说明和独立校验工具。
+
 ## 构建与执行
 
 ```sh
@@ -65,42 +67,107 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 
 ## 本机验证
 
-验证日期为 2026-10-15。机器为 Mac mini `Mac16,11`、Apple M4 Pro、14 个物理／逻辑核心
-（10 个性能核心、4 个能效核心）、48 GiB 内存、macOS 27.0.1（26A434）、
-Apple Clang 21.0.0、CMake 4.3.3、Standalone Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。
+完整测试的源码快照为 `6c8418e`，其中的网络库改动已纳入性能测量版本
+`2aa5bc0`。分开验证的纯测试改动 `25bb9f8` 覆盖下文的分配失败可移植性和
+原生连接完成顺序。连接池关闭专项单独标识源码快照 `550fb58`。
+[PR #16](https://github.com/OpenArkStudio/arknet/pull/16)
+记录候选版本审查与跨平台 CI；本机结果不代替候选版本自身的检查。
 
-| 依赖方案 | 构建／TLS | 检查数 | doctest 用例数 | 断言数 | 结果 |
-| --- | --- | ---: | ---: | ---: | --- |
-| Boost.Asio | Release／ON | 75 | 374 | 1,952,026 | 通过 |
-| Standalone Asio | Release／ON | 62 | 314 | 976,980 | 通过 |
+验证日期为 2026-10-15 至 16 日。机器为 Mac mini `Mac16,11`、Apple M4 Pro、14 个物理／逻辑核心
+（10 个性能核心、4 个能效核心）、48 GiB 内存、macOS 27.0.1（26A434）。
+依赖为 Standalone Asio 1.38.2、Boost 1.90.0 和 OpenSSL 3.6.4。
+普通构建使用 Apple Clang 21.0.0，Sanitizer 构建使用 LLVM 22.1.7。
 
-检查数是 `arknet_check` 执行的程序数，用例数是 doctest 用例总数。
-两套完整检查均无失败或跳过的用例，并包含基准冒烟和安装包使用检查。
-真实数据库测试使用隔离的 MySQL 8.4.11 与 Redis 7.4.2 服务；未提供服务环境变量时，
-对应的可选用例会跳过，不会以模拟服务代替。
+### 完整检查
 
-### 数据库客户端 Sanitizer 验证
+四套构建均使用 Debug，启用 TLS 和测试，关闭示例与基准程序。
+全部编译完成后，使用真实数据库服务串行执行检查。
 
-独立构建使用 LLVM 22.1.7，测试框架和 arknet 代码均启用检测。
+| 依赖／检测工具 | 检查数 | doctest 用例数 | 断言数 | 结果 |
+| --- | ---: | ---: | ---: | --- |
+| Boost.Asio | 52/52 | 470 | 978,433 | 通过 |
+| Standalone Asio | 51/51 | 410 | 576,824 | 通过 |
+| Boost.Asio／ASan+UBSan | 52/52 | 470 | 615,937 | 通过 |
+| Standalone Asio／TSan | 51/51 | 410 | 333,108 | 通过 |
 
-| 构建 | 范围 | 用例数 | 断言数 | 结果 |
-| --- | --- | ---: | ---: | --- |
-| Boost.Asio／TSan | MySQL connection 与 pool | 51 | 1,899 | 通过，0 跳过 |
-| Standalone Asio／TSan | MySQL connection 与 pool | 51 | 1,899 | 通过，0 跳过 |
-| Boost.Asio／ASan+UBSan | MySQL connection 与 pool | 51 | 1,899 | 通过，0 跳过 |
-| Boost.Asio／TSan | Redis client 与 pool | 35 | 316 | 通过，0 跳过 |
-| Standalone Asio／ASan+UBSan | Redis client 与 pool | 35 | 316 | 通过，0 跳过 |
+检查数是 `arknet_check` 执行的程序数，用例数是 doctest 执行的用例数。
+断言数为实际执行计数，包含按时长运行的压力用例。
+已启用的默认测试组均无失败或环境条件导致的跳过。本轮未启用归档的 Zephyr 互通测试，
+其独立证据见下文；默认测试包含独立 ARQ/FEC 实现互通。
 
-Boost.Asio 数据库 TSan 执行合计 86 个用例、2,215 项断言。
-MySQL 的 Standalone Asio TSan 与 Boost.Asio ASan+UBSan 分别覆盖相同的 51 个用例、1,899 项断言。
-没有 Sanitizer 诊断，也没有使用抑制规则。macOS ASan 执行关闭了泄漏检测。
-MySQL 包含投递返回前的运行时所有权，以及独立的无效连接参数／命令拒绝销毁用例；
-Redis 包含 RESET 字节预算与 REPLCONF 回复关联回归。
-[检查范围、环境与复现命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README_CN.md)
-记录了各项区别。这些结果覆盖数据库测试组，不代表全项目都执行过 Sanitizer 检查。
+每套配置均包含外部 context 停止（15 个用例／375 项断言）、排队连接取消（4／44）、
+协议、运行时退出、压力测试和安装包使用检查。
+安装包消费项目的子构建不继承 Sanitizer 参数，因此不计为 Sanitizer 覆盖。
 
-MySQL 编解码测试包含 MSVC 断言诊断所需的标准流头文件。
-命令聚合准入回归使用编码后合计超过预算的请求大小，不依赖字符串容量或小字符串优化（SSO）。
+### 数据库与停止行为覆盖
+
+四套配置均使用隔离的 MySQL Community 8.4.11 和 Redis 7.4.2 执行可选真实服务用例，
+没有跳过数据库用例。MySQL 验证 TLS，Redis 覆盖 TCP、TLS 和 mTLS。
+测试包含连接／客户端与连接池操作、永久关闭 `close_and_wait()`、晚到连接、
+回调与捕获对象释放、任务提交失败及恢复、取消和重置隔离。
+未提供服务环境变量时，真实服务用例会跳过，不会用模拟服务代替。
+Redis 协议的性能测量使用 Valkey 8.0.11，与这里的 Redis 7.4.2 互通验证分开记录。
+
+基于 TCP 的端点验证原生操作完成和捕获对象释放；多个所有者同时完整停止的串行化保证
+限定于 TCP 服务端及其 HTTP／WebSocket／TLS 派生服务端，不扩大为所有协议的新保证。
+外部 context 的所有者须先停止外部提交方，并在排空期间保持执行线程运行；
+工作线程中的回调不能阻塞等待自身退出。详见[生命周期](../concepts/lifecycle_CN.md)与
+[正式停止及故障用例](https://github.com/OpenArkStudio/arknet/pull/16/files)。
+这些结果不构成动态库可安全卸载的验证。
+
+### 补充专项检查
+
+| 范围 | 检查数 | 用例数 | 断言数 | 结果 |
+| --- | ---: | ---: | ---: | --- |
+| Boost.Asio、关闭 TLS：八个指定目标 | 8/8 | 66 | 1,515 | 通过 |
+| Boost.Asio ASan+UBSan：排队连接、HTTP 外部 context 与外部停止重复执行 | 72/72 | 280 | 4,664 | 通过 |
+
+无 TLS 检查覆盖 TCP、外部停止、manual-runtime、排队连接取消，以及四个 Redis
+停止／任务提交失败目标；不代表完整无 TLS 矩阵，也不代表 MySQL 可以不依赖 OpenSSL。
+72 次 ASan 执行包括 32 次排队连接测试、32 次指定 HTTP 用例及八次外部停止测试。
+HTTP 显式过滤器排除的用例不属于环境条件导致的跳过；完整 HTTP 测试组已在上表通过。
+
+纯测试改动的分配失败与连接顺序验证单独记录：
+
+| 依赖／检测工具 | 专项用例数 | 断言数 | 指定原生错误用例执行次数 |
+| --- | ---: | ---: | ---: |
+| Boost.Asio／ASan+UBSan | 30 | 927 | 32/32 通过 |
+| Standalone Asio／ASan+UBSan | 30 | 927 | 32/32 通过 |
+| Boost.Asio／TSan | 30 | 926 | 32/32 通过 |
+| Standalone Asio／TSan | 30 | 926 | 32/32 通过 |
+
+全部专项用例通过，未出现 Sanitizer 诊断。指定原生错误用例共执行 128 次，
+每次检查九项断言；过滤器排除的其他用例不属于环境条件导致的跳过。
+这些记录补充完整源码快照的结果，不代表纯测试改动的整套检查结果。
+MSVC 专用 CRT 分配路径在 Windows CI 中执行，本机 macOS 验证不覆盖该路径。
+
+### 连接池关闭检查
+
+源码快照 `550fb58` 在两种连接池中原位排空 acquire 等待请求，避免
+`unordered_map` 移动构造依赖分配。正式回归覆盖两个排队请求、回调重入
+close／cancel／acquire、完成通知恰好执行一次及捕获释放。测试使用拥有者侧关闭守卫，
+在致命断言导致退出时先永久关闭连接池，再销毁回调引用的状态。
+
+| 依赖／检测工具 | MySQL 关闭用例／断言 | Redis 关闭用例／断言 |
+| --- | ---: | ---: |
+| Boost.Asio／ASan+UBSan | 14／1,067 | 19／596 |
+| Standalone Asio／ASan+UBSan | 14／1,067 | 19／596 |
+| Boost.Asio／TSan | 14／1,067 | 19／595 |
+| Standalone Asio／TSan | 14／1,066 | 19／595 |
+
+八次目标程序执行均通过，无失败、跳过或 Sanitizer 诊断。四套配置另通过未改动的
+MySQL 归还失败测试（5 个用例／222 项断言）与 Redis 归还失败测试（4／107）。
+归还失败检查在仅调整测试关闭守卫之前执行，其测试文件和两个连接池头文件与本快照相同。
+这些是专项检查，不是本快照的完整测试运行。
+
+Redis 诊断测试将被检查的异常快照保留到并发观察线程退出。验证归档保留原 Linux TSan、
+Windows 故障注入失败记录、源码对应关系和专项日志。连接池修正移除了一处分配边界，
+不保证所有子连接关闭路径都能从堆内存耗尽中恢复。性能测量继续对应这项关闭修正之前的
+`2aa5bc0`。
+
+本机 macOS ASan 关闭泄漏检测。完整检查的 ASan 还关闭了在线符号化，以避开已定位的
+符号化程序挂起问题，内存检测仍然启用。没有新增 Sanitizer 抑制规则或强制预包含参数。
+仅沿用原版 KCP 测试编译单元的 `null,object-size` 检测排除项。
 
 ### RUDP 互通专项证据
 

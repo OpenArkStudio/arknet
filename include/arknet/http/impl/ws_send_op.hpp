@@ -20,16 +20,17 @@ protected:
 #endif
         owner.ws_stream().async_write(asio::buffer(payload),
             make_allocator(owner.wallocator(),
-                [&owner, lifetime = owner.selfptr(), completion = std::forward<Completion>(completion)](
-                    error_code ec, std::size_t size) mutable {
+                owner._track_async_operation(
+                    [&owner, lifetime = owner.selfptr(), completion = std::forward<Completion>(completion)](
+                        error_code ec, std::size_t size) mutable {
 #ifndef NDEBUG
-                    owner.post_send_counter_.fetch_sub(1);
+                        owner.post_send_counter_.fetch_sub(1);
 #endif
-                    set_last_error(ec);
-                    completion(ec, size);
-                    if (ec && owner.state_ == state_t::started)
-                        owner._do_disconnect(ec, owner.selfptr());
-                }));
+                        set_last_error(ec);
+                        completion(ec, size);
+                        if (ec && owner.state_ == state_t::started)
+                            owner._do_disconnect(ec, owner.selfptr());
+                    })));
         return true;
     }
 };

@@ -71,10 +71,12 @@ public:
         , sessions_(this->io_, state_) {}
 
     bool start() noexcept {
+        this->_set_async_wait_acceptance(true);
         return true;
     }
 
     void stop() {
+        this->_set_async_wait_acceptance(false);
         this->derived().dispatch([this] {
             this->_dispatch_stop_all_timers();
             this->_dispatch_stop_all_timed_events();

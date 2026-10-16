@@ -147,7 +147,7 @@ protected:
         object.is_stop_connect_timeout_timer_called_ = false;
         object.is_disconnect_called_ = false;
 #endif
-        if (object.state_.load() != state_t::starting)
+        if (object.is_iopool_stop_requested() || object.state_.load() != state_t::starting)
         {
             object._handle_connect(
                 asio::error::operation_aborted, std::move(owner), std::move(options), std::move(chain));
@@ -177,24 +177,25 @@ protected:
         auto resolver = std::make_unique<resolver_type>(object.io_->executor());
         auto* operation = resolver.get();
         operation->async_resolve(host, service,
-            [this, &object, owner = std::move(owner), options = std::move(options), chain = std::move(chain),
-                resolver = std::move(resolver)](error_code error, endpoints_type endpoints) mutable {
-                if (!object.connect_timeout_timer_)
-                {
-                    error = asio::error::timed_out;
-                }
-                if (error)
-                {
-                    object._handle_connect(error, std::move(owner), std::move(options), std::move(chain));
-                }
-                else
-                {
-                    auto owned = std::make_unique<endpoints_type>(std::move(endpoints));
-                    const auto first = owned->begin();
-                    object._post_connect(
-                        error, std::move(owned), first, std::move(owner), std::move(options), std::move(chain));
-                }
-            });
+            object._track_async_operation(
+                [this, &object, owner = std::move(owner), options = std::move(options), chain = std::move(chain),
+                    resolver = std::move(resolver)](error_code error, endpoints_type endpoints) mutable {
+                    if (!object.connect_timeout_timer_)
+                    {
+                        error = asio::error::timed_out;
+                    }
+                    if (error)
+                    {
+                        object._handle_connect(error, std::move(owner), std::move(options), std::move(chain));
+                    }
+                    else
+                    {
+                        auto owned = std::make_unique<endpoints_type>(std::move(endpoints));
+                        const auto first = owned->begin();
+                        object._post_connect(
+                            error, std::move(owned), first, std::move(owner), std::move(options), std::move(chain));
+                    }
+                }));
     }
 
     template<class Match, class Chain>
@@ -202,7 +203,7 @@ protected:
     void _post_connect(error_code error, std::unique_ptr<endpoints_type> endpoints, endpoints_iterator position,
         std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
-        if (object.state_.load() != state_t::starting)
+        if (object.is_iopool_stop_requested() || object.state_.load() != state_t::starting)
         {
             object._handle_connect(
                 asio::error::operation_aborted, std::move(owner), std::move(options), std::move(chain));
@@ -243,11 +244,18 @@ protected:
             object._do_init(options);
             object._fire_init();
         }
+        if (object.is_iopool_stop_requested())
+        {
+            object._handle_connect(
+                asio::error::operation_aborted, std::move(owner), std::move(options), std::move(chain));
+            return;
+        }
         const auto endpoint = position->endpoint();
         socket.async_connect(endpoint,
             make_allocator(object.rallocator(),
-                [&object, owner = std::move(owner), options = std::move(options), chain = std::move(chain),
-                    endpoints = std::move(endpoints), position](const error_code& failure) mutable {
+                object._track_async_operation([&object, owner = std::move(owner), options = std::move(options),
+                                                  chain = std::move(chain), endpoints = std::move(endpoints),
+                                                  position](const error_code& failure) mutable {
                     if (failure && failure != asio::error::operation_aborted)
                     {
                         object._post_connect(failure, std::move(endpoints), std::next(position), std::move(owner),
@@ -257,7 +265,7 @@ protected:
                     {
                         object._finish_socket_connect(failure, std::move(owner), std::move(options), std::move(chain));
                     }
-                }));
+                })));
     }
 
     template<class Match, class Chain>
@@ -270,8 +278,10 @@ protected:
         {
             object.remote_endpoint_ = endpoint;
         }
-        object._handle_connect(
-            object.state_.load() == state_t::starting ? error : error_code(asio::error::operation_aborted),
+        // A stop queued after init must fence protocol handshakes too.
+        object._handle_connect(object.state_.load() == state_t::starting && !object.is_iopool_stop_requested()
+                                   ? error
+                                   : error_code(asio::error::operation_aborted),
             std::move(owner), std::move(options), std::move(chain));
     }
 
@@ -288,14 +298,43 @@ protected:
         auto& object = static_cast<Derived&>(*this);
         if constexpr (Args::is_session)
         {
-            if (!object.socket().is_open())
+            object.dispatch([&object, error, owner = std::move(owner), options = std::move(options),
+                                chain = std::move(chain)]() mutable {
+                if (!object.socket().is_open())
+                {
+                    error = asio::error::timed_out;
+                }
+                object.sessions_.dispatch(object._track_async_operation(
+                    [&object, error, owner = std::move(owner), options = std::move(options),
+                        chain = std::move(chain)]() mutable {
+                        object._complete_connect(error, std::move(owner), std::move(options), std::move(chain));
+                    }));
+            });
+        }
+        else
+        {
+            if (object.is_iopool_stop_requested())
+            {
+                error = asio::error::operation_aborted;
+            }
+            else if (!object.connect_timeout_timer_)
             {
                 error = asio::error::timed_out;
             }
+            object._complete_connect(error, std::move(owner), std::move(options), std::move(chain));
         }
-        else if (!object.connect_timeout_timer_)
+    }
+
+    template<class Match, class Chain>
+    void _complete_connect(
+        error_code error, std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options, Chain chain) {
+        auto& object = static_cast<Derived&>(*this);
+        if constexpr (Args::is_session)
         {
-            error = asio::error::timed_out;
+            if (!error && object.stop_requested_)
+            {
+                error = asio::error::operation_aborted;
+            }
         }
         if (!error)
         {

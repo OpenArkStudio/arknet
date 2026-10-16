@@ -234,7 +234,8 @@ private:
         this->post_recv_counter_++;
 #endif
         auto completion = make_allocator(this->rallocator(),
-            [this, self = std::move(self), ecs = std::move(ecs), header](error_code ec, std::size_t) mutable {
+            (*this)._track_async_operation([this, self = std::move(self), ecs = std::move(ecs), header](
+                                               error_code ec, std::size_t) mutable {
                 this->reading_ = false;
 #ifndef NDEBUG
                 this->post_recv_counter_--;
@@ -307,7 +308,7 @@ private:
                         return;
                 }
                 _post_recv(std::move(self), std::move(ecs));
-            });
+            }));
         if (header)
         {
             http::async_read_header(this->stream(), this->buffer().base(), *parser_, std::move(completion));

@@ -7,6 +7,8 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <type_traits>
+#include <utility>
 
 #include <arknet/base/detail/allocator.hpp>
 #include <arknet/base/detail/future.hpp>
@@ -47,6 +49,29 @@ inline void wait_pending_operations(const std::shared_ptr<std::atomic_size_t>& c
     }
 }
 
+template<class Handler>
+class pending_handler
+{
+    // Retire the callable and its captures before publishing completion. Asio
+    // releases associated operation storage before invoking this handler.
+    pending_operation pending_;
+    Handler handler_;
+
+public:
+    pending_handler(std::shared_ptr<std::atomic_size_t> counter, Handler handler)
+        : pending_(std::move(counter))
+        , handler_(std::move(handler)) {}
+
+    const Handler& handler() const noexcept {
+        return handler_;
+    }
+
+    template<class... Arguments>
+    decltype(auto) operator()(Arguments&&... arguments) {
+        return handler_(std::forward<Arguments>(arguments)...);
+    }
+};
+
 template<class Derived, class Args = void>
 class post_cp
 {
@@ -54,6 +79,7 @@ class post_cp
     {
         std::atomic_bool alive{true};
         std::atomic_bool accepting{true};
+        std::atomic_bool accepting_timed{true};
         std::shared_ptr<std::atomic_size_t> pending = std::make_shared<std::atomic_size_t>(0);
         handler_memory<std::false_type, assizer<Args>> allocator;
         std::set<asio::steady_timer*> timers;
@@ -79,8 +105,17 @@ public:
     template<class Function, class Rep, class Period>
     Derived& post(Function&& callback, std::chrono::duration<Rep, Period> delay) {
         auto& object = static_cast<Derived&>(*this);
+        if (!tasks_->accepting_timed.load(std::memory_order_acquire))
+        {
+            set_last_error(asio::error::operation_aborted);
+            return object;
+        }
         post([state = tasks_, lane = object.io_, owner = object.selfptr(), callback = std::forward<Function>(callback),
                  delay]() mutable {
+            if (!state->accepting_timed.load(std::memory_order_acquire))
+            {
+                return;
+            }
             auto timer = std::make_unique<asio::steady_timer>(lane->executor());
             state->timers.insert(timer.get());
             lane->timers().insert(timer.get());
@@ -136,6 +171,28 @@ public:
     }
 
 protected:
+    void _set_async_wait_acceptance(bool accepting) {
+        tasks_->accepting_timed.store(accepting, std::memory_order_release);
+        auto& object = static_cast<Derived&>(*this);
+        object._set_user_timer_acceptance(accepting);
+        object._set_condition_acceptance(accepting);
+    }
+
+    template<class Handler>
+    auto _track_async_operation(Handler&& handler) {
+        // Native completions must always execute, including cancellation. They
+        // cannot use the acceptance gate for application post callbacks.
+        return pending_handler<std::decay_t<Handler>>(tasks_->pending, std::forward<Handler>(handler));
+    }
+
+    void _wait_async_operations() {
+        auto& object = static_cast<Derived&>(*this);
+        _wait_post_operations();
+        object._wait_user_timer_operations();
+        object._wait_condition_operations();
+        _wait_post_operations();
+    }
+
     Derived& _dispatch_stop_all_timed_events() {
         return cancel_tasks<true>();
     }
@@ -211,3 +268,28 @@ private:
     }
 };
 } // namespace arknet::detail
+
+#if defined(ARKNET_USE_BOOST_ASIO) && ARKNET_USE_BOOST_ASIO
+namespace boost::asio
+#else
+namespace asio
+#endif
+{
+template<template<class, class> class Associator, class Handler, class DefaultCandidate>
+struct associator<Associator, arknet::detail::pending_handler<Handler>, DefaultCandidate>
+    : Associator<Handler, DefaultCandidate>
+{
+    using base = Associator<Handler, DefaultCandidate>;
+
+    static decltype(auto) get(const arknet::detail::pending_handler<Handler>& handler) noexcept
+        requires requires { base::get(handler.handler()); }
+    {
+        return base::get(handler.handler());
+    }
+
+    static decltype(auto) get(
+        const arknet::detail::pending_handler<Handler>& handler, const DefaultCandidate& candidate) noexcept {
+        return base::get(handler.handler(), candidate);
+    }
+};
+} // namespace boost::asio

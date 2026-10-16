@@ -51,6 +51,10 @@ Keep a lease across a complete transaction or other connection-local operation. 
 
 Calling `release()` twice is harmless. Submissions on a released lease fail with `closed`; an empty or moved-from lease has no executor and rejects synchronously with request ID 0. `discard()` returns the lease without permitting reuse. Pool connections share library-owned IO resources; `max_connections` is not a thread count.
 
+If internal lease-return submission throws, the pool keeps the completed command result and marks that session for disposal. `pool::diagnostics()` returns a thread-safe `redis::pool_diagnostics` snapshot: `return_submission_failures` is a saturating counter, and `last_return_submission_exception` retains only the most recent exception. A new pool reports zero and an empty exception pointer.
+
+A later acquisition, cancellation or scheduling pass closes the failed session before replacing it. If close submission also fails, the entry stays tracked and the diagnostic records that failure; each pass attempts each failed entry at most once. Existing acquisitions retain their original deadlines. No background retry timer is added, so recovery requires later scheduling activity. Commands are never replayed.
+
 ## TLS options
 
 Use `redis::tls_client` or `redis::tls_pool` with `ARKNET_ENABLE_SSL=ON`:
@@ -75,8 +79,16 @@ Check server logs and fixed releases when diagnosing this disconnect. The client
 
 ## Execution and shutdown
 
-The library owns IO contexts, threads and transport lifetimes. A standalone client owns one IO context/thread; a pool owns one context/thread shared by its clients. Accepted command callbacks, connection callbacks and pushes run on the associated IO lane; rejected client submissions are also completed there. Callbacks must not throw or block. The empty-lease rejection above is the synchronous exception.
+The library owns IO contexts, threads and transport lifetimes. A standalone client owns one IO context/thread; a pool owns one context/thread shared by its clients. Accepted command callbacks, connection callbacks and pushes run on the associated IO lane. Callbacks must not throw or block. Empty-lease and permanently closed-client rejections complete synchronously on their caller.
 
 `close()` atomically rejects further useful work and schedules terminal shutdown. Pending operations complete once, but `close()` returning does **not** mean their callbacks or transport cleanup have drained. Destruction may request the same deferred shutdown, including when invoked from a callback. Application state captured by callbacks needs its own lifetime ownership; a request deadline or object destruction does not make a dangling reference safe.
+
+If dispatching an independent client's `close()` fails before shutdown begins, it restores the request flag and may be retried. A shutdown that has already begun remains terminal.
+
+For an independent client, call `close_and_wait()` from a non-IO thread to permanently close admission, finish previously accepted handlers and release their captures, join its owned worker, and destroy its transport, TLS objects and timers before returning success. It returns false with `operation_not_supported` on its own IO worker, during reentrant publication/finalization, or for a pool-owned child; these refusals do not initiate permanent shutdown. Do not hold locks needed by callbacks while waiting. Shutdown failures may throw.
+
+The pool also provides `close_and_wait()`: it closes pool and lease admission, drains accepted publications and callbacks, closes active children and discarded children still retained by leases, and joins the shared runtime exactly once. Child transports, TLS objects, timers and lease-return callables are retired before success. A borrowed child never stops that parent runtime itself. A pool refuses its own IO lane and reentrant publication/finalization, with the same false return and `operation_not_supported` error. Call only from a non-library-IO thread, without holding locks needed by callbacks. Concurrent external waiters observe the same completed shutdown or shutdown exception.
+
+After the permanent gate closes, connect/command/acquire submissions invoke their handler synchronously with `client_errc::closed`; command/acquire calls return ID 0. Cancellation, push-handler registration, lease return and ordinary `close()` cannot publish new work. Retained leases are inert and may safely be released after the pool object is destroyed. These later caller-side rejections are outside the earlier accepted-operation set; their handlers may propagate exceptions. The application must separately stop and join its submitting threads before releasing shared application code. This is an owned-IO shutdown boundary, not a process-wide cleanup or dynamic-library unload barrier.
 
 There is no automatic reconnect. Construct a new client after terminal close. A pool's `close()` also terminates queued acquisitions and its connections; it is not a callback-drain barrier.

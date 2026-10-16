@@ -38,6 +38,8 @@ client.async_pipeline({{"PING"}, {"ECHO", payload}}, [](arknet::redis::result re
 
 完整示例通过 promise 在主线程等待。回调运行在连接的 IO 线程上，不要在其中等待 future。回调捕获的应用对象需要存活到回调完成。
 
+独立客户端需要等待已受理 handler、其捕获及自有传输资源回收时，可在主线程调用 `close_and_wait()` 并检查返回值；自身 IO 线程和池内客户端不支持此等待。普通 `close()` 仍为异步关闭。应用退出前请先阅读[关闭约定](configuration_CN.md#执行与关闭)。
+
 ## 独占连接租约
 
 包含 `<arknet/redis/pool.hpp>`，配置 `pool_options.connection` 后调用 `async_acquire`。成功的 `acquire_result` 包含只能移动的 `connection` 租约。通过租约提交命令，完成后调用 `release()` 或离开作用域；不应复用的连接调用 `discard()`。
@@ -57,6 +59,8 @@ pool.async_acquire([](arknet::redis::pool::acquire_result response) {
 ```
 
 完整的 `WATCH`／`MULTI`／`EXEC` 序列需要持有同一个租约。归还时先等待在途回调及有序回复排空，再重置连接并恢复连接池配置的认证、协议和数据库，之后才能交给下一位使用者。重置失败或不被服务端支持时，丢弃并替换连接。
+
+停机时先停止提交方，再在主线程调用 `pool.close_and_wait()`。成功返回前会等待此前受理的回调及其捕获释放、等待连接池共用工作线程退出，并回收所有仍存活子连接的传输资源，包括已丢弃但仍由旧租约持有的连接。保留的租约随后同步返回 `closed` 和请求 ID 0。在连接池自己的 IO 线程或重入调用中会拒绝等待；需要检查返回值，并遵守[关闭契约](configuration_CN.md#执行与关闭)。
 
 ## TLS 与 mTLS
 

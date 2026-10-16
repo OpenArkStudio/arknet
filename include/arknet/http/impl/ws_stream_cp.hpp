@@ -80,20 +80,20 @@ protected:
                 }
                 auto timer = std::make_shared<asio::steady_timer>(owner.io_->executor());
                 timer->expires_after(owner.get_disconnect_timeout());
-                timer->async_wait([&owner, lifetime](error_code ec) {
+                timer->async_wait(owner._track_async_operation([&owner, lifetime](error_code ec) {
                     if (!ec)
                     {
                         error_code ignored;
                         owner.socket().cancel(ignored);
                         owner.socket().close(ignored);
                     }
-                });
+                }));
 #ifndef NDEBUG
                 ARKNET_ASSERT(owner.post_send_counter_.fetch_add(1) == 0);
 #endif
                 ws_stream_->async_close(websocket::close_code::normal,
-                    [this, &owner, lifetime = std::move(lifetime), timer, next = std::move(next)](
-                        error_code ec) mutable {
+                    owner._track_async_operation([this, &owner, lifetime = std::move(lifetime), timer,
+                                                     next = std::move(next)](error_code ec) mutable {
 #ifndef NDEBUG
                         owner.post_send_counter_.fetch_sub(1);
 #endif
@@ -104,7 +104,7 @@ protected:
                         ws_stream_->set_option(disabled);
                         ws_stream_->control_callback();
                         set_last_error(ec);
-                    });
+                    }));
             },
             chain.move_guard());
     }
@@ -127,14 +127,15 @@ protected:
         ARKNET_ASSERT(owner.post_recv_counter_.fetch_add(1) == 0);
 #endif
         ws_stream_->async_read(owner.buffer().base(),
-            make_allocator(owner.rallocator(), [&owner, lifetime = std::move(lifetime), policy = std::move(policy)](
-                                                   error_code ec, std::size_t size) mutable {
+            make_allocator(owner.rallocator(),
+                owner._track_async_operation([&owner, lifetime = std::move(lifetime), policy = std::move(policy)](
+                                                 error_code ec, std::size_t size) mutable {
 #ifndef NDEBUG
-                owner.post_recv_counter_.fetch_sub(1);
+                    owner.post_recv_counter_.fetch_sub(1);
 #endif
-                owner.reading_ = false;
-                owner._handle_recv(ec, size, std::move(lifetime), std::move(policy));
-            }));
+                    owner.reading_ = false;
+                    owner._handle_recv(ec, size, std::move(lifetime), std::move(policy));
+                })));
     }
 
     template<class Condition>
@@ -207,14 +208,15 @@ protected:
         ARKNET_ASSERT(owner.post_recv_counter_.fetch_add(1) == 0);
 #endif
         http::async_read(owner.upgrade_stream(), owner.buffer().base(), owner.get_upgrade_request(),
-            make_allocator(owner.rallocator(), [&owner, lifetime = std::move(lifetime), policy = std::move(policy),
-                                                   chain = std::move(chain)](error_code ec, std::size_t) mutable {
+            make_allocator(owner.rallocator(),
+                owner._track_async_operation([&owner, lifetime = std::move(lifetime), policy = std::move(policy),
+                                                 chain = std::move(chain)](error_code ec, std::size_t) mutable {
 #ifndef NDEBUG
-                owner.post_recv_counter_.fetch_sub(1);
+                    owner.post_recv_counter_.fetch_sub(1);
 #endif
-                owner.reading_ = false;
-                owner._handle_read_upgrade_request(ec, std::move(lifetime), std::move(policy), std::move(chain));
-            }));
+                    owner.reading_ = false;
+                    owner._handle_read_upgrade_request(ec, std::move(lifetime), std::move(policy), std::move(chain));
+                })));
     }
 
     template<class Condition, class Chain>
@@ -241,14 +243,14 @@ protected:
 #ifndef NDEBUG
         ARKNET_ASSERT(owner.post_send_counter_.fetch_add(1) == 0);
 #endif
-        auto completion =
-            make_allocator(owner.wallocator(), [&owner, lifetime = std::move(lifetime), policy = std::move(policy),
-                                                   chain = std::move(chain)](error_code ec) mutable {
+        auto completion = make_allocator(owner.wallocator(),
+            owner._track_async_operation([&owner, lifetime = std::move(lifetime), policy = std::move(policy),
+                                             chain = std::move(chain)](error_code ec) mutable {
 #ifndef NDEBUG
                 owner.post_send_counter_.fetch_sub(1);
 #endif
                 owner._handle_upgrade(ec, std::move(lifetime), std::move(policy), std::move(chain));
-            });
+            }));
         if constexpr (Args::is_session)
         {
             ws_stream_->async_accept(message, std::move(completion));
@@ -268,11 +270,11 @@ protected:
         requires(Args::is_session)
     {
         auto& owner = static_cast<Derived&>(*this);
-        ws_stream_->async_accept(
-            make_allocator(owner.wallocator(), [&owner, lifetime = std::move(lifetime), policy = std::move(policy),
-                                                   chain = std::move(chain)](error_code ec) mutable {
+        ws_stream_->async_accept(make_allocator(owner.wallocator(),
+            owner._track_async_operation([&owner, lifetime = std::move(lifetime), policy = std::move(policy),
+                                             chain = std::move(chain)](error_code ec) mutable {
                 owner._handle_upgrade(ec, std::move(lifetime), std::move(policy), std::move(chain));
-            }));
+            })));
     }
 
     template<class Condition, class Chain>

@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="730" viewBox="0 0 740 730" role="img" aria-labelledby="title description">
+<title id="title">吞吐量与五轮观测范围</title>
+<desc id="description">各配置的基线吞吐量中位数归一化为100%；显示两版本各五轮中位数、观测最小最大范围，以及候选中位数百分比和相对变化。</desc>
+<metadata>{&quot;source&quot;:&quot;comparisons.json&quot;,&quot;baseline&quot;:&quot;25fe2e5fac4e09edee597f312d58b0362b9e0681&quot;,&quot;candidate&quot;:&quot;2aa5bc0ef7d383d8cfbc04520f3b952fa27c5fbd&quot;,&quot;rows&quot;:[{&quot;cell&quot;:{&quot;id&quot;:&quot;redis-standalone-4096-p16&quot;,&quot;scope&quot;:&quot;redis&quot;,&quot;role&quot;:&quot;regression&quot;,&quot;dependency&quot;:&quot;standalone&quot;,&quot;protocol&quot;:&quot;redis&quot;,&quot;payload&quot;:4096,&quot;pipeline&quot;:16,&quot;window&quot;:1,&quot;clients&quot;:4,&quot;threads&quot;:4},&quot;normalized&quot;:{&quot;baseline&quot;:{&quot;median&quot;:100,&quot;minimum&quot;:98.35783201415276,&quot;maximum&quot;:102.59013290083352},&quot;candidate&quot;:{&quot;median&quot;:98.03658728415452,&quot;minimum&quot;:97.79850279741824,&quot;maximum&quot;:99.49225487649268}},&quot;throughput&quot;:{&quot;baseline&quot;:97110.3261995,&quot;candidate&quot;:95203.6497065}},{&quot;cell&quot;:{&quot;id&quot;:&quot;redis-standalone-1024-p64&quot;,&quot;scope&quot;:&quot;redis&quot;,&quot;role&quot;:&quot;regression&quot;,&quot;dependency&quot;:&quot;standalone&quot;,&quot;protocol&quot;:&quot;redis&quot;,&quot;payload&quot;:1024,&quot;pipeline&quot;:64,&quot;window&quot;:1,&quot;clients&quot;:4,&quot;threads&quot;:4},&quot;normalized&quot;:{&quot;baseline&quot;:{&quot;median&quot;:100,&quot;minimum&quot;:99.27612265321984,&quot;maximum&quot;:105.21370381503093},&quot;candidate&quot;:{&quot;median&quot;:100.75421827375021,&quot;minimum&quot;:99.23389549660536,&quot;maximum&quot;:102.89614279123593}},&quot;throughput&quot;:{&quot;baseline&quot;:365973.940445,&quot;candidate&quot;:368734.182781}},{&quot;cell&quot;:{&quot;id&quot;:&quot;ws-boost-64-w16-t4&quot;,&quot;scope&quot;:&quot;public&quot;,&quot;role&quot;:&quot;regression&quot;,&quot;dependency&quot;:&quot;boost&quot;,&quot;protocol&quot;:&quot;websocket&quot;,&quot;payload&quot;:64,&quot;pipeline&quot;:1,&quot;window&quot;:16,&quot;clients&quot;:16,&quot;threads&quot;:4},&quot;normalized&quot;:{&quot;baseline&quot;:{&quot;median&quot;:100,&quot;minimum&quot;:89.31374049858269,&quot;maximum&quot;:100.71334532058486},&quot;candidate&quot;:{&quot;median&quot;:99.0795958344875,&quot;minimum&quot;:98.37842655823414,&quot;maximum&quot;:99.26362423282177}},&quot;throughput&quot;:{&quot;baseline&quot;:236158.190765,&quot;candidate&quot;:233984.58094}},{&quot;cell&quot;:{&quot;id&quot;:&quot;ws-boost-4096-w16-t4&quot;,&quot;scope&quot;:&quot;public&quot;,&quot;role&quot;:&quot;regression&quot;,&quot;dependency&quot;:&quot;boost&quot;,&quot;protocol&quot;:&quot;websocket&quot;,&quot;payload&quot;:4096,&quot;pipeline&quot;:1,&quot;window&quot;:16,&quot;clients&quot;:16,&quot;threads&quot;:4},&quot;normalized&quot;:{&quot;baseline&quot;:{&quot;median&quot;:100,&quot;minimum&quot;:92.47782405888431,&quot;maximum&quot;:100.943397268722},&quot;candidate&quot;:{&quot;median&quot;:93.48718734848902,&quot;minimum&quot;:87.6170608757891,&quot;maximum&quot;:98.12946064916545}},&quot;throughput&quot;:{&quot;baseline&quot;:159667.59794,&quot;candidate&quot;:149268.746421}},{&quot;cell&quot;:{&quot;id&quot;:&quot;redis-boost-4096-p16&quot;,&quot;scope&quot;:&quot;redis&quot;,&quot;role&quot;:&quot;matched_dependency_control&quot;,&quot;dependency&quot;:&quot;boost&quot;,&quot;protocol&quot;:&quot;redis&quot;,&quot;payload&quot;:4096,&quot;pipeline&quot;:16,&quot;window&quot;:1,&quot;clients&quot;:4,&quot;threads&quot;:4},&quot;normalized&quot;:{&quot;baseline&quot;:{&quot;median&quot;:100,&quot;minimum&quot;:99.55598997924442,&quot;maximum&quot;:103.86716592727791},&quot;candidate&quot;:{&quot;median&quot;:99.99009802737714,&quot;minimum&quot;:99.88449942494009,&quot;maximum&quot;:102.20550392825952}},&quot;throughput&quot;:{&quot;baseline&quot;:95470.4800758,&quot;candidate&quot;:95461.026615}},{&quot;cell&quot;:{&quot;id&quot;:&quot;redis-boost-1024-p64&quot;,&quot;scope&quot;:&quot;redis&quot;,&quot;role&quot;:&quot;matched_dependency_control&quot;,&quot;dependency&quot;:&quot;boost&quot;,&quot;protocol&quot;:&quot;redis&quot;,&quot;payload&quot;:1024,&quot;pipeline&quot;:64,&quot;window&quot;:1,&quot;clients&quot;:4,&quot;threads&quot;:4},&quot;normalized&quot;:{&quot;baseline&quot;:{&quot;median&quot;:100,&quot;minimum&quot;:99.2835858281178,&quot;maximum&quot;:102.70862971630848},&quot;candidate&quot;:{&quot;median&quot;:100.54411307237703,&quot;minimum&quot;:99.45910994344888,&quot;maximum&quot;:102.42916333703866}},&quot;throughput&quot;:{&quot;baseline&quot;:365878.93566,&quot;candidate&quot;:367869.730778}},{&quot;cell&quot;:{&quot;id&quot;:&quot;tcp-boost-64-w16-t4&quot;,&quot;scope&quot;:&quot;public&quot;,&quot;role&quot;:&quot;diagnostic_control&quot;,&quot;dependency&quot;:&quot;boost&quot;,&quot;protocol&quot;:&quot;tcp&quot;,&quot;payload&quot;:64,&quot;pipeline&quot;:1,&quot;window&quot;:16,&quot;clients&quot;:16,&quot;threads&quot;:4},&quot;normalized&quot;:{&quot;baseline&quot;:{&quot;median&quot;:100,&quot;minimum&quot;:86.26103515581886,&quot;maximum&quot;:100.32899724159152},&quot;candidate&quot;:{&quot;median&quot;:98.51079127113043,&quot;minimum&quot;:84.55349080550555,&quot;maximum&quot;:99.5576491160231}},&quot;throughput&quot;:{&quot;baseline&quot;:315960.317166,&quot;candidate&quot;:311255.008543}},{&quot;cell&quot;:{&quot;id&quot;:&quot;http-boost-4096-w16-t1&quot;,&quot;scope&quot;:&quot;public&quot;,&quot;role&quot;:&quot;diagnostic_control&quot;,&quot;dependency&quot;:&quot;boost&quot;,&quot;protocol&quot;:&quot;http&quot;,&quot;payload&quot;:4096,&quot;pipeline&quot;:1,&quot;window&quot;:16,&quot;clients&quot;:16,&quot;threads&quot;:1},&quot;normalized&quot;:{&quot;baseline&quot;:{&quot;median&quot;:100,&quot;minimum&quot;:99.73083033504277,&quot;maximum&quot;:101.11562930001267},&quot;candidate&quot;:{&quot;median&quot;:99.83488107122712,&quot;minimum&quot;:99.07036035004448,&quot;maximum&quot;:100.3495146741106}},&quot;throughput&quot;:{&quot;baseline&quot;:53206.8127821,&quot;candidate&quot;:53118.9582628}}]}</metadata>
+<rect width="740" height="730" fill="#fff"/>
+<g font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" fill="#162538">
+<text x="18" y="29" font-size="19" font-weight="650">吞吐量与五轮观测范围</text>
+<text x="18" y="51" font-size="11" fill="#516176">各配置基线中位数 = 100%；两个版本各测量五轮，不合并不同负载。</text>
+<circle cx="23" cy="76" r="4" fill="#1261a0"/>
+<text x="35" y="80" font-size="12">基线 25fe2e5</text>
+<circle cx="230" cy="76" r="4" fill="#d15a12"/>
+<text x="242" y="80" font-size="12">候选 2aa5bc0</text>
+<text x="18" y="113" font-size="11" fill="#516176">配置与吞吐量中位数</text>
+<text x="350" y="98" font-size="11" fill="#516176">相对吞吐量</text>
+<text x="695" y="98" text-anchor="middle" font-size="11" fill="#516176">候选中位数</text>
+<text x="695" y="115" text-anchor="middle" font-size="10" fill="#516176">及相对变化</text>
+<rect x="8" y="128" width="724" height="68" rx="4" fill="#f8fafc"/>
+<rect x="8" y="264" width="724" height="68" rx="4" fill="#f8fafc"/>
+<rect x="8" y="400" width="724" height="68" rx="4" fill="#f8fafc"/>
+<rect x="8" y="536" width="724" height="68" rx="4" fill="#f8fafc"/>
+<path d="M350 125V672" fill="none" stroke="#dce3ec"/>
+<text x="350" y="115" text-anchor="middle" font-size="11" fill="#516176">80%</text>
+<path d="M397 125V672" fill="none" stroke="#dce3ec"/>
+<text x="397" y="115" text-anchor="middle" font-size="11" fill="#516176">85%</text>
+<path d="M444 125V672" fill="none" stroke="#dce3ec"/>
+<text x="444" y="115" text-anchor="middle" font-size="11" fill="#516176">90%</text>
+<path d="M491 125V672" fill="none" stroke="#dce3ec"/>
+<text x="491" y="115" text-anchor="middle" font-size="11" fill="#516176">95%</text>
+<path d="M538 125V672" fill="none" stroke="#8799ad" stroke-dasharray="4 3"/>
+<text x="538" y="115" text-anchor="middle" font-size="11" fill="#516176">100%</text>
+<path d="M585 125V672" fill="none" stroke="#dce3ec"/>
+<text x="585" y="115" text-anchor="middle" font-size="11" fill="#516176">105%</text>
+<path d="M632 125V672" fill="none" stroke="#dce3ec"/>
+<text x="632" y="115" text-anchor="middle" font-size="11" fill="#516176">110%</text>
+<g data-cell="redis-standalone-4096-p16">
+<text x="18" y="148" font-size="12" font-weight="600">Redis · Standalone Asio · 4 KiB</text>
+<text x="18" y="166" font-size="11" fill="#516176">4 连接 · 每批 16 条 · 每连接 1 批在途</text>
+<text x="18" y="185" font-size="11"><tspan fill="#1261a0">97,110.33</tspan><tspan dx="4" fill="#516176">→</tspan><tspan dx="4" fill="#d15a12">95,203.65</tspan><tspan dx="4" fill="#516176">命令/秒</tspan></text>
+<g data-version="baseline" data-median="100" data-minimum="98.35783201415276" data-maximum="102.59013290083352"><title>Redis · Standalone Asio · 4 KiB · baseline: 100.0000% [98.3578%–102.5901%]</title><path d="M522.56362093 152H562.34724927M522.56362093 148V156M562.34724927 148V156" fill="none" stroke="#1261a0" stroke-width="2"/><circle cx="538" cy="152" r="4" fill="#1261a0"/></g>
+<g data-version="candidate" data-median="98.03658728415452" data-minimum="97.79850279741824" data-maximum="99.49225487649268"><title>Redis · Standalone Asio · 4 KiB · candidate: 98.0366% [97.7985%–99.4923%]</title><path d="M517.3059263 174H533.22719584M517.3059263 170V178M533.22719584 170V178" fill="none" stroke="#d15a12" stroke-width="2"/><circle cx="519.54392047" cy="174" r="4" fill="#d15a12"/></g>
+<text x="695" y="156" text-anchor="middle" font-size="12" font-weight="600">98.04%</text>
+<text x="695" y="176" text-anchor="middle" font-size="12" fill="#d15a12">−1.96%</text>
+</g>
+<g data-cell="redis-standalone-1024-p64">
+<text x="18" y="216" font-size="12" font-weight="600">Redis · Standalone Asio · 1 KiB</text>
+<text x="18" y="234" font-size="11" fill="#516176">4 连接 · 每批 64 条 · 每连接 1 批在途</text>
+<text x="18" y="253" font-size="11"><tspan fill="#1261a0">365,973.94</tspan><tspan dx="4" fill="#516176">→</tspan><tspan dx="4" fill="#d15a12">368,734.18</tspan><tspan dx="4" fill="#516176">命令/秒</tspan></text>
+<g data-version="baseline" data-median="100" data-minimum="99.27612265321984" data-maximum="105.21370381503093"><title>Redis · Standalone Asio · 1 KiB · baseline: 100.0000% [99.2761%–105.2137%]</title><path d="M531.19555294 220H587.00881586M531.19555294 216V224M587.00881586 216V224" fill="none" stroke="#1261a0" stroke-width="2"/><circle cx="538" cy="220" r="4" fill="#1261a0"/></g>
+<g data-version="candidate" data-median="100.75421827375021" data-minimum="99.23389549660536" data-maximum="102.89614279123593"><title>Redis · Standalone Asio · 1 KiB · candidate: 100.7542% [99.2339%–102.8961%]</title><path d="M530.79861767 242H565.22374224M530.79861767 238V246M565.22374224 238V246" fill="none" stroke="#d15a12" stroke-width="2"/><circle cx="545.08965177" cy="242" r="4" fill="#d15a12"/></g>
+<text x="695" y="224" text-anchor="middle" font-size="12" font-weight="600">100.75%</text>
+<text x="695" y="244" text-anchor="middle" font-size="12" fill="#d15a12">+0.75%</text>
+</g>
+<g data-cell="ws-boost-64-w16-t4">
+<text x="18" y="284" font-size="12" font-weight="600">WebSocket · Boost · 64 B</text>
+<text x="18" y="302" font-size="11" fill="#516176">16 连接 · 每连接 16 条在途 · 1 io_context : 4 线程</text>
+<text x="18" y="321" font-size="11"><tspan fill="#1261a0">236,158.19</tspan><tspan dx="4" fill="#516176">→</tspan><tspan dx="4" fill="#d15a12">233,984.58</tspan><tspan dx="4" fill="#516176">往返/秒</tspan></text>
+<g data-version="baseline" data-median="100" data-minimum="89.31374049858269" data-maximum="100.71334532058486"><title>WebSocket · Boost · 64 B · baseline: 100.0000% [89.3137%–100.7133%]</title><path d="M437.54916069 288H544.70544601M437.54916069 284V292M544.70544601 284V292" fill="none" stroke="#1261a0" stroke-width="2"/><circle cx="538" cy="288" r="4" fill="#1261a0"/></g>
+<g data-version="candidate" data-median="99.0795958344875" data-minimum="98.37842655823414" data-maximum="99.26362423282177"><title>WebSocket · Boost · 64 B · candidate: 99.0796% [98.3784%–99.2636%]</title><path d="M522.75720965 310H531.07806779M522.75720965 306V314M531.07806779 306V314" fill="none" stroke="#d15a12" stroke-width="2"/><circle cx="529.34820084" cy="310" r="4" fill="#d15a12"/></g>
+<text x="695" y="292" text-anchor="middle" font-size="12" font-weight="600">99.08%</text>
+<text x="695" y="312" text-anchor="middle" font-size="12" fill="#d15a12">−0.92%</text>
+</g>
+<g data-cell="ws-boost-4096-w16-t4">
+<text x="18" y="352" font-size="12" font-weight="600">WebSocket · Boost · 4 KiB</text>
+<text x="18" y="370" font-size="11" fill="#516176">16 连接 · 每连接 16 条在途 · 1 io_context : 4 线程</text>
+<text x="18" y="389" font-size="11"><tspan fill="#1261a0">159,667.60</tspan><tspan dx="4" fill="#516176">→</tspan><tspan dx="4" fill="#d15a12">149,268.75</tspan><tspan dx="4" fill="#516176">往返/秒</tspan></text>
+<g data-version="baseline" data-median="100" data-minimum="92.47782405888431" data-maximum="100.943397268722"><title>WebSocket · Boost · 4 KiB · baseline: 100.0000% [92.4778%–100.9434%]</title><path d="M467.29154615 356H546.86793433M467.29154615 352V360M546.86793433 352V360" fill="none" stroke="#1261a0" stroke-width="2"/><circle cx="538" cy="356" r="4" fill="#1261a0"/></g>
+<g data-version="candidate" data-median="93.48718734848902" data-minimum="87.6170608757891" data-maximum="98.12946064916545"><title>WebSocket · Boost · 4 KiB · candidate: 93.4872% [87.6171%–98.1295%]</title><path d="M421.60037223 378H520.4169301M421.60037223 374V382M520.4169301 374V382" fill="none" stroke="#d15a12" stroke-width="2"/><circle cx="476.77956108" cy="378" r="4" fill="#d15a12"/></g>
+<text x="695" y="360" text-anchor="middle" font-size="12" font-weight="600">93.49%</text>
+<text x="695" y="380" text-anchor="middle" font-size="12" fill="#d15a12">−6.51%</text>
+</g>
+<g data-cell="redis-boost-4096-p16">
+<text x="18" y="420" font-size="12" font-weight="600">Redis · Boost · 4 KiB</text>
+<text x="18" y="438" font-size="11" fill="#516176">4 连接 · 每批 16 条 · 每连接 1 批在途</text>
+<text x="18" y="457" font-size="11"><tspan fill="#1261a0">95,470.48</tspan><tspan dx="4" fill="#516176">→</tspan><tspan dx="4" fill="#d15a12">95,461.03</tspan><tspan dx="4" fill="#516176">命令/秒</tspan></text>
+<g data-version="baseline" data-median="100" data-minimum="99.55598997924442" data-maximum="103.86716592727791"><title>Redis · Boost · 4 KiB · baseline: 100.0000% [99.5560%–103.8672%]</title><path d="M533.8263058 424H574.35135972M533.8263058 420V428M574.35135972 420V428" fill="none" stroke="#1261a0" stroke-width="2"/><circle cx="538" cy="424" r="4" fill="#1261a0"/></g>
+<g data-version="candidate" data-median="99.99009802737714" data-minimum="99.88449942494009" data-maximum="102.20550392825952"><title>Redis · Boost · 4 KiB · candidate: 99.9901% [99.8845%–102.2055%]</title><path d="M536.91429459 446H558.73173693M536.91429459 442V450M558.73173693 442V450" fill="none" stroke="#d15a12" stroke-width="2"/><circle cx="537.90692146" cy="446" r="4" fill="#d15a12"/></g>
+<text x="695" y="428" text-anchor="middle" font-size="12" font-weight="600">99.99%</text>
+<text x="695" y="448" text-anchor="middle" font-size="12" fill="#d15a12">−0.01%</text>
+</g>
+<g data-cell="redis-boost-1024-p64">
+<text x="18" y="488" font-size="12" font-weight="600">Redis · Boost · 1 KiB</text>
+<text x="18" y="506" font-size="11" fill="#516176">4 连接 · 每批 64 条 · 每连接 1 批在途</text>
+<text x="18" y="525" font-size="11"><tspan fill="#1261a0">365,878.94</tspan><tspan dx="4" fill="#516176">→</tspan><tspan dx="4" fill="#d15a12">367,869.73</tspan><tspan dx="4" fill="#516176">命令/秒</tspan></text>
+<g data-version="baseline" data-median="100" data-minimum="99.2835858281178" data-maximum="102.70862971630848"><title>Redis · Boost · 1 KiB · baseline: 100.0000% [99.2836%–102.7086%]</title><path d="M531.26570678 492H563.46111933M531.26570678 488V496M563.46111933 488V496" fill="none" stroke="#1261a0" stroke-width="2"/><circle cx="538" cy="492" r="4" fill="#1261a0"/></g>
+<g data-version="candidate" data-median="100.54411307237703" data-minimum="99.45910994344888" data-maximum="102.42916333703866"><title>Redis · Boost · 1 KiB · candidate: 100.5441% [99.4591%–102.4292%]</title><path d="M532.91563347 514H560.83413537M532.91563347 510V518M560.83413537 510V518" fill="none" stroke="#d15a12" stroke-width="2"/><circle cx="543.11466288" cy="514" r="4" fill="#d15a12"/></g>
+<text x="695" y="496" text-anchor="middle" font-size="12" font-weight="600">100.54%</text>
+<text x="695" y="516" text-anchor="middle" font-size="12" fill="#d15a12">+0.54%</text>
+</g>
+<g data-cell="tcp-boost-64-w16-t4">
+<text x="18" y="556" font-size="12" font-weight="600">TCP · Boost · 64 B</text>
+<text x="18" y="574" font-size="11" fill="#516176">16 连接 · 每连接 16 条在途 · 1 io_context : 4 线程</text>
+<text x="18" y="593" font-size="11"><tspan fill="#1261a0">315,960.32</tspan><tspan dx="4" fill="#516176">→</tspan><tspan dx="4" fill="#d15a12">311,255.01</tspan><tspan dx="4" fill="#516176">往返/秒</tspan></text>
+<g data-version="baseline" data-median="100" data-minimum="86.26103515581886" data-maximum="100.32899724159152"><title>TCP · Boost · 64 B · baseline: 100.0000% [86.2610%–100.3290%]</title><path d="M408.85373046 560H541.09257407M408.85373046 556V564M541.09257407 556V564" fill="none" stroke="#1261a0" stroke-width="2"/><circle cx="538" cy="560" r="4" fill="#1261a0"/></g>
+<g data-version="candidate" data-median="98.51079127113043" data-minimum="84.55349080550555" data-maximum="99.5576491160231"><title>TCP · Boost · 64 B · candidate: 98.5108% [84.5535%–99.5576%]</title><path d="M392.80281357 582H533.84190169M392.80281357 578V586M533.84190169 578V586" fill="none" stroke="#d15a12" stroke-width="2"/><circle cx="524.00143795" cy="582" r="4" fill="#d15a12"/></g>
+<text x="695" y="564" text-anchor="middle" font-size="12" font-weight="600">98.51%</text>
+<text x="695" y="584" text-anchor="middle" font-size="12" fill="#d15a12">−1.49%</text>
+</g>
+<g data-cell="http-boost-4096-w16-t1">
+<text x="18" y="624" font-size="12" font-weight="600">HTTP · Boost · 4 KiB</text>
+<text x="18" y="642" font-size="11" fill="#516176">16 连接 · 每连接 16 条在途 · 1 io_context : 1 线程</text>
+<text x="18" y="661" font-size="11"><tspan fill="#1261a0">53,206.81</tspan><tspan dx="4" fill="#516176">→</tspan><tspan dx="4" fill="#d15a12">53,118.96</tspan><tspan dx="4" fill="#516176">往返/秒</tspan></text>
+<g data-version="baseline" data-median="100" data-minimum="99.73083033504277" data-maximum="101.11562930001267"><title>HTTP · Boost · 4 KiB · baseline: 100.0000% [99.7308%–101.1156%]</title><path d="M535.46980515 628H548.48691542M535.46980515 624V632M548.48691542 624V632" fill="none" stroke="#1261a0" stroke-width="2"/><circle cx="538" cy="628" r="4" fill="#1261a0"/></g>
+<g data-version="candidate" data-median="99.83488107122712" data-minimum="99.07036035004448" data-maximum="100.3495146741106"><title>HTTP · Boost · 4 KiB · candidate: 99.8349% [99.0704%–100.3495%]</title><path d="M529.26138729 650H541.28543794M529.26138729 646V654M541.28543794 646V654" fill="none" stroke="#d15a12" stroke-width="2"/><circle cx="536.44788207" cy="650" r="4" fill="#d15a12"/></g>
+<text x="695" y="632" text-anchor="middle" font-size="12" font-weight="600">99.83%</text>
+<text x="695" y="652" text-anchor="middle" font-size="12" fill="#d15a12">−0.17%</text>
+</g>
+<text x="18" y="700" font-size="11" fill="#516176">点为中位数；线为五轮最小–最大值，不是置信区间。</text>
+<text x="18" y="718" font-size="11" fill="#516176">每轮预热 1 秒、测量 5 秒。各行单独归一化，不比较不同行的绝对吞吐量。</text>
+</g></svg>

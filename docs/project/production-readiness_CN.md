@@ -23,21 +23,27 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 
 ## 验收状态
 
-| 范围 | 截至 2026-10-15 的证据 |
+| 范围 | 证据 |
 | --- | --- |
-| 本机完整检查 | Release + TLS：Boost.Asio 为 75 项检查／374 个用例／1,952,026 项断言；Standalone Asio 为 62／314／976,980；均无失败或跳过 |
-| 数据库正确性 | 真实 MySQL 8.4.11 和 Redis 7.4.2；MySQL 客户端／连接池为 51 个用例／1,899 项断言，Redis 为 35／316 |
-| 数据库内存与并发 | Boost.Asio 数据库 TSan 为 86 个用例／2,215 项断言；MySQL Standalone Asio TSan 与 Boost.Asio ASan+UBSan 分别为 51／1,899；Redis Standalone Asio ASan+UBSan 为 35／316；无失败、跳过、诊断或抑制；[范围与命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261015/database-clients/README_CN.md) |
-| RUDP 内存／并发专项，2026-10-13 | 指定 ASan/UBSan 测试组：109 个用例；指定 TSan 测试组：86 个用例；不代表当前全项目 Sanitizer 执行 |
-| 跨平台 CI，v0.1.0 历史证据 | [13 项任务通过](https://github.com/OpenArkStudio/arknet/actions/runs/38355205095)：两种 Asio 依赖方案、Linux/macOS/Windows、无 TLS 构建、ASan/UBSan、TSan、安装后使用及格式检查；这次执行不验证 v0.2.0 |
-| 跨平台发布条件 | 合并前须通过全部 14 项必需检查：[CI 记录](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml)；本机结果不代替发行候选自身的检查 |
-| 真实旧库对端，2026-10-13 | 两种依赖方案：每种 12 组进程场景、16 个会话、512 条消息及回显 |
+| 本机完整检查，源码快照 `6c8418e` | Debug + TLS：Boost.Asio 为 52 项检查／470 个用例／978,433 项断言；Standalone Asio 为 51／410／576,824。已启用的默认测试均通过，无失败或环境条件导致的跳过；未启用归档的 Zephyr 互通测试 |
+| 内存与并发，同一源码快照 | 完整 Boost.Asio ASan+UBSan 为 52 项检查／470 个用例／615,937 项断言；完整 Standalone Asio TSan 为 51／410／333,108；无 Sanitizer 诊断。关闭泄漏检测，安装包消费项目的子构建未启用检测 |
+| 真实数据库 | 四套完整配置均使用隔离的 MySQL Community 8.4.11（TLS）和 Redis 7.4.2（TCP/TLS/mTLS）；覆盖客户端／连接池停止及任务提交失败恢复 |
+| 补充停止行为验证 | 指定 Boost 无 TLS 目标：8 项检查／66 个用例／1,515 项断言；ASan 排队连接、HTTP 外部 context 与外部停止：72 次进程检查／280 个用例／4,664 项断言 |
+| 纯测试改动 `25bb9f8` | 四种依赖／检测工具组合各通过 30 个专项用例，另通过 128 次指定原生错误用例；MSVC CRT 分配路径在 Windows CI 中执行，本机 macOS 验证不覆盖 |
+| 连接池关闭快照 `550fb58` | 两种依赖均通过 ASan+UBSan 与 TSan 下的 MySQL／Redis 关闭测试，覆盖排队 acquire 取消和回调重入；未改动的归还失败目标也通过四套配置。准确计数与源码边界见[测试与验证](testing_CN.md) |
+| 跨平台发布条件 | [PR #16](https://github.com/OpenArkStudio/arknet/pull/16) 发布前须通过全部 14 项必需检查；本机结果不代替候选版本自身的检查 |
+| 本机性能 | Release 测量标识产品版本 `2aa5bc0`，见[性能对比报告](../performance/index_CN.md)。Redis 协议性能使用 Valkey 8.0.11，与 Redis 7.4.2 正确性检查分开记录 |
+| 真实旧库对端，2026-10-13 | 两种依赖方案各完成 12 组进程场景、16 个会话、512 条消息及回显；独立归档证据 |
 | RUDP/FEC 实测负载 | 96 组配置、276 次测量、7,960,439 次成功消息往返；六组 120 秒持续运行 |
-| ark 整合 | [#38](https://github.com/OpenArkStudio/ark/pull/38) 完成直接替换与 C++20 升级；[#41](https://github.com/OpenArkStudio/ark/pull/41) 整理核心／官方插件；[#43](https://github.com/OpenArkStudio/ark/pull/43) 统一 snake_case 接口与风格；均已合并 |
-| ark 接收缓冲 | 分配优化及本机测量已在 [#42](https://github.com/OpenArkStudio/ark/pull/42) 合并；业务回归与部署验收仍单独进行 |
-| 生产部署 | 目标网络跨主机容量、生产时长耐久及部署访问控制待完成 |
+| ark 整合 | [#38](https://github.com/OpenArkStudio/ark/pull/38) 完成直接替换与 C++20 升级；[#41](https://github.com/OpenArkStudio/ark/pull/41) 整理核心／官方插件；[#43](https://github.com/OpenArkStudio/ark/pull/43) 统一 snake_case 接口与风格；[#42](https://github.com/OpenArkStudio/ark/pull/42) 调整接收缓冲；均已合并 |
+| ark 数据库开发层 | [#46](https://github.com/OpenArkStudio/ark/pull/46) 增加私有原生服务、Asio awaitable 和库提供的运行时，由模块线程驱动；[#49](https://github.com/OpenArkStudio/ark/pull/49) 增加独立回调／协程基准程序。正式数据库插件另行接入 |
+| 生产部署 | 目标网络跨主机容量、生产时长耐久、业务验收及部署访问控制待完成 |
 
-[测试与验证](testing_CN.md)记录完整检查和数据库结果。
+[测试与验证](testing_CN.md)记录配置、源码快照和 Sanitizer 限制。
+多个所有者同时完整停止的串行化保证限定于 TCP 服务端及其 HTTP／WebSocket／TLS 派生服务端，
+不扩大为所有协议的通用保证。宿主须先停止外部提交方，并在排空期间保持外部 context 的
+执行线程运行。本机结果不能证明动态库可安全卸载，也不能证明集群 PCU 容量。
+
 [RUDP/FEC 记录](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec)
 保留独立的互通专项证据。ark 直接替换已合并，业务行为与部署验收仍需使用对应负载测试。
 

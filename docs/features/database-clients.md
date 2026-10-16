@@ -70,7 +70,7 @@ Timeouts must be positive and representable by the monotonic clock. A zero Redis
 
 Results own their values. MySQL buffers rows within its configured result limits; it does not provide row streaming. Redis pipelines buffer their owned replies within the pipeline limit. Check field/value types before accessing them.
 
-Live-object completions run on the associated library IO lane and must not block or throw. An empty or moved-from lease has no executor and rejects inline with request ID 0. Capture application state with sufficient ownership through completion.
+Callbacks for accepted operations run on the associated library IO lane and must not block or throw. An empty or moved-from lease has no executor and rejects inline with request ID 0. Once `close_and_wait()` closes permanent admission, requests on live clients, pools and retained leases also invoke their rejection handlers synchronously on the caller. These later rejection handlers may propagate exceptions and are outside the earlier accepted-operation set. Capture application state with sufficient ownership through completion.
 
 `close()` asynchronously requests closure; its return is not a callback-drain barrier.
 Redis clients and both pools close terminally. A standalone MySQL connection can

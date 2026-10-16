@@ -3,9 +3,11 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -13,6 +15,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -101,7 +104,8 @@ class basic_pool;
 
 // One connection, one ordered request stream. No automatic reconnect or command replay.
 // close() is terminal; construct another client to connect again. Handlers must not throw.
-// All completions and pushes run on the connection IO lane, including rejected submissions.
+// Completions and pushes run on the connection IO lane, except synchronous
+// rejection after close_and_wait() closes the permanent submission gate.
 // Pub/Sub, replication, MONITOR and CLIENT REPLY OFF/SKIP require other response models and are rejected.
 template<class Transport>
 class basic_client
@@ -130,6 +134,7 @@ private:
     struct state : std::enable_shared_from_this<state>
     {
         client_options options;
+        const bool owns_runtime;
         std::shared_ptr<arknet::detail::io_pool> runtime;
         std::shared_ptr<Transport> transport;
         detail::resp_decoder decoder;
@@ -140,16 +145,25 @@ private:
         connect_options connection;
         std::atomic_bool ready{};
         std::atomic_bool close_requested{};
+        std::atomic_bool close_started{};
         std::atomic<request_id> next_id{1};
         bool started{};
         bool terminal{};
         std::mutex admission_mutex;
         std::size_t pending_commands{};
         std::size_t pending_bytes{};
+        std::mutex publishing_mutex;
+        std::condition_variable publishing_changed;
+        std::size_t publishers{};
+        bool terminating{};
+        bool terminated{};
+        std::thread::id finalizer;
+        std::exception_ptr shutdown_failure;
 
         explicit state(client_options configuration, const std::string& certificate_authority,
             std::shared_ptr<arknet::detail::io_pool> scheduler = {})
             : options(configuration)
+            , owns_runtime(!scheduler)
             , runtime(scheduler ? std::move(scheduler)
                                 : std::shared_ptr<arknet::detail::io_pool>(new arknet::detail::io_pool(1),
                                       [](arknet::detail::io_pool* pool) { arknet::detail::iopool_deleter{}(pool); }))
@@ -197,6 +211,55 @@ private:
             }
             transport->set_auto_reconnect(false);
         }
+
+        class publication
+        {
+            inline static thread_local publication* current_{};
+            state* owner_{};
+            publication* previous_{};
+
+        public:
+            explicit publication(state& owner) {
+                std::lock_guard lock(owner.publishing_mutex);
+                if (!owner.terminating)
+                {
+                    ++owner.publishers;
+                    owner_ = &owner;
+                    previous_ = current_;
+                    current_ = this;
+                }
+            }
+
+            publication(const publication&) = delete;
+            publication& operator=(const publication&) = delete;
+
+            ~publication() {
+                if (owner_)
+                {
+                    current_ = previous_;
+                    {
+                        std::lock_guard lock(owner_->publishing_mutex);
+                        --owner_->publishers;
+                    }
+                    owner_->publishing_changed.notify_all();
+                }
+            }
+
+            explicit operator bool() const noexcept {
+                return owner_ != nullptr;
+            }
+
+            static bool active_on_this_thread(const state& owner) noexcept {
+                for (auto* current = current_; current; current = current->previous_)
+                {
+                    if (current->owner_ == &owner)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
 
         auto executor() const {
             return transport->io().executor();
@@ -382,7 +445,18 @@ private:
         }
 
         void connected(arknet::error_code error) {
-            if (terminal || close_requested)
+            if (terminal)
+            {
+                // The transport connect event can finish after Redis shutdown
+                // closed an earlier socket. Retire that late-opened transport
+                // without completing the Redis request a second time.
+                arknet::error_code ignored;
+                transport->socket().cancel(ignored);
+                transport->socket().close(ignored);
+                transport->stop();
+                return;
+            }
+            if (close_requested)
             {
                 shutdown(client_errc::closed);
                 return;
@@ -717,7 +791,113 @@ private:
                 complete(operation, result{reason, error, std::move(operation->replies), operation->sent});
             }
         }
+
+        void request_close() {
+            if (!close_requested.exchange(true))
+            {
+                try
+                {
+                    asio::dispatch(executor(), [self = this->shared_from_this()] {
+                        self->close_started = true;
+                        self->shutdown(client_errc::closed);
+                    });
+                }
+                catch (...)
+                {
+                    // A failed allocation before actor entry did not close the
+                    // transport. Permit a later ordinary close() to retry.
+                    // Inline actor/user code may already have begun shutdown;
+                    // never roll back that externally visible transition.
+                    if (!close_started.load())
+                    {
+                        close_requested = false;
+                    }
+                    throw;
+                }
+            }
+        }
+
+        // Called only after the owned or borrowing pool runtime has joined.
+        // Keep its context alive until every socket/TLS/timer has retired.
+        void retire_context_resources() {
+            slots.clear();
+            connect_handler = {};
+            connect_timer.reset();
+            push = {};
+            decoder = detail::resp_decoder{};
+            connection = {};
+            options = {};
+            transport.reset();
+            std::lock_guard lock(publishing_mutex);
+            runtime.reset();
+        }
+
+        bool close_and_wait() {
+            {
+                std::unique_lock lock(publishing_mutex);
+                if (!owns_runtime || (runtime && runtime->running_in_threads()) ||
+                    publication::active_on_this_thread(*this) || finalizer == std::this_thread::get_id())
+                {
+                    arknet::set_last_error(asio::error::operation_not_supported);
+                    return false;
+                }
+                if (terminating)
+                {
+                    publishing_changed.wait(lock, [&] { return terminated || shutdown_failure; });
+                    if (shutdown_failure)
+                    {
+                        std::rethrow_exception(shutdown_failure);
+                    }
+                    arknet::clear_last_error();
+                    return true;
+                }
+                terminating = true;
+                finalizer = std::this_thread::get_id();
+                publishing_changed.wait(lock, [&] { return publishers == 0; });
+            }
+            try
+            {
+                // Every preceding API publication has enqueued its actor work.
+                // Join retires outer Asio handlers and captures as well as the
+                // visible protocol completion callback.
+                request_close();
+                auto scheduler = runtime;
+                scheduler->stop();
+
+                // Only the finalizer owns these resources after worker join.
+                // Keep the context alive until timers, sockets and TLS objects
+                // and all retained user callables have actually been destroyed.
+                retire_context_resources();
+                scheduler.reset();
+                {
+                    std::lock_guard lock(publishing_mutex);
+                    terminated = true;
+                    finalizer = {};
+                }
+                publishing_changed.notify_all();
+                arknet::clear_last_error();
+                return true;
+            }
+            catch (...)
+            {
+                {
+                    std::lock_guard lock(publishing_mutex);
+                    shutdown_failure = std::current_exception();
+                    finalizer = {};
+                }
+                publishing_changed.notify_all();
+                throw;
+            }
+        }
     };
+
+    static request_id reject_terminated(completion_handler handler) {
+        if (handler)
+        {
+            handler(result{client_errc::closed});
+        }
+        return 0;
+    }
 
 public:
     explicit basic_client(client_options options = {}, std::string certificate_authority = {})
@@ -734,6 +914,12 @@ public:
 
     void async_connect(connect_options options, completion_handler handler) {
         auto self = state_;
+        typename state::publication publishing(*self);
+        if (!publishing)
+        {
+            reject_terminated(std::move(handler));
+            return;
+        }
         const auto deadline =
             arknet::detail::checked_deadline(std::chrono::steady_clock::now(), self->options.connect_timeout);
         asio::post(
@@ -754,6 +940,12 @@ public:
 
     request_id async_execute(command arguments, completion_handler handler,
         std::chrono::milliseconds timeout = std::chrono::milliseconds::zero()) {
+        auto self = state_;
+        typename state::publication publishing(*self);
+        if (!publishing)
+        {
+            return reject_terminated(std::move(handler));
+        }
         std::vector<command> commands;
         commands.push_back(std::move(arguments));
         return async_pipeline(std::move(commands), std::move(handler), timeout);
@@ -762,6 +954,11 @@ public:
     request_id async_pipeline(std::vector<command> commands, completion_handler handler,
         std::chrono::milliseconds timeout = std::chrono::milliseconds::zero()) {
         auto self = state_;
+        typename state::publication publishing(*self);
+        if (!publishing)
+        {
+            return reject_terminated(std::move(handler));
+        }
         auto operation = std::make_shared<request>();
         operation->id = self->next_id.fetch_add(1, std::memory_order_relaxed);
         operation->commands = operation->remaining = commands.size();
@@ -817,6 +1014,11 @@ public:
     // Completes the caller without retracting a transport-queued write or replaying it.
     void cancel(request_id id) {
         auto self = state_;
+        typename state::publication publishing(*self);
+        if (!publishing)
+        {
+            return;
+        }
         asio::post(self->executor(), [self, id] {
             for (const auto& operation : self->slots)
             {
@@ -831,6 +1033,11 @@ public:
 
     void set_push_handler(push_handler handler) {
         auto self = state_;
+        typename state::publication publishing(*self);
+        if (!publishing)
+        {
+            return;
+        }
         asio::post(
             self->executor(), [self, handler = std::move(handler)]() mutable { self->push = std::move(handler); });
     }
@@ -841,10 +1048,25 @@ public:
 
     void close() {
         auto self = state_;
-        if (!self->close_requested.exchange(true))
+        typename state::publication publishing(*self);
+        if (publishing)
         {
-            asio::dispatch(self->executor(), [self] { self->shutdown(client_errc::closed); });
+            self->request_close();
         }
+    }
+
+    // Permanently closes an independent client, retires accepted callbacks and
+    // captures, joins its owned IO worker and destroys transport/TLS resources.
+    // Returns false with operation_not_supported on its own IO worker, during
+    // reentrant publication/finalization or for a pool-owned child; no permanent
+    // transition is made in those cases. Never hold locks needed by callbacks.
+    // After the gate closes, new commands/connects reject synchronously with
+    // closed and ID 0; those later handlers may propagate exceptions. Stop and
+    // wait for application callers separately. This is not a pool, process-wide
+    // cleanup or dynamic-library unload barrier.
+    bool close_and_wait() {
+        auto self = state_;
+        return self->close_and_wait();
     }
 
 private:
@@ -860,6 +1082,12 @@ private:
     // Its deadline covers the old replies and re-establishing protocol/authentication/database.
     void async_reset(completion_handler handler, std::chrono::milliseconds timeout) {
         auto self = state_;
+        typename state::publication publishing(*self);
+        if (!publishing)
+        {
+            reject_terminated(std::move(handler));
+            return;
+        }
         const auto deadline = arknet::detail::checked_deadline(std::chrono::steady_clock::now(), timeout);
         asio::post(self->executor(), [self, handler = std::move(handler), deadline]() mutable {
             if (!deadline)

@@ -5,8 +5,10 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstdint>
 #include <deque>
+#include <exception>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -15,6 +17,8 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -180,8 +184,10 @@ struct prepare_result
     }
 };
 
-// Completion handlers run exactly once on the library-owned IO lane and must
-// not throw. close() cancels a pending connect and can be called in its handler.
+// Accepted completion handlers run exactly once on the library-owned IO lane
+// and must not throw. Once permanent termination starts, new submissions reject
+// synchronously on their caller. close() cancels a pending connect and can be
+// called in its handler.
 // The connection itself may also be destroyed in a completion handler.
 class connection
 {
@@ -295,11 +301,21 @@ private:
             : deadline(executor) {}
     };
 
+    using statement_lifetime_list = std::vector<std::weak_ptr<prepared_statement::control>>;
+
     struct state : std::enable_shared_from_this<state>
     {
         // Destroyed last, after the resolver, timer and SSL stream.
         std::shared_ptr<arknet::detail::io_pool> pool;
         asio::any_io_executor executor;
+        const bool owns_runtime;
+        std::mutex publishing_mutex;
+        std::condition_variable publishing_changed;
+        std::size_t publishers = 0;
+        bool terminating = false;
+        bool terminated = false;
+        std::thread::id finalizer;
+        std::exception_ptr shutdown_failure;
 
         std::shared_ptr<attempt> current;
         std::atomic<std::uint64_t> generation{};
@@ -316,10 +332,61 @@ private:
         std::size_t admission_count_limit = 0;
         std::size_t admission_byte_limit = 0;
         std::unordered_map<std::uint32_t, std::weak_ptr<prepared_statement::control>> statements;
+        std::shared_ptr<statement_lifetime_list> statement_lifetimes = std::make_shared<statement_lifetime_list>();
 
-        explicit state(std::shared_ptr<arknet::detail::io_pool> runtime)
+        explicit state(std::shared_ptr<arknet::detail::io_pool> runtime, bool owned)
             : pool(std::move(runtime))
-            , executor(pool->get()->executor()) {}
+            , executor(pool->get()->executor())
+            , owns_runtime(owned) {}
+
+        class publication
+        {
+            inline static thread_local publication* current_{};
+            state* owner_{};
+            publication* previous_{};
+
+        public:
+            explicit publication(state& owner) {
+                std::lock_guard lock(owner.publishing_mutex);
+                if (!owner.terminating)
+                {
+                    ++owner.publishers;
+                    owner_ = &owner;
+                    previous_ = current_;
+                    current_ = this;
+                }
+            }
+
+            publication(const publication&) = delete;
+            publication& operator=(const publication&) = delete;
+
+            ~publication() {
+                if (owner_)
+                {
+                    current_ = previous_;
+                    {
+                        std::lock_guard lock(owner_->publishing_mutex);
+                        --owner_->publishers;
+                    }
+                    owner_->publishing_changed.notify_all();
+                }
+            }
+
+            explicit operator bool() const noexcept {
+                return owner_ != nullptr;
+            }
+
+            static bool active_on_this_thread(const state& owner) noexcept {
+                for (auto* current = current_; current; current = current->previous_)
+                {
+                    if (current->owner_ == &owner)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
 
         bool active(const std::shared_ptr<attempt>& operation) const noexcept {
             return current == operation && !operation->completed && operation->generation == generation.load();
@@ -1121,10 +1188,16 @@ private:
             record->cleanup = [weak = weak_from_this(), id, epoch, version] {
                 if (auto self = weak.lock())
                 {
-                    asio::post(self->executor,
-                        [self, id, epoch, version] { self->automatic_statement_close(id, epoch, version); });
+                    publication publishing(*self);
+                    if (publishing)
+                    {
+                        asio::post(self->executor,
+                            [self, id, epoch, version] { self->automatic_statement_close(id, epoch, version); });
+                    }
                 }
             };
+            std::erase_if(*statement_lifetimes, [](const auto& weak) { return weak.expired(); });
+            statement_lifetimes->push_back(record);
             complete_command(operation, {});
         }
 
@@ -1620,9 +1693,110 @@ private:
                 }
             });
         }
+
+        static void retire_statements(statement_lifetime_list& lifetimes) {
+            for (auto& weak : lifetimes)
+            {
+                if (auto statement = weak.lock())
+                {
+                    statement->closed = true;
+                    statement->cleanup = {};
+                }
+            }
+            lifetimes.clear();
+        }
+
+        // Only after the owning runtime has joined. A pool also retains the
+        // weak statement catalog when this child state expires before it.
+        void retire_context_resources() {
+            retire_statements(*statement_lifetimes);
+            statements.clear();
+            current.reset();
+            pending.clear();
+            active_command.reset();
+            executor = {};
+            std::lock_guard lock(publishing_mutex);
+            pool.reset();
+        }
+
+        bool close_and_wait() {
+            {
+                std::unique_lock lock(publishing_mutex);
+                if (!owns_runtime || (pool && pool->running_in_threads()) ||
+                    publication::active_on_this_thread(*this) || finalizer == std::this_thread::get_id())
+                {
+                    arknet::set_last_error(asio::error::operation_not_supported);
+                    return false;
+                }
+                if (terminating)
+                {
+                    publishing_changed.wait(lock, [&] { return terminated || shutdown_failure; });
+                    if (shutdown_failure)
+                    {
+                        std::rethrow_exception(shutdown_failure);
+                    }
+                    arknet::clear_last_error();
+                    return true;
+                }
+                terminating = true;
+                finalizer = std::this_thread::get_id();
+                publishing_changed.wait(lock, [&] { return publishers == 0; });
+            }
+            try
+            {
+                // All API publications preceding the gate are now enqueued.
+                // The actor cancels protocol IO; worker join retires the outer
+                // Asio handlers and their captures, beyond the actor callback.
+                request_close();
+                auto runtime = pool;
+                runtime->stop();
+
+                retire_context_resources();
+                // Destroy the owned context on this non-IO thread, before
+                // announcing success to other waiters.
+                runtime.reset();
+                {
+                    std::lock_guard lock(publishing_mutex);
+                    terminated = true;
+                    finalizer = {};
+                }
+                publishing_changed.notify_all();
+                arknet::clear_last_error();
+                return true;
+            }
+            catch (...)
+            {
+                {
+                    std::lock_guard lock(publishing_mutex);
+                    shutdown_failure = std::current_exception();
+                    finalizer = {};
+                }
+                publishing_changed.notify_all();
+                throw;
+            }
+        }
     };
 
     std::shared_ptr<state> state_;
+
+    template<class Result, class Handler>
+    static request_id reject_terminated(Handler handler) {
+        if (handler)
+        {
+            Result result;
+            auto error = state::failure(connection_errc::not_connected, "MySQL connection permanently closed");
+            if constexpr (std::is_same_v<Result, connection_result>)
+            {
+                result = std::move(error);
+            }
+            else
+            {
+                result.status = std::move(error);
+            }
+            handler(std::move(result));
+        }
+        return 0;
+    }
 
     std::shared_ptr<command> make_command(command_kind kind, query_options options) {
         auto operation = std::make_shared<command>(state_->executor);
@@ -1673,8 +1847,8 @@ private:
         return id;
     }
 
-    explicit connection(std::shared_ptr<arknet::detail::io_pool> runtime)
-        : state_(std::make_shared<state>(std::move(runtime))) {
+    explicit connection(std::shared_ptr<arknet::detail::io_pool> runtime, bool owned = false)
+        : state_(std::make_shared<state>(std::move(runtime), owned)) {
         if (!state_->pool->start())
         {
             throw std::runtime_error("Cannot start MySQL IO runtime");
@@ -1684,7 +1858,8 @@ private:
 public:
     connection()
         : connection(std::shared_ptr<arknet::detail::io_pool>(
-              new arknet::detail::io_pool(1), arknet::detail::iopool_deleter{})) {}
+                         new arknet::detail::io_pool(1), arknet::detail::iopool_deleter{}),
+              true) {}
 
     connection(const connection&) = delete;
     connection& operator=(const connection&) = delete;
@@ -1698,6 +1873,12 @@ public:
     void async_connect(connect_options options, connect_handler handler) {
         // A completion on another thread may destroy the facade before post returns.
         const auto self = state_;
+        state::publication publishing(*self);
+        if (!publishing)
+        {
+            reject_terminated<connection_result>(std::move(handler));
+            return;
+        }
         const auto epoch = self->generation.load();
         asio::post(self->executor, [self, options = std::move(options), handler = std::move(handler), epoch]() mutable {
             self->start(std::move(options), std::move(handler), epoch);
@@ -1708,6 +1889,12 @@ public:
     // Cancelling a sent request closes the connection; the server may already
     // have executed it (status.outcome_unknown). Requests are never replayed.
     request_id async_query(std::string sql, query_handler handler, query_options options = {}) {
+        const auto self = state_;
+        state::publication publishing(*self);
+        if (!publishing)
+        {
+            return reject_terminated<query_result>(std::move(handler));
+        }
         auto operation = make_command(command_kind::query, options);
         operation->query_completion = std::move(handler);
         const auto encoded = detail::encode_query(sql, operation->request);
@@ -1715,6 +1902,12 @@ public:
     }
 
     request_id async_prepare(std::string sql, prepare_handler handler, query_options options = {}) {
+        const auto self = state_;
+        state::publication publishing(*self);
+        if (!publishing)
+        {
+            return reject_terminated<prepare_result>(std::move(handler));
+        }
         auto operation = make_command(command_kind::prepare, options);
         operation->prepare_completion = std::move(handler);
         const auto encoded = detail::encode_prepare(sql, operation->request);
@@ -1723,6 +1916,12 @@ public:
 
     request_id async_execute(const prepared_statement& statement, std::vector<field_value> parameters,
         query_handler handler, query_options options = {}) {
+        const auto self = state_;
+        state::publication publishing(*self);
+        if (!publishing)
+        {
+            return reject_terminated<query_result>(std::move(handler));
+        }
         auto operation = make_command(command_kind::execute, options);
         operation->statement = statement.control_;
         operation->parameters = std::move(parameters);
@@ -1732,6 +1931,12 @@ public:
 
     request_id async_close(
         const prepared_statement& statement, result_handler handler = {}, query_options options = {}) {
+        const auto self = state_;
+        state::publication publishing(*self);
+        if (!publishing)
+        {
+            return reject_terminated<connection_result>(std::move(handler));
+        }
         auto operation = make_command(command_kind::close_statement, options);
         operation->statement = statement.control_;
         operation->result_completion = std::move(handler);
@@ -1755,6 +1960,12 @@ public:
     // COM_RESET_CONNECTION performs a real server-side session reset. Success
     // invalidates all prepared handles and releases transaction/session state.
     request_id async_reset(result_handler handler, query_options options = {}) {
+        const auto self = state_;
+        state::publication publishing(*self);
+        if (!publishing)
+        {
+            return reject_terminated<connection_result>(std::move(handler));
+        }
         auto operation = make_command(command_kind::reset, options);
         operation->request.assign(1, '\x1f');
         operation->result_completion = std::move(handler);
@@ -1763,12 +1974,34 @@ public:
 
     void cancel(request_id id) {
         const auto self = state_;
+        state::publication publishing(*self);
+        if (!publishing)
+        {
+            return;
+        }
         asio::post(self->executor, [self, id] { self->cancel_command(id); });
     }
 
     void close() {
         const auto self = state_;
-        self->request_close();
+        state::publication publishing(*self);
+        if (publishing)
+        {
+            self->request_close();
+        }
+    }
+
+    // Permanently closes an independent connection and joins its owned IO
+    // worker. The caller must not be any library IO worker or hold locks needed
+    // by callbacks. On this connection's worker (or a pool-owned child), returns
+    // false with operation_not_supported and leaves ordinary close() available.
+    // After termination, new submissions complete synchronously with
+    // not_connected, returning ID 0; those handlers may propagate exceptions.
+    // Stop and wait for application callers before unloading their code. This
+    // method is not a pool, process cleanup worker or DSO-unload barrier.
+    bool close_and_wait() {
+        const auto self = state_;
+        return self->close_and_wait();
     }
 
     bool is_open() const noexcept {

@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <future>
 #include <iomanip>
 #include <iostream>
@@ -696,87 +697,90 @@ void benchmark(const options& settings, const std::shared_ptr<context>& owner) {
     std::vector<std::shared_ptr<client_state<Client>>> states;
     clients.reserve(settings.clients);
     states.reserve(settings.clients);
-    if constexpr (!Framed && !WebSocket && !Http)
+    std::exception_ptr failure;
+    try
     {
-        owner->client_buffers.resize(settings.clients);
-        server.bind_init(
-            [&server, owner, receive_buffer = static_cast<int>(settings.udp_server_receive_buffer)]() noexcept {
-                owner->server_buffers = configure_udp(server.acceptor(), owner, receive_buffer);
-            });
-    }
-    if constexpr (Secure)
-    {
-        server.set_cert_file("", settings.certs + "/server.pem", settings.certs + "/server-key.pem", "");
-        if (arknet::get_last_error())
+        if constexpr (!Framed && !WebSocket && !Http)
         {
-            throw std::runtime_error("server certificate loading failed");
+            owner->client_buffers.resize(settings.clients);
+            server.bind_init(
+                [&server, owner, receive_buffer = static_cast<int>(settings.udp_server_receive_buffer)]() noexcept {
+                    owner->server_buffers = configure_udp(server.acceptor(), owner, receive_buffer);
+                });
         }
-    }
-    if constexpr (Framed || WebSocket || Http)
-    {
-        server.bind_connect([owner](auto& session) noexcept {
-            session->set_no_delay(true);
+        if constexpr (Secure)
+        {
+            server.set_cert_file("", settings.certs + "/server.pem", settings.certs + "/server-key.pem", "");
             if (arknet::get_last_error())
             {
-                ++owner->phases[0]->callback_exceptions;
+                throw std::runtime_error("server certificate loading failed");
             }
-        });
-    }
-    server.bind_recv([owner, work = settings.work](auto& session, const auto& incoming) noexcept {
-        const std::string_view message = [&]() -> std::string_view {
-            if constexpr (Http)
+        }
+        if constexpr (Framed || WebSocket || Http)
+        {
+            server.bind_connect([owner](auto& session) noexcept {
+                session->set_no_delay(true);
+                if (arknet::get_last_error())
+                {
+                    ++owner->phases[0]->callback_exceptions;
+                }
+            });
+        }
+        server.bind_recv([owner, work = settings.work](auto& session, const auto& incoming) noexcept {
+            const std::string_view message = [&]() -> std::string_view {
+                if constexpr (Http)
+                {
+                    return incoming.body();
+                }
+                else
+                {
+                    return incoming;
+                }
+            }();
+            const auto tag = message.size() >= 16 ? static_cast<unsigned char>(message[3]) : 2;
+            const auto state = owner->phases[tag < 2 ? tag : 0];
+            try
             {
-                return incoming.body();
+                if (tag > 1 || message.substr(0, 3) != "ANB")
+                {
+                    ++state->content_errors;
+                    return;
+                }
+                ++state->server_received;
+                if constexpr (WebSocket)
+                {
+                    session->ws_stream().binary(true);
+                }
+                benchmark_work(work, message);
+                auto payload = std::make_shared<const std::string>(message);
+                owned_send(*session, payload, state, true);
+            }
+            catch (...)
+            { ++state->callback_exceptions; }
+        });
+        const auto host = settings.address_family == "ipv6" ? "::1" : "127.0.0.1";
+        const bool listening = [&] {
+            if constexpr (Framed)
+            {
+                return server.start(host, 0, arknet::use_dgram);
             }
             else
             {
-                return incoming;
+                return server.start(host, 0);
             }
         }();
-        const auto tag = message.size() >= 16 ? static_cast<unsigned char>(message[3]) : 2;
-        const auto state = owner->phases[tag < 2 ? tag : 0];
-        try
+        if (!listening)
         {
-            if (tag > 1 || message.substr(0, 3) != "ANB")
-            {
-                ++state->content_errors;
-                return;
-            }
-            ++state->server_received;
-            if constexpr (WebSocket)
-            {
-                session->ws_stream().binary(true);
-            }
-            benchmark_work(work, message);
-            auto payload = std::make_shared<const std::string>(message);
-            owned_send(*session, payload, state, true);
+            throw std::runtime_error("server start failed: " + arknet::get_last_error().message());
         }
-        catch (...)
-        { ++state->callback_exceptions; }
-    });
-    const auto host = settings.address_family == "ipv6" ? "::1" : "127.0.0.1";
-    const bool listening = [&] {
-        if constexpr (Framed)
-        {
-            return server.start(host, 0, arknet::use_dgram);
-        }
-        else
-        {
-            return server.start(host, 0);
-        }
-    }();
-    if (!listening)
-    {
-        throw std::runtime_error("server start failed: " + arknet::get_last_error().message());
-    }
-    try
-    {
         for (std::size_t i = 0; i < settings.clients; ++i)
         {
-            auto client = runtime ? std::make_unique<Client>(1024, 128 * 1024, runtime->context_at(i))
-                                  : std::make_unique<Client>(1024, 128 * 1024, 1);
+            clients.push_back(runtime ? std::make_unique<Client>(1024, 128 * 1024, runtime->context_at(i))
+                                      : std::make_unique<Client>(1024, 128 * 1024, 1));
+            auto& client = clients.back();
             auto state =
                 std::make_shared<client_state<Client>>(*client, owner, settings, static_cast<std::uint32_t>(i));
+            states.push_back(state);
             client->set_auto_reconnect(false);
             client->set_connect_timeout(std::chrono::seconds(10));
             if constexpr (!Framed && !WebSocket && !Http)
@@ -834,37 +838,36 @@ void benchmark(const options& settings, const std::shared_ptr<context>& owner) {
             }
             if constexpr (!Framed && !WebSocket && !Http)
             {
-                for (const auto& previous : clients)
+                for (std::size_t previous = 0; previous < i; ++previous)
                 {
-                    if (previous->get_local_port() == client->get_local_port())
+                    if (clients[previous]->get_local_port() == client->get_local_port())
                     {
                         throw std::runtime_error("UDP clients share local endpoint " + std::string(host) + ':' +
                                                  std::to_string(client->get_local_port()));
                     }
                 }
             }
-            clients.push_back(std::move(client));
-            states.push_back(std::move(state));
         }
         run_phase(states, owner->phases[0], settings.warmup);
         run_phase(states, owner->phases[1], settings.seconds);
     }
     catch (...)
-    {
-        owner->closing = true;
-        for (auto& client : clients)
-        {
-            client->stop();
-        }
-        server.stop();
-        throw;
-    }
+    { failure = std::current_exception(); }
     owner->closing = true;
     for (auto& client : clients)
     {
         client->stop();
     }
     server.stop();
+    if (runtime)
+    {
+        // Keep endpoints and their captures alive until the borrowed contexts finish all callbacks.
+        runtime->stop();
+    }
+    if (failure)
+    {
+        std::rethrow_exception(failure);
+    }
 }
 
 std::string quoted(std::string_view value) {

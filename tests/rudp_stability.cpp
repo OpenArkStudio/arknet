@@ -101,6 +101,31 @@ private:
     asio::ip::udp::socket socket_;
 };
 
+struct observed_rudp_server : arknet::rudp_server_impl_t<observed_rudp_server>
+{
+    using base = arknet::rudp_server_impl_t<observed_rudp_server>;
+    using base::base;
+
+    std::size_t received_datagrams{};
+
+    template<class Condition>
+    void _handle_recv(const arknet::error_code& error, std::size_t count,
+        std::shared_ptr<observed_rudp_server> lifetime, std::shared_ptr<arknet::detail::ecs_t<Condition>> condition) {
+        received_datagrams += !error;
+        base::_handle_recv(error, count, std::move(lifetime), std::move(condition));
+    }
+};
+
+template<class Server>
+std::uint32_t wait_for_ack(polled_server_t<Server>& runtime, raw_peer& peer, std::uint32_t sync) {
+    std::optional<std::uint32_t> conversation;
+    runtime.until([&] {
+        conversation = peer.acknowledged(sync);
+        return conversation.has_value();
+    });
+    return *conversation;
+}
+
 std::string arq_message(std::uint32_t conversation) {
     arknet::arq::control_block core(conversation);
     std::string packet;
@@ -126,7 +151,7 @@ DOCTEST_TEST_CASE("Silence duration is independent of wall clock changes") {
 }
 
 DOCTEST_TEST_CASE("RUDP admission is bounded and freed sessions admit new peers") {
-    polled_server runtime;
+    polled_server_t<observed_rudp_server> runtime;
     unsigned handshakes{};
     runtime.server.bind_handshake([&](auto&, arknet::error_code error) { handshakes += !error; });
     DOCTEST_CHECK(runtime.server.get_max_sessions() == 1024);
@@ -139,32 +164,47 @@ DOCTEST_TEST_CASE("RUDP admission is bounded and freed sessions admit new peers"
     for (unsigned i = 0; i < 8; ++i)
     {
         peers.push_back(std::make_unique<raw_peer>(runtime.server.acceptor().local_endpoint()));
-        peers.back()->send(arknet::detail::rudp_control(1, i + 1));
     }
-    runtime.pump(20ms);
+    // Queue both handshakes before polling, then observe their ACKs rather than
+    // assuming a fixed run_for budget processed every receive and send.
+    peers[0]->send(arknet::detail::rudp_control(1, 1));
+    peers[1]->send(arknet::detail::rudp_control(1, 2));
+    const auto first = wait_for_ack(runtime, *peers[0], 1);
+    const auto second = wait_for_ack(runtime, *peers[1], 2);
     DOCTEST_CHECK(runtime.server.get_session_count() == 2);
     DOCTEST_CHECK(handshakes == 2);
-    const auto first = peers[0]->acknowledged(1);
-    const auto second = peers[1]->acknowledged(2);
-    check(first && second, "first two peers complete handshake");
+    DOCTEST_CHECK(first != second);
+    const auto first_session = runtime.server.find_session(peers[0]->endpoint());
+    const auto second_session = runtime.server.find_session(peers[1]->endpoint());
+    check(first_session && second_session, "both peer endpoints have admitted sessions");
+    DOCTEST_CHECK(first_session->conversation() == first);
+    DOCTEST_CHECK(second_session->conversation() == second);
+    for (unsigned i = 2; i < peers.size(); ++i)
+    {
+        peers[i]->send(arknet::detail::rudp_control(1, i + 1));
+    }
+    // A missing ACK proves rejection only after every excess SYN was handled.
+    runtime.until([&] { return runtime.server.received_datagrams == peers.size(); });
+    DOCTEST_CHECK(runtime.server.get_session_count() == 2);
+    DOCTEST_CHECK(handshakes == 2);
     for (unsigned i = 2; i < peers.size(); ++i)
     {
         DOCTEST_CHECK_FALSE(peers[i]->acknowledged(i + 1).has_value());
     }
     peers[1]->send(arknet::detail::rudp_control(1, 2));
-    runtime.pump();
-    DOCTEST_CHECK(peers[1]->acknowledged(2) == second);
+    DOCTEST_CHECK(wait_for_ack(runtime, *peers[1], 2) == second);
     DOCTEST_CHECK(handshakes == 2);
-    peers[0]->send(arknet::detail::rudp_control(3, 1, *first));
-    runtime.pump();
+    peers[0]->send(arknet::detail::rudp_control(3, 1, first));
+    runtime.until([&] { return runtime.server.get_session_count() == 1; });
     DOCTEST_CHECK(runtime.server.get_session_count() == 1);
     peers[2]->send(arknet::detail::rudp_control(1, 3));
-    runtime.pump();
-    DOCTEST_CHECK(peers[2]->acknowledged(3).has_value());
+    const auto replacement = wait_for_ack(runtime, *peers[2], 3);
+    DOCTEST_CHECK(replacement != first);
+    DOCTEST_CHECK(replacement != second);
     DOCTEST_CHECK(runtime.server.get_session_count() == 2);
     DOCTEST_CHECK(handshakes == 3);
     asio::post(runtime.context, [&] { runtime.server.stop(); });
-    runtime.pump(200ms);
+    runtime.until([&] { return runtime.server.is_stopped(); });
     check(runtime.server.is_stopped(), "bounded server stops and drains all sessions");
     runtime.server.set_max_sessions(3);
     DOCTEST_CHECK(runtime.server.get_max_sessions() == 3);
@@ -212,10 +252,12 @@ DOCTEST_TEST_CASE("RUDP invalid traffic cannot postpone the silence timeout") {
     for (unsigned mode = 0; mode < 4; ++mode)
     {
         DOCTEST_INFO(mode);
-        polled_server runtime;
         unsigned disconnected{};
         arknet::rudp_session* original{};
         arknet::error_code disconnect_error;
+        // Runtime teardown may disconnect a replacement admitted by a queued
+        // SYN; its callback state must remain alive until that teardown finishes.
+        polled_server runtime;
         runtime.server.bind_connect([](auto& session) { session->set_silence_timeout(60ms); });
         runtime.server.bind_disconnect([&](auto& session) {
             if (session.get() == original)

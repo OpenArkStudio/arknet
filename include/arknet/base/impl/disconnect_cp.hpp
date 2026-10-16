@@ -85,10 +85,11 @@ protected:
         auto& object = static_cast<Derived&>(*this);
         timer->timer.expires_after(object.get_disconnect_timeout());
         auto* operation = &timer->timer;
-        operation->async_wait([&object, error, owner = std::move(owner), chain = std::move(chain),
-                                  timer = std::move(timer)](const error_code& failure) mutable {
-            object._handle_readend_timer(failure, error, std::move(owner), std::move(chain), std::move(timer));
-        });
+        operation->async_wait(
+            object._track_async_operation([&object, error, owner = std::move(owner), chain = std::move(chain),
+                                              timer = std::move(timer)](const error_code& failure) mutable {
+                object._handle_readend_timer(failure, error, std::move(owner), std::move(chain), std::move(timer));
+            }));
     }
 
     template<class Chain>

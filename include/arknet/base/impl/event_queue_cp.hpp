@@ -317,7 +317,7 @@ protected:
 #ifndef ARKNET_STRONG_EVENT_ORDER
         if (object.io_->running_in_this_thread())
         {
-            enqueue(std::forward<Callable>(callable));
+            enqueue(object._track_async_operation(std::forward<Callable>(callable)));
             return object;
         }
 #endif
@@ -329,9 +329,9 @@ protected:
         auto& object = static_cast<Derived&>(*this);
         asio::post(object.io_->executor(),
             make_allocator(object.wallocator(),
-                [this, owner = object.selfptr(), callback = std::forward<Callable>(callable)]() mutable {
-                    enqueue(std::move(callback));
-                }));
+                object._track_async_operation([this, owner = object.selfptr(),
+                                                  callback = object._track_async_operation(std::forward<Callable>(
+                                                      callable))]() mutable { enqueue(std::move(callback)); })));
         return object;
     }
 
@@ -342,21 +342,25 @@ protected:
         {
             return push_event(std::forward<Callable>(callable));
         }
-        asio::dispatch(object.io_->executor(),
-            make_allocator(
-                object.wallocator(), [callback = std::forward<Callable>(callable), guard = std::move(guard)]() mutable {
-                    callback(std::move(guard));
-                }));
+        asio::dispatch(
+            object.io_->executor(), make_allocator(object.wallocator(),
+                                        object._track_async_operation(
+                                            [callback = std::forward<Callable>(callable),
+                                                guard = std::move(guard)]() mutable { callback(std::move(guard)); })));
         return object;
     }
 
     template<class = void>
     Derived& next_event(event_queue_guard<Derived> guard) {
         auto& object = static_cast<Derived&>(*this);
+        // Popping the event may release its last token while pump still uses
+        // the endpoint, including when an external guard returns on this lane.
+        auto pending = object._track_async_operation([] {});
         if (!object.io_->running_in_this_thread())
         {
-            asio::post(
-                object.io_->executor(), [this, guard = std::move(guard)]() mutable { next_event(std::move(guard)); });
+            asio::post(object.io_->executor(),
+                object._track_async_operation(
+                    [this, guard = std::move(guard)]() mutable { next_event(std::move(guard)); }));
             return object;
         }
         guard.valid_ = false;

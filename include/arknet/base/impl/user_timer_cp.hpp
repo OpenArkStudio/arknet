@@ -111,6 +111,7 @@ private:
     struct operation_state
     {
         std::atomic_bool alive{true};
+        std::atomic_bool accepting{true};
         std::shared_ptr<std::atomic_size_t> pending = std::make_shared<std::atomic_size_t>(0);
         user_timer_map timers;
     };
@@ -169,11 +170,20 @@ public:
             return;
         }
         auto& object = static_cast<Derived&>(*this);
+        if (!timers_->accepting.load(std::memory_order_acquire))
+        {
+            set_last_error(asio::error::operation_aborted);
+            return;
+        }
         object.post(
             [state = timers_, lane = object.io_, owner = object.selfptr(),
                 key = user_timer_handle(std::forward<Key>(key)), period = to_steady_duration(interval),
                 first = to_steady_duration(first), count = std::size_t(repeat),
                 callback = std::bind_front(std::forward<Function>(function), std::forward<Bound>(bound)...)]() mutable {
+                if (!state->accepting.load(std::memory_order_acquire))
+                {
+                    return;
+                }
                 cancel(state, key);
                 auto timer = std::make_shared<user_timer_obj>(key, lane->executor());
                 timer->interval = period;
@@ -234,6 +244,10 @@ public:
     }
 
 protected:
+    void _set_user_timer_acceptance(bool accepting) {
+        timers_->accepting.store(accepting, std::memory_order_release);
+    }
+
     void _dispatch_stop_all_timers() {
         cancel_all<true>();
     }
