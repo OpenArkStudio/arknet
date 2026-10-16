@@ -788,16 +788,16 @@ private:
             terminal = true;
             ready = false;
             cancel_timer(connect_timer);
-            auto pending = std::move(slots);
-            slots.clear();
             cleanup_transport();
             auto connecting = std::exchange(connect_handler, {});
             if (connecting)
             {
                 connecting(result{reason, error});
             }
-            for (const auto& operation : pending)
+            while (!slots.empty())
             {
+                auto operation = std::move(slots.front());
+                slots.pop_front();
                 release(operation);
                 cancel_timer(operation->timer);
                 operation->remaining = 0;
