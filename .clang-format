@@ -65,7 +65,10 @@ IncludeCategories:
   - Regex: '^["<](vendor/|asio([/.]|>)|boost/|openssl/|spdlog/|doctest/)'
     Priority: 2
     SortPriority: 3
-  # Windows SDK headers such as psapi.h require windows.h first.
+  # Winsock2 must precede windows.h, which must precede SDK headers such as psapi.h.
+  - Regex: '^<winsock2\.h>$'
+    Priority: 1
+    SortPriority: -1
   - Regex: '^<windows\.h>$'
     Priority: 1
     SortPriority: 1
