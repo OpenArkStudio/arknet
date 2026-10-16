@@ -24,9 +24,11 @@
 
 #ifdef _WIN32
 #include <windows.h>
+
 #else
 #include <signal.h>
 #include <unistd.h>
+
 #endif
 
 #include <arknet/base/io_pool.hpp>
