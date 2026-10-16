@@ -1,5 +1,7 @@
 # arknet
 
+[![Merge queue checks](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml/badge.svg?event=merge_group)](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml?query=event%3Amerge_group)
+
 [中文](README_CN.md)
 
 arknet is a general-purpose C++20, header-only networking library maintained by OpenArkStudio.

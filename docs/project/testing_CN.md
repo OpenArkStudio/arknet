@@ -213,8 +213,15 @@ ASan/UBSan 与 TSan 使用独立构建。它们会增加运行开销，发布的
 ## CI 与未覆盖范围
 
 CI 在 Linux／macOS／Windows 检查两种依赖方案，Linux 另运行 ASan/UBSan 和 TSan。
-Job 名称包含系统、依赖方案、TLS 和检查模式。main push 与 PR 使用独立触发，
-过期运行会取消。CI 上传测试日志、执行基准冒烟，不生成性能报告矩阵。
+Job 名称包含系统、依赖方案、TLS 和检查模式。PR、合并队列候选和手动触发均运行完整
+14 项检查。PR 源分支通过，不代表包含最新 main 和前序队列改动的候选已经通过。
+候选合入 main 后，不重复运行同一套矩阵。README 徽章展示合并队列运行结果。
+
+运行保留现有的 PR 或 ref 并发组。新运行不会取消同组内正在执行的运行，而是等待并发组。
+GitHub 仍可能替换同组较早的待执行运行，因此这个设置不保证每次 push 都按 FIFO 顺序保留，
+详见 [GitHub 并发规则](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)。
+候选的必需检查仍须全部通过。文档发布继续使用独立的 main push 工作流。
+CI 上传测试日志、执行基准冒烟；性能报告矩阵来自本机测量。
 
 本机 RUDP 测量覆盖随机／突发丢包、延迟、重复与乱序，并包含六组 120 秒持续运行。
 这些结果不能预测跨主机容量和广域网延迟。文件描述符耗尽、生产时长耐久及

@@ -1,5 +1,7 @@
 # arknet
 
+[![合并队列检查](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml/badge.svg?event=merge_group)](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml?query=event%3Amerge_group)
+
 [English](README.md)
 
 arknet 是 OpenArkStudio 维护的通用 C++20 header-only 网络库。

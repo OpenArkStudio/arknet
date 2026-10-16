@@ -242,10 +242,19 @@ and thread schedules exercised; it does not prove that all errors are absent.
 ## CI and Remaining Coverage
 
 CI checks Linux/macOS/Windows with both dependency configurations; Linux also runs
-ASan/UBSan and TSan. Job names include OS, provider, TLS and check mode.
-Main pushes and PRs are separate triggers; outdated runs are canceled.
-CI uploads test logs and runs benchmark smoke checks, not a performance
-report matrix.
+ASan/UBSan and TSan. Job names include OS, dependency, TLS and check mode.
+The full 14 checks run for pull requests, merge-queue candidates and manual
+dispatches. A successful PR head does not validate the queue candidate containing
+the latest main and preceding queued changes. CI does not repeat the same matrix
+after the candidate is merged into main. The README badge shows merge-queue runs.
+
+Runs keep the existing per-PR or ref concurrency group. A new run does not cancel
+the active run in that group; it waits for the group. GitHub may replace an older
+pending run in the same group, so this setting is not a FIFO history of every push
+([GitHub concurrency rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)).
+Required checks on the candidate still need to succeed. Documentation publishing
+keeps its separate main-push workflow. CI uploads test logs and runs benchmark
+smoke checks; performance report matrices come from local measurements.
 
 Local RUDP measurements cover random/burst loss, delay, duplication and
 reordering, with six 120-second sustained runs. They cannot predict cross-host
