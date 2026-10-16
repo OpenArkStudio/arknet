@@ -20,10 +20,13 @@ branch or worktree when the existing checkout contains uncommitted changes.
   independently reviewable work instead of accumulating unrelated modifications.
 - All changes to `main` go through a PR. Do not push directly, force-push or delete
   `main`, bypass branch protection, or rewrite already merged history.
-- Merge with squash only after the current head, synchronized with `main`, passes
-  every required CI check and review conversations are resolved. Another
-  maintainer's approval is not currently mandatory. The authorized policy is to
-  merge eligible PRs without asking for confirmation again.
+- Use squash only after every required CI check passes and review conversations
+  are resolved. Outside the merge queue, synchronize the PR head with `main`
+  before acceptance. With the merge queue enabled, validate the queue candidate
+  containing the latest `main` and preceding queued changes; a green PR head alone
+  does not validate that combination. Add eligible PRs to the queue promptly.
+  Another maintainer's approval is not currently mandatory. Merge eligible PRs
+  without asking for confirmation again.
 - Explicitly set the squash commit subject to the Conventional Commit PR title.
   Replace GitHub's generated commit-list body with a concise change description;
   do not copy intermediate commit subjects into release notes.
