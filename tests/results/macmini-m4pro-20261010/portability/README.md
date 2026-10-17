@@ -9,14 +9,14 @@ GCC builds use Homebrew GCC 15.2.0 with libstdc++.
 
 | Configuration | Checks / cases | Result | Log |
 | --- | ---: | --- | --- |
-| Clang, standalone, Release, TLS | 41 / 133 | Passed, exit 0 | [Full check](arknet-format-standalone.log) |
-| Clang, Boost, Release, TLS | 41 / 133 | Passed, exit 0 | [Full check](arknet-format-boost.log) |
-| Clang, standalone, Debug, ASan/UBSan, TLS | 16 / 133 | Passed, exit 0 | [Full check](arknet-format-asan.log) |
-| Clang, standalone, Debug, TSan, TLS | 16 / 133 | Passed, exit 0 | [Full check](arknet-format-tsan.log) |
-| GCC, standalone, NoTLS, lifecycle | 1 / 18 | Passed, exit 0 | [Lifecycle](arknet-lifecycle-gcc-after.log) |
-| GCC, standalone, NoTLS, TCP | 1 / 5 | Passed, exit 0 | [TCP](arknet-ci-fix-gcc-tcp.log) |
-| GCC, standalone, NoTLS, detail | 1 / 11 | Passed, exit 0 | [Detail](arknet-ci-fix-gcc-detail.log) |
-| GCC, standalone, NoTLS, IO pool | 1 / 6 | Passed, exit 0 | [IO pool](arknet-ci-fix-gcc-io_pool.log) |
+| Clang, standalone, Release, TLS | 41 / 133 | Passed, exit 0 | [Full check](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-format-standalone.log) |
+| Clang, Boost, Release, TLS | 41 / 133 | Passed, exit 0 | [Full check](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-format-boost.log) |
+| Clang, standalone, Debug, ASan/UBSan, TLS | 16 / 133 | Passed, exit 0 | [Full check](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-format-asan.log) |
+| Clang, standalone, Debug, TSan, TLS | 16 / 133 | Passed, exit 0 | [Full check](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-format-tsan.log) |
+| GCC, standalone, NoTLS, lifecycle | 1 / 18 | Passed, exit 0 | [Lifecycle](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-lifecycle-gcc-after.log) |
+| GCC, standalone, NoTLS, TCP | 1 / 5 | Passed, exit 0 | [TCP](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-ci-fix-gcc-tcp.log) |
+| GCC, standalone, NoTLS, detail | 1 / 11 | Passed, exit 0 | [Detail](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-ci-fix-gcc-detail.log) |
+| GCC, standalone, NoTLS, IO pool | 1 / 6 | Passed, exit 0 | [IO pool](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-ci-fix-gcc-io_pool.log) |
 
 The two Release builds include protocol tests, stress tests, an installed-package
 consumer and 25 short benchmark checks. Sanitizer builds omit benchmarks and
@@ -27,13 +27,13 @@ an error. Apple ASan does not provide a Linux LeakSanitizer result.
 
 With libstdc++, an unread future kept the user callable in a `std::packaged_task`
 shared state after the canceled task was destroyed. The
-[before log](arknet-lifecycle-gcc-before.log) records the failed callback-release
+[before log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-lifecycle-gcc-before.log) records the failed callback-release
 assertion. The fix separates the promise result state from the callable in
 post, IO pool and queued-event tasks. Permanent lifecycle tests cover canceled
 and completed captures, void/value/reference results, move-only captures and
 results, and callback exceptions.
 
-[GCC commands](arknet-ci-fix-gcc-commands.txt) record the exact compilation and
+[GCC commands](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-ci-fix-gcc-commands.txt) record the exact compilation and
 execution commands, versions and exit statuses. Clang checks ran with:
 
 ```sh
@@ -66,7 +66,7 @@ passed on both dependency configurations in the cross-platform CI run below.
 
 Windows also exceeded the 35-minute job limit. The UDP rejection test recorded
 system error 1784 for the 65,508-byte send on both
-[standalone](windows-udp-before-standalone.log) and [Boost](windows-udp-before-boost.log).
+[standalone](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/windows-udp-before-standalone.log) and [Boost](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/windows-udp-before-boost.log).
 It now verifies failure, zero bytes and subsequent recovery, preserving the
 native error. The simulated completion test includes error 1784. CI allows 60 minutes.
 
@@ -85,8 +85,8 @@ passed all 13 jobs for source `6d8b7224bd6dbbe34154d112caad0f49952e2897`:
 The final documentation and search-index updates retain the same implementation,
 tests and build configuration identified by the source checksums below.
 
-[Source checksums](source.sha256) identify the current implementation, tests and style configuration.
-[Earlier checksums](source-before-format.sha256) accompany the retained 132-case logs.
+[Source checksums](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/source.sha256) identify the current implementation, tests and style configuration.
+[Earlier checksums](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/source-before-format.sha256) accompany the retained 132-case logs.
 Previous performance measurements keep their original inputs in the provenance
 archives; this check did not rerun the performance matrix. IPv6 validation
 remains limited to loopback as described in the [IPv6 record](../ipv6/README.md).

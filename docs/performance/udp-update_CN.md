@@ -85,6 +85,6 @@ build-perf/benchmarks/arknet_loopback_benchmark \
 
 这组溢出探测预计返回非零退出码；将窗口改为 16，或将包体改为 1472，可复现表中的无丢失配置。
 
-[完整原始记录、命令与机器信息](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-udp) · [逐次内核快照](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-udp/buffer-probes) · [大小边界图表](udp-limits_CN.md)
+[完整原始记录、命令与机器信息](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp) · [逐次内核快照](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp/buffer-probes) · [大小边界图表](udp-limits_CN.md)
 
 这些结果只覆盖该机器上的短时 IPv4 回环，未测量跨主机或 IPv6 压力容量。RUDP 有独立的 [性能报告](rudp_CN.md)。协程对比测量原生 TCP，不应套用于 UDP。

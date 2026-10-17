@@ -455,7 +455,8 @@ def index_page(reports, rows, failed, chinese, raw_base, host_description="", na
     lines += ["## " + ("原始数据" if chinese else "Raw Data"), "",
               f"[{'完整数值 JSON' if chinese else 'Complete numeric JSON'}](dimensions-summary.json ':ignore')", ""]
     for path, value in reports:
-        lines.append(f"- [{path.name}]({raw_link(path, raw_base)}): {len(value['results'])} " +
+        label = f"[{path.name}]({raw_link(path, raw_base)})" if raw_base else f"`{path.name}`"
+        lines.append(f"- {label}: {len(value['results'])} " +
                      ("次测量" if chinese else "measurements") +
                      f"; executable SHA-256 `{value.get('executable_sha256', 'not recorded')}`")
     lines += ["", f"[{'复现命令与指标定义' if chinese else 'Reproduction and metric definitions'}](../testing{suffix}.md)", "",
@@ -497,7 +498,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reports", nargs="+", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
-    parser.add_argument("--raw-base", default="https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results")
+    parser.add_argument("--raw-base", help="optional published URL base for raw inputs; omitted inputs remain unlinked")
     parser.add_argument("--host-description", default="", help="optional collected toolchain/build details")
     parser.add_argument("--scope", choices=("full", "udp"), default="full", help="require the complete full or UDP-only matrix")
     args = parser.parse_args()

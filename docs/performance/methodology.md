@@ -2,6 +2,8 @@
 
 Measure locally with independent Release C++ programs. CI runs regressions and smoke checks; published reports record the host, configuration, raw results and scope.
 
+Keep raw JSON and logs outside the source repository. Replace `/path/to/arknet-results` below with an existing external directory. Offline report tools accept `--raw-base` (`--raw-url` for RUDP) for a published archive; without it, input names appear without raw-data links.
+
 ## Single Benchmark
 
 ```sh
@@ -21,7 +23,7 @@ for repetition in 1 2 3; do
   build/benchmarks/arknet_loopback_benchmark \
     --protocol tcp --payload 1024 --clients 16 --window 16 \
     --io-model shared --io-threads 1 --work 0 --warmup 0.25 --seconds 1 \
-    > "build/tcp-${repetition}.json" || exit 1
+    > "/path/to/arknet-results/tcp-${repetition}.json" || exit 1
 done
 ```
 
@@ -43,13 +45,13 @@ bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_loopback_b
   --backend standalone --certs tests/certs --clients 16 --windows 1 4 16 64 \
   --payloads 64 1024 16384 --io-models shared sharded --io-threads 1 4 \
   --seconds 1 --warmup 0.25 --repetitions 3 --keep-going \
-  --output benchmarks/results/local-dimensions-standalone-callback.json
+  --output /path/to/arknet-results/local-dimensions-standalone-callback.json
 bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_coroutine_benchmark \
   --backend standalone --certs tests/certs --protocols tcp --clients 16 \
   --windows 1 4 16 64 --payloads 64 1024 16384 \
   --io-models shared sharded --io-threads 1 4 --work-values 0 10000 \
   --execution-modes callback coroutine --seconds 1 --warmup 0.25 --repetitions 3 \
-  --output benchmarks/results/local-dimensions-standalone-native.json
+  --output /path/to/arknet-results/local-dimensions-standalone-native.json
 ```
 
 Repeat both commands with the executables from the Boost build directory, set
@@ -79,10 +81,10 @@ four data files after measurement has finished:
 
 ```sh
 build/report-venv/bin/python benchmarks/dimensions.py \
-  --reports benchmarks/results/local-dimensions-standalone-callback.json \
-            benchmarks/results/local-dimensions-boost-callback.json \
-            benchmarks/results/local-dimensions-standalone-native.json \
-            benchmarks/results/local-dimensions-boost-native.json \
+  --reports /path/to/arknet-results/local-dimensions-standalone-callback.json \
+            /path/to/arknet-results/local-dimensions-boost-callback.json \
+            /path/to/arknet-results/local-dimensions-standalone-native.json \
+            /path/to/arknet-results/local-dimensions-boost-native.json \
   --output-dir docs/performance
 ```
 
@@ -91,11 +93,11 @@ build/report-venv/bin/python benchmarks/dimensions.py \
 ```sh
 bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_loopback_benchmark \
   --certs tests/certs --seconds 1 --warmup 0.25 --repetitions 3 \
-  --output benchmarks/results/local-loopback.json
+  --output /path/to/arknet-results/local-loopback.json
 bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_coroutine_benchmark \
   --certs tests/certs --protocols tcp --work-values 0 10000 \
   --seconds 1 --warmup 0.25 --repetitions 3 \
-  --output benchmarks/results/local-coroutine.json
+  --output /path/to/arknet-results/local-coroutine.json
 ```
 
 Per dependency configuration, the callback matrix has **630 measurements**:
@@ -165,7 +167,7 @@ and measurement duration:
 python3 -m venv build/report-venv
 build/report-venv/bin/pip install -r benchmarks/requirements-report.txt
 build/report-venv/bin/python benchmarks/report.py \
-  --reports benchmarks/results/local-loopback.json benchmarks/results/local-coroutine.json \
+  --reports /path/to/arknet-results/local-loopback.json /path/to/arknet-results/local-coroutine.json \
   --output-dir docs/performance \
   --host-description "Actual hardware, compiler, dependencies and Release build flags"
 ```

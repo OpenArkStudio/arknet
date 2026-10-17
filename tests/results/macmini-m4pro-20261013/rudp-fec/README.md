@@ -7,21 +7,21 @@
 CMake 4.3.3, Standalone Asio 1.38.2, Boost 1.90.0 and OpenSSL 3.6.4.
 Source: published base `15ff563` plus the changes in the commit containing this
 record. The measured source manifest and binary hashes are retained with the
-[performance data](../../../../benchmarks/results/macmini-m4pro-20261013/rudp-fec/metadata.json).
+[performance data](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261013/rudp-fec/metadata.json).
 RUDP/FEC is not included in `v0.1.0-rc.1`.
 
 ## Results
 
 | Check | Coverage | Result |
 | --- | --- | --- |
-| Standalone Asio, Release + TLS | 55 checks / 219 doctest cases | [Passed](arknet-rudp-fec-check-standalone.log) |
-| Boost.Asio, Release + TLS | 55 checks / 219 doctest cases | [Passed](arknet-rudp-fec-check-boost.log) |
+| Standalone Asio, Release + TLS | 55 checks / 219 doctest cases | [Passed](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-standalone.log) |
+| Boost.Asio, Release + TLS | 55 checks / 219 doctest cases | [Passed](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-boost.log) |
 | ASan/UBSan, Standalone Asio | 10 selected suites / 109 cases | [Logs](arknet-rudp-final-asan/) |
 | TSan, Standalone Asio | 8 selected suites / 86 cases | [Logs](arknet-rudp-final-tsan/) |
 | Real zephyr/arknet peers, each dependency configuration | 12 process pairs / 16 sessions / 512 messages and echoes | [Evidence](interop/arknet-zephyr-interop-final.md) |
-| Formatting and exclusion rules | 146 project C++ files; third-party exclusions | [Check](arknet-rudp-fec-format.log), [runner](arknet-rudp-fec-format-runner.log) |
-| Report generator | Schema/accounting checks, linked SVGs, XML and rendering | [Log](arknet-rudp-report-verification.log) |
-| Bilingual documentation | Build, routes, local references and AI Markdown exports | [Log](arknet-rudp-fec-docs-check.log) |
+| Formatting and exclusion rules | 146 project C++ files; third-party exclusions | [Check](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-format.log), [runner](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-format-runner.log) |
+| Report generator | Schema/accounting checks, linked SVGs, XML and rendering | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-report-verification.log) |
+| Bilingual documentation | Build, routes, local references and AI Markdown exports | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-docs-check.log) |
 
 Complete checks include installed-package consumption and benchmark smoke cases;
 smoke timings are not published performance results. RUDP FEC passed 11 cases

@@ -6,6 +6,9 @@
 *.user
 __pycache__/
 
-# Local benchmark and test output; only published report datasets are versioned.
+# Raw benchmark/test output belongs outside the checkout. These ignores also
+# prevent accidental reintroduction under the historical report directories.
+/benchmarks/results/
+/tests/results/
 /benchmarks/local-results/
 /tests/local-results/

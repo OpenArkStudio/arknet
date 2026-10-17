@@ -10,14 +10,14 @@ CMake 4.3.3、Standalone Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。
 
 | 检查 | 用例 / 断言 | 证据 |
 | --- | ---: | --- |
-| Standalone Asio，Release + TLS，完整测试 | 48 项检查 / 174 个用例 | [日志](arknet-rudp-final-standalone.log) |
-| Boost.Asio，Release + TLS，完整测试 | 48 项检查 / 174 个用例 | [日志](arknet-rudp-final-boost.log) |
-| ARQ 核心，ASan/UBSan | 19 / 17,824 | [日志](arknet-arq-final-asan.log) |
-| 原版 KCP 互通，ASan/UBSan | 3 / 21,571 | [日志](arknet-arq-interop-final-asan.log) |
-| RUDP 网络，ASan/UBSan | 10 / 452 | [日志](arknet-rudp-final-asan.log) |
-| HTTP 请求，ASan/UBSan | 8 / 70 | [日志](arknet-httprequest-final-asan.log) |
-| RUDP 网络，TSan | 10 / 452 | [日志](arknet-rudp-tsan.log) |
-| HTTP 请求，TSan | 8 / 70 | [日志](arknet-rudp-http-tsan.log) |
+| Standalone Asio，Release + TLS，完整测试 | 48 项检查 / 174 个用例 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-standalone.log) |
+| Boost.Asio，Release + TLS，完整测试 | 48 项检查 / 174 个用例 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-boost.log) |
+| ARQ 核心，ASan/UBSan | 19 / 17,824 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-arq-final-asan.log) |
+| 原版 KCP 互通，ASan/UBSan | 3 / 21,571 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-arq-interop-final-asan.log) |
+| RUDP 网络，ASan/UBSan | 10 / 452 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-asan.log) |
+| HTTP 请求，ASan/UBSan | 8 / 70 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-httprequest-final-asan.log) |
+| RUDP 网络，TSan | 10 / 452 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-tsan.log) |
+| HTTP 请求，TSan | 8 / 70 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-http-tsan.log) |
 
 全部通过。完整测试包含安装包消费项目和三种 RUDP 基准冒烟配置，冒烟耗时
 不作为性能结果。本轮 TSan 检查针对新增网络模块，不代表重新执行了历史

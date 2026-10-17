@@ -165,9 +165,9 @@ Boost 在另一构建目录设置 `-DARKNET_USE_BOOST_ASIO=ON`。单项用例由
 ```sh
 node benchmarks/report_rudp_fec.mjs --self-check
 node benchmarks/report_rudp_fec.mjs \
-  --results benchmarks/results/macmini-m4pro-20261013/rudp-fec --output docs/performance
+  --results /path/to/arknet-results/rudp-fec --output docs/performance
 ```
 
 [完整指标与测量元数据](rudp-fec-summary.json)
 
-[原始 JSON、实际命令与退出码](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261013/rudp-fec)
+[原始 JSON、实际命令与退出码](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261013/rudp-fec)

@@ -2,6 +2,8 @@
 
 使用独立的 Release C++ 程序在本地测量。CI 只执行回归与 smoke 检查；公开报告记录机器、配置、原始数据和测量范围。
 
+原始 JSON 和日志保存到源码仓库外。下文的 `/path/to/arknet-results` 需替换为已创建的外部目录。离线报告工具的 `--raw-base`（RUDP 工具为 `--raw-url`）可指定已发布归档；未指定时仅显示输入名称，不生成原始数据链接。
+
 ## 单项基准
 
 ```sh
@@ -21,7 +23,7 @@ for repetition in 1 2 3; do
   build/benchmarks/arknet_loopback_benchmark \
     --protocol tcp --payload 1024 --clients 16 --window 16 \
     --io-model shared --io-threads 1 --work 0 --warmup 0.25 --seconds 1 \
-    > "build/tcp-${repetition}.json" || exit 1
+    > "/path/to/arknet-results/tcp-${repetition}.json" || exit 1
 done
 ```
 
@@ -41,13 +43,13 @@ bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_loopback_b
   --backend standalone --certs tests/certs --clients 16 --windows 1 4 16 64 \
   --payloads 64 1024 16384 --io-models shared sharded --io-threads 1 4 \
   --seconds 1 --warmup 0.25 --repetitions 3 --keep-going \
-  --output benchmarks/results/local-dimensions-standalone-callback.json
+  --output /path/to/arknet-results/local-dimensions-standalone-callback.json
 bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_coroutine_benchmark \
   --backend standalone --certs tests/certs --protocols tcp --clients 16 \
   --windows 1 4 16 64 --payloads 64 1024 16384 \
   --io-models shared sharded --io-threads 1 4 --work-values 0 10000 \
   --execution-modes callback coroutine --seconds 1 --warmup 0.25 --repetitions 3 \
-  --output benchmarks/results/local-dimensions-standalone-native.json
+  --output /path/to/arknet-results/local-dimensions-standalone-native.json
 ```
 
 再用 Boost 构建目录中的两个可执行文件运行相同命令，将 `--backend` 改为 `boost`，
@@ -70,10 +72,10 @@ bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_coroutine_
 
 ```sh
 build/report-venv/bin/python benchmarks/dimensions.py \
-  --reports benchmarks/results/local-dimensions-standalone-callback.json \
-            benchmarks/results/local-dimensions-boost-callback.json \
-            benchmarks/results/local-dimensions-standalone-native.json \
-            benchmarks/results/local-dimensions-boost-native.json \
+  --reports /path/to/arknet-results/local-dimensions-standalone-callback.json \
+            /path/to/arknet-results/local-dimensions-boost-callback.json \
+            /path/to/arknet-results/local-dimensions-standalone-native.json \
+            /path/to/arknet-results/local-dimensions-boost-native.json \
   --output-dir docs/performance
 ```
 
@@ -82,11 +84,11 @@ build/report-venv/bin/python benchmarks/dimensions.py \
 ```sh
 bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_loopback_benchmark \
   --certs tests/certs --seconds 1 --warmup 0.25 --repetitions 3 \
-  --output benchmarks/results/local-loopback.json
+  --output /path/to/arknet-results/local-loopback.json
 bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_coroutine_benchmark \
   --certs tests/certs --protocols tcp --work-values 0 10000 \
   --seconds 1 --warmup 0.25 --repetitions 3 \
-  --output benchmarks/results/local-coroutine.json
+  --output /path/to/arknet-results/local-coroutine.json
 ```
 
 每种依赖方案的回调矩阵包含 **630 次测量**：
@@ -145,7 +147,7 @@ Python 和 Matplotlib 是可选的离线报告工具，不参与 C++ 网络测�
 python3 -m venv build/report-venv
 build/report-venv/bin/pip install -r benchmarks/requirements-report.txt
 build/report-venv/bin/python benchmarks/report.py \
-  --reports benchmarks/results/local-loopback.json benchmarks/results/local-coroutine.json \
+  --reports /path/to/arknet-results/local-loopback.json /path/to/arknet-results/local-coroutine.json \
   --output-dir docs/performance \
   --host-description "Actual hardware, compiler, dependencies and Release build flags"
 ```

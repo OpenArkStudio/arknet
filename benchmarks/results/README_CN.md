@@ -1,11 +1,20 @@
-# 公开性能报告的数据
+# 历史性能报告
 
-本目录保存[性能报告](../../docs/performance/index_CN.md)使用的原始数据。JSON 与机器配置、负载参数和源码校验和一起保存，便于核对图表和重新生成报告。
+本目录保留 Markdown 历史报告。原始 JSON、命令、源码快照和日志可从[固定归档提交](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results)或现有 [v0.2.1 发布附件](https://github.com/OpenArkStudio/arknet/releases/tag/v0.2.1)获取。
 
-- 只有支撑公开报告的数据集才提交到仓库。
-- 报告更新结果时替换对应数据集，较早版本通过 Git 历史查询。
-- 日常测量和问题诊断输出到已忽略的构建目录或 `benchmarks/local-results/`。
-- CI 测试日志存入工作流 artifacts，避免反复提交执行日志和失败诊断数据。
-- 单元测试需要的精简、确定性输入保留在对应测试目录，不作为性能测试输出处理。
+- `arknet-0.2.1-benchmark-comparison.tar.gz` 内含 `source/arknet-measured-2aa5bc0.tar`。
+- `arknet-0.2.1-validation-logs.tar.gz` 内含 `historical/arknet-0.2.1-validation-logs/source/arknet-validation-6c8418e.tar`。
+- 两个嵌套源码归档均完整保留历史 `benchmarks/results/` 与 `tests/results/` 目录。使用前核对发布附件的 `.sha256` 文件及归档内的 `SHA256SUMS`。
 
-C++ 基准程序可以独立编译运行。可选的 shell 与报告工具读取用户指定目录中的输出。
+归档提交只用于定位存储，不代表每份报告的测量源码。复现时保留数据集原有的源码版本、可执行文件校验和、命令、机器信息和测量时间。
+
+本地已有该归档提交时，可仅将证据目录提取到源码仓库外：
+
+```sh
+history_dir=/path/to/outside-source/arknet-history
+mkdir -p "$history_dir"
+git archive 7685e241bebd086d50da403f2cf06a72bbef1085 \
+  benchmarks/results tests/results | tar -xf - -C "$history_dir"
+```
+
+新的原始 JSON 和日志保存到源码仓库外，通过发布附件或 CI artifacts 共享。[公开性能报告](../../docs/performance/index_CN.md)、SVG 图表和精简数值汇总继续保存在 `docs/`，确定性输入保存在对应测试中。C++ 基准程序仍可独立编译运行；可选的 shell 和离线报告工具读取调用者指定的外部目录。发布归档后再设置 `--raw-base` 或 RUDP 报告工具的 `--raw-url`，未设置时只显示输入名称，不生成原始数据链接。
