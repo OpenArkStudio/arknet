@@ -8,6 +8,7 @@
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
+#include <future>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -636,6 +637,21 @@ public:
             return;
         }
         values_.closing = true;
+        std::vector<std::future<void>> requests;
+        values_.guard([&] {
+            requests.reserve(connections_.size());
+            for (const auto& connection : connections_)
+            {
+                auto* state = connection.get();
+                requests.push_back(state->endpoint.post([state] { state->endpoint.stop(); }, asio::use_future));
+            }
+        });
+        for (auto& request : requests)
+        {
+            values_.guard([&] { request.get(); });
+        }
+        // Worker calls request shutdown without waiting. Keep every endpoint and
+        // its shared runtime alive until these owner calls drain native callbacks.
         for (const auto& connection : connections_)
         {
             connection->endpoint.stop();
@@ -1140,6 +1156,7 @@ int run(const options& settings) {
 
 } // namespace
 
+#ifndef ARKNET_CONNECTION_BENCHMARK_NO_MAIN
 int main(int argc, char** argv) {
     try
     {
@@ -1154,3 +1171,4 @@ int main(int argc, char** argv) {
         return 2;
     }
 }
+#endif

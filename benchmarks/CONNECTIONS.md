@@ -69,6 +69,8 @@ The server's `--expected-connections` is independent of a single client's `--con
 
 Each client process has its own hold boundary. This version does not synchronize the measurement phases of multiple client processes or machines. It also does not retry failed connects or replay requests.
 
+During client cleanup, stop is requested on all connection executors before the owner waits for each endpoint's native callbacks and executor fences. Per-connection disconnect grace periods can therefore overlap. Stop-request completion is not a drain-complete signal: endpoints and the shared IO runtime remain alive until all owner waits finish. A protocol timeout still fails the run even when cleanup succeeds.
+
 ## Bounds
 
 | Option | Default | Meaning and accepted range |
