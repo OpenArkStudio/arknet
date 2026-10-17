@@ -18,6 +18,8 @@ This maintenance release strengthens Redis cleanup when native stop submission f
 
 No library API migration is required from 0.2.1. Rebuild applications to consume the header changes. Redis recovery covers direct native cleanup submission failures; later asynchronous native-stage failures and throwing user callbacks retain their existing exception contract. Keep the documented thread/executor preconditions for `close_and_wait()`.
 
+Known limitation: a local 5,000-connection TCP Echo workload on macOS 27.0.1 (one IO worker per process, 1 KiB payload, four outstanding requests per connection) has missed its response deadline with both Boost 1.90 and Standalone Asio 1.38.2. The cause remains unconfirmed, and this workload has not passed capacity acceptance.
+
 The connection tool currently measures TCP callbacks with numeric addresses; TLS, reconnect workloads and fixed arrival-rate traffic are outside its scope. Local loopback success does not establish production capacity or PCU. Published measurements keep their original source revisions: the earlier 4 KiB WebSocket comparison recorded 6.51% lower median throughput and 13.29% higher P99 at `2aa5bc0`, with an unconfirmed cause; it is not a measurement of 0.2.2. See [performance](https://openarkstudio.github.io/arknet/performance/steady-workloads/) and [validation](https://openarkstudio.github.io/arknet/project/testing/).
 
 ## 0.2.1
