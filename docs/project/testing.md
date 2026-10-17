@@ -209,7 +209,7 @@ pairs passed all 12 scenarios per dependency configuration, including reconnect,
 headers, 4096-byte bodies, ARQ packet loss and reordering. The relay preserves
 SYN/ACK/FIN; this does not establish reliable shutdown when FIN is lost.
 
-[Logs and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/README.md)
+[Logs and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/README.md)
 record the source revision and exact scope. The test-only canonical KCP source
 disables `null,object-size` instrumentation; arknet's own code remains fully instrumented.
 RUDP performance has a [separate report](../performance/rudp.md).
@@ -263,5 +263,5 @@ and [ARK business acceptance](production-readiness.md) remain to be validated.
 
 All 14 independent client/server usage programs were also built with both
 dependency configurations. The seven protocol pairs per dependency configuration verified echo contents and all
-28 processes exited normally. [Build/run logs and reproduction scripts](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/usage/README.md)
+28 processes exited normally. [Build/run logs and reproduction scripts](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/usage/README.md)
 retain this check separately from timed performance measurements.

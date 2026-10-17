@@ -1,2 +1,0 @@
-net.inet.udp.maxdgram: 9216
-net.inet.udp.recvspace: 786896

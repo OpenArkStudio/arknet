@@ -1,37 +1,72 @@
 import copy
 import json
 from pathlib import Path
-import shutil
 import tempfile
 import unittest
 
 import udp_limits_report
 
 
-ARCHIVE = Path(__file__).resolve().parents[1] / "benchmarks/results/macmini-m4pro-20261010-udp-limits"
+def synthetic_reports():
+    # Deliberately independent of collector constants. These are mathematical
+    # inputs, not measurements, source revisions or observed kernel events.
+    payloads = (1472, 8192, 16356, 16357, 16384, 65507)
+    windows = (1, 16, 64)
+    counters = ("client_send_rejections", "client_send_completion_errors",
+                "server_send_rejections", "server_send_completion_errors",
+                "content_errors", "order_errors", "unexpected_messages", "disconnect_errors",
+                "udp_lost_messages", "unfinished_messages", "callback_exceptions",
+                "drain_timeouts", "duplicate_completions", "pending_completions", "warmup_errors")
+    reports = {}
+    for backend in ("standalone", "boost"):
+        value = dict(schema_version=2, complete=True, backend=backend,
+                     source_sha256="synthetic-input-not-a-measured-source",
+                     host={"cpu": "synthetic test input"},
+                     settings=dict(protocols=["udp"], payloads=list(payloads), repetitions=3,
+                                   profiles=[dict(clients=16, window=window) for window in windows],
+                                   io_profiles=[dict(io_model="shared", io_threads=1, handler_work=0)],
+                                   seconds=1), failed_measurements=18, results=[])
+        for index, payload in enumerate(payloads):
+            for window in windows:
+                lost = (660 if index < 3 else 661) if window == 64 else 0
+                for repetition in (1, 2, 3):
+                    identity = dict(protocol="udp", clients=16, io_model="shared", io_threads=1,
+                                    handler_work=0, backend=backend, payload_bytes=payload, window=window)
+                    metric = dict(identity, **{field: lost if field == "udp_lost_messages" else 0
+                                               for field in counters}, ok=lost == 0, warmup_ok=True)
+                    value["results"].append(dict(identity, repetition=repetition,
+                                                 returncode=1 if lost else 0, metrics=metric))
+        reports[backend] = value
+    return reports
+
+
+def write_inputs(destination, reports):
+    for backend, value in reports.items():
+        (destination / f"{backend}.json").write_text(json.dumps(value), encoding="utf-8")
+        for phase in ("before", "after"):
+            drops = 0 if phase == "before" else 23778
+            (destination / f"{backend}-{phase}-netstat-udp.txt").write_text(
+                f"{drops} dropped due to full socket buffers\n", encoding="utf-8")
+            (destination / f"{backend}-{phase}-netstat-ip.txt").write_text(
+                "0 fragment received\n0 reassembled ok\n0 output datagram fragmented\n0 fragment created\n",
+                encoding="utf-8")
 
 
 class UdpReportChecks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.reports = {backend: json.loads((ARCHIVE / f"{backend}.json").read_text())
-                       for backend in udp_limits_report.BACKENDS}
+        cls.reports = synthetic_reports()
 
     def changed_report(self, change):
         reports = copy.deepcopy(self.reports)
         change(reports["standalone"])
         with tempfile.TemporaryDirectory() as folder:
             destination = Path(folder)
-            for backend, value in reports.items():
-                (destination / f"{backend}.json").write_text(json.dumps(value), encoding="utf-8")
-                for phase in ("before", "after"):
-                    for protocol in ("udp", "ip"):
-                        name = f"{backend}-{phase}-netstat-{protocol}.txt"
-                        shutil.copyfile(ARCHIVE / name, destination / name)
+            write_inputs(destination, reports)
             return udp_limits_report.collect(destination)
 
-    def test_complete_archived_108_measurements_and_kernel_evidence(self):
-        summary = udp_limits_report.collect(ARCHIVE)
+    def test_complete_synthetic_108_records_and_kernel_deltas(self):
+        summary = self.changed_report(lambda value: None)
         self.assertEqual(summary["measurements"], 108)
         self.assertEqual(summary["address_family"], "ipv4")
         self.assertEqual(len(summary["profiles"]), 36)

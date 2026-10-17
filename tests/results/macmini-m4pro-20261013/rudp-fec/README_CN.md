@@ -6,21 +6,21 @@
 （10 个性能核心、4 个能效核心）、48 GiB 内存、macOS 27.0.1（26A434）、
 Apple Clang 21.0.0、CMake 4.3.3、Standalone Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。
 源码为已发布基线 `15ff563` 加包含本记录的提交。测量源码清单和二进制哈希保存在
-[性能数据](../../../../benchmarks/results/macmini-m4pro-20261013/rudp-fec/metadata.json)中。
+[性能数据](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261013/rudp-fec/metadata.json)中。
 RUDP/FEC 不包含在 `v0.1.0-rc.1` 中。
 
 ## 结果
 
 | 检查 | 范围 | 结果 |
 | --- | --- | --- |
-| Standalone Asio，Release + TLS | 55 项检查／219 个 doctest 用例 | [通过](arknet-rudp-fec-check-standalone.log) |
-| Boost.Asio，Release + TLS | 55 项检查／219 个 doctest 用例 | [通过](arknet-rudp-fec-check-boost.log) |
+| Standalone Asio，Release + TLS | 55 项检查／219 个 doctest 用例 | [通过](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-standalone.log) |
+| Boost.Asio，Release + TLS | 55 项检查／219 个 doctest 用例 | [通过](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-check-boost.log) |
 | ASan/UBSan，Standalone Asio | 10 个指定测试组／109 个用例 | [日志](arknet-rudp-final-asan/) |
 | TSan，Standalone Asio | 8 个指定测试组／86 个用例 | [日志](arknet-rudp-final-tsan/) |
 | 真实 zephyr/arknet 对端，每种依赖方案 | 12 组进程／16 个会话／512 条消息及回显 | [证据](interop/arknet-zephyr-interop-final.md) |
-| 格式与排除规则 | 146 个项目 C++ 文件；排除第三方实现 | [检查](arknet-rudp-fec-format.log)、[脚本](arknet-rudp-fec-format-runner.log) |
-| 报告生成器 | 数据结构与计数、SVG 链接、XML 和渲染 | [日志](arknet-rudp-report-verification.log) |
-| 中英文文档 | 构建、路由、本地链接与 AI Markdown 导出 | [日志](arknet-rudp-fec-docs-check.log) |
+| 格式与排除规则 | 146 个项目 C++ 文件；排除第三方实现 | [检查](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-format.log)、[脚本](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-format-runner.log) |
+| 报告生成器 | 数据结构与计数、SVG 链接、XML 和渲染 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-report-verification.log) |
+| 中英文文档 | 构建、路由、本地链接与 AI Markdown 导出 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/arknet-rudp-fec-docs-check.log) |
 
 完整检查包含安装包消费项目和基准冒烟用例；冒烟计时不作为性能结果。
 RUDP FEC 在两种 Release 依赖方案及两种 Sanitizer 构建中均通过 11 个用例、2,564 项断言。

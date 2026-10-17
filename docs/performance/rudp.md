@@ -165,9 +165,9 @@ The optional offline report tool needs Node only and does not launch network tes
 ```sh
 node benchmarks/report_rudp_fec.mjs --self-check
 node benchmarks/report_rudp_fec.mjs \
-  --results benchmarks/results/macmini-m4pro-20261013/rudp-fec --output docs/performance
+  --results /path/to/arknet-results/rudp-fec --output docs/performance
 ```
 
 [Full Metrics and Measurement Metadata](rudp-fec-summary.json)
 
-[Raw JSON, Actual Commands and Exit Codes](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261013/rudp-fec)
+[Raw JSON, Actual Commands and Exit Codes](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261013/rudp-fec)

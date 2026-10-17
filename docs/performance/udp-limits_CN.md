@@ -58,23 +58,23 @@ build-perf/benchmarks/arknet_loopback_benchmark \
   --io-model shared --io-threads 1 --work 0 --warmup 0.25 --seconds 1
 ```
 
-归档的[Standalone 命令与内核快照](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-udp/limits)
+归档的[Standalone 命令与内核快照](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp/limits)
 也保留了完整 shell 矩阵和 Boost 命令。可选离线图表工具使用[报告环境](methodology_CN.md#%E6%8C%87%E6%A0%87%E4%B8%8E%E5%9B%BE%E8%A1%A8)：
 
 ```sh
 build/report-venv/bin/python scripts/udp_limits_report.py \
-  --input-dir benchmarks/results/macmini-m4pro-20261012-udp/limits \
+  --input-dir /path/to/arknet-history/benchmarks/results/macmini-m4pro-20261012-udp/limits \
   --output docs/performance/assets/udp-limits-loss.svg
 ```
 
-报告工具检查验证归档数据完整性，并拒绝异常输入；不会启动网络测试：
+报告工具检查使用确定性的合成矩阵验证计算与异常输入，不读取历史测量或启动网络测试：
 
 ```sh
 python3 -m unittest discover -s scripts -p 'test_udp_limits_report.py' -v
 ```
 
-[Standalone 原始 JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261012-udp/limits/standalone.json) ·
-[Boost 原始 JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261012-udp/limits/boost.json) ·
+[Standalone 原始 JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp/limits/standalone.json) ·
+[Boost 原始 JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp/limits/boost.json) ·
 [图表数值](assets/udp-limits-loss.json ':ignore') · [环境与测量定义](methodology_CN.md)
 
 源码 SHA-256：`0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`。

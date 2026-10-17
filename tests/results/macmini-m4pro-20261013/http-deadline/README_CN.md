@@ -7,13 +7,13 @@ HTTP 截止时间修复与测试。
 
 | 构建 | 结果 |
 | --- | --- |
-| Standalone Asio，Release + TLS | [10 个用例、283 项断言通过](httprequest-standalone.log) |
-| Boost.Asio，Release + TLS | [10 个用例、283 项断言通过](httprequest-boost.log) |
-| Standalone Asio，Debug + ASan/UBSan | [10 个用例、283 项断言通过](httprequest-asan-ubsan.log) |
-| Standalone Asio，Debug + TSan | [10 个用例、283 项断言通过](httprequest-tsan.log) |
+| Standalone Asio，Release + TLS | [10 个用例、283 项断言通过](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/http-deadline/httprequest-standalone.log) |
+| Boost.Asio，Release + TLS | [10 个用例、283 项断言通过](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/http-deadline/httprequest-boost.log) |
+| Standalone Asio，Debug + ASan/UBSan | [10 个用例、283 项断言通过](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/http-deadline/httprequest-asan-ubsan.log) |
+| Standalone Asio，Debug + TSan | [10 个用例、283 项断言通过](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/http-deadline/httprequest-tsan.log) |
 
 已发布的 `e767cdf` 头文件在新增的响应排队测试中失败，详见
-[对照结果](published-header-regression.log)。已就绪的 IO 回调可能先于
+[对照结果](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/http-deadline/published-header-regression.log)。已就绪的 IO 回调可能先于
 已到期的定时器回调执行。请求现在会在处理 DNS、连接、写入和读取结果前
 检查截止时间。测试覆盖 IO 暂停后排队的完整响应与不完整响应、完成通知
 恰好执行一次，以及数字地址和域名下共 64 次极短连接超时。
