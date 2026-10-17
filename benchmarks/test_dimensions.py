@@ -243,6 +243,18 @@ class DimensionsTests(unittest.TestCase):
         ratios = dimensions.paired_ratios(groups)
         self.assertEqual(sum(row["coroutine_callback_cpu_ratio"] is None for row in ratios), 1)
 
+    def test_external_raw_inputs_only_link_an_explicit_archive_url(self):
+        reports, groups, failed = self.load()
+        reports[0] = (Path("/outside source/raw data/run 1.json"), reports[0][1])
+        rows = report.summary(groups)
+        for chinese in (False, True):
+            local = dimensions.index_page(reports, rows, failed, chinese, None)
+            linked = dimensions.index_page(reports, rows, failed, chinese, "https://example.test/archive/")
+            self.assertIn("`run 1.json`", local)
+            self.assertNotIn("github.com/OpenArkStudio/arknet", local)
+            self.assertIn("[run 1.json](https://example.test/archive/run%201.json)", linked)
+            self.assertIn("executable SHA-256", local)
+
     def test_address_families_cannot_be_mixed_with_legacy_ipv4(self):
         self.values[7]["results"][0]["metrics"]["address_family"] = "ipv6"
         with self.assertRaisesRegex(ValueError, "address families"):

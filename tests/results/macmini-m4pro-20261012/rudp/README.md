@@ -10,14 +10,14 @@ commit containing this record. These additions are not part of `v0.1.0-rc.1`.
 
 | Check | Cases / assertions | Evidence |
 | --- | ---: | --- |
-| Standalone Asio, Release + TLS, complete suite | 48 checks / 174 cases | [Log](arknet-rudp-final-standalone.log) |
-| Boost.Asio, Release + TLS, complete suite | 48 checks / 174 cases | [Log](arknet-rudp-final-boost.log) |
-| ARQ core, ASan/UBSan | 19 / 17,824 | [Log](arknet-arq-final-asan.log) |
-| Canonical KCP interop, ASan/UBSan | 3 / 21,571 | [Log](arknet-arq-interop-final-asan.log) |
-| RUDP network, ASan/UBSan | 10 / 452 | [Log](arknet-rudp-final-asan.log) |
-| HTTP requests, ASan/UBSan | 8 / 70 | [Log](arknet-httprequest-final-asan.log) |
-| RUDP network, TSan | 10 / 452 | [Log](arknet-rudp-tsan.log) |
-| HTTP requests, TSan | 8 / 70 | [Log](arknet-rudp-http-tsan.log) |
+| Standalone Asio, Release + TLS, complete suite | 48 checks / 174 cases | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-standalone.log) |
+| Boost.Asio, Release + TLS, complete suite | 48 checks / 174 cases | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-boost.log) |
+| ARQ core, ASan/UBSan | 19 / 17,824 | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-arq-final-asan.log) |
+| Canonical KCP interop, ASan/UBSan | 3 / 21,571 | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-arq-interop-final-asan.log) |
+| RUDP network, ASan/UBSan | 10 / 452 | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-final-asan.log) |
+| HTTP requests, ASan/UBSan | 8 / 70 | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-httprequest-final-asan.log) |
+| RUDP network, TSan | 10 / 452 | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-tsan.log) |
+| HTTP requests, TSan | 8 / 70 | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/rudp/arknet-rudp-http-tsan.log) |
 
 All checks passed. Complete suites include the installed consumer and three
 RUDP benchmark smoke configurations. Their timings are not performance results.

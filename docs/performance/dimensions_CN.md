@@ -78,10 +78,10 @@ arknet 协议测试记录单消息 RTT；原生 Asio 的回调／协程匹配测
 
 [完整数值 JSON](dimensions-summary.json ':ignore')
 
-- [standalone-callback.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-dimensions/standalone-callback.json): 756 次测量; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
-- [boost-callback.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-dimensions/boost-callback.json): 756 次测量; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
-- [standalone-native.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-dimensions/standalone-native.json): 432 次测量; executable SHA-256 `5d7ac94153f942eda1494656edc865ab01817a7ea9122a240cc5f3260b061549`
-- [boost-native.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261010-dimensions/boost-native.json): 432 次测量; executable SHA-256 `d68dc3aea70b8334e5fc88d3bda0739faeb8696842c4f2f582092d92cb1b2d6d`
+- [standalone-callback.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261010-dimensions/standalone-callback.json): 756 次测量; executable SHA-256 `480122707b4b3ed592d1f580f5cf7092b8008ce52331f55f0e666e89c568be6b`
+- [boost-callback.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261010-dimensions/boost-callback.json): 756 次测量; executable SHA-256 `7b2989fd23e15a68a662899d1906f3b094138018b8ada5904309b4a90d96ea34`
+- [standalone-native.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261010-dimensions/standalone-native.json): 432 次测量; executable SHA-256 `5d7ac94153f942eda1494656edc865ab01817a7ea9122a240cc5f3260b061549`
+- [boost-native.json](https://raw.githubusercontent.com/OpenArkStudio/arknet/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261010-dimensions/boost-native.json): 432 次测量; executable SHA-256 `d68dc3aea70b8334e5fc88d3bda0739faeb8696842c4f2f582092d92cb1b2d6d`
 
 [复现命令与指标定义](methodology_CN.md)
 

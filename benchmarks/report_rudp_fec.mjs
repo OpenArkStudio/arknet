@@ -345,13 +345,11 @@ function topologySVG() {
   return parts.join("\n") + "\n";
 }
 
-export function documentation(report, zh = false) {
+export function documentation(report, zh = false, rawURL) {
   const { metadata: meta, rows } = report, settings = meta.settings, host = meta.host;
   const main = rows.filter(row => row.group === "main"), dimensions = rows.filter(row => row.group === "dimensions");
   const soak = rows.filter(row => row.group === "soak"), protocol = rows[0].protocol_settings;
   const ticks = String.fromCharCode(96), inline = value => ticks + value + ticks, fence = ticks.repeat(3);
-  const rawURL = "https://github.com/OpenArkStudio/arknet/tree/main/" +
-    meta.raw_repository_path.split("/").map(encodeURIComponent).join("/");
   const os = ["Darwin", "macOS"].includes(host.system) ? "macOS " + host.os_version + " (" + host.os_build + ")" :
     host.system + " " + host.release;
   const buffers = Array.from(new Set(rows.flatMap(row => [
@@ -567,14 +565,16 @@ export function documentation(report, zh = false) {
     "", fence + "sh",
     "node benchmarks/report_rudp_fec.mjs --self-check",
     "node benchmarks/report_rudp_fec.mjs \\",
-    "  --results " + meta.raw_repository_path + " --output docs/performance", fence, "",
+    "  --results /path/to/arknet-results/rudp-fec --output docs/performance", fence, "",
     "[" + (zh ? "完整指标与测量元数据" : "Full Metrics and Measurement Metadata") + "](rudp-fec-summary.json)", "",
-    "[" + (zh ? "原始 JSON、实际命令与退出码" : "Raw JSON, Actual Commands and Exit Codes") + "](" + rawURL + ")", "");
+    rawURL ? "[" + (zh ? "原始 JSON、实际命令与退出码" : "Raw JSON, Actual Commands and Exit Codes") + "](" + rawURL + ")" :
+      (zh ? "原始输入保存在调用者的外部目录。发布归档后可用 `--raw-url` 指定链接。" :
+        "Raw inputs remain in the caller's external directory. Set `--raw-url` after publishing their archive."), "");
   const document = lines.join("\n");
   return zh ? document : document.replaceAll("；", "; ").replaceAll("／", " / ");
 }
 
-function writeReport(report, output) {
+function writeReport(report, output, rawURL) {
   const artifacts = [
     ["throughput", "roundtrips_per_second", "RUDP FEC: completed round-trip throughput", "Round trips / s", 1],
     ["rtt", "rtt_p99_us", "RUDP FEC: p99 round-trip latency", "p99 RTT / ms", 1000],
@@ -587,8 +587,8 @@ function writeReport(report, output) {
   const files = artifacts.map(([name, metric, title, unit, divisor]) =>
     [join(output, "assets", "rudp-fec-" + name + ".svg"), chartSVG(report, metric, title, unit, divisor)]);
   files.push([join(output, "assets", "rudp-fec-topology.svg"), topologySVG()],
-    [join(output, "rudp.md"), documentation(report, false)],
-    [join(output, "rudp_CN.md"), documentation(report, true)],
+    [join(output, "rudp.md"), documentation(report, false, rawURL)],
+    [join(output, "rudp_CN.md"), documentation(report, true, rawURL)],
     [join(output, "rudp-fec-summary.json"), JSON.stringify({ report_schema_version: 1, ...report }, null, 2) + "\n"]);
   mkdirSync(join(output, "assets"), { recursive: true });
   for (const [path, content] of files) writeFileSync(path, content, "utf8");
@@ -706,11 +706,21 @@ function selfCheck() {
       assert.ok(document.includes("node benchmarks/report_rudp_fec.mjs --self-check"));
       assert.ok(document.includes(zh ? "不是 WAN 实测" : "not WAN measurements"));
       assert.ok(document.includes(zh ? "不构成通用赢家" : "do not establish a universal winner"));
+      assert.ok(!document.includes("https://github.com/OpenArkStudio/arknet"));
+      assert.ok(document.includes("--results /path/to/arknet-results/rudp-fec"));
+      assert.ok(document.includes("--raw-url"));
+      const linked = documentation(report, zh, "https://example.test/archive.tar.gz");
+      assert.ok(linked.includes("](https://example.test/archive.tar.gz)"));
       assert.ok(document.includes("](assets/rudp-fec-topology.svg)"));
       assert.ok(!document.includes("flowchart") && !document.includes("mermaid"));
     }
     const output = join(directory, "generated");
     writeReport(report, output);
+    const summaryBeforeLink = readFileSync(join(output, "rudp-fec-summary.json"), "utf8");
+    writeReport(report, output, "https://example.test/archive.tar.gz");
+    assert.equal(readFileSync(join(output, "rudp-fec-summary.json"), "utf8"), summaryBeforeLink);
+    assert.ok(readFileSync(join(output, "rudp.md"), "utf8").includes("](https://example.test/archive.tar.gz)"));
+    assert.ok(readFileSync(join(output, "rudp_CN.md"), "utf8").includes("](https://example.test/archive.tar.gz)"));
     const diagram = readFileSync(join(output, "assets", "rudp-fec-topology.svg"), "utf8");
     assert.equal(diagram, topologySVG());
     assert.ok(diagram.includes('viewBox="0 0 360 310"'));
@@ -752,15 +762,15 @@ function main() {
   }
   const options = {};
   for (let index = 0; index < args.length; index += 2) {
-    check(["--results", "--metadata", "--output"].includes(args[index]) && args[index + 1] &&
-      !args[index + 1].startsWith("--"), "Usage: node report_rudp_fec.mjs --results DIRECTORY --output DIRECTORY [--metadata FILE]");
+    check(["--results", "--metadata", "--output", "--raw-url"].includes(args[index]) && args[index + 1] &&
+      !args[index + 1].startsWith("--"), "Usage: node report_rudp_fec.mjs --results DIRECTORY --output DIRECTORY [--metadata FILE] [--raw-url URL]");
     check(options[args[index]] === undefined, "duplicate option: " + args[index]);
     options[args[index]] = args[index + 1];
   }
   check(options["--results"] && options["--output"], "--results and --output are required");
   const report = loadResults(resolve(options["--results"]),
     options["--metadata"] ? resolve(options["--metadata"]) : undefined);
-  writeReport(report, resolve(options["--output"]));
+  writeReport(report, resolve(options["--output"]), options["--raw-url"]);
   console.log("RUDP FEC report: " + report.rows.length + " configurations; " +
     report.rows.reduce((sum, row) => sum + row.rounds, 0) + " measured runs; PASS");
 }

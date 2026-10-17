@@ -7,6 +7,7 @@ import json
 import math
 from pathlib import Path
 import statistics
+from urllib.parse import quote
 
 METRICS = ("roundtrips_per_second", "payload_mib_per_second", "rtt_p50_us", "rtt_p95_us", "rtt_p99_us", "peak_rss_bytes")
 PROTOCOLS = ("tcp", "udp", "websocket", "tcps", "wss", "http", "https")
@@ -420,7 +421,8 @@ def overview(reports, rows, chinese, raw_base, host_description):
               f"- [{'已完成测量' if chinese else 'Completed measurements'}]: {sum(len(report['results']) for _, report in reports)}",
               f"- [{'复现命令与检查范围' if chinese else 'Commands and validation scope'}](../testing{suffix}.md)", ""]
     for path, report in reports:
-        lines.append(f"- [{path.name}]({raw_base.rstrip('/')}/{path.name}): {len(report['results'])} measurements; {report['recorded_at_utc']}; executable SHA-256 `{report['executable_sha256']}`")
+        label = f"[{path.name}]({raw_base.rstrip('/')}/{quote(path.name)})" if raw_base else f"`{path.name}`"
+        lines.append(f"- {label}: {len(report['results'])} measurements; {report['recorded_at_utc']}; executable SHA-256 `{report['executable_sha256']}`")
     lines += ["", "## " + ("适用范围" if chinese else "Scope"), "",
               "本机回环结果不代表跨主机或生产容量。短时测量、调度和温度可能带来波动；部署前需使用实际负载测量。" if chinese else "Local loopback results do not establish cross-host or production capacity. Short runs, scheduling and thermals introduce variance; repeat with the deployment workload.", ""]
     return "\n".join(lines)
@@ -430,7 +432,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reports", nargs="+", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
-    parser.add_argument("--raw-base", default="https://github.com/OpenArkStudio/arknet/blob/main/benchmarks/results")
+    parser.add_argument("--raw-base", help="optional published URL base for raw inputs; omitted inputs remain unlinked")
     parser.add_argument("--host-description", required=True, help="hardware, compiler, dependencies and build flags")
     args = parser.parse_args()
     reports, groups = load_reports(args.reports)

@@ -24,13 +24,13 @@ one drain timeout. This reproduces the original failure pattern. The original
 
 The diagnostic wrapper also failed because `rg` was unavailable after it printed
 the evidence. Its run is reproduction evidence, not a passing test result.
-The raw output is retained in [linux-before.log](linux-before.log).
+The raw output is retained in [linux-before.log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/linux-before.log).
 
 After changing only the default reuse setting, the same diagnostic program passed
 **50 consecutive 256-client runs** on Linux, with no duplicate endpoints,
 content errors or missing replies:
 [run 38194451308](https://github.com/OpenArkStudio/arknet/actions/runs/38194451308),
-[raw results](linux-after.log).
+[raw results](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/linux-after.log).
 
 ## Change and Coverage
 
@@ -51,12 +51,12 @@ plus the UDP endpoint fix in the commit containing this record.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Standalone + TLS, Release, complete checks | 41 checks / 134 cases passed | [Log](standalone-check.log) |
-| Boost + TLS, Release, complete checks | 41 checks / 134 cases passed | [Log](boost-check.log) |
-| Standalone UDP, ASan/UBSan | 14 cases passed | [Log](udp-asan.log) |
-| Standalone UDP, TSan | 14 cases passed | [Log](udp-tsan.log) |
-| Original failing configuration, Standalone | 30 fresh-process runs passed | [JSONL](standalone-repeated.jsonl) |
-| Original failing configuration, Boost | 30 fresh-process runs passed | [JSONL](boost-repeated.jsonl) |
+| Standalone + TLS, Release, complete checks | 41 checks / 134 cases passed | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/standalone-check.log) |
+| Boost + TLS, Release, complete checks | 41 checks / 134 cases passed | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/boost-check.log) |
+| Standalone UDP, ASan/UBSan | 14 cases passed | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/udp-asan.log) |
+| Standalone UDP, TSan | 14 cases passed | [Log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/udp-tsan.log) |
+| Original failing configuration, Standalone | 30 fresh-process runs passed | [JSONL](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/standalone-repeated.jsonl) |
+| Original failing configuration, Boost | 30 fresh-process runs passed | [JSONL](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/boost-repeated.jsonl) |
 
 All 60 repeated runs had successful warmup, zero content errors, zero missing
 replies and zero drain timeouts. These short checks establish regression stability;

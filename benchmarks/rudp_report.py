@@ -173,7 +173,7 @@ def chart(metadata, rows, output, field, title, unit, scale=1):
     output.write_text("\n".join(line.rstrip() for line in output.read_text(encoding="utf-8").splitlines()) + "\n", encoding="utf-8")
 
 
-def documentation(metadata, rows, chinese, raw_directory):
+def documentation(metadata, rows, chinese, raw_directory, raw_url=None):
     settings = metadata[0]["settings"]
     host = metadata[0]["host"]
     cpu_count = host["logical_cpus"]
@@ -253,11 +253,13 @@ def documentation(metadata, rows, chinese, raw_directory):
               ("维护者批量采集使用 shell；单项 C++ 程序不需要 jq、Python 或 Ruby。" if chinese else
                "Maintainers collect the matrix with shell; the standalone C++ executable does not require jq, Python or Ruby."), "", "```sh",
               "bash scripts/rudp_matrix.sh --build-dir build-perf --backend standalone \\",
-              "  --backend-include /path/to/asio/include --output benchmarks/results/local-rudp", "```", "",
+              "  --backend-include /path/to/asio/include --output /path/to/arknet-results/local-rudp", "```", "",
               ("Boost 在独立目录配置 `-DARKNET_USE_BOOST_ASIO=ON`；批量命令使用 `--backend boost --backend-include /path/to/boost/include`，其余测量参数相同。" if chinese else
                "Configure Boost in a separate build directory with `-DARKNET_USE_BOOST_ASIO=ON`; collect with `--backend boost --backend-include /path/to/boost/include` and identical measurement settings."), "",
               ("[完整数值与测量元数据](rudp-summary.json)" if chinese else "[Full values and measurement metadata](rudp-summary.json)"), "",
-              f"[{'项目中的原始 JSON、命令与机器信息' if chinese else 'Project raw JSON, commands and host metadata'}](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/{raw_directory.name})", ""]
+              (f"[{'原始 JSON、命令与机器信息' if chinese else 'Raw JSON, commands and host metadata'}]({raw_url})" if raw_url else
+               (f"原始输入目录：`{raw_directory.name}`。发布归档后可用 `--raw-url` 指定链接。" if chinese else
+                f"Raw input directory: `{raw_directory.name}`. Set `--raw-url` after publishing its archive.")), ""]
     return "\n".join(lines)
 
 
@@ -265,6 +267,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--raw-url", help="optional published URL for the raw input archive or directory")
     args = parser.parse_args()
     metadata, rows = load_results(args.results)
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -274,7 +277,7 @@ def main():
     chart(metadata, rows, assets / "rudp-rtt.svg", "rtt_p99_us", "p99 latency", "p99 RTT (ms)", 1000)
     chart(metadata, rows, assets / "rudp-cpu.svg", "cpu_percent", "CPU utilization", "Process CPU (%)")
     for chinese, name in ((False, "rudp.md"), (True, "rudp_CN.md")):
-        (args.output_dir / name).write_text(documentation(metadata, rows, chinese, args.results), encoding="utf-8")
+        (args.output_dir / name).write_text(documentation(metadata, rows, chinese, args.results, args.raw_url), encoding="utf-8")
     (args.output_dir / "rudp-summary.json").write_text(json.dumps({"metadata": metadata, "results": rows}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 

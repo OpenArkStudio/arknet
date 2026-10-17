@@ -100,6 +100,21 @@ class ReportTests(unittest.TestCase):
             self.assertIn("CPU% / 14", report.cpu_note(chinese, 14))
             self.assertIn("7.14", report.cpu_note(chinese, 14))
 
+    def test_external_raw_inputs_only_link_an_explicit_archive_url(self):
+        reports, groups = self.load(self.fixture())
+        reports[0] = (Path("/outside source/raw data/run 1.json"), reports[0][1])
+        rows = report.summary(groups)
+        for chinese in (False, True):
+            local = report.overview(reports, rows, chinese, None, "test-toolchain")
+            linked = report.overview(reports, rows, chinese, "https://example.test/archive/", "test-toolchain")
+            self.assertIn("`run 1.json`", local)
+            self.assertNotIn("github.com/OpenArkStudio/arknet", local)
+            self.assertIn("[run 1.json](https://example.test/archive/run%201.json)", linked)
+            for page in (local, linked):
+                self.assertIn("test-executable", page)
+                self.assertIn("test-time", page)
+                self.assertIn("same-source", page)
+
     def test_address_families_reject_mixed_old_and_new_samples(self):
         for family in ("ipv4", "ipv6"):
             value = self.fixture()

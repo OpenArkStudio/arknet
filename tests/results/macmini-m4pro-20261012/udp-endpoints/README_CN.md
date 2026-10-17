@@ -21,12 +21,12 @@
 
 诊断脚本打印上述证据后，还因 runner 未安装 `rg` 而失败。这次运行用于保存
 复现证据，不计为通过的功能检查。
-原始输出保存在 [linux-before.log](linux-before.log)。
+原始输出保存在 [linux-before.log](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/linux-before.log)。
 
 只修改默认复用选项后，同一个诊断程序在 Linux 上连续通过 **50 次、每次 256 个
 客户端**的运行，没有重复端点、内容错误或未收到的回包：
 [运行 38194451308](https://github.com/OpenArkStudio/arknet/actions/runs/38194451308)、
-[原始结果](linux-after.log)。
+[原始结果](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/linux-after.log)。
 
 ## 修改与覆盖
 
@@ -45,12 +45,12 @@ Asio 1.38.2、Boost 1.90.0、OpenSSL 3.6.4。源码基于
 
 | 检查 | 结果 | 证据 |
 | --- | --- | --- |
-| Standalone + TLS，Release，完整检查 | 41 项检查、134 个用例通过 | [日志](standalone-check.log) |
-| Boost + TLS，Release，完整检查 | 41 项检查、134 个用例通过 | [日志](boost-check.log) |
-| Standalone UDP，ASan/UBSan | 14 个用例通过 | [日志](udp-asan.log) |
-| Standalone UDP，TSan | 14 个用例通过 | [日志](udp-tsan.log) |
-| 原失败配置，Standalone | 30 个独立进程运行均通过 | [JSONL](standalone-repeated.jsonl) |
-| 原失败配置，Boost | 30 个独立进程运行均通过 | [JSONL](boost-repeated.jsonl) |
+| Standalone + TLS，Release，完整检查 | 41 项检查、134 个用例通过 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/standalone-check.log) |
+| Boost + TLS，Release，完整检查 | 41 项检查、134 个用例通过 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/boost-check.log) |
+| Standalone UDP，ASan/UBSan | 14 个用例通过 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/udp-asan.log) |
+| Standalone UDP，TSan | 14 个用例通过 | [日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/udp-tsan.log) |
+| 原失败配置，Standalone | 30 个独立进程运行均通过 | [JSONL](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/standalone-repeated.jsonl) |
+| 原失败配置，Boost | 30 个独立进程运行均通过 | [JSONL](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261012/udp-endpoints/boost-repeated.jsonl) |
 
 60 次重复运行均成功完成预热，内容错误、未收到的回包和排空超时均为 0。
 这些短测用于验证回归稳定性，其时间指标不作为发布的性能测量结果。

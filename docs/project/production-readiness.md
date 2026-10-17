@@ -49,7 +49,7 @@ for every protocol. Hosts must stop producers and keep external context runners
 alive through drain. Local validation does not establish dynamic-library
 unloading safety or the cluster PCU target.
 
-The [RUDP/FEC record](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec)
+The [RUDP/FEC record](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec)
 retains its independent interoperability evidence. The ark replacement is merged;
 business behavior and deployment acceptance still need their own workload tests.
 
