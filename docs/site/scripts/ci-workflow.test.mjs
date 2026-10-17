@@ -31,13 +31,14 @@ function checkPolicy(source) {
     "  cancel-in-progress: false",
   ].join("\n"));
 
-  // Reviewed source 56f8d2537f793b334064f5d4abdcb0d2035c5300: preserve all jobs,
-  // including the 12 native rows, names, timeouts, commands, sanitizers and uploads.
+  // Preserve the 14 required checks. The required style job validates the scope;
+  // all 12 native rows retain their commands, sanitizers and uploads for full
+  // checks, while reviewed documentation changes get explicit scope-only records.
   // An intentional job change needs a new review before updating this fingerprint.
   const jobs = source.slice(source.indexOf("jobs:\n"));
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
-    "eb419c11f19747d79088065a47815e5178be81fe1daf8a30eb6afab1692ec132",
-    "review the complete 14-check job contract before changing it");
+    "d49d5a1811c05eb6ffa9f737281a0d46236c13e082f15d0ac1ed6ef5759e1dc0",
+    "review the complete 14-check and scope contract before changing it");
 }
 
 test("CI validates PRs and merge candidates without cancelling active runs or repeating main pushes", () => {
@@ -58,6 +59,11 @@ test("CI policy rejects changed events, cancellation, permissions and required j
     ["sanitize: [\"OFF\"]", "sanitize: [\"ON\"]"],
     ["-fsanitize=address,undefined", "-fsanitize=address"],
     ["build/tests/logs/**/*.log", "build/tests/other/**/*.log"],
+    ["    needs: format", "    needs: []"],
+    ["needs.format.outputs.full_cpp == 'true'", "needs.format.outputs.full_cpp != 'false'"],
+    ["throw 'Missing or failed CI scope validation'", "Write-Output 'Missing scope'"],
+    ["fetch-depth: 0", "fetch-depth: 1"],
+    ["$env:ARKNET_FULL_CPP -cne", "$env:ARKNET_FULL_CPP -ne"],
   ];
   for (const [from, to] of mutations) {
     assert.ok(workflow.includes(from), `mutation must change source: ${from}`);
