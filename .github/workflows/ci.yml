@@ -29,8 +29,18 @@ jobs:
     name: Style - clang-format 18
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    outputs:
+      full_cpp: ${{ steps.scope.outputs.full_cpp }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - run: node --test docs/site/scripts/ci-scope.test.mjs
+      - id: scope
+        run: node .github/scripts/ci-scope.mjs
       - name: Install clang-format 18
         run: sudo apt-get update && sudo apt-get install -y clang-format-18
       - name: Check project C++ formatting
@@ -42,6 +52,8 @@ jobs:
   test:
     name: Test - ${{ matrix.os }} - ${{ matrix.boost == 'ON' && 'Boost' || 'Standalone' }} - ${{ matrix.ssl == 'ON' && 'TLS' || 'NoTLS' }} - ${{ matrix.sanitize == 'THREAD' && 'TSan' || matrix.sanitize == 'ON' && 'ASan+UBSan' || 'Release' }}
     timeout-minutes: 60
+    needs: format
+    if: ${{ !cancelled() }}
     strategy:
       fail-fast: false
       matrix:
@@ -58,18 +70,36 @@ jobs:
           - {os: ubuntu-latest, boost: "ON", ssl: "ON", sanitize: "THREAD"}
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Validate scope result
+        shell: pwsh
+        env:
+          ARKNET_SCOPE_RESULT: ${{ needs.format.result }}
+          ARKNET_FULL_CPP: ${{ needs.format.outputs.full_cpp }}
+        run: |
+          if ($env:ARKNET_SCOPE_RESULT -cne 'success' -or ($env:ARKNET_FULL_CPP -cne 'true' -and $env:ARKNET_FULL_CPP -cne 'false')) {
+            throw 'Missing or failed CI scope validation'
+          }
+      - name: Record documentation-only coverage
+        if: ${{ needs.format.outputs.full_cpp == 'false' }}
+        shell: pwsh
+        run: |
+          'Documentation-only change: native checks are not planned. Documentation and formatting checks remain required.' | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
       - uses: actions/checkout@v4
+        if: ${{ needs.format.outputs.full_cpp == 'true' }}
       - uses: ilammy/msvc-dev-cmd@v1
-        if: runner.os == 'Windows'
+        if: ${{ needs.format.outputs.full_cpp == 'true' && (runner.os == 'Windows') }}
       - uses: lukka/get-cmake@latest
+        if: ${{ needs.format.outputs.full_cpp == 'true' }}
       - uses: lukka/run-vcpkg@v11
+        if: ${{ needs.format.outputs.full_cpp == 'true' }}
         with:
           vcpkgGitCommitId: 0699a19d0c6386247ce50d4dedbb8217d484d536
           vcpkgJsonGlob: vcpkg.json
       - name: Configure TSan address space
-        if: matrix.sanitize == 'THREAD'
+        if: ${{ needs.format.outputs.full_cpp == 'true' && (matrix.sanitize == 'THREAD') }}
         run: sudo sysctl -w vm.mmap_rnd_bits=28
       - name: Configure
+        if: ${{ needs.format.outputs.full_cpp == 'true' }}
         shell: pwsh
         run: >-
           cmake -S . -B build -G Ninja
@@ -82,22 +112,23 @@ jobs:
           ${{ matrix.sanitize != 'OFF' && '"-DCMAKE_CXX_FLAGS_DEBUG=-O0 -g1"' || '' }}
           ${{ matrix.sanitize == 'ON' && '"-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"' || matrix.sanitize == 'THREAD' && '"-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=thread"' || '' }}
       - run: cmake --build build --parallel ${{ matrix.sanitize == 'ON' && '1' || matrix.sanitize == 'THREAD' && '2' || '3' }}
+        if: ${{ needs.format.outputs.full_cpp == 'true' }}
       - name: Test
-        if: matrix.sanitize == 'OFF'
+        if: ${{ needs.format.outputs.full_cpp == 'true' && (matrix.sanitize == 'OFF') }}
         run: cmake --build build --target arknet_check
       - name: Test with sanitizers
-        if: matrix.sanitize == 'ON'
+        if: ${{ needs.format.outputs.full_cpp == 'true' && (matrix.sanitize == 'ON') }}
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
         run: cmake --build build --target arknet_check
       - name: Test with thread sanitizer
-        if: matrix.sanitize == 'THREAD'
+        if: ${{ needs.format.outputs.full_cpp == 'true' && (matrix.sanitize == 'THREAD') }}
         env:
           TSAN_OPTIONS: halt_on_error=1:second_deadlock_stack=1
         run: cmake --build build --target arknet_check
       - name: Check benchmark batch runner and report calculations
-        if: runner.os == 'Linux' && matrix.ssl == 'ON' && matrix.sanitize == 'OFF'
+        if: ${{ needs.format.outputs.full_cpp == 'true' && (runner.os == 'Linux' && matrix.ssl == 'ON' && matrix.sanitize == 'OFF') }}
         run: |
           sudo apt-get update
           sudo apt-get install -y jq
@@ -108,7 +139,7 @@ jobs:
           python3 -m unittest discover -s benchmarks -p 'test_*.py' -v
           python3 -m unittest discover -s scripts -p 'test_udp_limits_report.py' -v
       - name: Upload test results
-        if: always()
+        if: ${{ needs.format.outputs.full_cpp == 'true' && (always()) }}
         uses: actions/upload-artifact@v4
         with:
           name: results-${{ matrix.os }}-${{ matrix.boost == 'ON' && 'Boost' || 'Standalone' }}-${{ matrix.ssl == 'ON' && 'TLS' || 'NoTLS' }}-${{ matrix.sanitize == 'THREAD' && 'TSan' || matrix.sanitize == 'ON' && 'ASan+UBSan' || 'Release' }}
