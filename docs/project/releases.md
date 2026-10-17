@@ -1,5 +1,25 @@
 # Releases
 
+## 0.2.2
+
+This maintenance release strengthens Redis cleanup when native stop submission fails and adds native tools for measuring TCP connection loads and process resources. arknet remains C++20 and header-only.
+
+### Fixes
+
+- Redis clients preserve accepted connect and command completions when native cleanup submission throws. Pools retain child ownership and bounded connection slots after cleanup submission fails, preventing premature replacement connections.
+- Permanent Redis close reconciles pending child cleanup before joining the owned runtime. One failed child does not prevent other children from closing; commands are not replayed and original terminal results are preserved.
+
+### Improvements
+
+- A standalone C++ TCP load program runs server and client in separate processes, with IPv4/IPv6, idle connections and closed-loop Echo traffic. Connection pacing, pending attempts, payload/window limits, content checks and bounded RTT statistics support reproducible workload setup.
+- Native resource sampling reports CPU utilization, current/peak RSS and supported descriptor, handle and thread counts. Periodic and whole-run CPU scopes are explicit; unavailable metrics carry reasons instead of reporting zero. CPU 100% represents one logical core. See the [connection-load guide](https://github.com/OpenArkStudio/arknet/blob/226a02138245a169664d38875cdc2f6abedafa9b/benchmarks/CONNECTIONS.md).
+
+### Upgrade notes
+
+No library API migration is required from 0.2.1. Rebuild applications to consume the header changes. Redis recovery covers direct native cleanup submission failures; later asynchronous native-stage failures and throwing user callbacks retain their existing exception contract. Keep the documented thread/executor preconditions for `close_and_wait()`.
+
+The connection tool currently measures TCP callbacks with numeric addresses; TLS, reconnect workloads and fixed arrival-rate traffic are outside its scope. Local loopback success does not establish production capacity or PCU. Published measurements keep their original source revisions: the earlier 4 KiB WebSocket comparison recorded 6.51% lower median throughput and 13.29% higher P99 at `2aa5bc0`, with an unconfirmed cause; it is not a measurement of 0.2.2. See [performance](https://openarkstudio.github.io/arknet/performance/steady-workloads/) and [validation](https://openarkstudio.github.io/arknet/project/testing/).
+
 ## 0.2.1
 
 This release improves shutdown reliability for database clients and TCP-based protocols, and adds application-driven IO execution.
