@@ -411,13 +411,17 @@ DOCTEST_TEST_CASE("MySQL pool acquire deadline includes time waiting for its exe
 }
 
 DOCTEST_TEST_CASE("MySQL pool discards connections when database restoration fails or exceeds the return deadline") {
-    for (const bool timeout : {false, true})
-    {
-        mysql_peer peer([timeout](mysql_peer& server) -> asio::awaitable<void> {
+    const auto verify = [](bool timeout) {
+        std::promise<void> restoration_received, discarded;
+        auto restoration_result = restoration_received.get_future();
+        auto discarded_result = discarded.get_future();
+        mysql_peer peer([&](mysql_peer& server) -> asio::awaitable<void> {
+            DOCTEST_INFO("restoration response withheld = " << timeout);
             co_await authenticate(server);
             CHECK(co_await receive_command(server) == std::string(1, '\x1f'));
             co_await server.send(ok_packet);
             CHECK(co_await receive_command(server) == std::string(1, '\3') + "USE `test-db`");
+            restoration_received.set_value();
             if (!timeout)
             {
                 std::string error(1, '\xff');
@@ -426,18 +430,40 @@ DOCTEST_TEST_CASE("MySQL pool discards connections when database restoration fai
                 co_await server.send(error);
             }
             co_await server.wait_for_eof();
+            discarded.set_value();
         });
         auto options = pooled_options(peer);
-        options.reset_timeout = 30ms;
+        // The budget covers reset and restoration; do not require both commands
+        // to cross independently scheduled executors within a 30 ms interval.
+        options.reset_timeout = timeout ? 500ms : 2s;
         mysql_pool pool(options);
         auto first = acquire(pool);
         REQUIRE(bool(first));
+        const auto started = std::chrono::steady_clock::now();
         first.connection.release();
+        REQUIRE(restoration_result.wait_for(2s) == std::future_status::ready);
+        REQUIRE(discarded_result.wait_for(2s) == std::future_status::ready);
+        const auto elapsed = std::chrono::steady_clock::now() - started;
+        DOCTEST_INFO("return elapsed ms = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
+        if (timeout)
+        {
+            // The pool rounds remaining query time down to whole milliseconds.
+            CHECK(elapsed >= options.reset_timeout - 1ms);
+        }
+        CHECK(elapsed < 2s);
+        // EOF must precede close(): the server error or absolute return deadline
+        // discards the lease, not the test's final pool shutdown.
+        peer.finish();
         const auto next = acquire(pool, 80ms);
         CHECK(next.status.code == connection_errc::timeout);
         CHECK_FALSE(bool(next));
         pool.close();
-        peer.finish();
+    };
+    DOCTEST_SUBCASE("restoration returns a server error") {
+        verify(false);
+    }
+    DOCTEST_SUBCASE("restoration exceeds the absolute return deadline") {
+        verify(true);
     }
 }
 
