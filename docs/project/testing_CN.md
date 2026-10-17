@@ -8,6 +8,20 @@
 性能测量在这些检查通过后于本机执行，使用不带 Sanitizer 的 Release 构建。
 CI 用于回归和冒烟执行，共享 runner 的时间不作为发布的性能基线。
 
+## CI 覆盖范围
+
+代码、依赖、构建、CI 配置及无法分类的改动运行完整原生矩阵：Linux/macOS/Windows、
+Boost/Standalone Asio、TLS、Linux 无 TLS，以及 Linux ASan/UBSan 和 TSan。
+手动触发 CI 时也运行完整矩阵。
+
+仅修改根目录 README 或 `docs/` 下的 Markdown、MDX、SVG、CSS、图片文件时，
+运行文档和格式检查。十二个原生矩阵任务保留必需检查名称，明确记录本次只验证改动范围，
+不安装原生依赖、构建或执行 C++ 测试。
+
+PR 和合并队列的完整候选版本使用同一规则。每个改动路径都必须符合文档范围，重命名时
+同时检查新旧路径。提交对象缺失、改动列表为空或不可用、事件类型未知时均运行完整检查。
+范围检查失败会阻止必需检查通过。分支保护保持不变，也不会为新提交取消正在执行的检查。
+
 下载[验证日志与源码对应关系](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz)及 [SHA256 校验和](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz.sha256)。归档包含双语说明和独立校验工具。
 
 ## 构建与执行
@@ -183,7 +197,7 @@ RUDP FEC 端点测试在两种 Release 依赖方案及独立 ASan/UBSan、TSan �
 2,564 项断言。真实 zephyr/arknet 混合进程测试每种依赖方案均通过 12 组，覆盖重连、ARK 二进制
 消息头、4096 字节消息体、ARQ 报文丢失和乱序。中继保留 SYN/ACK/FIN，未验证 FIN 丢失后的可靠关闭。
 
-[日志与复现命令](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/README_CN.md)
+[日志与复现命令](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/README_CN.md)
 记录了源码版本和检查范围。仅用于测试的原版 KCP 源码关闭 `null,object-size` 检测，
 arknet 自有代码保留完整检测。性能数据见独立的 [RUDP 报告](../performance/rudp_CN.md)。
 
@@ -229,5 +243,5 @@ CI 上传测试日志、执行基准冒烟；性能报告矩阵来自本机测�
 
 文档中的 14 个独立客户端、服务端程序也在两种依赖方案上编译、运行通过。每种依赖方案
 的七组协议检查了回显内容，全部 28 个进程正常退出。
-[构建、运行日志与复现脚本](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/usage/README_CN.md)
+[构建、运行日志与复现脚本](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/usage/README_CN.md)
 独立保留这项检查，不混入性能测量。

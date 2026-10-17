@@ -7,13 +7,13 @@ fix and tests in the commit containing this record.
 
 | Build | Result |
 | --- | --- |
-| Standalone Asio, Release + TLS | [10 cases / 283 assertions passed](httprequest-standalone.log) |
-| Boost.Asio, Release + TLS | [10 cases / 283 assertions passed](httprequest-boost.log) |
-| Standalone Asio, Debug + ASan/UBSan | [10 cases / 283 assertions passed](httprequest-asan-ubsan.log) |
-| Standalone Asio, Debug + TSan | [10 cases / 283 assertions passed](httprequest-tsan.log) |
+| Standalone Asio, Release + TLS | [10 cases / 283 assertions passed](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/http-deadline/httprequest-standalone.log) |
+| Boost.Asio, Release + TLS | [10 cases / 283 assertions passed](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/http-deadline/httprequest-boost.log) |
+| Standalone Asio, Debug + ASan/UBSan | [10 cases / 283 assertions passed](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/http-deadline/httprequest-asan-ubsan.log) |
+| Standalone Asio, Debug + TSan | [10 cases / 283 assertions passed](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/http-deadline/httprequest-tsan.log) |
 
 The published `e767cdf` header fails the new queued-response regression:
-[control result](published-header-regression.log). A ready IO handler can run
+[control result](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/http-deadline/published-header-regression.log). A ready IO handler can run
 before an expired timer's handler. Requests now check the absolute deadline
 before handling DNS, connect, write and read results. Coverage includes successful
 and truncated responses queued while IO is paused, exactly-once completion,

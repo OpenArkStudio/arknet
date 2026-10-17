@@ -85,6 +85,6 @@ build-perf/benchmarks/arknet_loopback_benchmark \
 
 This overflow probe is expected to return a nonzero status. Set the window to 16, or the payload to 1472, to reproduce the corresponding loss-free configurations above.
 
-[Raw records, commands and machine metadata](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-udp) · [Per-run kernel snapshots](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-udp/buffer-probes) · [Size-boundary charts](udp-limits.md)
+[Raw records, commands and machine metadata](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp) · [Per-run kernel snapshots](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp/buffer-probes) · [Size-boundary charts](udp-limits.md)
 
 Results cover short IPv4 loopback runs on this machine. Cross-host capacity and IPv6 stress capacity are not measured. RUDP has a [separate report](rudp.md). Coroutine comparisons use native TCP and must not be generalized to UDP.

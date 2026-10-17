@@ -9,6 +9,23 @@ restarts and cleanup. Performance measurements run locally after those checks
 pass and use a Release build without sanitizers. CI checks regressions and
 smoke execution; its shared-runner timing is not the published baseline.
 
+## CI coverage
+
+Code, dependency, build, CI configuration and unclassified changes run the full
+native matrix: Linux/macOS/Windows, Boost/Standalone Asio, TLS, Linux without TLS,
+and Linux ASan/UBSan and TSan. Manual CI runs also use the full matrix.
+
+Changes limited to the root READMEs or Markdown, MDX, SVG, CSS and image files
+under `docs/` run documentation and formatting checks. The twelve native matrix
+jobs retain their required check names and explicitly record scope-only coverage,
+without installing native dependencies, building or running C++ tests.
+
+The same policy applies to PRs and the complete merge-queue candidate. Every
+changed path must qualify, including both paths of a rename. Missing commit
+objects, empty or unavailable change lists and unknown events select full
+validation. A failed scope check blocks required checks. This policy preserves
+branch protection and never cancels an active run to schedule a newer commit.
+
 Download the [validation logs and source mapping](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz) with the [SHA256 checksum](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz.sha256). The archive includes bilingual instructions and an independent verifier.
 
 ## Build and Run
@@ -209,7 +226,7 @@ pairs passed all 12 scenarios per dependency configuration, including reconnect,
 headers, 4096-byte bodies, ARQ packet loss and reordering. The relay preserves
 SYN/ACK/FIN; this does not establish reliable shutdown when FIN is lost.
 
-[Logs and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261013/rudp-fec/README.md)
+[Logs and reproduction commands](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec/README.md)
 record the source revision and exact scope. The test-only canonical KCP source
 disables `null,object-size` instrumentation; arknet's own code remains fully instrumented.
 RUDP performance has a [separate report](../performance/rudp.md).
@@ -263,5 +280,5 @@ and [ARK business acceptance](production-readiness.md) remain to be validated.
 
 All 14 independent client/server usage programs were also built with both
 dependency configurations. The seven protocol pairs per dependency configuration verified echo contents and all
-28 processes exited normally. [Build/run logs and reproduction scripts](https://github.com/OpenArkStudio/arknet/blob/main/tests/results/macmini-m4pro-20261010/usage/README.md)
+28 processes exited normally. [Build/run logs and reproduction scripts](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/usage/README.md)
 retain this check separately from timed performance measurements.

@@ -142,6 +142,19 @@ class RUDPReportTests(unittest.TestCase):
                 rudp_report.load_results(self.directory)
         self.write(name, original)
 
+    def test_external_raw_directory_only_links_an_explicit_archive_url(self):
+        metadata, rows = rudp_report.load_results(self.directory)
+        original = copy.deepcopy(metadata)
+        for chinese in (False, True):
+            local = rudp_report.documentation(metadata, rows, chinese, Path("/outside source/raw data"))
+            linked = rudp_report.documentation(metadata, rows, chinese, self.directory,
+                                               "https://example.test/archive.tar.gz")
+            self.assertIn("`raw data`", local)
+            self.assertNotIn("github.com/OpenArkStudio/arknet", local)
+            self.assertIn("](https://example.test/archive.tar.gz)", linked)
+            self.assertIn("--raw-url", local)
+        self.assertEqual(metadata, original)
+
     def test_bilingual_docs_keep_measured_conditions_and_limits(self):
         metadata, rows = rudp_report.load_results(self.directory)
         for chinese in (False, True):

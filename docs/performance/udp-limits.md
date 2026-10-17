@@ -67,25 +67,25 @@ build-perf/benchmarks/arknet_loopback_benchmark \
   --io-model shared --io-threads 1 --work 0 --warmup 0.25 --seconds 1
 ```
 
-The archived [Standalone command and kernel snapshots](https://github.com/OpenArkStudio/arknet/tree/main/benchmarks/results/macmini-m4pro-20261012-udp/limits)
+The archived [Standalone command and kernel snapshots](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp/limits)
 also retain the complete shell matrix and the Boost command. The optional
 offline chart tool needs the [report environment](methodology.md#metrics-and-charts):
 
 ```sh
 build/report-venv/bin/python scripts/udp_limits_report.py \
-  --input-dir benchmarks/results/macmini-m4pro-20261012-udp/limits \
+  --input-dir /path/to/arknet-history/benchmarks/results/macmini-m4pro-20261012-udp/limits \
   --output docs/performance/assets/udp-limits-loss.svg
 ```
 
-Report-tool checks validate the archived cohort and reject malformed data;
-they do not launch network tests:
+Report-tool checks use a deterministic synthetic matrix to validate calculations
+and reject malformed data; they do not load archived measurements or launch network tests:
 
 ```sh
 python3 -m unittest discover -s scripts -p 'test_udp_limits_report.py' -v
 ```
 
-[Standalone raw JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261012-udp/limits/standalone.json) ·
-[Boost raw JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/main/benchmarks/results/macmini-m4pro-20261012-udp/limits/boost.json) ·
+[Standalone raw JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp/limits/standalone.json) ·
+[Boost raw JSON](https://raw.githubusercontent.com/OpenArkStudio/arknet/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp/limits/boost.json) ·
 [Numeric chart data](assets/udp-limits-loss.json ':ignore') ·
 [Environment and measurement definitions](../project/testing.md)
 

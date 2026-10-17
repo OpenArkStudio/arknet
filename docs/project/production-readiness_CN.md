@@ -44,7 +44,7 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 不扩大为所有协议的通用保证。宿主须先停止外部提交方，并在排空期间保持外部 context 的
 执行线程运行。本机结果不能证明动态库可安全卸载，也不能证明集群 PCU 容量。
 
-[RUDP/FEC 记录](https://github.com/OpenArkStudio/arknet/tree/main/tests/results/macmini-m4pro-20261013/rudp-fec)
+[RUDP/FEC 记录](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec)
 保留独立的互通专项证据。ark 直接替换已合并，业务行为与部署验收仍需使用对应负载测试。
 
 ## 部署容量目标

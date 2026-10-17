@@ -9,14 +9,14 @@ GCC 构建使用 Homebrew GCC 15.2.0 和 libstdc++。
 
 | 配置 | 检查 / 用例 | 结果 | 日志 |
 | --- | ---: | --- | --- |
-| Clang、standalone、Release、TLS | 41 / 133 | 通过，退出码 0 | [完整检查](arknet-format-standalone.log) |
-| Clang、Boost、Release、TLS | 41 / 133 | 通过，退出码 0 | [完整检查](arknet-format-boost.log) |
-| Clang、standalone、Debug、ASan/UBSan、TLS | 16 / 133 | 通过，退出码 0 | [完整检查](arknet-format-asan.log) |
-| Clang、standalone、Debug、TSan、TLS | 16 / 133 | 通过，退出码 0 | [完整检查](arknet-format-tsan.log) |
-| GCC、standalone、NoTLS、生命周期 | 1 / 18 | 通过，退出码 0 | [生命周期](arknet-lifecycle-gcc-after.log) |
-| GCC、standalone、NoTLS、TCP | 1 / 5 | 通过，退出码 0 | [TCP](arknet-ci-fix-gcc-tcp.log) |
-| GCC、standalone、NoTLS、detail | 1 / 11 | 通过，退出码 0 | [detail](arknet-ci-fix-gcc-detail.log) |
-| GCC、standalone、NoTLS、线程池 | 1 / 6 | 通过，退出码 0 | [线程池](arknet-ci-fix-gcc-io_pool.log) |
+| Clang、standalone、Release、TLS | 41 / 133 | 通过，退出码 0 | [完整检查](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-format-standalone.log) |
+| Clang、Boost、Release、TLS | 41 / 133 | 通过，退出码 0 | [完整检查](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-format-boost.log) |
+| Clang、standalone、Debug、ASan/UBSan、TLS | 16 / 133 | 通过，退出码 0 | [完整检查](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-format-asan.log) |
+| Clang、standalone、Debug、TSan、TLS | 16 / 133 | 通过，退出码 0 | [完整检查](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-format-tsan.log) |
+| GCC、standalone、NoTLS、生命周期 | 1 / 18 | 通过，退出码 0 | [生命周期](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-lifecycle-gcc-after.log) |
+| GCC、standalone、NoTLS、TCP | 1 / 5 | 通过，退出码 0 | [TCP](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-ci-fix-gcc-tcp.log) |
+| GCC、standalone、NoTLS、detail | 1 / 11 | 通过，退出码 0 | [detail](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-ci-fix-gcc-detail.log) |
+| GCC、standalone、NoTLS、线程池 | 1 / 6 | 通过，退出码 0 | [线程池](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-ci-fix-gcc-io_pool.log) |
 
 两种 Release 构建包含协议测试、压力测试、安装包使用验证和 25 个短基准检查。
 Sanitizer 构建不包含基准程序，本次使用该 Mac 上的默认运行选项，未报告错误。
@@ -25,12 +25,12 @@ Apple ASan 通过不等同于 Linux LeakSanitizer 检查通过。
 ## 复现回归问题
 
 libstdc++ 的 `std::packaged_task` 被取消并销毁后，尚未读取的 future
-仍通过共享状态持有用户回调。[修复前日志](arknet-lifecycle-gcc-before.log)
+仍通过共享状态持有用户回调。[修复前日志](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-lifecycle-gcc-before.log)
 记录了回调释放断言失败。修复将 promise 的结果状态与回调分开，覆盖 post、
 线程池和排队任务。永久生命周期用例验证取消和完成后的捕获释放、
 void／值／引用返回、仅可移动的捕获和结果，以及回调异常。
 
-[GCC 命令记录](arknet-ci-fix-gcc-commands.txt) 包含实际编译与运行命令、
+[GCC 命令记录](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/arknet-ci-fix-gcc-commands.txt) 包含实际编译与运行命令、
 版本和退出状态。Clang 检查命令为：
 
 ```sh
@@ -57,7 +57,7 @@ UDP 发送失败时保留 socket 错误码，完成回调报告 0 字节。永�
 检查包含该用例。两种依赖方案的 Linux LeakSanitizer 也已通过下方的跨平台 CI 检查。
 
 Windows job 还超过了 35 分钟限时。UDP 测试在
-[standalone](windows-udp-before-standalone.log) 和 [Boost](windows-udp-before-boost.log)
+[standalone](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/windows-udp-before-standalone.log) 和 [Boost](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/windows-udp-before-boost.log)
 下记录了 65,508 字节发送返回系统错误 1784。测试现检查发送失败、完成字节数为 0
 及后续发送可恢复，并保留原生错误码。模拟完成测试也覆盖错误 1784。CI 限时为 60 分钟。
 
@@ -75,7 +75,7 @@ clang-format 18.1.8 检查和格式脚本自检均通过，覆盖全部 126 个�
 
 最后的文档和搜索索引更新，未改变下方源码校验值标识的实现、测试和构建配置。
 
-[源码校验值](source.sha256) 标识当前实现、测试和格式配置；
-[此前校验值](source-before-format.sha256) 对应保留的 132 用例日志。此前性能测量的原始输入
+[源码校验值](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/source.sha256) 标识当前实现、测试和格式配置；
+[此前校验值](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/portability/source-before-format.sha256) 对应保留的 132 用例日志。此前性能测量的原始输入
 保留在 provenance 归档中，本次没有重跑性能矩阵。IPv6 仍仅验证本机回环，
 范围见 [IPv6 测试记录](../ipv6/README_CN.md)。

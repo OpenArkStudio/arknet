@@ -52,8 +52,12 @@ branch or worktree when the existing checkout contains uncommitted changes.
   cancelled run is not validation. If a run is cancelled for scheduling, record
   the reason and resume its acceptance checks; do not leave it indefinitely red.
 - Required checks include the configured Boost and Standalone Asio, operating
-  system, TLS, sanitizer, documentation and formatting coverage. Do not omit
-  checks or fabricate success to make a PR mergeable.
+  system, TLS, sanitizer, documentation and formatting coverage. Code, dependency,
+  build and CI changes require the full native matrix. Strictly classified
+  documentation-only changes retain every required check name, with native jobs
+  recording scope-only coverage; documentation and formatting still run. Unknown
+  change ranges require full validation. A failed or missing scope result must
+  fail required checks. Never report scope-only jobs as executed native tests.
 - Include what changed, why, validation and remaining limits in PR descriptions.
   Verify the merge result before saying that a PR has merged.
 
