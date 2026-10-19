@@ -90,7 +90,7 @@ jobs:
           if ($env:ARKNET_VALIDATION_TIER -cnotin @('full', 'modules', 'documentation') -or
               ($env:ARKNET_FULL_CPP -ceq 'false') -ne ($env:ARKNET_VALIDATION_TIER -ceq 'documentation') -or
               ($env:GITHUB_EVENT_NAME -cne 'pull_request' -and $env:ARKNET_VALIDATION_TIER -ceq 'modules') -or
-              ($env:ARKNET_VALIDATION_TIER -cne 'modules' -and $env:ARKNET_SOURCE_TESTS -cne '')) {
+              ($env:ARKNET_VALIDATION_TIER -cne 'modules' -and [string]$env:ARKNET_SOURCE_TESTS -cne '')) {
             throw 'Invalid validation tier for this event'
           }
       - name: Record planned coverage
