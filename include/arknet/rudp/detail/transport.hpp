@@ -10,6 +10,7 @@
 #include <deque>
 #include <functional>
 #include <memory>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -289,9 +290,9 @@ public:
             fail(asio::error::no_buffer_space);
             return;
         }
+        queue_.push_back(std::make_shared<std::string>(bytes));
         queued_bytes_ += bytes.size();
         wire_bytes_tx_ += bytes.size();
-        queue_.push_back(std::make_shared<std::string>(bytes));
         if (!writing_)
         {
             write();
@@ -364,13 +365,22 @@ private:
                 self->write();
             }
         };
-        if (connected_)
+        try
         {
-            socket_->async_send(asio::buffer(*bytes), std::move(completion));
+            if (connected_)
+            {
+                socket_->async_send(asio::buffer(*bytes), std::move(completion));
+            }
+            else
+            {
+                socket_->async_send_to(asio::buffer(*bytes), remote_, std::move(completion));
+            }
         }
-        else
+        catch (const std::bad_alloc&)
         {
-            socket_->async_send_to(asio::buffer(*bytes), remote_, std::move(completion));
+            writing_ = false;
+            fail(asio::error::no_memory);
+            throw;
         }
     }
 
