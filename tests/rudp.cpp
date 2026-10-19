@@ -34,7 +34,7 @@ public:
         return socket_.local_endpoint().port();
     }
 
-    std::atomic<unsigned> dropped{}, duplicated{}, reordered{};
+    std::atomic<unsigned> dropped{}, duplicated{}, reordered{}, dropped_syn{}, dropped_ack{};
 
 private:
     void send(std::shared_ptr<std::string> bytes, asio::ip::udp::endpoint target) {
@@ -54,7 +54,27 @@ private:
             const auto target = sender_ == server_ ? client_ : server_;
             auto bytes = std::make_shared<std::string>(buffer_.data(), count);
             const auto index = ++packets_;
-            if (index % 7 == 1)
+            const bool syn = sender_ != server_ && (arknet::detail::rudp_is_control(*bytes, 1) ||
+                                                       arknet::detail::rudp_is_fec_control(*bytes, 4));
+            const bool ack = sender_ == server_ && (arknet::detail::rudp_is_control(*bytes, 2) ||
+                                                       arknet::detail::rudp_is_fec_control(*bytes, 5));
+            if (syn)
+            {
+                ++syn_attempts_;
+            }
+            // Lose the first SYN, then every initial ACK. Both initial ACKs must
+            // be lost so another client SYN is required to recover the handshake.
+            if (syn && syn_attempts_ == 1)
+            {
+                ++dropped_syn;
+                ++dropped;
+            }
+            else if (ack && syn_attempts_ < 3)
+            {
+                ++dropped_ack;
+                ++dropped;
+            }
+            else if (index % 7 == 1)
             {
                 ++dropped;
             }
@@ -87,7 +107,7 @@ private:
     asio::ip::udp::socket socket_;
     asio::ip::udp::endpoint server_, client_, sender_;
     std::array<char, 65536> buffer_{};
-    unsigned packets_{};
+    unsigned packets_{}, syn_attempts_{};
     std::thread thread_;
 };
 } // namespace
@@ -145,30 +165,47 @@ DOCTEST_TEST_CASE("RUDP reassembles empty binary and fragmented messages on IPv4
 }
 
 DOCTEST_TEST_CASE("RUDP handshake and data recover from real UDP drop duplicate and reorder") {
-    messages received;
-    std::atomic<unsigned> connects{};
-    arknet::rudp_server server;
-    server.bind_connect([&](auto&) { ++connects; });
-    server.bind_recv([](auto& session, std::string_view bytes) { session->async_send(bytes); });
-    check(server.start("127.0.0.1", 0), "loss test server starts");
-    lossy_relay relay(server.acceptor().local_endpoint());
-    arknet::rudp_client client;
-    client.set_auto_reconnect(false).set_connect_timeout(2s);
-    client.bind_recv([&](std::string_view bytes) { received.push(bytes); });
-    check(client.start("127.0.0.1", relay.port()), "handshake retries a dropped SYN");
-    std::vector<std::string> expected;
-    for (unsigned i = 0; i < 24; ++i)
+    for (const auto mode : {arknet::fec::policy::disabled, arknet::fec::policy::fixed, arknet::fec::policy::adaptive})
     {
-        auto value = std::to_string(i) + ':';
-        value.resize(i % 2 ? 4119 : 16384, static_cast<char>(i));
-        expected.push_back(value);
-        check(client.async_send(value), "reliable message admitted");
+        DOCTEST_INFO(static_cast<int>(mode));
+        messages received;
+        std::atomic<unsigned> connects{}, server_handshakes{}, client_handshakes{};
+        auto fec = arknet::fec::options::fixed();
+        fec.mode = mode;
+        arknet::rudp_server server;
+        server.set_fec_options(fec);
+        server.bind_handshake([&](auto&, arknet::error_code error) {
+            check(!error, "retried server handshake succeeds");
+            ++server_handshakes;
+        });
+        server.bind_connect([&](auto&) { ++connects; });
+        server.bind_recv([](auto& session, std::string_view bytes) { session->async_send(bytes); });
+        check(server.start("127.0.0.1", 0), "loss test server starts");
+        lossy_relay relay(server.acceptor().local_endpoint());
+        arknet::rudp_client client;
+        client.set_fec_options(fec).set_auto_reconnect(false).set_connect_timeout(2s);
+        client.bind_handshake([&](arknet::error_code error) {
+            check(!error, "retried client handshake succeeds");
+            ++client_handshakes;
+        });
+        client.bind_recv([&](std::string_view bytes) { received.push(bytes); });
+        check(client.start("127.0.0.1", relay.port()), "handshake retries dropped SYN and ACK datagrams");
+        check(relay.dropped_syn == 1 && relay.dropped_ack >= 2, "relay loses the SYN and every initial ACK");
+        std::vector<std::string> expected;
+        for (unsigned i = 0; i < 24; ++i)
+        {
+            auto value = std::to_string(i) + ':';
+            value.resize(i % 2 ? 4119 : 16384, static_cast<char>(i));
+            expected.push_back(value);
+            check(client.async_send(value), "reliable message admitted");
+        }
+        check(received.wait(expected.size()) == expected, "loss and reorder preserve exact ordered messages");
+        check(connects == 1 && server_handshakes == 1 && client_handshakes == 1,
+            "SYN and ACK recovery notify one connection and one handshake per endpoint");
+        check(relay.dropped > 0 && relay.duplicated > 0 && relay.reordered > 0, "all impairment paths executed");
+        client.stop();
+        server.stop();
     }
-    check(received.wait(expected.size()) == expected, "loss and reorder preserve exact ordered messages");
-    check(connects == 1, "repeated handshake does not create duplicate sessions");
-    check(relay.dropped > 0 && relay.duplicated > 0 && relay.reordered > 0, "all impairment paths executed");
-    client.stop();
-    server.stop();
 }
 
 DOCTEST_TEST_CASE("RUDP rejects non-handshake datagrams and ignores wrong conversation close") {
