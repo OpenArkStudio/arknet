@@ -1,8 +1,13 @@
 add_library(arknet_test_framework STATIC framework.cpp)
+set(ARKNET_CHECK_TESTS "" CACHE STRING "Check names to build and run; empty selects all checks")
 target_compile_features(arknet_test_framework PUBLIC cxx_std_20)
 target_link_libraries(arknet_test_framework PUBLIC Threads::Threads)
 
 function(arknet_add_check name timeout)
+    set_property(GLOBAL APPEND PROPERTY ARKNET_REGISTERED_CHECKS "${name}")
+    if(ARKNET_CHECK_TESTS AND NOT name IN_LIST ARKNET_CHECK_TESTS)
+        return()
+    endif()
     set(command "arknet_run_check([==[${name}]==] ${timeout}")
     math(EXPR last "${ARGC} - 1")
     foreach(index RANGE 2 ${last})
@@ -18,15 +23,22 @@ function(arknet_add_check name timeout)
 endfunction()
 
 function(arknet_configure_check_target)
+    get_property(registered GLOBAL PROPERTY ARKNET_REGISTERED_CHECKS)
+    foreach(name IN LISTS ARKNET_CHECK_TESTS)
+        if(NOT name IN_LIST registered)
+            message(FATAL_ERROR "Unknown or unavailable arknet check: ${name}")
+        endif()
+    endforeach()
     get_property(commands GLOBAL PROPERTY ARKNET_CHECK_COMMANDS)
     get_property(targets GLOBAL PROPERTY ARKNET_CHECK_TARGETS)
     file(GENERATE OUTPUT "${PROJECT_BINARY_DIR}/tests/check-$<CONFIG>.cmake" CONTENT "${commands}")
+    add_custom_target(arknet_check_build DEPENDS ${targets})
     add_custom_target(arknet_check
         COMMAND ${CMAKE_COMMAND}
             "-DARKNET_TEST_COMMANDS=${PROJECT_BINARY_DIR}/tests/check-$<CONFIG>.cmake"
             "-DARKNET_TEST_LOG_DIR=${PROJECT_BINARY_DIR}/tests/logs/$<CONFIG>"
             -P "${PROJECT_SOURCE_DIR}/tests/run.cmake"
-        DEPENDS ${targets}
+        DEPENDS arknet_check_build
         USES_TERMINAL)
 endfunction()
 

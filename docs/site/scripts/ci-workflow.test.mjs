@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
+import { runInNewContext } from "node:vm";
+
+import { planChecks } from "../../../.github/scripts/ci-scope.mjs";
 
 const workflow = await readFile(new URL("../../../.github/workflows/ci.yml", import.meta.url), "utf8");
 
@@ -33,11 +36,12 @@ function checkPolicy(source) {
 
   // Preserve the 14 required checks. The required style job validates the scope;
   // all 12 native rows retain their commands, sanitizers and uploads for full
-  // checks, while reviewed documentation changes get explicit scope-only records.
+  // merge-group checks. Source PRs run related modules in Linux/Boost/TLS/Release;
+  // other cells explicitly record scope-only coverage, not native-test success.
   // An intentional job change needs a new review before updating this fingerprint.
   const jobs = source.slice(source.indexOf("jobs:\n"));
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
-    "d49d5a1811c05eb6ffa9f737281a0d46236c13e082f15d0ac1ed6ef5759e1dc0",
+    "a4c440dd760584907b2b4f31a6191ab5f5dd68838463821a00d00d07801ec7e6",
     "review the complete 14-check and scope contract before changing it");
 }
 
@@ -63,12 +67,39 @@ test("CI policy rejects changed events, cancellation, permissions and required j
     ["needs.format.outputs.full_cpp == 'true'", "needs.format.outputs.full_cpp != 'false'"],
     ["throw 'Missing or failed CI scope validation'", "Write-Output 'Missing scope'"],
     ["fetch-depth: 0", "fetch-depth: 1"],
+    ["needs.format.outputs.tier == 'full'", "needs.format.outputs.tier != 'documentation'"],
+    ["Invalid validation tier for this event", "Ignore invalid tier"],
+    ["--target arknet_check_build", "--target nonexistent"],
     ["$env:ARKNET_FULL_CPP -cne", "$env:ARKNET_FULL_CPP -ne"],
   ];
   for (const [from, to] of mutations) {
     assert.ok(workflow.includes(from), `mutation must change source: ${from}`);
     assert.throws(() => checkPolicy(workflow.replace(from, to)), { name: "AssertionError" }, from);
   }
+});
+
+test("real workflow selector keeps all twelve queue cells and only the source regression cell", () => {
+  const expression = workflow.match(/ARKNET_RUN_NATIVE: \$\{\{ (.+) \}\}/)?.[1];
+  assert.ok(expression);
+  const matrix = [];
+  for (const os of ["ubuntu-latest", "macos-latest", "windows-latest"]) {
+    for (const boost of ["OFF", "ON"]) matrix.push({ os, boost, ssl: "ON", sanitize: "OFF" });
+  }
+  for (const boost of ["OFF", "ON"]) {
+    matrix.push({ os: "ubuntu-latest", boost, ssl: "OFF", sanitize: "OFF" });
+    for (const sanitize of ["ON", "THREAD"]) matrix.push({ os: "ubuntu-latest", boost, ssl: "ON", sanitize });
+  }
+  const cells = plan => matrix.filter(cell => runInNewContext(expression,
+    { needs: { format: { outputs: { ...plan, full_cpp: String(plan.full_cpp) } } }, matrix: cell }, { timeout: 100 }));
+  const make = eventName => planChecks({ eventName, known: true, files: ["tests/rudp.cpp"] });
+  assert.equal(cells(make("merge_group")).length, 12);
+  assert.equal(cells(make("workflow_dispatch")).length, 12);
+  assert.deepEqual(cells(make("pull_request")), [
+    { os: "ubuntu-latest", boost: "ON", ssl: "ON", sanitize: "OFF" },
+  ]);
+  assert.equal(cells(planChecks({ eventName: "pull_request", known: false })).length, 12);
+  assert.equal(cells(planChecks({ eventName: "merge_group", known: true, files: ["README.md"] })).length, 0);
+  assert.match(workflow, /\$env:GITHUB_EVENT_NAME -cne 'pull_request' -and \$env:ARKNET_VALIDATION_TIER -ceq 'modules'/);
 });
 
 test("documentation publishing retains its separate main-push workflow", async () => {

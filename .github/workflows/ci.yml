@@ -31,6 +31,8 @@ jobs:
     timeout-minutes: 5
     outputs:
       full_cpp: ${{ steps.scope.outputs.full_cpp }}
+      tier: ${{ steps.scope.outputs.tier }}
+      source_tests: ${{ steps.scope.outputs.source_tests }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,6 +41,8 @@ jobs:
         with:
           node-version: 26
       - run: node --test docs/site/scripts/ci-scope.test.mjs
+      - name: Validate selective native check registration
+        run: node --test tests/ci/*.test.mjs
       - id: scope
         run: node .github/scripts/ci-scope.mjs
       - name: Install clang-format 18
@@ -69,66 +73,85 @@ jobs:
           - {os: ubuntu-latest, boost: "OFF", ssl: "ON", sanitize: "THREAD"}
           - {os: ubuntu-latest, boost: "ON", ssl: "ON", sanitize: "THREAD"}
     runs-on: ${{ matrix.os }}
+    env:
+      ARKNET_RUN_NATIVE: ${{ needs.format.outputs.full_cpp == 'true' && (needs.format.outputs.tier == 'full' || (needs.format.outputs.tier == 'modules' && matrix.os == 'ubuntu-latest' && matrix.boost == 'ON' && matrix.ssl == 'ON' && matrix.sanitize == 'OFF')) }}
     steps:
       - name: Validate scope result
         shell: pwsh
         env:
           ARKNET_SCOPE_RESULT: ${{ needs.format.result }}
           ARKNET_FULL_CPP: ${{ needs.format.outputs.full_cpp }}
+          ARKNET_VALIDATION_TIER: ${{ needs.format.outputs.tier }}
+          ARKNET_SOURCE_TESTS: ${{ needs.format.outputs.source_tests }}
         run: |
           if ($env:ARKNET_SCOPE_RESULT -cne 'success' -or ($env:ARKNET_FULL_CPP -cne 'true' -and $env:ARKNET_FULL_CPP -cne 'false')) {
             throw 'Missing or failed CI scope validation'
           }
-      - name: Record documentation-only coverage
-        if: ${{ needs.format.outputs.full_cpp == 'false' }}
+          if ($env:ARKNET_VALIDATION_TIER -cnotin @('full', 'modules', 'documentation') -or
+              ($env:ARKNET_FULL_CPP -ceq 'false') -ne ($env:ARKNET_VALIDATION_TIER -ceq 'documentation') -or
+              ($env:GITHUB_EVENT_NAME -cne 'pull_request' -and $env:ARKNET_VALIDATION_TIER -ceq 'modules') -or
+              ($env:ARKNET_VALIDATION_TIER -cne 'modules' -and [string]$env:ARKNET_SOURCE_TESTS -cne '')) {
+            throw 'Invalid validation tier for this event'
+          }
+      - name: Record planned coverage
+        if: ${{ env.ARKNET_RUN_NATIVE != 'true' }}
         shell: pwsh
         run: |
-          'Documentation-only change: native checks are not planned. Documentation and formatting checks remain required.' | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          'This cell validates scope only; it did not execute native tests. PR module regression runs in Linux/Boost/TLS/Release. Code-bearing merge-group candidates require the complete native matrix; documentation-only candidates require documentation and formatting.' | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
       - uses: actions/checkout@v4
-        if: ${{ needs.format.outputs.full_cpp == 'true' }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
       - uses: ilammy/msvc-dev-cmd@v1
-        if: ${{ needs.format.outputs.full_cpp == 'true' && (runner.os == 'Windows') }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (runner.os == 'Windows') }}
       - uses: lukka/get-cmake@latest
-        if: ${{ needs.format.outputs.full_cpp == 'true' }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
       - uses: lukka/run-vcpkg@v11
-        if: ${{ needs.format.outputs.full_cpp == 'true' }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
         with:
           vcpkgGitCommitId: 0699a19d0c6386247ce50d4dedbb8217d484d536
           vcpkgJsonGlob: vcpkg.json
       - name: Configure TSan address space
-        if: ${{ needs.format.outputs.full_cpp == 'true' && (matrix.sanitize == 'THREAD') }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (matrix.sanitize == 'THREAD') }}
         run: sudo sysctl -w vm.mmap_rnd_bits=28
       - name: Configure
-        if: ${{ needs.format.outputs.full_cpp == 'true' }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
         shell: pwsh
         run: >-
           cmake -S . -B build -G Ninja
           "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
           "-DVCPKG_MANIFEST_FEATURES=boost;ssl"
           -DCMAKE_BUILD_TYPE=${{ matrix.sanitize != 'OFF' && 'Debug' || 'Release' }}
+          "-DARKNET_CHECK_TESTS=${{ needs.format.outputs.source_tests }}"
           -DARKNET_USE_BOOST_ASIO=${{ matrix.boost }}
           -DARKNET_ENABLE_SSL=${{ matrix.ssl }}
           -DARKNET_BUILD_BENCHMARKS=${{ matrix.sanitize != 'OFF' && 'OFF' || 'ON' }}
           ${{ matrix.sanitize != 'OFF' && '"-DCMAKE_CXX_FLAGS_DEBUG=-O0 -g1"' || '' }}
           ${{ matrix.sanitize == 'ON' && '"-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"' || matrix.sanitize == 'THREAD' && '"-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=thread"' || '' }}
-      - run: cmake --build build --parallel ${{ matrix.sanitize == 'ON' && '1' || matrix.sanitize == 'THREAD' && '2' || '3' }}
-        if: ${{ needs.format.outputs.full_cpp == 'true' }}
+      - name: Build planned native targets
+        shell: pwsh
+        run: |
+          if ('${{ needs.format.outputs.tier }}' -ceq 'modules' -and '${{ needs.format.outputs.source_tests }}' -cne '') {
+            cmake --build build --target arknet_check_build --parallel 3
+          } else {
+            cmake --build build --parallel ${{ matrix.sanitize == 'ON' && '1' || matrix.sanitize == 'THREAD' && '2' || '3' }}
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
       - name: Test
-        if: ${{ needs.format.outputs.full_cpp == 'true' && (matrix.sanitize == 'OFF') }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (matrix.sanitize == 'OFF') }}
         run: cmake --build build --target arknet_check
       - name: Test with sanitizers
-        if: ${{ needs.format.outputs.full_cpp == 'true' && (matrix.sanitize == 'ON') }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (matrix.sanitize == 'ON') }}
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
         run: cmake --build build --target arknet_check
       - name: Test with thread sanitizer
-        if: ${{ needs.format.outputs.full_cpp == 'true' && (matrix.sanitize == 'THREAD') }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (matrix.sanitize == 'THREAD') }}
         env:
           TSAN_OPTIONS: halt_on_error=1:second_deadlock_stack=1
         run: cmake --build build --target arknet_check
       - name: Check benchmark batch runner and report calculations
-        if: ${{ needs.format.outputs.full_cpp == 'true' && (runner.os == 'Linux' && matrix.ssl == 'ON' && matrix.sanitize == 'OFF') }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (needs.format.outputs.tier == 'full' || needs.format.outputs.source_tests == '') && (runner.os == 'Linux' && matrix.ssl == 'ON' && matrix.sanitize == 'OFF') }}
         run: |
           sudo apt-get update
           sudo apt-get install -y jq
@@ -139,7 +162,7 @@ jobs:
           python3 -m unittest discover -s benchmarks -p 'test_*.py' -v
           python3 -m unittest discover -s scripts -p 'test_udp_limits_report.py' -v
       - name: Upload test results
-        if: ${{ needs.format.outputs.full_cpp == 'true' && (always()) }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (always()) }}
         uses: actions/upload-artifact@v4
         with:
           name: results-${{ matrix.os }}-${{ matrix.boost == 'ON' && 'Boost' || 'Standalone' }}-${{ matrix.ssl == 'ON' && 'TLS' || 'NoTLS' }}-${{ matrix.sanitize == 'THREAD' && 'TSan' || matrix.sanitize == 'ON' && 'ASan+UBSan' || 'Release' }}

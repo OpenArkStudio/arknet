@@ -51,13 +51,17 @@ branch or worktree when the existing checkout contains uncommitted changes.
 - Pending, skipped, cancelled and successful checks are distinct states. A
   cancelled run is not validation. If a run is cancelled for scheduling, record
   the reason and resume its acceptance checks; do not leave it indefinitely red.
-- Required checks include the configured Boost and Standalone Asio, operating
-  system, TLS, sanitizer, documentation and formatting coverage. Code, dependency,
-  build and CI changes require the full native matrix. Strictly classified
-  documentation-only changes retain every required check name, with native jobs
-  recording scope-only coverage; documentation and formatting still run. Unknown
-  change ranges require full validation. A failed or missing scope result must
-  fail required checks. Never report scope-only jobs as executed native tests.
+- Source PRs run related native modules in Linux Boost/TLS Release, plus formatting
+  and documentation checks. Shared headers, TCP, build/dependency/CI changes and
+  unmapped paths run the complete Linux Boost suite. Module mappings must fail
+  conservatively; missing or malformed change ranges select the complete matrix.
+- Code-bearing merge-group candidates and manual runs require the full configured
+  operating-system, Boost/Standalone, TLS and sanitizer matrix. Source-only green
+  checks do not establish that acceptance. Strictly classified documentation-only
+  changes require documentation and formatting at both stages. Matrix cells keep
+  their required names and explicitly record scope-only coverage when no native
+  tests are planned. Failed/missing scope validation must fail required checks;
+  never describe a scope-only cell as an executed native test.
 - Include what changed, why, validation and remaining limits in PR descriptions.
   Verify the merge result before saying that a PR has merged.
 

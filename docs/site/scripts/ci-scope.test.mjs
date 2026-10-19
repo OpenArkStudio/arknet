@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { changedFiles, isDocumentationPath, planChecks } from "../../../.github/scripts/ci-scope.mjs";
+import { changedFiles, isDocumentationPath, moduleTests, planChecks, sourceTests } from "../../../.github/scripts/ci-scope.mjs";
 
 test("only reviewed documentation paths qualify for reduced native checks", () => {
   for (const file of ["README.md", "README_CN.md", "docs/usage_CN.md", "docs/site/src/styles/prose.css",
@@ -77,11 +77,44 @@ test("exact git ranges cover additions, deletions, renames and multi-change queu
     const execute = eventName => spawnSync(process.execPath, [script], { cwd: repo, encoding: "utf8",
       env: { ...process.env, GITHUB_EVENT_NAME: eventName, GITHUB_EVENT_PATH: eventPath, GITHUB_OUTPUT: outputPath } });
     assert.equal(execute("pull_request").status, 0);
-    assert.equal(readFileSync(outputPath, "utf8"), "full_cpp=false\n");
+    assert.equal(readFileSync(outputPath, "utf8"), "full_cpp=false\ntier=documentation\nsource_tests=\n");
     writeFileSync(eventPath, "invalid JSON");
     assert.equal(execute("pull_request").status, 0);
-    assert.equal(readFileSync(outputPath, "utf8"), "full_cpp=false\nfull_cpp=true\n");
+    assert.equal(readFileSync(outputPath, "utf8"), "full_cpp=false\ntier=documentation\nsource_tests=\nfull_cpp=true\ntier=full\nsource_tests=\n");
   } finally {
     rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("source PRs select related modules and union mixed changes", () => {
+  const examples = { rudp: "include/arknet/fec/transport.hpp", udp: "include/arknet/udp/udp_server.hpp",
+    http: "include/arknet/websocket/ws_server.hpp", mysql: "tests/mysql_pool.cpp", redis: "include/arknet/redis/client.hpp" };
+  for (const [group, file] of Object.entries(examples)) {
+    const plan = planChecks({ eventName: "pull_request", known: true, files: [file, "docs/usage.md"] });
+    assert.equal(plan.tier, "modules");
+    assert.equal(plan.full_cpp, true);
+    assert.deepEqual(plan.source_tests.split(";"), [...moduleTests[group]].sort());
+  }
+  assert.deepEqual(sourceTests([examples.mysql, examples.redis]),
+    [...new Set([...moduleTests.mysql, ...moduleTests.redis])].sort());
+  for (const file of ["include/arknet/tcp/tcp_client.hpp", "include/arknet/base/client.hpp",
+    "tests/test_main.cpp", "tests/CMakeLists.txt", "vcpkg.json", ".github/workflows/ci.yml", "new-module/file.cpp"]) {
+    assert.deepEqual(sourceTests([examples.rudp, file]), [], file);
+  }
+});
+
+test("queue, manual, unknown ranges and malformed paths cannot narrow native coverage", () => {
+  for (const files of [["tests/rudp.cpp"], ["tests/rudp.cpp", "README.md"], [".github/workflows/ci.yml"]]) {
+    for (const eventName of ["merge_group", "workflow_dispatch", "unknown"]) {
+      const plan = planChecks({ eventName, known: true, files });
+      assert.equal(plan.tier, "full");
+      assert.equal(plan.source_tests, "");
+      assert.equal(plan.full_cpp, true);
+    }
+  }
+  for (const changes of [{ known: false, files: ["tests/rudp.cpp"] }, { known: true, files: [] },
+    { known: true, files: [undefined] }, { known: true, files: ["../tests/rudp.cpp"] },
+    { known: true, files: ["/tests/rudp.cpp"] }, { known: "true", files: ["tests/rudp.cpp"] }]) {
+    assert.equal(planChecks({ eventName: "pull_request", ...changes }).tier, "full");
   }
 });
