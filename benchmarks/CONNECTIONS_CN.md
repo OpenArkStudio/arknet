@@ -138,3 +138,57 @@ JSON 只新增字段，原有字段的类型和测量阶段保持不变。对比
 `arknet_connection_resources_test` 检查实际资源输出字段、真实零值与缺失指标及其原因、诊断文本转义，以及周期和全程时间范围的独立性。系统计数器本身由独立的[进程资源检查程序](process_resources_CN.md)验证。
 
 扩大规模之前，先用少量连接检查 idle、traffic、IPv4 和 IPv6 的双端最终计数，再验证拒绝连接、错误运行标识、目标期限、重复身份及非法缓冲或窗口预算均非零退出。每次测量保留命令、可执行文件与源码身份、机器配置、全部失败和双端日志。本工具的测试协议不能替代 ark 应用、鉴权、重连恢复或跨机器生产验收。
+
+## 独立原生 Asio 回调对照
+
+`arknet_asio_connection_control` 随 benchmark 选项构建，是用于诊断的 TCP 对端。
+它直接使用 Boost.Asio 1.90.0 及以上或 Standalone Asio 1.38.0 及以上，不链接 arknet 的
+endpoint 或运行时。结果记录实际 header 版本。冻结的诊断运行必须校验预期的精确版本；
+本轮小规模检查使用官方 Boost 1.90.0 和 Standalone Asio 1.38.2。唯一共享的协议实现是仅含标准库的
+`connections_protocol.hpp`。
+
+```sh
+cmake --build build --target arknet_asio_connection_control --parallel 2
+build/benchmarks/arknet_asio_connection_control --self-test
+build/benchmarks/arknet_asio_connection_control --role server --listen 127.0.0.1 \
+  --port 21001 --run-id 71 --scenario traffic --expected-connections 8 \
+  --max-connections 8 --window 4 --hold-seconds 0.1 --deadline-seconds 5
+# 另开终端，以独立进程运行：
+build/benchmarks/arknet_asio_connection_control --role client --target 127.0.0.1 \
+  --port 21001 --run-id 71 --client-id 91 --scenario traffic --connections 8 \
+  --max-connections 8 --window 4 --hold-seconds 0.1 --deadline-seconds 5
+```
+
+对照程序使用一个 `io_context`、一个 IO 工作线程、每会话 strand 和 `TCP_NODELAY`。
+独立 datagram 解析器通过 `async_read_until` 使用上限为 4096 字节的 stream buffer，
+保留后续帧，并拒绝非规范或超限长度。串行 `async_write` 使用独立的长度前缀 buffer
+和协议帧 buffer，持有两者直到回调完成。HELLO、START、DATA、FIN 及 ACK 的身份和
+序号规则与原 benchmark 一致。payload 限制为 1–4023 字节，保持原程序对 4096 字节
+接收上限的保守校验。
+
+默认活动连接容量为 5000，最多同时建连 32 个，DATA 在途容量为 20000，发送和 DATA
+字节限制为 64 MiB。这些是配置边界，不是已验证容量。`--max-inflight` 增加显式全局
+DATA 数量限制；声明的连接窗口必须同时满足数量和字节限制。控制帧也占用发送字节额度。
+buffer budget 覆盖声明的接收、发送和客户端时间戳存储，不代表 RSS、socket 内存或全部
+C++ 分配。额度拒绝使本轮失败。server 必须配置非零预期连接数。未知、重复、格式错误
+或不支持的参数均明确失败；`--io-threads` 只接受 1，`--max-buffer-bytes` 只接受
+4096，不支持 `--sample-ms`。完整支持项见 `--help`。
+
+成功 final JSON 要求目标连接完整完成、DATA 双边收发计数一致、客户端 DATA 在途归零，
+并实际取消和排空所有 socket 回调。写回调错误与协议／状态错误分别计数。失败以非零状态
+退出，保留未完成计数。owner 线程的全程 deadline 触发清理；清理 deadline 停止未排空的 context，
+标记清理未完成。独立 watchdog 在回调或输出阻塞导致这些 deadline 无法推进时以 124
+退出，不生成虚假的 final summary。无论退出码如何，缺失 final 结果都属于未完成运行。
+
+建连准入、阶段切换和超时扫描运行在独立的主线程／owner 线程上；唯一 IO 工作线程
+执行 socket 回调和每会话 strand 命令。跨线程计数和 pending 时间戳使用原子量，
+不为 IO 回调加全局锁。watchdog 是第三个线程，不增加 IO 工作线程。匹配器独立解析
+前缀并检查正文可用长度，不复用 arknet matcher；未来比较必须保留这一解析实现差异。小规模协议
+通过不代表压力负载等价，也不证明停顿根因。
+
+启用测试后，`benchmark_asio_connections_self_test` 无需 socket 即检查容量、分帧及
+身份／序号门禁。Unix 下的 `benchmark_asio_connections_processes` 以独立原生
+server／client 进程验证 1、8、32 连接，覆盖 idle、payload 边界、非法 CLI 和实际
+deadline／清理失败，并以 8 连接验证与 arknet 对端的两个互通方向。子进程日志和原始
+退出码文件保留在输出的 `/tmp/arknet-native-process-test-*` 目录。这些仅是正确性检查，
+不构成 5000 连接或性能验收。

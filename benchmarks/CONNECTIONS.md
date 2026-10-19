@@ -138,3 +138,70 @@ Configure with `-DARKNET_BUILD_TESTS=ON` to also build `arknet_connection_protoc
 `arknet_connection_resources_test` checks the actual resource output fields, numeric zero versus missing metrics and reasons, diagnostic escaping, and independent periodic/whole-run time windows. The standalone [process resource probe](process_resources.md) covers the platform counters themselves.
 
 Before increasing scale, run both idle and traffic with a few connections, IPv4 and IPv6, and inspect both final results. Also verify a refused connection, mismatched run ID, target deadline, duplicate identity and an invalid buffer/window budget fail with a nonzero exit. Keep the command lines, executable/source identity, machine configuration, all failures and both process logs with each measurement. This tool's test protocol does not replace an ark application, authentication, reconnect recovery or cross-machine production acceptance.
+
+## Independent native Asio callback control
+
+`arknet_asio_connection_control` is a diagnostic TCP peer, built with the benchmark
+option. It uses Boost.Asio 1.90.0 or newer, or Standalone Asio 1.38.0 or newer directly;
+it links neither arknet endpoints nor its runtime. The result records the actual
+header version. A frozen diagnostic run must check the intended exact versions;
+the small checks here use official Boost 1.90.0 and Standalone Asio 1.38.2. `connections_protocol.hpp` is its only shared protocol
+implementation, and contains only standard-library code.
+
+```sh
+cmake --build build --target arknet_asio_connection_control --parallel 2
+build/benchmarks/arknet_asio_connection_control --self-test
+build/benchmarks/arknet_asio_connection_control --role server --listen 127.0.0.1 \
+  --port 21001 --run-id 71 --scenario traffic --expected-connections 8 \
+  --max-connections 8 --window 4 --hold-seconds 0.1 --deadline-seconds 5
+# Separate terminal/process:
+build/benchmarks/arknet_asio_connection_control --role client --target 127.0.0.1 \
+  --port 21001 --run-id 71 --client-id 91 --scenario traffic --connections 8 \
+  --max-connections 8 --window 4 --hold-seconds 0.1 --deadline-seconds 5
+```
+
+The control has one `io_context`, one IO worker, per-session strands and
+`TCP_NODELAY`. Its independent datagram parser uses `async_read_until` with a
+4096-byte stream buffer, retaining possible subsequent frames. It rejects
+noncanonical or oversized lengths. Each serialized `async_write` owns a separate
+length-prefix buffer and protocol-frame buffer through callback completion. The
+HELLO, START, DATA, FIN and acknowledgement identity/sequence rules match the
+original benchmark. Payload is limited to 1–4023 bytes, preserving the original
+conservative 4096-byte receive-cap validation.
+
+The default active capacity is 5000, connect parallelism is 32, data inflight
+capacity is 20000 and the send/data byte limit is 64 MiB. These are declared limits,
+not measured capacity. `--max-inflight` adds an explicit global DATA count limit;
+connection-window declarations must fit both count and byte limits. Control writes
+also consume the send-byte limit. The buffer budget covers declared receive,
+send and client timestamp storage, not RSS, socket memory or all C++ allocations.
+Admission refusal fails the run. A server requires a nonzero expected count.
+Unknown, duplicate, malformed and unsupported arguments fail explicitly;
+`--io-threads` accepts only 1, `--max-buffer-bytes` only 4096, and `--sample-ms`
+is unsupported. Use `--help` for the supported options.
+
+Successful final JSON requires the complete target, matching DATA send/receive
+counts, no remaining client DATA inflight and real cancellation/callback drain.
+Write callback errors and protocol/state errors have separate counters. A failed
+run exits nonzero and retains incomplete counters. The owner-thread overall
+deadline starts cleanup; the cleanup deadline stops an undrained context and marks
+cleanup incomplete. An independent watchdog exits 124 without a synthetic final
+summary if callbacks or output prevent those deadlines from progressing. A missing
+final result is an incomplete run, regardless of the exit code.
+
+Admission, phase changes and timeout scans execute on a separate main/owner
+thread; one IO worker executes socket callbacks and per-session strand commands.
+Counters and pending timestamps cross that boundary through atomics, without a
+global callback lock. The watchdog adds a third thread, not another IO worker.
+The matcher independently decodes the prefix and checks payload availability rather than using
+arknet's matcher. This parsing implementation difference must accompany future comparisons;
+small protocol checks do not establish an equivalent pressure workload or a stall cause.
+
+With tests enabled, `benchmark_asio_connections_self_test` checks capacity,
+framing and identity/sequence gates without sockets. On Unix,
+`benchmark_asio_connections_processes` launches separate native server/client
+processes at 1, 8 and 32 connections, checks idle and payload boundaries, malformed
+CLI and actual deadline/cleanup failure, and checks both interoperability directions
+against the arknet peer at 8 connections. Child logs and original exit files are
+retained in the printed `/tmp/arknet-native-process-test-*` directory. These are
+correctness checks only; they do not certify 5000 connections or performance.

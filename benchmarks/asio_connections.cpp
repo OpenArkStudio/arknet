@@ -1,0 +1,1168 @@
+// Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
+// Native callback control: deliberately no arknet headers or runtime objects.
+#include <array>
+#include <atomic>
+#include <charconv>
+#include <chrono>
+#include <cmath>
+#include <condition_variable>
+#include <csignal>
+#include <cstdlib>
+#include <deque>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <memory>
+#include <mutex>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <thread>
+#include <vector>
+
+#if ARKNET_CONTROL_BOOST
+#include <boost/asio.hpp>
+#include <boost/version.hpp>
+
+static_assert(BOOST_VERSION >= 109000, "native control requires Boost 1.90.0 or newer");
+namespace asio = boost::asio;
+using error_code = boost::system::error_code;
+constexpr auto dependency = "Boost.Asio";
+constexpr auto dependency_version = BOOST_VERSION;
+#else
+#include <asio.hpp>
+
+static_assert(ASIO_VERSION >= 103800, "native control requires Standalone Asio 1.38.0 or newer");
+using error_code = asio::error_code;
+constexpr auto dependency = "Standalone Asio";
+constexpr auto dependency_version = ASIO_VERSION;
+#endif
+
+#include "connections_protocol.hpp"
+
+namespace {
+
+using clock_type = std::chrono::steady_clock;
+using tcp = asio::ip::tcp;
+using connection_load::frame_kind;
+using connection_load::header_bytes;
+using connection_load::identity;
+
+struct options
+{
+    std::string role, scenario = "idle", host;
+    std::uint64_t run{}, client = 1;
+    std::size_t port{}, connections = 1, expected{}, maximum = 5000;
+    std::size_t rate = 100, parallel = 32, payload = 1024, window = 1;
+    std::size_t connect_ms = 5000, request_ms = 5000, inflight = 20000;
+    std::size_t inflight_bytes = 64 * 1024 * 1024, budget = 512 * 1024 * 1024;
+    double hold = 1, deadline = 30, cleanup = 5;
+};
+
+std::uint64_t integer(std::string_view text) {
+    std::uint64_t value{};
+    const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (text.empty() || parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size())
+    {
+        throw std::invalid_argument("expected an unsigned decimal integer");
+    }
+    return value;
+}
+
+double seconds(const std::string& text) {
+    double value{};
+    const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || !std::isfinite(value))
+    {
+        throw std::invalid_argument("expected finite decimal seconds");
+    }
+    return value;
+}
+
+void validate(const options& o) {
+    if ((o.role != "server" && o.role != "client") || (o.scenario != "idle" && o.scenario != "traffic") || !o.run ||
+        !o.client || o.host.empty() || o.port > 65535 || (o.role == "client" && !o.port))
+    {
+        throw std::invalid_argument("specify role, listen/target, port and nonzero run/client IDs");
+    }
+    error_code error;
+    const auto address = asio::ip::make_address(o.host, error);
+    if (error || address.is_multicast() || (o.role == "client" && address.is_unspecified()))
+    {
+        throw std::invalid_argument("address must be numeric unicast IPv4 or IPv6");
+    }
+    if (!o.maximum || o.maximum > 200000 || !o.connections || o.connections > o.maximum || !o.expected ||
+        o.expected > o.maximum || !o.rate || o.rate > 1000000 || !o.parallel || o.parallel > 4096 || !o.payload ||
+        o.payload > 4023 || !o.window || o.window > 1024 || !o.inflight || o.inflight > 100000000 ||
+        o.inflight_bytes < header_bytes + o.payload || o.inflight_bytes > 1024ULL * 1024 * 1024 ||
+        o.budget > 16ULL * 1024 * 1024 * 1024 || !o.connect_ms || o.connect_ms > 3600000 || !o.request_ms ||
+        o.request_ms > 3600000 || !std::isfinite(o.hold) || o.hold <= 0 || !std::isfinite(o.deadline) ||
+        o.deadline <= o.hold || o.deadline > 86400 || !std::isfinite(o.cleanup) || o.cleanup < 1 || o.cleanup > 60)
+    {
+        throw std::invalid_argument("argument out of range (server requires a nonzero expected-connections)");
+    }
+    const auto count = o.role == "client" ? o.connections : o.maximum;
+    const auto slots = std::uint64_t(count) * o.window;
+    if (o.scenario == "traffic" && (slots > o.inflight || slots * (header_bytes + o.payload) > o.inflight_bytes))
+    {
+        throw std::invalid_argument("declared connection windows exceed data inflight count/byte limits");
+    }
+    // Same declared receive/send/timestamp reservation as the arknet benchmark.
+    const auto reserved = std::uint64_t(count) * 4096 + o.inflight_bytes +
+                          (o.role == "client" && o.scenario == "traffic" ? slots * sizeof(clock_type::time_point) : 0);
+    if (reserved > o.budget)
+    {
+        throw std::invalid_argument("declared buffer reservation exceeds buffer-budget-bytes");
+    }
+}
+
+void help() {
+    std::cout << "arknet_asio_connection_control --role server|client --scenario idle|traffic\n"
+                 "  server: --listen NUMERIC_IP --port PORT --run-id ID --expected-connections COUNT\n"
+                 "  client: --target NUMERIC_IP --port PORT --run-id ID --client-id ID --connections COUNT\n"
+                 "  --connect-rate COUNT_PER_SECOND --connect-parallel COUNT --connect-timeout-ms MS\n"
+                 "  --hold-seconds SECONDS --deadline-seconds SECONDS --cleanup-seconds SECONDS\n"
+                 "  --request-timeout-ms MS --io-threads 1 --payload BYTES --window COUNT\n"
+                 "  --max-connections COUNT --max-buffer-bytes 4096 --max-inflight COUNT\n"
+                 "  --max-inflight-bytes BYTES --buffer-budget-bytes BYTES\n"
+                 "  --self-test (unit checks only; no sockets)\n"
+                 "One native Asio context/worker, session strands, TCP_NODELAY, 4096B read_until cap.\n"
+                 "Defaults permit 5000 active connections, 32 connecting and 20000 data inflight.\n"
+                 "Server port 0 reports its selected port; expected count must be nonzero.\n"
+                 "Unsupported options (including sample-ms and multiple workers) are rejected.\n";
+}
+
+options arguments(int argc, char** argv) {
+    options o;
+    std::set<std::string> seen;
+    bool port_set = false;
+    std::string address_option;
+    for (int index = 1; index < argc; ++index)
+    {
+        const std::string key = argv[index];
+        if (!seen.insert(key).second || index + 1 == argc)
+        {
+            throw std::invalid_argument("duplicate option or missing value: " + key);
+        }
+        const std::string value = argv[++index];
+        if (key == "--role")
+        {
+            o.role = value;
+        }
+        else if (key == "--scenario")
+        {
+            o.scenario = value;
+        }
+        else if (key == "--listen" || key == "--target")
+        {
+            o.host = value;
+            address_option = key;
+        }
+        else if (key == "--port")
+        {
+            o.port = integer(value);
+            port_set = true;
+        }
+        else if (key == "--run-id")
+        {
+            o.run = integer(value);
+        }
+        else if (key == "--client-id")
+        {
+            o.client = integer(value);
+        }
+        else if (key == "--connections")
+        {
+            o.connections = integer(value);
+        }
+        else if (key == "--expected-connections")
+        {
+            o.expected = integer(value);
+        }
+        else if (key == "--max-connections")
+        {
+            o.maximum = integer(value);
+        }
+        else if (key == "--connect-rate")
+        {
+            o.rate = integer(value);
+        }
+        else if (key == "--connect-parallel")
+        {
+            o.parallel = integer(value);
+        }
+        else if (key == "--payload")
+        {
+            o.payload = integer(value);
+        }
+        else if (key == "--window")
+        {
+            o.window = integer(value);
+        }
+        else if (key == "--connect-timeout-ms")
+        {
+            o.connect_ms = integer(value);
+        }
+        else if (key == "--request-timeout-ms")
+        {
+            o.request_ms = integer(value);
+        }
+        else if (key == "--max-inflight")
+        {
+            o.inflight = integer(value);
+        }
+        else if (key == "--max-inflight-bytes")
+        {
+            o.inflight_bytes = integer(value);
+        }
+        else if (key == "--buffer-budget-bytes")
+        {
+            o.budget = integer(value);
+        }
+        else if (key == "--hold-seconds")
+        {
+            o.hold = seconds(value);
+        }
+        else if (key == "--deadline-seconds")
+        {
+            o.deadline = seconds(value);
+        }
+        else if (key == "--cleanup-seconds")
+        {
+            o.cleanup = seconds(value);
+        }
+        else if (key == "--io-threads" && integer(value) == 1)
+        {
+        }
+        else if (key == "--max-buffer-bytes" && integer(value) == 4096)
+        {
+        }
+        else
+        {
+            throw std::invalid_argument("unsupported option or value: " + key);
+        }
+    }
+    if (!port_set || address_option != (o.role == "server" ? "--listen" : "--target") ||
+        (seen.contains("--listen") && seen.contains("--target")) ||
+        (o.role == "client" && seen.contains("--expected-connections")) ||
+        (o.role == "server" && (seen.contains("--connections") || seen.contains("--client-id"))))
+    {
+        throw std::invalid_argument("missing port or role-inappropriate option");
+    }
+    if (o.role == "client")
+    {
+        o.expected = o.connections;
+    }
+    validate(o);
+    return o;
+}
+
+// Independent dgram decoder: inspect a bounded prefix first, then require exactly
+// the declared payload before accepting a frame. It never invokes arknet's matcher or receive helpers.
+struct dgram_match
+{
+    using result_type = std::pair<asio::buffers_iterator<asio::streambuf::const_buffers_type>, bool>;
+
+    template<class Iterator>
+    std::pair<Iterator, bool> operator()(Iterator begin, Iterator end) const {
+        auto cursor = begin;
+        if (cursor == end)
+        {
+            return {begin, false};
+        }
+        const auto marker = static_cast<unsigned char>(*cursor++);
+        const unsigned width = marker == 255 ? 8 : marker == 254 ? 2 : 0;
+        std::uint64_t size = width ? 0 : marker;
+        for (unsigned byte = 0; byte < width; ++byte)
+        {
+            if (cursor == end)
+            {
+                return {begin, false};
+            }
+            size |= std::uint64_t(static_cast<unsigned char>(*cursor++)) << (byte * 8);
+        }
+        if ((width == 2 && size < 254) || (width == 8 && size < 65536) || size > 4096 - 1 - width)
+        {
+            return {begin, true};
+        }
+        if (static_cast<std::uint64_t>(std::distance(cursor, end)) < size)
+        {
+            return {begin, false};
+        }
+        std::advance(cursor, static_cast<typename std::iterator_traits<Iterator>::difference_type>(size));
+        return {cursor, true};
+    }
+};
+
+struct wire_frame
+{
+    explicit wire_frame(std::string value)
+        : body(std::move(value)) {
+        const auto size = body.size();
+        prefix_size = size < 254 ? 1 : size <= 65535 ? 3 : 9;
+        prefix[0] = static_cast<char>(prefix_size == 1 ? size : prefix_size == 3 ? 254 : 255);
+        for (std::size_t byte = 1; byte < prefix_size; ++byte)
+        {
+            prefix[byte] = static_cast<char>(std::uint64_t(size) >> ((byte - 1) * 8));
+        }
+    }
+
+    std::array<char, 9> prefix{};
+    std::size_t prefix_size{};
+    std::string body;
+
+    bool is_data() const {
+        return connection_load::read_integer(body, 8) == static_cast<std::uint64_t>(frame_kind::data);
+    }
+};
+
+// Shared by runtime and self-test; rejects a wrong owner, phase or sequence.
+struct protocol_state
+{
+    identity owner{};
+    bool hello{}, started{}, finish_sent{}, finished{};
+    std::uint64_t next_send = 1, next_receive = 1;
+
+    bool accept(const connection_load::frame_header& h, const options& o, bool server) {
+        if (server && h.kind == frame_kind::hello && !hello && h.owner.run == o.run && h.owner.client &&
+            h.owner.connection && h.sequence == (o.scenario == "traffic" ? 1 : 0))
+        {
+            owner = h.owner;
+            hello = true;
+            return true;
+        }
+        if (h.owner != owner)
+        {
+            return false;
+        }
+        if (!server && h.kind == frame_kind::hello_ack && !hello && !h.sequence)
+        {
+            hello = true;
+            return true;
+        }
+        if (h.kind == (server ? frame_kind::start : frame_kind::start_ack) && hello && !started && !h.sequence)
+        {
+            started = true;
+            return true;
+        }
+        if (h.kind == frame_kind::data && started && !finished && o.scenario == "traffic" &&
+            h.body_bytes == o.payload && h.sequence == next_receive && (server || h.sequence < next_send))
+        {
+            ++next_receive;
+            return true;
+        }
+        if (h.kind == (server ? frame_kind::finish : frame_kind::finish_ack) && started && !finished &&
+            (server || finish_sent) && h.sequence == (server ? next_receive : next_send) - 1)
+        {
+            finished = true;
+            return true;
+        }
+        return false;
+    }
+};
+
+struct application;
+
+struct session : std::enable_shared_from_this<session>
+{
+    session(application& owner, asio::io_context& context);
+    void read();
+    void send(std::string body);
+    void write();
+    void close();
+    void fill();
+    void finish();
+    void receive(std::string_view bytes);
+
+    application& app;
+    asio::strand<asio::io_context::executor_type> strand;
+    tcp::socket socket;
+    asio::streambuf input{4096};
+    protocol_state state;
+    std::deque<std::shared_ptr<wire_frame>> queued;
+    std::shared_ptr<wire_frame> writing;
+    std::vector<clock_type::time_point> sent_at;
+    std::atomic<clock_type::time_point> pending_since{}, connect_since{};
+    std::atomic<bool> connecting{};
+    bool active{}, closed{}, peer_eof{};
+};
+
+struct application
+{
+    explicit application(options value)
+        : o(std::move(value))
+        , acceptor(io)
+        , cleanup(io)
+        , signals(io, SIGINT, SIGTERM) {}
+
+    void run();
+    void accept();
+    void launch();
+    void poll();
+    void fail(const std::string& scope, const std::string& reason);
+    void stop();
+    void drained();
+    void result() const;
+
+    options o;
+    asio::io_context io{1};
+    tcp::acceptor acceptor;
+    asio::steady_timer cleanup;
+    asio::executor_work_guard<asio::io_context::executor_type> work{asio::make_work_guard(io)};
+    asio::signal_set signals;
+    std::vector<std::shared_ptr<session>> sessions; // IO-thread ownership.
+    std::vector<std::shared_ptr<session>> clients;  // Owner-thread ownership.
+    std::set<std::pair<std::uint64_t, std::uint64_t>> identities;
+    std::atomic<std::uint64_t> attempted{}, accepted{}, established{}, connecting{}, active{}, peak_active{},
+        peak_connecting{};
+    std::atomic<std::uint64_t> ready{}, started{}, finished{}, disconnected{}, data_sent{}, data_received{},
+        outstanding{};
+    std::atomic<std::uint64_t> pending_writes{}, pending_bytes{}, pending_data_writes{}, callbacks{}, data_bytes{},
+        peak_inflight{}, peak_bytes{};
+    std::atomic<std::uint64_t> write_errors{}, state_errors{}, connect_errors{}, timeouts{}, rejected{},
+        cancelled_writes{};
+    std::atomic<bool> failed{}, stopping{}, traffic{}, draining{};
+    bool cleanup_started{}, cleanup_timeout{}, starting{};
+    std::string failure;
+    clock_type::time_point began = clock_type::now(), next_launch = began, next_timeout_scan = began, until{},
+                           stopped_at{}, drained_at{};
+};
+
+session::session(application& owner, asio::io_context& context)
+    : app(owner)
+    , strand(asio::make_strand(context))
+    , socket(strand) {
+    // Match the arknet driver's initial receive reservation as well as its cap.
+    input.prepare(4096);
+}
+
+void application::fail(const std::string& scope, const std::string& reason) {
+    if (!failed.exchange(true))
+    {
+        failure = scope + ": " + reason;
+    }
+}
+
+void application::drained() {
+    if (cleanup_started && !callbacks && !pending_writes && !pending_bytes && !pending_data_writes && !active &&
+        !connecting)
+    {
+        drained_at = clock_type::now();
+        cleanup.cancel();
+        work.reset();
+    }
+}
+
+void session::close() {
+    if (closed)
+    {
+        return;
+    }
+    closed = true;
+    error_code ignored;
+    socket.cancel(ignored);
+    socket.close(ignored);
+    if (active)
+    {
+        active = false;
+        --app.active;
+        ++app.disconnected;
+    }
+    for (const auto& value : queued)
+    {
+        --app.pending_writes;
+        app.pending_bytes -= value->body.size();
+        if (value->is_data())
+        {
+            --app.pending_data_writes;
+        }
+        ++app.cancelled_writes;
+    }
+    queued.clear();
+}
+
+void application::stop() {
+    // Only the owner thread calls stop, after admission has quiesced.
+    if (stopping.exchange(true))
+    {
+        return;
+    }
+    stopped_at = clock_type::now();
+    asio::post(io, [this] {
+        cleanup_started = true;
+        error_code ignored;
+        acceptor.close(ignored);
+        signals.cancel();
+        cleanup.expires_after(
+            std::chrono::duration_cast<clock_type::duration>(std::chrono::duration<double>(o.cleanup)));
+        cleanup.async_wait([this](error_code error) {
+            if (!error)
+            {
+                cleanup_timeout = true;
+                fail("cleanup", "socket callbacks did not drain");
+                io.stop();
+            }
+        });
+        for (const auto& value : sessions)
+        {
+            asio::dispatch(value->strand, [value] {
+                value->close();
+                value->app.drained();
+            });
+        }
+        drained();
+    });
+}
+
+void session::send(std::string body) {
+    if (closed || app.stopping || app.failed)
+    {
+        return;
+    }
+    const bool data = connection_load::read_integer(body, 8) == static_cast<std::uint64_t>(frame_kind::data);
+    if ((data && app.pending_data_writes >= app.o.inflight) || body.size() > app.o.inflight_bytes - app.pending_bytes)
+    {
+        ++app.rejected;
+        app.fail("write admission", "data count or send-byte limit exceeded");
+        return;
+    }
+    const auto value = std::make_shared<wire_frame>(std::move(body));
+    queued.push_back(value);
+    ++app.pending_writes;
+    if (data)
+    {
+        ++app.pending_data_writes;
+    }
+    app.pending_bytes += value->body.size();
+    app.peak_bytes = (std::max)(app.peak_bytes.load(), app.pending_bytes.load());
+    write();
+}
+
+void session::write() {
+    if (writing || queued.empty() || closed)
+    {
+        return;
+    }
+    writing = queued.front();
+    queued.pop_front();
+    const auto value = writing;
+    const std::array<asio::const_buffer, 2> buffers{
+        asio::buffer(value->prefix.data(), value->prefix_size), asio::buffer(value->body)};
+    ++app.callbacks;
+    asio::async_write(socket, buffers,
+        asio::bind_executor(strand, [self = shared_from_this(), value](error_code error, std::size_t size) {
+            auto& a = self->app;
+            --a.callbacks;
+            --a.pending_writes;
+            a.pending_bytes -= value->body.size();
+            if (value->is_data())
+            {
+                --a.pending_data_writes;
+            }
+            self->writing.reset();
+            if (error || size != value->body.size() + value->prefix_size)
+            {
+                if (a.stopping && error == asio::error::operation_aborted)
+                {
+                    ++a.cancelled_writes;
+                }
+                else
+                {
+                    ++a.write_errors;
+                    a.fail("write callback", error ? error.message() : "short async_write");
+                }
+            }
+            else
+            {
+                const auto kind = static_cast<frame_kind>(connection_load::read_integer(value->body, 8));
+                if (kind == frame_kind::data)
+                {
+                    ++a.data_sent;
+                }
+                if (a.o.role == "server" && kind == frame_kind::finish_ack)
+                {
+                    ++a.finished;
+                }
+                self->write();
+                if (self->peer_eof && !self->writing && self->queued.empty())
+                {
+                    self->close();
+                }
+            }
+            a.drained();
+        }));
+}
+
+void session::read() {
+    if (closed || app.stopping || app.failed)
+    {
+        return;
+    }
+    ++app.callbacks;
+    asio::async_read_until(socket, input, dgram_match{},
+        asio::bind_executor(strand, [self = shared_from_this()](error_code error, std::size_t size) {
+            auto& a = self->app;
+            --a.callbacks;
+            if (error)
+            {
+                if (!a.stopping && error == asio::error::eof && self->state.finished)
+                {
+                    self->peer_eof = true;
+                    if (!self->writing && self->queued.empty())
+                    {
+                        self->close();
+                    }
+                }
+                else if (!a.stopping)
+                {
+                    ++a.state_errors;
+                    a.fail("read callback", error.message());
+                }
+            }
+            else if (!a.stopping)
+            {
+                if (!size)
+                {
+                    ++a.state_errors;
+                    a.fail("read frame", "invalid or oversized dgram prefix");
+                }
+                else
+                {
+                    // basic_streambuf supplies one contiguous input sequence.
+                    // Borrow it only during receive; queued writes own their copies.
+                    const auto buffers = self->input.data();
+                    const auto buffer = *asio::buffer_sequence_begin(buffers);
+                    const auto* bytes = static_cast<const char*>(buffer.data());
+                    const auto marker = static_cast<unsigned char>(*bytes);
+                    const std::size_t prefix = marker < 254 ? 1 : marker == 254 ? 3 : 9;
+                    self->receive(std::string_view(bytes + prefix, size - prefix));
+                    self->input.consume(size);
+                    self->read();
+                }
+            }
+            a.drained();
+        }));
+}
+
+void session::receive(std::string_view bytes) {
+    auto& a = app;
+    connection_load::frame_header h;
+    const bool server = a.o.role == "server";
+    if (!connection_load::decode(bytes, h) || !state.accept(h, a.o, server))
+    {
+        ++a.state_errors;
+        a.fail("protocol", "identity, phase, sequence or body mismatch");
+        return;
+    }
+    if (h.kind == frame_kind::hello || h.kind == frame_kind::hello_ack)
+    {
+        if (server && !a.identities.emplace(h.owner.client, h.owner.connection).second)
+        {
+            ++a.state_errors;
+            a.fail("protocol", "duplicate client/connection identity");
+            return;
+        }
+        ++a.ready;
+        pending_since = clock_type::time_point{};
+        if (server)
+        {
+            send(connection_load::make_frame(frame_kind::hello_ack, state.owner));
+        }
+    }
+    else if (h.kind == frame_kind::start || h.kind == frame_kind::start_ack)
+    {
+        ++a.started;
+        pending_since = clock_type::time_point{};
+        if (server)
+        {
+            send(connection_load::make_frame(frame_kind::start_ack, state.owner));
+        }
+    }
+    else if (h.kind == frame_kind::data)
+    {
+        ++a.data_received;
+        if (server)
+        {
+            send(std::string(bytes));
+        }
+        else
+        {
+            --a.outstanding;
+            a.data_bytes -= header_bytes + a.o.payload;
+            pending_since = state.next_receive < state.next_send ? sent_at[(state.next_receive - 1) % a.o.window]
+                                                                 : clock_type::time_point{};
+            fill();
+            finish();
+        }
+    }
+    else if (server)
+    {
+        send(connection_load::make_frame(frame_kind::finish_ack, state.owner, h.sequence));
+    }
+    else
+    {
+        ++a.finished;
+        pending_since = clock_type::time_point{};
+    }
+}
+
+void session::fill() {
+    auto& a = app;
+    while (a.traffic && !a.draining && !a.stopping && !a.failed && a.o.scenario == "traffic" &&
+           state.next_send - state.next_receive < a.o.window)
+    {
+        if (a.outstanding >= a.o.inflight || header_bytes + a.o.payload > a.o.inflight_bytes - a.data_bytes)
+        {
+            ++a.rejected;
+            a.fail("data admission", "global inflight count/byte limit exceeded");
+            return;
+        }
+        if (state.next_send == (std::numeric_limits<std::uint64_t>::max)())
+        {
+            ++a.state_errors;
+            a.fail("protocol", "sequence exhausted");
+            return;
+        }
+        const auto sequence = state.next_send++;
+        sent_at[(sequence - 1) % a.o.window] = clock_type::now();
+        if (sequence == state.next_receive)
+        {
+            pending_since = clock_type::now();
+        }
+        ++a.outstanding;
+        a.data_bytes += header_bytes + a.o.payload;
+        a.peak_inflight = (std::max)(a.peak_inflight.load(), a.outstanding.load());
+        send(connection_load::make_frame(frame_kind::data, state.owner, sequence, a.o.payload));
+    }
+}
+
+void session::finish() {
+    if (app.draining && !app.stopping && !app.failed && !state.finish_sent && state.next_receive == state.next_send)
+    {
+        state.finish_sent = true;
+        pending_since = clock_type::now();
+        send(connection_load::make_frame(frame_kind::finish, state.owner, state.next_send - 1));
+    }
+}
+
+void application::accept() {
+    if (stopping || failed)
+    {
+        return;
+    }
+    auto value = std::make_shared<session>(*this, io);
+    ++callbacks;
+    acceptor.async_accept(value->socket, asio::bind_executor(value->strand, [this, value](error_code error) {
+        --callbacks;
+        if (!stopping && error)
+        {
+            ++connect_errors;
+            fail("accept callback", error.message());
+        }
+        else if (!stopping)
+        {
+            ++accepted;
+            if (sessions.size() >= o.maximum || accepted > o.expected)
+            {
+                ++rejected;
+                value->close();
+                fail("accept admission", "expected/max connection count exceeded");
+            }
+            else
+            {
+                sessions.push_back(value);
+                value->active = true;
+                ++active;
+                peak_active = (std::max)(peak_active.load(), active.load());
+                error_code option_error;
+                value->socket.set_option(tcp::no_delay(true), option_error);
+                if (option_error)
+                {
+                    fail("TCP_NODELAY", option_error.message());
+                }
+                else
+                {
+                    value->read();
+                    accept();
+                }
+            }
+        }
+        drained();
+    }));
+}
+
+void application::launch() {
+    if (clients.size() >= o.maximum || connecting >= o.parallel)
+    {
+        ++rejected;
+        fail("connect admission", "active/connecting limit exceeded");
+        return;
+    }
+    auto value = std::make_shared<session>(*this, io);
+    clients.push_back(value);
+    value->state.owner = {o.run, o.client, ++attempted};
+    value->sent_at.resize(o.window);
+    value->connecting = true;
+    value->connect_since = clock_type::now();
+    ++connecting;
+    peak_connecting = (std::max)(peak_connecting.load(), connecting.load());
+    asio::post(value->strand, [this, value] {
+        if (stopping || failed)
+        {
+            --connecting;
+            value->connecting = false;
+            value->close();
+            drained();
+            return;
+        }
+        sessions.push_back(value);
+        ++callbacks;
+        value->socket.async_connect(tcp::endpoint(asio::ip::make_address(o.host), static_cast<unsigned short>(o.port)),
+            asio::bind_executor(value->strand, [this, value](error_code error) {
+                --callbacks;
+                --connecting;
+                value->connecting = false;
+                if (!stopping && error)
+                {
+                    ++connect_errors;
+                    fail("connect callback", error.message());
+                }
+                else if (!stopping)
+                {
+                    ++established;
+                    ++active;
+                    peak_active = (std::max)(peak_active.load(), active.load());
+                    value->active = true;
+                    error_code option_error;
+                    value->socket.set_option(tcp::no_delay(true), option_error);
+                    if (option_error)
+                    {
+                        fail("TCP_NODELAY", option_error.message());
+                    }
+                    else
+                    {
+                        value->pending_since = clock_type::now();
+                        value->read();
+                        value->send(connection_load::make_frame(
+                            frame_kind::hello, value->state.owner, o.scenario == "traffic" ? 1 : 0));
+                    }
+                }
+                drained();
+            }));
+    });
+}
+
+void application::poll() {
+    if (stopping || failed)
+    {
+        return;
+    }
+    const auto now = clock_type::now();
+    if (o.role == "client")
+    {
+        if (attempted < o.connections && connecting < o.parallel && now >= next_launch)
+        {
+            launch();
+            next_launch = now + std::chrono::nanoseconds(1000000000 / o.rate);
+        }
+        if (!starting && ready == o.connections)
+        {
+            starting = true;
+            for (const auto& value : clients)
+            {
+                asio::post(value->strand, [value] {
+                    value->pending_since = clock_type::now();
+                    value->send(connection_load::make_frame(frame_kind::start, value->state.owner));
+                });
+            }
+        }
+        if (!traffic && started == o.connections)
+        {
+            traffic = true;
+            until = now + std::chrono::duration_cast<clock_type::duration>(std::chrono::duration<double>(o.hold));
+            for (const auto& value : clients)
+            {
+                asio::post(value->strand, [value] { value->fill(); });
+            }
+        }
+        if (traffic && !draining && now >= until)
+        {
+            draining = true;
+            for (const auto& value : clients)
+            {
+                asio::post(value->strand, [value] { value->finish(); });
+            }
+        }
+        if (finished == o.connections && !outstanding && !pending_writes)
+        {
+            stop();
+            return;
+        }
+        if (now < next_timeout_scan)
+        {
+            return;
+        }
+        const auto timeout = std::chrono::milliseconds((std::min)(o.connect_ms, o.request_ms));
+        next_timeout_scan = now + std::clamp(timeout / 4, std::chrono::milliseconds(1), std::chrono::milliseconds(50));
+        for (const auto& value : clients)
+        {
+            if (value->connecting && now - value->connect_since.load() >= std::chrono::milliseconds(o.connect_ms))
+            {
+                ++timeouts;
+                fail("connect timeout", "pending connect exceeded connect-timeout-ms");
+                return;
+            }
+            const auto pending = value->pending_since.load();
+            if (pending != clock_type::time_point{} && now - pending >= std::chrono::milliseconds(o.request_ms))
+            {
+                ++timeouts;
+                fail("request timeout", "pending response exceeded request-timeout-ms");
+                return;
+            }
+        }
+    }
+    else if (finished == o.expected && disconnected == o.expected && !pending_writes)
+    {
+        stop();
+        return;
+    }
+}
+
+void application::run() {
+    if (o.role == "server")
+    {
+        const tcp::endpoint endpoint(asio::ip::make_address(o.host), static_cast<unsigned short>(o.port));
+        acceptor.open(endpoint.protocol());
+        acceptor.bind(endpoint);
+        acceptor.listen(asio::socket_base::max_listen_connections);
+        asio::post(io, [this] { accept(); });
+        std::cout << "{\"event\":\"ready\",\"port\":" << acceptor.local_endpoint().port() << "}\n" << std::flush;
+    }
+    signals.async_wait([this](error_code error, int) {
+        if (!error)
+        {
+            fail("signal", "interrupted");
+        }
+    });
+    const auto until_deadline =
+        began + std::chrono::duration_cast<clock_type::duration>(std::chrono::duration<double>(o.deadline));
+    std::thread worker([this] { io.run(); });
+    while (!stopping)
+    {
+        if (failed)
+        {
+            stop();
+        }
+        else if (clock_type::now() >= until_deadline)
+        {
+            ++timeouts;
+            fail("deadline", "target incomplete");
+            stop();
+        }
+        else
+        {
+            poll();
+        }
+        if (!stopping)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+    worker.join();
+}
+
+void application::result() const {
+    const auto expected = o.role == "client" ? o.connections : o.expected;
+    const bool clean = stopping && !cleanup_timeout && !callbacks && !pending_writes && !pending_bytes &&
+                       !pending_data_writes && !active && !connecting;
+    const bool complete = ready == expected && started == expected && finished == expected &&
+                          data_sent == data_received && !outstanding && (o.scenario == "idle" || data_received > 0);
+    std::cout << "{\"event\":\"result\",\"tool\":\"arknet_asio_connection_control\",\"dependency\":"
+              << std::quoted(dependency) << ",\"dependency_version\":" << dependency_version
+              << ",\"scenario\":" << std::quoted(o.scenario) << ",\"run_id\":" << o.run << ",\"client_id\":" << o.client
+              << ",\"target_connections\":" << expected << ",\"payload_bytes\":" << o.payload
+              << ",\"window\":" << o.window << ",\"connect_rate_limit\":" << o.rate
+              << ",\"connect_parallel_limit\":" << o.parallel
+              << ",\"io_contexts\":1,\"io_workers\":1,\"controller_on_io_worker\":false,\"initial_buffer_bytes\":4096,"
+                 "\"tcp_nodelay\":true,\"max_"
+                 "buffer_bytes\":4096"
+              << ",\"role\":" << std::quoted(o.role)
+              << ",\"success\":" << (failure.empty() && clean && complete ? "true" : "false")
+              << ",\"cleanup_complete\":" << (clean ? "true" : "false") << ",\"error\":" << std::quoted(failure)
+              << ",\"attempted\":" << attempted << ",\"accepted\":" << accepted << ",\"established\":" << established
+              << ",\"ready\":" << ready << ",\"started\":" << started << ",\"finished\":" << finished
+              << ",\"active\":" << active << ",\"connecting\":" << connecting << ",\"disconnected\":" << disconnected
+              << ",\"data_sent\":" << data_sent << ",\"data_received\":" << data_received
+              << ",\"outstanding\":" << outstanding << ",\"pending_writes\":" << pending_writes
+              << ",\"pending_bytes\":" << pending_bytes << ",\"socket_callbacks\":" << callbacks
+              << ",\"write_errors\":" << write_errors << ",\"state_errors\":" << state_errors
+              << ",\"connect_errors\":" << connect_errors << ",\"timeouts\":" << timeouts
+              << ",\"rejected\":" << rejected << ",\"cancelled_writes\":" << cancelled_writes
+              << ",\"peak_active\":" << peak_active << ",\"peak_connecting\":" << peak_connecting
+              << ",\"peak_data_inflight\":" << peak_inflight << ",\"peak_pending_bytes\":" << peak_bytes
+              << ",\"max_connections\":" << o.maximum << ",\"max_inflight\":" << o.inflight
+              << ",\"max_inflight_bytes\":" << o.inflight_bytes
+              << ",\"elapsed_seconds\":" << std::chrono::duration<double>(clock_type::now() - began).count()
+              << ",\"cleanup_seconds\":"
+              << (drained_at == clock_type::time_point{}
+                         ? -1
+                         : std::chrono::duration<double>(drained_at - stopped_at).count())
+              << "}\n";
+    if (!failure.empty() || !clean || !complete)
+    {
+        throw std::runtime_error(failure.empty() ? "terminal state incomplete" : failure);
+    }
+}
+
+void self_test() {
+    auto require = [](bool ok) {
+        if (!ok)
+        {
+            throw std::runtime_error("native control self-test failed");
+        }
+    };
+    options o;
+    o.role = "client";
+    o.host = "127.0.0.1";
+    o.port = 1;
+    o.run = 7;
+    o.scenario = "traffic";
+    o.connections = 5000;
+    o.expected = 5000;
+    o.window = 4;
+    validate(o);
+    auto rejected = [&](options value) {
+        try
+        { validate(value); }
+        catch (const std::invalid_argument&)
+        { return true; }
+        return false;
+    };
+    auto invalid = o;
+    invalid.inflight = 19999;
+    require(rejected(invalid));
+    invalid = o;
+    invalid.inflight_bytes = 20000 * (header_bytes + o.payload) - 1;
+    require(rejected(invalid));
+    invalid = o;
+    invalid.budget = 4096;
+    require(rejected(invalid));
+    invalid = o;
+    invalid.maximum = 4999;
+    require(rejected(invalid));
+    invalid = o;
+    invalid.parallel = 0;
+    require(rejected(invalid));
+    invalid = o;
+    invalid.payload = 4024;
+    require(rejected(invalid));
+    for (const auto size : {std::size_t{64}, std::size_t{253}, std::size_t{254}, std::size_t{1088}, std::size_t{4093}})
+    {
+        const wire_frame value(std::string(size, 'x'));
+        const std::string wire(value.prefix.data(), value.prefix_size);
+        const auto bytes = wire + value.body + "tail";
+        for (std::size_t length = 0; length < wire.size() + size; ++length)
+        {
+            require(!dgram_match{}(bytes.begin(), bytes.begin() + length).second);
+        }
+        const auto match = dgram_match{}(bytes.begin(), bytes.end());
+        require(match.second && std::size_t(match.first - bytes.begin()) == wire.size() + size);
+    }
+    for (const std::string bad : {std::string("\xfe\x01\x00", 3), std::string("\xff\x01\0\0\0\0\0\0\0", 9),
+             std::string("\xfe\x00\x10", 3), std::string("\xff\0\0\x01\0\0\0\0\0", 9)})
+    {
+        const auto match = dgram_match{}(bad.begin(), bad.end());
+        require(match.second && match.first == bad.begin());
+    }
+    auto feed = [&](protocol_state& state, bool server, frame_kind kind, identity owner, std::uint64_t sequence = 0) {
+        connection_load::frame_header h;
+        require(connection_load::decode(
+            connection_load::make_frame(kind, owner, sequence, kind == frame_kind::data ? o.payload : 0), h));
+        return state.accept(h, o, server);
+    };
+    const identity owner{7, 9, 1}, wrong{7, 9, 2};
+    protocol_state server, client;
+    client.owner = owner;
+    require(!feed(server, true, frame_kind::start, owner));
+    require(feed(server, true, frame_kind::hello, owner, 1));
+    require(!feed(server, true, frame_kind::hello, owner, 1));
+    require(feed(client, false, frame_kind::hello_ack, owner));
+    require(feed(server, true, frame_kind::start, owner));
+    require(feed(client, false, frame_kind::start_ack, owner));
+    require(!feed(server, true, frame_kind::data, wrong, 1));
+    require(!feed(server, true, frame_kind::data, owner, 2));
+    require(feed(server, true, frame_kind::data, owner, 1));
+    require(!feed(client, false, frame_kind::data, owner, 1));
+    client.next_send = 2;
+    require(feed(client, false, frame_kind::data, owner, 1));
+    require(!feed(client, false, frame_kind::data, owner, 1));
+    require(!feed(server, true, frame_kind::finish, owner, 0));
+    require(feed(server, true, frame_kind::finish, owner, 1));
+    require(!feed(client, false, frame_kind::finish_ack, owner, 1));
+    client.finish_sent = true;
+    require(feed(client, false, frame_kind::finish_ack, owner, 1));
+    require(!feed(server, true, frame_kind::data, owner, 2));
+    std::cout << "native control configuration, dgram, identity and sequence checks passed\n";
+}
+} // namespace
+
+int main(int argc, char** argv) {
+    try
+    {
+        if (argc == 2 && std::string_view(argv[1]) == "--help")
+        {
+            help();
+            return 0;
+        }
+        if (argc == 2 && std::string_view(argv[1]) == "--self-test")
+        {
+            self_test();
+            return 0;
+        }
+        application app(arguments(argc, argv));
+        // A blocked callback/stdout cannot turn the asynchronous deadline into
+        // an unlimited hang. This watchdog emits no synthetic final result.
+        std::mutex mutex;
+        std::condition_variable wake;
+        bool done = false;
+        std::thread watchdog([&] {
+            std::unique_lock lock(mutex);
+            if (!wake.wait_until(lock,
+                    app.began + std::chrono::duration_cast<clock_type::duration>(
+                                    std::chrono::duration<double>(app.o.deadline + app.o.cleanup)),
+                    [&] { return done; }))
+            {
+                std::_Exit(124);
+            }
+        });
+        try
+        {
+            app.run();
+            app.result();
+        }
+        catch (...)
+        {
+            {
+                std::lock_guard lock(mutex);
+                done = true;
+            }
+            wake.notify_one();
+            watchdog.join();
+            throw;
+        }
+        {
+            std::lock_guard lock(mutex);
+            done = true;
+        }
+        wake.notify_one();
+        watchdog.join();
+        return 0;
+    }
+    catch (const std::exception& error)
+    {
+        std::cerr << "native control: " << error.what() << '\n';
+        return 1;
+    }
+}
