@@ -18,6 +18,8 @@
 
 从 0.2.1 升级无需迁移库 API，重新编译应用即可纳入头文件修复。Redis 恢复范围是原生清理任务的直接投递失败；后续异步阶段失败和用户回调抛异常仍遵循原有异常约定。调用 `close_and_wait()` 时继续遵循文档规定的线程和执行器前提。
 
+已知限制：macOS 27.0.1 下的本机 5,000 连接 TCP 回显负载（每进程 1 个 IO 工作线程、1 KiB 包体、每连接 4 条在途请求）在 Boost 1.90 与 Standalone Asio 1.38.2 配置中均出现过响应超时。原因尚未确认，该负载尚未通过容量验收。
+
 连接工具当前测量使用数值地址的 TCP 回调接口；TLS、重连负载与固定到达率流量不在范围内。本地回环通过不代表生产容量或 PCU 已验收。已发布测量保留原始源码身份：先前 4 KiB WebSocket 对照在 `2aa5bc0` 记录到吞吐中位数降低 6.51%、P99 升高 13.29%，原因尚未确认；这不是 0.2.2 的测量。详见[性能报告](https://openarkstudio.github.io/arknet/zh/performance/steady-workloads/)与[验证记录](https://openarkstudio.github.io/arknet/zh/project/testing/)。
 
 ## 0.2.1

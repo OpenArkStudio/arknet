@@ -34,13 +34,22 @@ evidence below.
 | Additional shutdown coverage | Selected Boost NoTLS targets: 8 checks / 66 cases / 1,515 assertions; ASan queued-connect, HTTP external-context and external-stop: 72 process checks / 280 cases / 4,664 assertions |
 | Test-only snapshot `25bb9f8` | Four dependency/sanitizer combinations, 30 focused cases each, plus 128 selected native-error executions; all pass locally. The MSVC CRT allocation path is covered by Windows CI, outside this macOS validation |
 | Pool-shutdown snapshot `550fb58` | Both dependencies pass the MySQL and Redis shutdown suites under ASan+UBSan and TSan, including queued acquire cancellation and callback reentry. Unchanged return-failure targets also pass all four configurations; exact counts and source boundaries are in [testing](testing.md) |
-| Cross-platform release gate | [PR #16](https://github.com/OpenArkStudio/arknet/pull/16) must pass all 14 required checks before release; local results do not substitute for the candidate's own checks |
+| Cross-platform release gate | Published v0.2.2, source `c5432ca`, passed all 14 required checks on its [actual merge candidate](https://github.com/OpenArkStudio/arknet/actions/runs/39034278627); local results do not substitute for release-candidate validation |
 | Local performance | Release measurements identify product revision `2aa5bc0`; see the [comparison reports](../performance/index.md). Redis-protocol performance uses Valkey 8.0.11, separately from Redis 7.4.2 correctness checks |
 | Real legacy peers, 2026-10-13 | Both dependency configurations: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each; independent archived evidence |
 | Measured RUDP/FEC load | 96 configurations, 276 runs, 7,960,439 successful message round trips; six 120-second sustained runs |
 | ark integration | Direct replacement and C++20 in [#38](https://github.com/OpenArkStudio/ark/pull/38); core/official plugin organization in [#41](https://github.com/OpenArkStudio/ark/pull/41), snake_case interfaces/style in [#43](https://github.com/OpenArkStudio/ark/pull/43), and receive buffering in [#42](https://github.com/OpenArkStudio/ark/pull/42), all merged |
 | ark database development | [#46](https://github.com/OpenArkStudio/ark/pull/46) adds private native services, Asio awaitables and a library-owned runtime driven from the module thread; [#49](https://github.com/OpenArkStudio/ark/pull/49) adds the standalone callback/coroutine benchmark. Formal database-plugin activation remains separate |
 | Production deployment | Target-network cross-host capacity, production-duration endurance, business acceptance and deployment access control pending |
+
+The released v0.2.2 source has missed the response deadline in a local
+5,000-connection TCP Echo workload on macOS 27.0.1: one IO worker per process,
+1 KiB payload and four outstanding requests per connection, using either Boost
+1.90 or Standalone Asio 1.38.2. Its cause is unconfirmed and this workload has
+not passed capacity acceptance. See the [release notes](releases.md).
+[PR #26](https://github.com/OpenArkStudio/arknet/pull/26) improves benchmark client
+cleanup scheduling on main; it is outside v0.2.2 and does not resolve this TCP
+response timeout.
 
 [Testing and validation](testing.md) records configurations, source snapshots and
 sanitizer limitations. Concurrent complete owner stops are serialized for TCP
