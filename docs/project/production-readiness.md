@@ -51,6 +51,20 @@ not passed capacity acceptance. See the [release notes](releases.md).
 cleanup scheduling on main; it is outside v0.2.2 and does not resolve this TCP
 response timeout.
 
+An independent control using official Asio directly also exhibited an incomplete
+target, without arknet endpoints or runtime code:
+
+| Control configuration | Observed result |
+| --- | --- |
+| Source `9501775`, Boost 1.90, AppleClang 21 Release, TLS off; Mac16,11, 14 CPU cores, 48 GiB, macOS 27.0.1 | 5,000 connections established, 4,999 finished, four unanswered requests |
+| One IO worker, 1 KiB payload, four outstanding requests per connection; client response deadline 5 s, server deadline 40 s | Client response timeout and incomplete server target; both processes completed cleanup |
+
+This symptom can therefore occur outside arknet's endpoint/runtime implementation.
+It does not establish a common cause for the failures. Correlating packet sequences
+with per-connection state remains necessary before attributing the cause or claiming
+capacity acceptance. The reusable control and reproduction parameters are described
+in [connection benchmarks](../../benchmarks/CONNECTIONS.md).
+
 [Testing and validation](testing.md) records configurations, source snapshots and
 sanitizer limitations. Concurrent complete owner stops are serialized for TCP
 servers and HTTP/WebSocket/TLS-derived servers; this is not a blanket guarantee
