@@ -10,17 +10,26 @@ CI 用于回归和冒烟执行，共享 runner 的时间不作为发布的性能
 
 ## CI 覆盖范围
 
-代码、依赖、构建、CI 配置及无法分类的改动运行完整原生矩阵：Linux/macOS/Windows、
+源分支 PR 运行格式、文档检查，以及 Linux Boost/TLS Release 下的相关模块回归。
+RUDP/ARQ/FEC、UDP、HTTP/WebSocket、MySQL 和 Redis 路径有明确映射；跨模块改动取并集。
+公共 TCP、共享头文件、构建、依赖、CI 及未分类路径运行完整的 Linux Boost/TLS Release
+测试、示例构建和基准冒烟检查。
+
+包含代码的合并队列候选和手动执行保留完整原生矩阵：Linux/macOS/Windows、
 Boost/Standalone Asio、TLS、Linux 无 TLS，以及 Linux ASan/UBSan 和 TSan。
-手动触发 CI 时也运行完整矩阵。
+源分支通过不代表已完成全矩阵验收。
 
-仅修改根目录 README 或 `docs/` 下的 Markdown、MDX、SVG、CSS、图片文件时，
-运行文档和格式检查。十二个原生矩阵任务保留必需检查名称，明确记录本次只验证改动范围，
-不安装原生依赖、构建或执行 C++ 测试。
+严格分类的 README／纯文档改动在两个阶段均运行文档和格式检查。十二个矩阵任务保留必需
+检查名称；源分支中不属于计划范围的任务明确记录仅验证范围，不声称执行了原生测试。
+改动范围缺失或格式错误时运行完整矩阵；范围验证失败会阻止所有原生检查通过。
+重命名同时分类新旧路径，不为新提交取消正在执行的检查。
 
-PR 和合并队列的完整候选版本使用同一规则。每个改动路径都必须符合文档范围，重命名时
-同时检查新旧路径。提交对象缺失、改动列表为空或不可用、事件类型未知时均运行完整检查。
-范围检查失败会阻止必需检查通过。分支保护保持不变，也不会为新提交取消正在执行的检查。
+本地可以选择已注册的检查名称；省略此选项时运行全部检查，未知或不可用的名称会使配置失败：
+
+```sh
+cmake -S . -B build -DARKNET_ENABLE_SSL=ON '-DARKNET_CHECK_TESTS=arq_core;fec'
+cmake --build build --target arknet_check --parallel 2
+```
 
 下载[验证日志与源码对应关系](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz)及 [SHA256 校验和](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz.sha256)。归档包含双语说明和独立校验工具。
 

@@ -11,20 +11,31 @@ smoke execution; its shared-runner timing is not the published baseline.
 
 ## CI coverage
 
-Code, dependency, build, CI configuration and unclassified changes run the full
-native matrix: Linux/macOS/Windows, Boost/Standalone Asio, TLS, Linux without TLS,
-and Linux ASan/UBSan and TSan. Manual CI runs also use the full matrix.
+Source PRs run formatting, documentation and related native modules in a Linux
+Boost/TLS Release job. RUDP/ARQ/FEC, UDP, HTTP/WebSocket, MySQL and Redis paths
+have explicit module mappings; combined changes run their union. Shared TCP,
+common headers, build/dependency/CI changes and unclassified paths run the entire
+Linux Boost/TLS Release suite, examples and benchmark smoke checks.
 
-Changes limited to the root READMEs or Markdown, MDX, SVG, CSS and image files
-under `docs/` run documentation and formatting checks. The twelve native matrix
-jobs retain their required check names and explicitly record scope-only coverage,
-without installing native dependencies, building or running C++ tests.
+Code-bearing merge-queue candidates and manual runs retain the complete native
+matrix: Linux/macOS/Windows, Boost/Standalone Asio, TLS, Linux without TLS, and
+Linux ASan/UBSan and TSan. A green source PR is not full-matrix acceptance.
 
-The same policy applies to PRs and the complete merge-queue candidate. Every
-changed path must qualify, including both paths of a rename. Missing commit
-objects, empty or unavailable change lists and unknown events select full
-validation. A failed scope check blocks required checks. This policy preserves
-branch protection and never cancels an active run to schedule a newer commit.
+Strictly classified README/documentation-only changes run documentation and
+formatting checks in both stages. The twelve matrix jobs retain their required
+names; cells outside the planned source coverage explicitly record scope-only
+validation, not executed native tests. Missing or malformed change ranges select
+the complete matrix. Failed scope validation blocks every native gate. Rename
+classification includes both old and new paths. Active runs are not cancelled to
+schedule a newer commit.
+
+For a focused local run, pass exact registered check names. Omit the option to
+run all checks; unknown or unavailable names fail during configuration:
+
+```sh
+cmake -S . -B build -DARKNET_ENABLE_SSL=ON '-DARKNET_CHECK_TESTS=arq_core;fec'
+cmake --build build --target arknet_check --parallel 2
+```
 
 Download the [validation logs and source mapping](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz) with the [SHA256 checksum](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-validation-logs.tar.gz.sha256). The archive includes bilingual instructions and an independent verifier.
 
