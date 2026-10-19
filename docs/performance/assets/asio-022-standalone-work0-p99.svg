@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="980" viewBox="0 0 1280 980" role="img" aria-labelledby="title desc">
+<title id="title">Standalone Asio 1.38.2 · Sampled P99 round-trip time · 0</title>
+<desc id="desc">Medians of three independent process runs; whiskers show minimum and maximum. microseconds · window 16 measures the whole batch</desc>
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" fill="#182638">
+<text x="28" y="42" font-size="36" font-weight="bold">Sampled P99 round-trip time</text>
+<text x="28" y="79" font-size="24">Standalone Asio 1.38.2 · 16 connections · 0 computation iterations per echo</text>
+<text x="28" y="112" font-size="24">microseconds · window 16 measures the whole batch</text>
+<rect x="28" y="134" width="20" height="20" fill="#2878c8"/>
+<text x="58" y="152" font-size="24">Callback</text>
+<rect x="205" y="134" width="20" height="20" fill="#e67722"/>
+<text x="235" y="152" font-size="24">Coroutine</text>
+<text x="430" y="152" font-size="24">Median; whiskers: min–max of 3 runs</text>
+<text x="75" y="194" font-size="26" font-weight="bold">64 B · window 1 · message RTT</text>
+<line x1="75" x2="575" y1="450" y2="450" stroke="#dce2e9"/>
+<text x="67" y="457" text-anchor="end" font-size="22">0</text>
+<line x1="75" x2="575" y1="392.5" y2="392.5" stroke="#dce2e9"/>
+<text x="67" y="399.5" text-anchor="end" font-size="22">50</text>
+<line x1="75" x2="575" y1="335" y2="335" stroke="#dce2e9"/>
+<text x="67" y="342" text-anchor="end" font-size="22">100</text>
+<line x1="75" x2="575" y1="277.5" y2="277.5" stroke="#dce2e9"/>
+<text x="67" y="284.5" text-anchor="end" font-size="22">150</text>
+<line x1="75" x2="575" y1="220" y2="220" stroke="#dce2e9"/>
+<text x="67" y="227" text-anchor="end" font-size="22">200</text>
+<rect x="110" y="335.24035" width="34" height="114.75965000000002" fill="#2878c8" data-group="standalone:64:1:0:shared:1:callback" data-metric="rtt_p99_us" data-scale="1" data-median="99.791" data-min="94.542" data-max="127.875"><title>callback: 99.8 [94.5–127.9]</title></rect>
+<path d="M127 341.2767V302.94375M122 341.2767h10M122 302.94375h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="153" y="329.9216" width="34" height="120.07839999999999" fill="#e67722" data-group="standalone:64:1:0:shared:1:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="104.416" data-min="97.958" data-max="107.041"><title>coroutine: 104.4 [98–107]</title></rect>
+<path d="M170 337.3483V326.90285M165 337.3483h10M165 326.90285h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="149" y="480" text-anchor="middle" font-size="22">1 context</text>
+<text x="149" y="508" text-anchor="middle" font-size="22">1 thread</text>
+<rect x="277" y="329.0108" width="34" height="120.98919999999998" fill="#2878c8" data-group="standalone:64:1:0:shared:4:callback" data-metric="rtt_p99_us" data-scale="1" data-median="105.208" data-min="103.584" data-max="123.833"><title>callback: 105.2 [103.6–123.8]</title></rect>
+<path d="M294 330.8784V307.59205000000003M289 330.8784h10M289 307.59205000000003h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="320" y="324.74545" width="34" height="125.25455" fill="#e67722" data-group="standalone:64:1:0:shared:4:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="108.917" data-min="104.917" data-max="124.75"><title>coroutine: 108.9 [104.9–124.8]</title></rect>
+<path d="M337 329.34545V306.5375M332 329.34545h10M332 306.5375h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="316" y="480" text-anchor="middle" font-size="22">1 context</text>
+<text x="316" y="508" text-anchor="middle" font-size="22">4 threads</text>
+<rect x="444" y="334.09035" width="34" height="115.90965" fill="#2878c8" data-group="standalone:64:1:0:sharded:4:callback" data-metric="rtt_p99_us" data-scale="1" data-median="100.791" data-min="100.042" data-max="108.125"><title>callback: 100.8 [100–108.1]</title></rect>
+<path d="M461 334.95169999999996V325.65625M456 334.95169999999996h10M456 325.65625h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="487" y="333.37045" width="34" height="116.62955" fill="#e67722" data-group="standalone:64:1:0:sharded:4:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="101.417" data-min="98.083" data-max="107.25"><title>coroutine: 101.4 [98.1–107.3]</title></rect>
+<path d="M504 337.20455V326.6625M499 337.20455h10M499 326.6625h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="483" y="480" text-anchor="middle" font-size="22">4 contexts</text>
+<text x="483" y="508" text-anchor="middle" font-size="22">4 threads</text>
+<text x="705" y="194" font-size="26" font-weight="bold">64 B · window 16 · batch RTT</text>
+<line x1="705" x2="1205" y1="450" y2="450" stroke="#dce2e9"/>
+<text x="697" y="457" text-anchor="end" font-size="22">0</text>
+<line x1="705" x2="1205" y1="392.5" y2="392.5" stroke="#dce2e9"/>
+<text x="697" y="399.5" text-anchor="end" font-size="22">50</text>
+<line x1="705" x2="1205" y1="335" y2="335" stroke="#dce2e9"/>
+<text x="697" y="342" text-anchor="end" font-size="22">100</text>
+<line x1="705" x2="1205" y1="277.5" y2="277.5" stroke="#dce2e9"/>
+<text x="697" y="284.5" text-anchor="end" font-size="22">150</text>
+<line x1="705" x2="1205" y1="220" y2="220" stroke="#dce2e9"/>
+<text x="697" y="227" text-anchor="end" font-size="22">200</text>
+<rect x="740" y="318.51705000000004" width="34" height="131.48294999999996" fill="#2878c8" data-group="standalone:64:16:0:shared:1:callback" data-metric="rtt_p99_us" data-scale="1" data-median="114.333" data-min="106.917" data-max="115.167"><title>callback: 114.3 [106.9–115.2]</title></rect>
+<path d="M757 327.04545V317.55795M752 327.04545h10M752 317.55795h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="783" y="284.0642" width="34" height="165.93579999999997" fill="#e67722" data-group="standalone:64:16:0:shared:1:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="144.292" data-min="118.25" data-max="164.709"><title>coroutine: 144.3 [118.3–164.7]</title></rect>
+<path d="M800 314.0125V260.58465M795 314.0125h10M795 260.58465h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="779" y="480" text-anchor="middle" font-size="22">1 context</text>
+<text x="779" y="508" text-anchor="middle" font-size="22">1 thread</text>
+<rect x="907" y="319.95455" width="34" height="130.04545000000002" fill="#2878c8" data-group="standalone:64:16:0:shared:4:callback" data-metric="rtt_p99_us" data-scale="1" data-median="113.083" data-min="110.417" data-max="164.292"><title>callback: 113.1 [110.4–164.3]</title></rect>
+<path d="M924 323.02045V261.0642M919 323.02045h10M919 261.0642h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="950" y="292.78465" width="34" height="157.21535" fill="#e67722" data-group="standalone:64:16:0:shared:4:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="136.709" data-min="119.541" data-max="143.209"><title>coroutine: 136.7 [119.5–143.2]</title></rect>
+<path d="M967 312.52785V285.30965M962 312.52785h10M962 285.30965h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="946" y="480" text-anchor="middle" font-size="22">1 context</text>
+<text x="946" y="508" text-anchor="middle" font-size="22">4 threads</text>
+<rect x="1074" y="328.9625" width="34" height="121.03750000000002" fill="#2878c8" data-group="standalone:64:16:0:sharded:4:callback" data-metric="rtt_p99_us" data-scale="1" data-median="105.25" data-min="102.75" data-max="108.041"><title>callback: 105.3 [102.8–108]</title></rect>
+<path d="M1091 331.8375V325.75285M1086 331.8375h10M1086 325.75285h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="1117" y="326.0875" width="34" height="123.91250000000002" fill="#e67722" data-group="standalone:64:16:0:sharded:4:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="107.75" data-min="104.209" data-max="111"><title>coroutine: 107.8 [104.2–111]</title></rect>
+<path d="M1134 330.15965V322.35M1129 330.15965h10M1129 322.35h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="1113" y="480" text-anchor="middle" font-size="22">4 contexts</text>
+<text x="1113" y="508" text-anchor="middle" font-size="22">4 threads</text>
+<text x="75" y="564" font-size="26" font-weight="bold">4096 B · window 1 · message RTT</text>
+<line x1="75" x2="575" y1="820" y2="820" stroke="#dce2e9"/>
+<text x="67" y="827" text-anchor="end" font-size="22">0</text>
+<line x1="75" x2="575" y1="762.5" y2="762.5" stroke="#dce2e9"/>
+<text x="67" y="769.5" text-anchor="end" font-size="22">75</text>
+<line x1="75" x2="575" y1="705" y2="705" stroke="#dce2e9"/>
+<text x="67" y="712" text-anchor="end" font-size="22">150</text>
+<line x1="75" x2="575" y1="647.5" y2="647.5" stroke="#dce2e9"/>
+<text x="67" y="654.5" text-anchor="end" font-size="22">225</text>
+<line x1="75" x2="575" y1="590" y2="590" stroke="#dce2e9"/>
+<text x="67" y="597" text-anchor="end" font-size="22">300</text>
+<rect x="110" y="702.125" width="34" height="117.875" fill="#2878c8" data-group="standalone:4096:1:0:shared:1:callback" data-metric="rtt_p99_us" data-scale="1" data-median="153.75" data-min="152.166" data-max="161.166"><title>callback: 153.8 [152.2–161.2]</title></rect>
+<path d="M127 703.3394V696.4394M122 703.3394h10M122 696.4394h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="153" y="697.3969666666667" width="34" height="122.60303333333331" fill="#e67722" data-group="standalone:4096:1:0:shared:1:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="159.917" data-min="159.792" data-max="217.375"><title>coroutine: 159.9 [159.8–217.4]</title></rect>
+<path d="M170 697.4928V653.3458333333333M165 697.4928h10M165 653.3458333333333h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="149" y="850" text-anchor="middle" font-size="22">1 context</text>
+<text x="149" y="878" text-anchor="middle" font-size="22">1 thread</text>
+<rect x="277" y="709.7602333333333" width="34" height="110.2397666666667" fill="#2878c8" data-group="standalone:4096:1:0:shared:4:callback" data-metric="rtt_p99_us" data-scale="1" data-median="143.791" data-min="122.417" data-max="168.958"><title>callback: 143.8 [122.4–169]</title></rect>
+<path d="M294 726.1469666666667V690.4655333333334M289 726.1469666666667h10M289 690.4655333333334h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="320" y="710.6541666666667" width="34" height="109.3458333333333" fill="#e67722" data-group="standalone:4096:1:0:shared:4:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="142.625" data-min="118.375" data-max="174.458"><title>coroutine: 142.6 [118.4–174.5]</title></rect>
+<path d="M337 729.2458333333334V686.2488666666667M332 729.2458333333334h10M332 686.2488666666667h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="316" y="850" text-anchor="middle" font-size="22">1 context</text>
+<text x="316" y="878" text-anchor="middle" font-size="22">4 threads</text>
+<rect x="444" y="737.7428" width="34" height="82.25720000000001" fill="#2878c8" data-group="standalone:4096:1:0:sharded:4:callback" data-metric="rtt_p99_us" data-scale="1" data-median="107.292" data-min="99.459" data-max="112.167"><title>callback: 107.3 [99.5–112.2]</title></rect>
+<path d="M461 743.7481V734.0053M456 743.7481h10M456 734.0053h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="487" y="742.6303" width="34" height="77.36969999999997" fill="#e67722" data-group="standalone:4096:1:0:sharded:4:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="100.917" data-min="99.417" data-max="102.708"><title>coroutine: 100.9 [99.4–102.7]</title></rect>
+<path d="M504 743.7803V741.2572M499 743.7803h10M499 741.2572h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="483" y="850" text-anchor="middle" font-size="22">4 contexts</text>
+<text x="483" y="878" text-anchor="middle" font-size="22">4 threads</text>
+<text x="705" y="564" font-size="26" font-weight="bold">4096 B · window 16 · batch RTT</text>
+<line x1="705" x2="1205" y1="820" y2="820" stroke="#dce2e9"/>
+<text x="697" y="827" text-anchor="end" font-size="22">0</text>
+<line x1="705" x2="1205" y1="762.5" y2="762.5" stroke="#dce2e9"/>
+<text x="697" y="769.5" text-anchor="end" font-size="22">500</text>
+<line x1="705" x2="1205" y1="705" y2="705" stroke="#dce2e9"/>
+<text x="697" y="712" text-anchor="end" font-size="22">1,000</text>
+<line x1="705" x2="1205" y1="647.5" y2="647.5" stroke="#dce2e9"/>
+<text x="697" y="654.5" text-anchor="end" font-size="22">1,500</text>
+<line x1="705" x2="1205" y1="590" y2="590" stroke="#dce2e9"/>
+<text x="697" y="597" text-anchor="end" font-size="22">2,000</text>
+<rect x="740" y="712.8775" width="34" height="107.12249999999995" fill="#2878c8" data-group="standalone:4096:16:0:shared:1:callback" data-metric="rtt_p99_us" data-scale="1" data-median="931.5" data-min="913.75" data-max="984.333"><title>callback: 931.5 [913.8–984.3]</title></rect>
+<path d="M757 714.91875V706.801705M752 714.91875h10M752 706.801705h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="783" y="701.732045" width="34" height="118.26795500000003" fill="#e67722" data-group="standalone:4096:16:0:shared:1:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="1028.417" data-min="942.459" data-max="1050.167"><title>coroutine: 1,028.4 [942.5–1,050.2]</title></rect>
+<path d="M800 711.617215V699.2307950000001M795 711.617215h10M795 699.2307950000001h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="779" y="850" text-anchor="middle" font-size="22">1 context</text>
+<text x="779" y="878" text-anchor="middle" font-size="22">1 thread</text>
+<rect x="907" y="783.037045" width="34" height="36.962954999999965" fill="#2878c8" data-group="standalone:4096:16:0:shared:4:callback" data-metric="rtt_p99_us" data-scale="1" data-median="321.417" data-min="313.458" data-max="363.042"><title>callback: 321.4 [313.5–363]</title></rect>
+<path d="M924 783.95233V778.25017M919 783.95233h10M919 778.25017h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="950" y="783.995455" width="34" height="36.00454500000001" fill="#e67722" data-group="standalone:4096:16:0:shared:4:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="313.083" data-min="311.25" data-max="323.708"><title>coroutine: 313.1 [311.3–323.7]</title></rect>
+<path d="M967 784.20625V782.77358M962 784.20625h10M962 782.77358h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="946" y="850" text-anchor="middle" font-size="22">1 context</text>
+<text x="946" y="878" text-anchor="middle" font-size="22">4 threads</text>
+<rect x="1074" y="791.48966" width="34" height="28.510340000000042" fill="#2878c8" data-group="standalone:4096:16:0:sharded:4:callback" data-metric="rtt_p99_us" data-scale="1" data-median="247.916" data-min="244.709" data-max="258"><title>callback: 247.9 [244.7–258]</title></rect>
+<path d="M1091 791.858465V790.33M1086 791.858465h10M1086 790.33h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="1117" y="787.378295" width="34" height="32.62170500000002" fill="#e67722" data-group="standalone:4096:16:0:sharded:4:coroutine" data-metric="rtt_p99_us" data-scale="1" data-median="283.667" data-min="280.041" data-max="289.5"><title>coroutine: 283.7 [280–289.5]</title></rect>
+<path d="M1134 787.795285V786.7075M1129 787.795285h10M1129 786.7075h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="1113" y="850" text-anchor="middle" font-size="22">4 contexts</text>
+<text x="1113" y="878" text-anchor="middle" font-size="22">4 threads</text>
+<text x="28" y="926" font-size="22">Local IPv4 loopback · 0.5 s warmup + 2 s traffic per run · source c5432ca</text>
+<text x="28" y="958" font-size="22">CPU includes warmup and both client/server in one process; 100% = one logical core</text>
+</g></svg>
