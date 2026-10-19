@@ -31,13 +31,19 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 | 补充停止行为验证 | 指定 Boost 无 TLS 目标：8 项检查／66 个用例／1,515 项断言；ASan 排队连接、HTTP 外部 context 与外部停止：72 次进程检查／280 个用例／4,664 项断言 |
 | 纯测试改动 `25bb9f8` | 四种依赖／检测工具组合各通过 30 个专项用例，另通过 128 次指定原生错误用例；MSVC CRT 分配路径在 Windows CI 中执行，本机 macOS 验证不覆盖 |
 | 连接池关闭快照 `550fb58` | 两种依赖均通过 ASan+UBSan 与 TSan 下的 MySQL／Redis 关闭测试，覆盖排队 acquire 取消和回调重入；未改动的归还失败目标也通过四套配置。准确计数与源码边界见[测试与验证](testing_CN.md) |
-| 跨平台发布条件 | [PR #16](https://github.com/OpenArkStudio/arknet/pull/16) 发布前须通过全部 14 项必需检查；本机结果不代替候选版本自身的检查 |
+| 跨平台发布条件 | 已发布的 v0.2.2，源码 `c5432ca`，已在[实际合并候选](https://github.com/OpenArkStudio/arknet/actions/runs/39034278627)通过全部 14 项必需检查；本机结果不代替发行候选自身的验证 |
 | 本机性能 | Release 测量标识产品版本 `2aa5bc0`，见[性能对比报告](../performance/index_CN.md)。Redis 协议性能使用 Valkey 8.0.11，与 Redis 7.4.2 正确性检查分开记录 |
 | 真实旧库对端，2026-10-13 | 两种依赖方案各完成 12 组进程场景、16 个会话、512 条消息及回显；独立归档证据 |
 | RUDP/FEC 实测负载 | 96 组配置、276 次测量、7,960,439 次成功消息往返；六组 120 秒持续运行 |
 | ark 整合 | [#38](https://github.com/OpenArkStudio/ark/pull/38) 完成直接替换与 C++20 升级；[#41](https://github.com/OpenArkStudio/ark/pull/41) 整理核心／官方插件；[#43](https://github.com/OpenArkStudio/ark/pull/43) 统一 snake_case 接口与风格；[#42](https://github.com/OpenArkStudio/ark/pull/42) 调整接收缓冲；均已合并 |
 | ark 数据库开发层 | [#46](https://github.com/OpenArkStudio/ark/pull/46) 增加私有原生服务、Asio awaitable 和库提供的运行时，由模块线程驱动；[#49](https://github.com/OpenArkStudio/ark/pull/49) 增加独立回调／协程基准程序。正式数据库插件另行接入 |
 | 生产部署 | 目标网络跨主机容量、生产时长耐久、业务验收及部署访问控制待完成 |
+
+已发布的 v0.2.2 源码在 macOS 27.0.1 的本机 5,000 连接 TCP 回显负载中出现过响应超时：
+每进程 1 个 IO 工作线程、1 KiB 包体、每连接 4 条在途请求，使用 Boost 1.90 或
+Standalone Asio 1.38.2 均出现过。原因尚未确认，该负载尚未通过容量验收，详见[版本说明](releases_CN.md)。
+main 上的 [PR #26](https://github.com/OpenArkStudio/arknet/pull/26) 改善了基准程序客户端的清理调度，
+不属于 v0.2.2，也没有解决这项 TCP 响应超时。
 
 [测试与验证](testing_CN.md)记录配置、源码快照和 Sanitizer 限制。
 多个所有者同时完整停止的串行化保证限定于 TCP 服务端及其 HTTP／WebSocket／TLS 派生服务端，
