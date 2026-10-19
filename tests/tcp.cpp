@@ -1,3 +1,10 @@
+// Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
+#include <array>
+#include <atomic>
+#include <future>
+#include <string>
+#include <vector>
+
 #include <arknet/tcp/tcp_client.hpp>
 #include <arknet/tcp/tcp_server.hpp>
 #include "check.hpp"
@@ -104,6 +111,76 @@ DOCTEST_TEST_CASE("TCP datagram framing covers each length prefix boundary") {
     }
     check(received.wait(expected.size()) == expected, "little-endian prefix boundaries and empty frames");
     client.stop();
+    server.stop();
+}
+
+DOCTEST_TEST_CASE("TCP datagram receives retain split prefixes and consecutive frames at the buffer limit") {
+    messages received;
+    // The first frame exactly fills the receive limit, including its prefix.
+    arknet::tcp_server server(16, 257, 1);
+    server.bind_recv([&](auto&, std::string_view bytes) { received.push(bytes); });
+    check(server.start("127.0.0.1", 0, arknet::use_dgram), "bounded framed server start");
+    asio::io_context context;
+    asio::ip::tcp::socket peer(context);
+    peer.connect({asio::ip::make_address("127.0.0.1"), server.get_listen_port()});
+
+    const std::string first(254, 'a');
+    const std::array<unsigned char, 3> prefix{254, 254, 0};
+    // A native peer bypasses arknet's sender so receiver and sender cannot share
+    // a framing bug. Separate writes also allow incomplete prefix/body reads.
+    for (const auto byte : prefix)
+    {
+        asio::write(peer, asio::buffer(&byte, 1));
+    }
+    asio::write(peer, asio::buffer(first.data(), 17));
+    // One write contains the rest of the first frame, an empty frame, and the
+    // following frame. TCP may split or coalesce any of these writes.
+    std::string tail = first.substr(17);
+    tail += '\0';
+    tail += static_cast<char>(4);
+    tail += "next";
+    asio::write(peer, asio::buffer(tail));
+    const std::vector<std::string> expected{first, "", "next"};
+    check(
+        received.wait(3) == expected, "split prefixes, exact limit and buffered follow-up frames preserve boundaries");
+    peer.close();
+    server.stop();
+}
+
+DOCTEST_TEST_CASE("TCP datagram rejects invalid or oversized frames without delivering partial data") {
+    std::string wire;
+    arknet::error_code expected;
+    DOCTEST_SUBCASE("noncanonical two-byte length") {
+        wire = std::string("\xfe\x01\x00", 3);
+        expected = asio::error::no_data;
+    }
+    DOCTEST_SUBCASE("noncanonical eight-byte length") {
+        wire = std::string("\xff\xfe\x00\x00\x00\x00\x00\x00\x00", 9);
+        expected = asio::error::no_data;
+    }
+    DOCTEST_SUBCASE("unrepresentable length") {
+        wire.assign(9, static_cast<char>(255));
+        expected = asio::error::no_data;
+    }
+    DOCTEST_SUBCASE("frame exceeds the configured receive limit") {
+        wire.assign(129, 'x');
+        wire.front() = static_cast<char>(128);
+        expected = asio::error::not_found;
+    }
+    std::atomic<unsigned> delivered{};
+    std::promise<arknet::error_code> disconnected;
+    auto result = disconnected.get_future();
+    arknet::tcp_server server(16, 128, 1);
+    server.bind_recv([&](auto&, std::string_view) { ++delivered; });
+    server.bind_disconnect([&](auto&) { disconnected.set_value(arknet::get_last_error()); });
+    check(server.start("127.0.0.1", 0, arknet::use_dgram), "invalid-frame server start");
+    asio::io_context context;
+    asio::ip::tcp::socket peer(context);
+    peer.connect({asio::ip::make_address("127.0.0.1"), server.get_listen_port()});
+    asio::write(peer, asio::buffer(wire));
+    check(await(result) == expected, "bad framing closes the session with the expected error");
+    check(delivered == 0, "invalid or incomplete payload never reaches the receive callback");
+    peer.close();
     server.stop();
 }
 
