@@ -235,7 +235,8 @@
 }
 
 @media (max-width: 640px) {
-  .docs-content p:has(> img[src*="/performance/assets/"][src$=".svg"]) {
+  .docs-content p:has(> img[src*="/performance/assets/"][src$=".svg"]),
+  .docs-content p:has(> a > img[src*="/performance/assets/"][src$=".svg"]) {
     overflow-x: auto;
   }
 

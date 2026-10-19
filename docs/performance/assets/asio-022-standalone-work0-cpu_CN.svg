@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="980" viewBox="0 0 1280 980" role="img" aria-labelledby="title desc">
+<title id="title">Standalone Asio 1.38.2 · 进程 CPU 占用 · 0</title>
+<desc id="desc">三次独立进程测量的中位数，误差线为最小值至最大值。 % · 100% 表示一个逻辑核满载</desc>
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" fill="#182638">
+<text x="28" y="42" font-size="36" font-weight="bold">进程 CPU 占用</text>
+<text x="28" y="79" font-size="24">Standalone Asio 1.38.2 · 16 条连接 · 每次回显 0 次计算迭代</text>
+<text x="28" y="112" font-size="24">% · 100% 表示一个逻辑核满载</text>
+<rect x="28" y="134" width="20" height="20" fill="#2878c8"/>
+<text x="58" y="152" font-size="24">回调</text>
+<rect x="205" y="134" width="20" height="20" fill="#e67722"/>
+<text x="235" y="152" font-size="24">协程</text>
+<text x="430" y="152" font-size="24">中位数；误差线：三次测量的最小值—最大值</text>
+<text x="75" y="194" font-size="26" font-weight="bold">64 B · 在途 1 · 单条往返</text>
+<line x1="75" x2="575" y1="450" y2="450" stroke="#dce2e9"/>
+<text x="67" y="457" text-anchor="end" font-size="22">0</text>
+<line x1="75" x2="575" y1="392.5" y2="392.5" stroke="#dce2e9"/>
+<text x="67" y="399.5" text-anchor="end" font-size="22">125</text>
+<line x1="75" x2="575" y1="335" y2="335" stroke="#dce2e9"/>
+<text x="67" y="342" text-anchor="end" font-size="22">250</text>
+<line x1="75" x2="575" y1="277.5" y2="277.5" stroke="#dce2e9"/>
+<text x="67" y="284.5" text-anchor="end" font-size="22">375</text>
+<line x1="75" x2="575" y1="220" y2="220" stroke="#dce2e9"/>
+<text x="67" y="227" text-anchor="end" font-size="22">500</text>
+<rect x="110" y="404.04885337999997" width="34" height="45.95114662000003" fill="#2878c8" data-group="standalone:64:1:0:shared:1:callback" data-metric="cpu_percent" data-scale="1" data-median="99.893797" data-min="99.863604" data-max="99.92371"><title>callback: 99.9 [99.9–99.9]</title></rect>
+<path d="M127 404.06274215999997V404.0350934M122 404.06274215999997h10M122 404.0350934h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="153" y="404.03488594" width="34" height="45.96511406000002" fill="#e67722" data-group="standalone:64:1:0:shared:1:coroutine" data-metric="cpu_percent" data-scale="1" data-median="99.924161" data-min="99.902842" data-max="99.927961"><title>coroutine: 99.9 [99.9–99.9]</title></rect>
+<path d="M170 404.04469268V404.03313793999996M165 404.04469268h10M165 404.03313793999996h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="149" y="480" text-anchor="middle" font-size="22">1 个事件循环</text>
+<text x="149" y="508" text-anchor="middle" font-size="22">1 个线程</text>
+<rect x="277" y="331.70569666" width="34" height="118.29430334" fill="#2878c8" data-group="standalone:64:1:0:shared:4:callback" data-metric="cpu_percent" data-scale="1" data-median="257.161529" data-min="256.660352" data-max="257.69379"><title>callback: 257.2 [256.7–257.7]</title></rect>
+<path d="M294 331.93623808V331.4608566M289 331.93623808h10M289 331.4608566h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="320" y="329.98928486" width="34" height="120.01071514" fill="#e67722" data-group="standalone:64:1:0:shared:4:coroutine" data-metric="cpu_percent" data-scale="1" data-median="260.892859" data-min="260.425486" data-max="261.258296"><title>coroutine: 260.9 [260.4–261.3]</title></rect>
+<path d="M337 330.20427644V329.82118384M332 330.20427644h10M332 329.82118384h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="316" y="480" text-anchor="middle" font-size="22">1 个事件循环</text>
+<text x="316" y="508" text-anchor="middle" font-size="22">4 个线程</text>
+<rect x="444" y="274.2194387" width="34" height="175.7805613" fill="#2878c8" data-group="standalone:64:1:0:sharded:4:callback" data-metric="cpu_percent" data-scale="1" data-median="382.131655" data-min="381.045901" data-max="389.133326"><title>callback: 382.1 [381–389.1]</title></rect>
+<path d="M461 274.71888554V270.99867004M456 274.71888554h10M456 270.99867004h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="487" y="273.15049438" width="34" height="176.84950562" fill="#e67722" data-group="standalone:64:1:0:sharded:4:coroutine" data-metric="cpu_percent" data-scale="1" data-median="384.455447" data-min="382.147018" data-max="389.518581"><title>coroutine: 384.5 [382.1–389.5]</title></rect>
+<path d="M504 274.21237172V270.82145274000004M499 274.21237172h10M499 270.82145274000004h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="483" y="480" text-anchor="middle" font-size="22">4 个事件循环</text>
+<text x="483" y="508" text-anchor="middle" font-size="22">4 个线程</text>
+<text x="705" y="194" font-size="26" font-weight="bold">64 B · 在途 16 · 整批往返</text>
+<line x1="705" x2="1205" y1="450" y2="450" stroke="#dce2e9"/>
+<text x="697" y="457" text-anchor="end" font-size="22">0</text>
+<line x1="705" x2="1205" y1="392.5" y2="392.5" stroke="#dce2e9"/>
+<text x="697" y="399.5" text-anchor="end" font-size="22">125</text>
+<line x1="705" x2="1205" y1="335" y2="335" stroke="#dce2e9"/>
+<text x="697" y="342" text-anchor="end" font-size="22">250</text>
+<line x1="705" x2="1205" y1="277.5" y2="277.5" stroke="#dce2e9"/>
+<text x="697" y="284.5" text-anchor="end" font-size="22">375</text>
+<line x1="705" x2="1205" y1="220" y2="220" stroke="#dce2e9"/>
+<text x="697" y="227" text-anchor="end" font-size="22">500</text>
+<rect x="740" y="404.03235961999997" width="34" height="45.967640380000034" fill="#2878c8" data-group="standalone:64:16:0:shared:1:callback" data-metric="cpu_percent" data-scale="1" data-median="99.929653" data-min="99.914647" data-max="99.963911"><title>callback: 99.9 [99.9–100]</title></rect>
+<path d="M757 404.03926238V404.01660094M752 404.03926238h10M752 404.01660094h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="783" y="404.03920488" width="34" height="45.96079512" fill="#e67722" data-group="standalone:64:16:0:shared:1:coroutine" data-metric="cpu_percent" data-scale="1" data-median="99.914772" data-min="99.877246" data-max="99.92884"><title>coroutine: 99.9 [99.9–99.9]</title></rect>
+<path d="M800 404.05646684V404.03273360000003M795 404.05646684h10M795 404.03273360000003h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="779" y="480" text-anchor="middle" font-size="22">1 个事件循环</text>
+<text x="779" y="508" text-anchor="middle" font-size="22">1 个线程</text>
+<rect x="907" y="330.43036689999997" width="34" height="119.56963310000003" fill="#2878c8" data-group="standalone:64:16:0:shared:4:callback" data-metric="cpu_percent" data-scale="1" data-median="259.933985" data-min="258.23995" data-max="261.022649"><title>callback: 259.9 [258.2–261]</title></rect>
+<path d="M924 331.209623V329.92958146M919 331.209623h10M919 329.92958146h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="950" y="328.98175376" width="34" height="121.01824624" fill="#e67722" data-group="standalone:64:16:0:shared:4:coroutine" data-metric="cpu_percent" data-scale="1" data-median="263.083144" data-min="262.853733" data-max="264.741212"><title>coroutine: 263.1 [262.9–264.7]</title></rect>
+<path d="M967 329.08728282000004V328.21904248M962 329.08728282000004h10M962 328.21904248h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="946" y="480" text-anchor="middle" font-size="22">1 个事件循环</text>
+<text x="946" y="508" text-anchor="middle" font-size="22">4 个线程</text>
+<rect x="1074" y="273.05941115999997" width="34" height="176.94058884000003" fill="#2878c8" data-group="standalone:64:16:0:sharded:4:callback" data-metric="cpu_percent" data-scale="1" data-median="384.653454" data-min="383.688306" data-max="389.75772"><title>callback: 384.7 [383.7–389.8]</title></rect>
+<path d="M1091 273.50337923999996V270.71144879999997M1086 273.50337923999996h10M1086 270.71144879999997h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="1117" y="272.45336852" width="34" height="177.54663147999997" fill="#e67722" data-group="standalone:64:16:0:sharded:4:coroutine" data-metric="cpu_percent" data-scale="1" data-median="385.970938" data-min="382.451004" data-max="388.781522"><title>coroutine: 386 [382.5–388.8]</title></rect>
+<path d="M1134 274.07253815999997V271.16049988M1129 274.07253815999997h10M1129 271.16049988h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="1113" y="480" text-anchor="middle" font-size="22">4 个事件循环</text>
+<text x="1113" y="508" text-anchor="middle" font-size="22">4 个线程</text>
+<text x="75" y="564" font-size="26" font-weight="bold">4096 B · 在途 1 · 单条往返</text>
+<line x1="75" x2="575" y1="820" y2="820" stroke="#dce2e9"/>
+<text x="67" y="827" text-anchor="end" font-size="22">0</text>
+<line x1="75" x2="575" y1="762.5" y2="762.5" stroke="#dce2e9"/>
+<text x="67" y="769.5" text-anchor="end" font-size="22">125</text>
+<line x1="75" x2="575" y1="705" y2="705" stroke="#dce2e9"/>
+<text x="67" y="712" text-anchor="end" font-size="22">250</text>
+<line x1="75" x2="575" y1="647.5" y2="647.5" stroke="#dce2e9"/>
+<text x="67" y="654.5" text-anchor="end" font-size="22">375</text>
+<line x1="75" x2="575" y1="590" y2="590" stroke="#dce2e9"/>
+<text x="67" y="597" text-anchor="end" font-size="22">500</text>
+<rect x="110" y="774.03488502" width="34" height="45.96511497999995" fill="#2878c8" data-group="standalone:4096:1:0:shared:1:callback" data-metric="cpu_percent" data-scale="1" data-median="99.924163" data-min="99.913009" data-max="99.927798"><title>callback: 99.9 [99.9–99.9]</title></rect>
+<path d="M127 774.04001586V774.03321292M122 774.04001586h10M122 774.03321292h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="153" y="774.03454738" width="34" height="45.96545261999995" fill="#e67722" data-group="standalone:4096:1:0:shared:1:coroutine" data-metric="cpu_percent" data-scale="1" data-median="99.924897" data-min="99.307316" data-max="99.929325"><title>coroutine: 99.9 [99.3–99.9]</title></rect>
+<path d="M170 774.31863464V774.0325105M165 774.31863464h10M165 774.0325105h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="149" y="850" text-anchor="middle" font-size="22">1 个事件循环</text>
+<text x="149" y="878" text-anchor="middle" font-size="22">1 个线程</text>
+<rect x="277" y="696.38993298" width="34" height="123.61006701999997" fill="#2878c8" data-group="standalone:4096:1:0:shared:4:callback" data-metric="cpu_percent" data-scale="1" data-median="268.717537" data-min="267.114233" data-max="269.067347"><title>callback: 268.7 [267.1–269.1]</title></rect>
+<path d="M294 697.12745282V696.2290203800001M289 697.12745282h10M289 696.2290203800001h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="320" y="694.98236242" width="34" height="125.01763758000004" fill="#e67722" data-group="standalone:4096:1:0:shared:4:coroutine" data-metric="cpu_percent" data-scale="1" data-median="271.777473" data-min="270.849106" data-max="272.039379"><title>coroutine: 271.8 [270.8–272]</title></rect>
+<path d="M337 695.40941124V694.86188566M332 695.40941124h10M332 694.86188566h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="316" y="850" text-anchor="middle" font-size="22">1 个事件循环</text>
+<text x="316" y="878" text-anchor="middle" font-size="22">4 个线程</text>
+<rect x="444" y="642.0706899200001" width="34" height="177.92931007999994" fill="#2878c8" data-group="standalone:4096:1:0:sharded:4:callback" data-metric="cpu_percent" data-scale="1" data-median="386.802848" data-min="386.627115" data-max="387.650472"><title>callback: 386.8 [386.6–387.7]</title></rect>
+<path d="M461 642.1515271V641.68078288M456 642.1515271h10M456 641.68078288h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="487" y="642.14785308" width="34" height="177.85214692" fill="#e67722" data-group="standalone:4096:1:0:sharded:4:coroutine" data-metric="cpu_percent" data-scale="1" data-median="386.635102" data-min="381.960468" data-max="390.202525"><title>coroutine: 386.6 [382–390.2]</title></rect>
+<path d="M504 644.29818472V640.5068385M499 644.29818472h10M499 640.5068385h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="483" y="850" text-anchor="middle" font-size="22">4 个事件循环</text>
+<text x="483" y="878" text-anchor="middle" font-size="22">4 个线程</text>
+<text x="705" y="564" font-size="26" font-weight="bold">4096 B · 在途 16 · 整批往返</text>
+<line x1="705" x2="1205" y1="820" y2="820" stroke="#dce2e9"/>
+<text x="697" y="827" text-anchor="end" font-size="22">0</text>
+<line x1="705" x2="1205" y1="762.5" y2="762.5" stroke="#dce2e9"/>
+<text x="697" y="769.5" text-anchor="end" font-size="22">125</text>
+<line x1="705" x2="1205" y1="705" y2="705" stroke="#dce2e9"/>
+<text x="697" y="712" text-anchor="end" font-size="22">250</text>
+<line x1="705" x2="1205" y1="647.5" y2="647.5" stroke="#dce2e9"/>
+<text x="697" y="654.5" text-anchor="end" font-size="22">375</text>
+<line x1="705" x2="1205" y1="590" y2="590" stroke="#dce2e9"/>
+<text x="697" y="597" text-anchor="end" font-size="22">500</text>
+<rect x="740" y="774.0251734999999" width="34" height="45.97482650000006" fill="#2878c8" data-group="standalone:4096:16:0:shared:1:callback" data-metric="cpu_percent" data-scale="1" data-median="99.945275" data-min="99.812826" data-max="99.977757"><title>callback: 99.9 [99.8–100]</title></rect>
+<path d="M757 774.08610004V774.01023178M752 774.08610004h10M752 774.01023178h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="783" y="774.04166956" width="34" height="45.958330440000054" fill="#e67722" data-group="standalone:4096:16:0:shared:1:coroutine" data-metric="cpu_percent" data-scale="1" data-median="99.909414" data-min="99.805073" data-max="99.989004"><title>coroutine: 99.9 [99.8–100]</title></rect>
+<path d="M800 774.08966642V774.00505816M795 774.08966642h10M795 774.00505816h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="779" y="850" text-anchor="middle" font-size="22">1 个事件循环</text>
+<text x="779" y="878" text-anchor="middle" font-size="22">1 个线程</text>
+<rect x="907" y="670.27265696" width="34" height="149.72734304000005" fill="#2878c8" data-group="standalone:4096:16:0:shared:4:callback" data-metric="cpu_percent" data-scale="1" data-median="325.494224" data-min="325.271702" data-max="326.695712"><title>callback: 325.5 [325.3–326.7]</title></rect>
+<path d="M924 670.37501708V669.71997248M919 670.37501708h10M919 669.71997248h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="950" y="667.87385678" width="34" height="152.12614322000002" fill="#e67722" data-group="standalone:4096:16:0:shared:4:coroutine" data-metric="cpu_percent" data-scale="1" data-median="330.709007" data-min="328.895751" data-max="332.210416"><title>coroutine: 330.7 [328.9–332.2]</title></rect>
+<path d="M967 668.70795454V667.18320864M962 668.70795454h10M962 667.18320864h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="946" y="850" text-anchor="middle" font-size="22">1 个事件循环</text>
+<text x="946" y="878" text-anchor="middle" font-size="22">4 个线程</text>
+<rect x="1074" y="636.15077788" width="34" height="183.84922212000004" fill="#2878c8" data-group="standalone:4096:16:0:sharded:4:callback" data-metric="cpu_percent" data-scale="1" data-median="399.672222" data-min="399.600696" data-max="399.720887"><title>callback: 399.7 [399.6–399.7]</title></rect>
+<path d="M1091 636.18367984V636.12839198M1086 636.18367984h10M1086 636.12839198h10" fill="none" stroke="#182638" stroke-width="2"/>
+<rect x="1117" y="636.1806811" width="34" height="183.81931889999998" fill="#e67722" data-group="standalone:4096:16:0:sharded:4:coroutine" data-metric="cpu_percent" data-scale="1" data-median="399.607215" data-min="399.169732" data-max="399.655401"><title>coroutine: 399.6 [399.2–399.7]</title></rect>
+<path d="M1134 636.38192328V636.15851554M1129 636.38192328h10M1129 636.15851554h10" fill="none" stroke="#182638" stroke-width="2"/>
+<text x="1113" y="850" text-anchor="middle" font-size="22">4 个事件循环</text>
+<text x="1113" y="878" text-anchor="middle" font-size="22">4 个线程</text>
+<text x="28" y="926" font-size="22">本机 IPv4 回环 · 每次 0.5 秒预热 + 2 秒测量 · 源码 c5432ca</text>
+<text x="28" y="958" font-size="22">CPU 为同进程客户端与服务端合计，包含预热；100% 表示一个逻辑核</text>
+</g></svg>
