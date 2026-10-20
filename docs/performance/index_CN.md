@@ -21,6 +21,8 @@
 SVG 图表对比吞吐量、p99 RTT、CPU、网络开销、恢复、重传与保留内存。
 当前 RUDP 公共 API 使用回调，RUDP 协程仍为 TODO。
 
+[RUDP 并发报告](rudp-concurrency_CN.md)：128／512／1024 个客户端、一个共享 io_context，比较 1 与 4 个端点线程；18 组、54 轮，包含吞吐量、CPU、p99 与进程峰值 RSS。
+
 ## 数据库客户端
 
 - [MySQL](../features/mysql/performance_CN.md)：只读文本与预处理查询，比较包体、连接数与客户端排队深度；记录查询 RT、吞吐量、CPU 和内存。
