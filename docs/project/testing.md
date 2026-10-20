@@ -357,8 +357,13 @@ slots. Immediately before building, a small Node helper requires all of:
 A zero constrained-memory result is recorded as `no-reported-constraint` and does
 not supply another numeric ceiling; the helper then uses actual total memory and
 still requires the independent available-memory and CPU checks. Zero does not
-prove unlimited memory. Missing, invalid, inconsistent or insufficient resource
-observations select one slot. Other profiles keep their existing parallelism,
+prove unlimited memory. A positive constraint must be a finite integer and is
+first capped at the already validated physical total; the effective ceiling must
+then be a safe integer. An external limit above that total is reported as
+`reported-above-host-memory`, without inferring unlimited memory. CPU, physical
+total and available-memory observations must remain positive safe integers;
+nonfinite, negative, fractional or string constraints are invalid. Missing,
+invalid, inconsistent or insufficient resource observations select one slot. Other profiles keep their existing parallelism,
 and source-module targets, sccache launchers, all twelve matrix profiles, native
 tests and the 60-minute job limit remain unchanged. The required gate verifies
 that the planning step ran successfully only in its intended native cell.

@@ -9,18 +9,22 @@ export const admission = { cpu: 4, effectiveMemory: 15 * gib, availableMemory: 1
 const positiveInteger = value => Number.isSafeInteger(value) && value > 0;
 
 export function selectParallelism(resources) {
-  const constraintStatus = resources.constrainedMemory === 0 ? "no-reported-constraint" :
-    positiveInteger(resources.constrainedMemory) ? "reported-constraint" : "invalid-constraint";
+  const validConstraint = Number.isFinite(resources.constrainedMemory) &&
+    Number.isInteger(resources.constrainedMemory) && resources.constrainedMemory >= 0;
+  let constraintStatus = resources.constrainedMemory === 0 ? "no-reported-constraint" :
+    validConstraint ? "reported-constraint" : "invalid-constraint";
   const fallback = reason => ({ parallel: 1, reason, effectiveMemory: null, constraintStatus });
   if (resources.platform !== "linux" || resources.boost !== "ON" || resources.sanitize !== "ON") {
     return fallback("outside-experimental-profile");
   }
   if (![resources.cpu, resources.totalMemory, resources.availableMemory].every(positiveInteger) ||
-      !Number.isSafeInteger(resources.constrainedMemory) || resources.constrainedMemory < 0) {
+      !validConstraint) {
     return fallback("unknown-or-invalid-resource");
   }
   const effectiveMemory = resources.constrainedMemory === 0 ? resources.totalMemory :
     Math.min(resources.totalMemory, resources.constrainedMemory);
+  if (!positiveInteger(effectiveMemory)) return fallback("unknown-or-invalid-resource");
+  if (resources.constrainedMemory > resources.totalMemory) constraintStatus = "reported-above-host-memory";
   if (resources.availableMemory > effectiveMemory) return fallback("inconsistent-memory-observation");
   const eligible = resources.cpu >= admission.cpu && effectiveMemory >= admission.effectiveMemory &&
     resources.availableMemory >= admission.availableMemory;

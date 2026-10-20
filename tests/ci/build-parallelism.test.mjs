@@ -29,7 +29,7 @@ test("the experimental profile admits exactly two slots only at or above every r
 test("unknown inconsistent and invalid resources retain one slot", () => {
   for (const key of ["cpu", "totalMemory", "constrainedMemory", "availableMemory"]) {
     for (const value of [undefined, null, 0, -1, "16", NaN, Infinity, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
-      if (key === "constrainedMemory" && value === 0) continue;
+      if (key === "constrainedMemory" && (value === 0 || value === Number.MAX_SAFE_INTEGER + 1)) continue;
       assert.equal(selectParallelism({ ...enough, [key]: value }).parallel, 1, `${key}/${value}`);
     }
   }
@@ -37,6 +37,32 @@ test("unknown inconsistent and invalid resources retain one slot", () => {
   for (const changes of [{ platform: "darwin" }, { platform: "win32" }, { boost: "OFF" }, { sanitize: "THREAD" },
     { sanitize: "OFF" }, { platform: undefined }, { boost: undefined }, { sanitize: undefined }]) {
     assert.equal(selectParallelism({ ...enough, ...changes }).parallel, 1);
+  }
+});
+
+test("the observed large external limit is clipped to validated physical memory without changing admission thresholds", () => {
+  const observed = { platform: "linux", boost: "ON", sanitize: "ON", cpu: 4,
+    totalMemory: 16766410752, constrainedMemory: 18446744073709552000, availableMemory: 15565606912 };
+  const decision = selectParallelism(observed);
+  assert.deepEqual(admission, { cpu: 4, effectiveMemory: 15 * gib, availableMemory: 12 * gib });
+  assert.equal(decision.parallel, 2);
+  assert.equal(decision.effectiveMemory, observed.totalMemory);
+  assert.equal(decision.constraintStatus, "reported-above-host-memory");
+  assert.equal(observed.constrainedMemory, 18446744073709552000, "keep the raw observation");
+  for (const constrainedMemory of [Number.MAX_SAFE_INTEGER + 1, 2 ** 64, Number.MAX_VALUE]) {
+    const clipped = selectParallelism({ ...observed, constrainedMemory });
+    assert.equal(clipped.parallel, 2);
+    assert.equal(clipped.effectiveMemory, observed.totalMemory);
+    assert.ok(Number.isSafeInteger(clipped.effectiveMemory));
+    assert.equal(clipped.constraintStatus, "reported-above-host-memory");
+  }
+  for (const changes of [{ cpu: admission.cpu - 1 }, { totalMemory: admission.effectiveMemory - 1 },
+    { constrainedMemory: admission.effectiveMemory - 1 }, { availableMemory: admission.availableMemory - 1 },
+    { availableMemory: observed.totalMemory + 1 }]) {
+    assert.equal(selectParallelism({ ...observed, ...changes }).parallel, 1, JSON.stringify(changes));
+  }
+  for (const constrainedMemory of [NaN, Infinity, -Infinity, -1, 1.5, "18446744073709552000"]) {
+    assert.equal(selectParallelism({ ...observed, constrainedMemory }).parallel, 1);
   }
 });
 
