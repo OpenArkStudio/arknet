@@ -56,14 +56,20 @@ target, without arknet endpoints or runtime code:
 
 | Control configuration | Observed result |
 | --- | --- |
-| Source `9501775`, Boost 1.90, AppleClang 21 Release, TLS off; Mac16,11, 14 CPU cores, 48 GiB, macOS 27.0.1 | 5,000 connections established, 4,999 finished, four unanswered requests |
-| One IO worker, 1 KiB payload, four outstanding requests per connection; client response deadline 5 s, server deadline 40 s | Client response timeout and incomplete server target; both processes completed cleanup |
+| Diagnostic source `c945ce9`, Boost 1.90, AppleClang 21 Release, TLS off; Mac16,11, 14 CPU cores, 48 GiB, macOS 27.0.1; measured 2026-10-20 | 5,000 connections established, 4,999 finished, four unanswered requests on one connection; both processes completed cleanup |
+| One IO worker, 1 KiB payload, four outstanding requests per connection; response deadline 5 s, server deadline 40 s | Client write queue empty; 4,364 bytes remained in its kernel send buffer; application buffers and kernel-readable bytes were zero on both peers |
+| Same failed connection, before socket cancellation | Client send window 366,912 bytes; 19,032 retransmitted bytes and 4,364 out-of-order bytes; `rto_ms` was zero |
+| Correlated packet headers | Receiver ACK remained at 602375564 with a SACK block above the missing 1,091-byte range; the capture includes a retransmission of that range |
 
 This symptom can therefore occur outside arknet's endpoint/runtime implementation.
-It does not establish a common cause for the failures. Correlating packet sequences
-with per-connection state remains necessary before attributing the cause or claiming
-capacity acceptance. The reusable control and reproduction parameters are described
-in [connection benchmarks](../../benchmarks/CONNECTIONS.md).
+The failure shows a TCP sequence gap with available window space, rather than
+buffered application frames waiting for dispatch. It does not establish a common
+cause for the arknet and native-control failures or identify why TCP recovery
+stalled. The capture recorded 1,675,186 packets and dropped 364,705; absent packets
+cannot be treated as proof that no transmission occurred. All packet headers and
+raw logs remain local. Capacity acceptance and cross-host validation are pending.
+The reusable control and reproduction parameters are described in
+[connection benchmarks](../../benchmarks/CONNECTIONS.md).
 
 [Testing and validation](testing.md) records configurations, source snapshots and
 sanitizer limitations. Concurrent complete owner stops are serialized for TCP
