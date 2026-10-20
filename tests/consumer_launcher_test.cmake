@@ -1,6 +1,7 @@
 # Exercise the installed-consumer harness and the same generated-command runner
 # with a small consumer. The separate install_consumer check still builds and
 # runs the complete installed public-header consumer.
+include("${CMAKE_CURRENT_LIST_DIR}/consumer_launcher_path_test.cmake")
 file(REMOVE_RECURSE "${ARKNET_LAUNCHER_TEST_DIR}")
 file(MAKE_DIRECTORY "${ARKNET_LAUNCHER_TEST_DIR}/fixture/tests/consumer")
 set(fixture "${ARKNET_LAUNCHER_TEST_DIR}/fixture")
@@ -89,11 +90,12 @@ foreach(case empty spaces arguments failure)
         endif()
     else()
         file(READ "${evidence}/invocations.log" invocations)
-        string(FIND "${invocations}" "compiler=${ARKNET_CXX_COMPILER}\n" compiler_position)
-        if(compiler_position EQUAL -1)
+        arknet_consumer_compiler_recorded(compiler_matches "${ARKNET_CXX_COMPILER}" "${invocations}")
+        if(NOT compiler_matches)
             message(FATAL_ERROR "Consumer did not invoke the requested compiler\n${invocations}")
         endif()
         if(case STREQUAL "arguments" OR case STREQUAL "failure")
+            string(REPLACE "\r\n" "\n" invocations "${invocations}")
             string(FIND "${invocations}" "token=first value\ntoken=second\n" token_position)
             if(token_position EQUAL -1)
                 message(FATAL_ERROR "Consumer split launcher arguments\n${invocations}")
