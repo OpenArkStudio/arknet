@@ -179,13 +179,20 @@ jobs:
           -DARKNET_BUILD_BENCHMARKS=${{ matrix.sanitize != 'OFF' && 'OFF' || 'ON' }}
           ${{ matrix.sanitize != 'OFF' && '"-DCMAKE_CXX_FLAGS_DEBUG=-O0 -g1"' || '' }}
           ${{ matrix.sanitize == 'ON' && '"-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"' || matrix.sanitize == 'THREAD' && '"-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=thread"' || '' }}
+      - name: Select bounded compiler parallelism
+        id: build-parallel
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && runner.os == 'Linux' && matrix.boost == 'ON' && matrix.sanitize == 'ON' }}
+        env:
+          MATRIX_BOOST: ${{ matrix.boost }}
+          MATRIX_SANITIZE: ${{ matrix.sanitize }}
+        run: node .github/scripts/build-parallelism.mjs
       - name: Build planned native targets
         shell: pwsh
         run: |
           if ('${{ needs.format.outputs.tier }}' -ceq 'modules' -and '${{ needs.format.outputs.source_tests }}' -cne '') {
             cmake --build build --target arknet_check_build --parallel 3
           } else {
-            cmake --build build --parallel ${{ matrix.sanitize == 'ON' && '1' || matrix.sanitize == 'THREAD' && '2' || '3' }}
+            cmake --build build --parallel ${{ matrix.sanitize == 'ON' && (steps.build-parallel.outputs.parallel || '1') || matrix.sanitize == 'THREAD' && '2' || '3' }}
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}

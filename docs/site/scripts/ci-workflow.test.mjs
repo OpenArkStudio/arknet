@@ -42,7 +42,7 @@ function checkPolicy(source) {
   const required = source.indexOf("  required:\n");
   const jobs = source.slice(source.indexOf("jobs:\n"), required === -1 ? undefined : required);
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
-    "8ba8b41b26e8980f0289a6905279fe6f502174e7597cadd1365d61583d13dafe",
+    "5f313e9e281071823303dc0b82d599ca491493f2e1ae20d9a8d85dac0dd6b351",
     "review the complete 14-check and scope contract before changing it");
 }
 
@@ -71,6 +71,8 @@ test("CI policy rejects changed events, cancellation, permissions and required j
     ["needs.format.outputs.tier == 'full'", "needs.format.outputs.tier != 'documentation'"],
     ["Invalid validation tier for this event", "Ignore invalid tier"],
     ["--target arknet_check_build", "--target nonexistent"],
+    ["Select bounded compiler parallelism", "Bypass bounded compiler parallelism"],
+    ["steps.build-parallel.outputs.parallel || '1'", "steps.build-parallel.outputs.parallel || '2'"],
     ["$env:ARKNET_FULL_CPP -cne", "$env:ARKNET_FULL_CPP -ne"],
   ];
   for (const [from, to] of mutations) {

@@ -280,6 +280,39 @@ CI 上传测试日志、执行基准冒烟；性能报告矩阵来自本机测�
 [构建、运行日志与复现脚本](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/usage/README_CN.md)
 独立保留这项检查，不混入性能测量。
 
+### 有界编译并行度
+
+已验收的[合并候选运行 39372855018](https://github.com/OpenArkStudio/arknet/actions/runs/39372855018)
+对应候选 `36e4e184b6d145c2fd03dbf1e99107b590b518ad`。以下耗时单位为分钟，描述单轮托管执行，
+不是受控的性能比较：
+
+| 执行配置 | 任务总耗时 | 配置阶段 | 构建 | 测试 |
+| --- | ---: | ---: | ---: | ---: |
+| Linux Boost TLS，AddressSanitizer（内存错误检测）+ UndefinedBehaviorSanitizer（未定义行为检测） | 58.35 | 3.42 | 50.68 | 3.45 |
+| Linux Standalone TLS，AddressSanitizer（内存错误检测）+ UndefinedBehaviorSanitizer（未定义行为检测） | 33.02 | 2.92 | 27.28 | 2.27 |
+| Windows Boost TLS Release | 56.47 | 10.88 | 37.77 | 6.35 |
+
+只有 Linux Boost 的 AddressSanitizer（内存错误检测）与 UndefinedBehaviorSanitizer（未定义行为检测）构建
+可以试验性选择两个编译槽。构建开始前，Node helper 要求以下条件同时满足：
+
+- `os.availableParallelism()` 报告至少四个可用 CPU 槽。
+- 有效内存上限至少为 15 GiB：取实测 `os.totalmem()` 与正的 `process.constrainedMemory()` 限额中的较小值。
+- `process.availableMemory()` 独立报告进程仍有至少 12 GiB 可用内存，且不超过上述有效上限。
+
+受限内存返回零时，记录为 `no-reported-constraint`，不再添加数值上限；此时使用实测总内存，
+仍须独立通过可用内存与 CPU 检查。零不能证明内存无限。观测缺失、非法、矛盾或不足时选择一个槽。
+其他配置保留现有并行度；源模块目标、sccache launcher、全部十二格矩阵、原生测试和 60 分钟期限保持不变。
+required gate 核对规划步骤仅在目标原生格中实际成功执行。
+
+helper 在任务日志和摘要中输出真实观测、阈值、所选并行度与原因。这是保守的调度启发式：
+12 GiB 可用内存是两个编译槽及其开销的准入预算，不是实测编译峰值或强制单槽上限。
+耗时元数据没有编译器／链接器内存峰值，应用基准 RSS 不能补足这项证据。
+合入前必须通过完整托管矩阵；本地检查不证明提速。发生内存耗尽时应保留日志并修正，不能自动重试以掩盖失败。
+
+API 语义参考：[Node 操作系统资源接口](https://nodejs.org/api/os.html#osavailableparallelism)、
+[受限内存](https://nodejs.org/api/process.html#processconstrainedmemory)、
+[可用内存](https://nodejs.org/api/process.html#processavailablememory)。
+
 ### 原生构建缓存
 
 每个实际执行原生检查的矩阵单元使用 Mozilla 官方 sccache action `v0.0.11`

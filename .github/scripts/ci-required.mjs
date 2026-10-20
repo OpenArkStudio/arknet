@@ -115,6 +115,8 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
     const native = runNative(plan, profile);
     nativeCells += Number(native);
     cacheOutcomes(job, native);
+    outcome(job, "Select bounded compiler parallelism", native && profile.os === "ubuntu-latest" &&
+      profile.boost === "ON" && profile.sanitize === "ON" ? "success" : "skipped");
     outcome(job, "Validate scope result");
     outcome(job, "Record planned coverage", native ? "skipped" : "success");
     for (const name of ["Run actions/checkout@v4", "Run lukka/get-cmake@latest", "Run lukka/run-vcpkg@v11",
