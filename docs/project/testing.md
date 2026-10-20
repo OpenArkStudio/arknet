@@ -332,6 +332,50 @@ dependency configurations. The seven protocol pairs per dependency configuration
 28 processes exited normally. [Build/run logs and reproduction scripts](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/usage/README.md)
 retain this check separately from timed performance measurements.
 
+### Bounded compiler parallelism
+
+The accepted [merge-candidate run 39372855018](https://github.com/OpenArkStudio/arknet/actions/runs/39372855018),
+for candidate `36e4e184b6d145c2fd03dbf1e99107b590b518ad`, records these elapsed
+minutes. They describe one hosted run, not a controlled performance comparison:
+
+| Profile | Job | Configure | Build | Test |
+| --- | ---: | ---: | ---: | ---: |
+| Linux Boost TLS, AddressSanitizer + UndefinedBehaviorSanitizer | 58.35 | 3.42 | 50.68 | 3.45 |
+| Linux Standalone TLS, AddressSanitizer + UndefinedBehaviorSanitizer | 33.02 | 2.92 | 27.28 | 2.27 |
+| Windows Boost TLS Release | 56.47 | 10.88 | 37.77 | 6.35 |
+
+Only the Linux Boost build with AddressSanitizer and
+UndefinedBehaviorSanitizer can experimentally select two compiler
+slots. Immediately before building, a small Node helper requires all of:
+
+- `os.availableParallelism()` reports at least four available CPU slots.
+- The effective memory ceiling is at least 15 GiB: use the lesser of actual
+  `os.totalmem()` and a positive `process.constrainedMemory()` limit.
+- `process.availableMemory()` independently reports at least 12 GiB still available
+  to the process, without exceeding that ceiling.
+
+A zero constrained-memory result is recorded as `no-reported-constraint` and does
+not supply another numeric ceiling; the helper then uses actual total memory and
+still requires the independent available-memory and CPU checks. Zero does not
+prove unlimited memory. Missing, invalid, inconsistent or insufficient resource
+observations select one slot. Other profiles keep their existing parallelism,
+and source-module targets, sccache launchers, all twelve matrix profiles, native
+tests and the 60-minute job limit remain unchanged. The required gate verifies
+that the planning step ran successfully only in its intended native cell.
+
+The helper prints the actual observations, thresholds, selected bound and reason
+to the job log and summary. This is a conservative scheduling heuristic: 12 GiB
+of available memory is an admission allowance for both slots and their overhead,
+not a measured compiler peak or an enforced per-slot limit. The timing metadata
+contains no compiler/linker peak memory, and application benchmark RSS cannot
+supply it. A successful complete hosted matrix is required before merging this
+change; speedup is not established locally. An out-of-memory failure must retain
+its logs for correction, without an automatic retry that hides the failure.
+
+API semantics: [Node OS resource APIs](https://nodejs.org/api/os.html#osavailableparallelism),
+[constrained memory](https://nodejs.org/api/process.html#processconstrainedmemory),
+and [available memory](https://nodejs.org/api/process.html#processavailablememory).
+
 ### Native build caches
 
 Every active native matrix cell uses the official Mozilla sccache action `v0.0.11`
