@@ -189,6 +189,20 @@ cleanup incomplete. An independent watchdog exits 124 without a synthetic final
 summary if callbacks or output prevent those deadlines from progressing. A missing
 final result is an incomplete run, regardless of the exit code.
 
+On failure, the IO worker emits `connection_diagnostic` records before cancelling
+sockets. At most 16 unfinished or write-pending sessions are recorded;
+`diagnostic_summary` reports the total and omitted count. Match `run_id`,
+`client_id`, `connection_id` and socket endpoints between peers. The record shows
+protocol phase, next send/receive sequence, active reads/writes, buffered frame
+availability, kernel-readable bytes, socket buffer sizes and completion ages.
+On macOS, `tcp_info` also contains TCP state, windows, queued send bytes, byte
+counts and retransmission counters; unavailable information is `null` or carries
+an error code. Queries do not consume input or change workload counters. Ages
+are milliseconds, with -1 for no recorded completion or pending request.
+Snapshots describe cleanup entry, not the exact instant of failure. Per-frame
+diagnostic bookkeeping affects scheduling, so these runs are for diagnosis and
+must not be used as performance measurements.
+
 Admission, phase changes and timeout scans execute on a separate main/owner
 thread; one IO worker executes socket callbacks and per-session strand commands.
 Counters and pending timestamps cross that boundary through atomics, without a
@@ -205,3 +219,5 @@ CLI and actual deadline/cleanup failure, and checks both interoperability direct
 against the arknet peer at 8 connections. Child logs and original exit files are
 retained in the printed `/tmp/arknet-native-process-test-*` directory. These are
 correctness checks only; they do not certify 5000 connections or performance.
+An additional silent TCP peer verifies that a real request timeout emits the
+connection snapshot before the final result and still completes socket cleanup.
