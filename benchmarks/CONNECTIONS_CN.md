@@ -129,6 +129,17 @@ Stdout 使用 JSON Lines：服务端的 `ready`、定期 `sample` 和最终 `res
 
 资源指标由独立的周期与全程采样器收集，均在主线程串行调用。CPU 使用实际单调时钟查询时间计算，不用计划间隔或采样百分比的算术平均值代替。默认间隔仍为一秒；文件描述符枚举和系统线程查询有开销，计入被测进程。系统查询与连接计数不是原子快照。短于采样间隔的运行可以没有周期记录，同时仍有有效的全程 CPU 占用率。最终 RSS、文件描述符、句柄和线程数明确属于清理后阶段，负载期间的值应查看周期记录。不支持的系统指标仍为 null，包括编译目标不支持相关 API 时的 Windows 线程数。采样不会修改系统限制，也不会设置 RSS 上限。
 
+每条周期记录包含累计的 `ready`、`started` 和 `finished` 协议计数。
+只有在 **连续两个采样端点** 均满足 `active == ready == started == N`、
+`finished == 0` 且 `pending_send_bytes == 0` 时，才将对应区间计为空闲 CPU 区间；
+`N` 是声明的目标连接数。使用第二条记录中的 CPU 占用率和 `resource_cpu_interval_s`，
+它们描述前一个区间。第一条达到全部 START 的记录可能仍覆盖握手或 START 处理，
+不能单独证明区间空闲。CPU 指标必须可用，并保留两个端点的记录。
+`started` 在资源查询前读取，`finished` 在查询后读取；两者的单调性用于排除
+区间边界上的 START／FIN 重叠。其他连接计数与系统查询不是原子快照，
+各客户端进程的 hold 边界也仍然独立。
+CPU 100% 表示一个逻辑核心；这些区间测量进程空闲 CPU，不代表吞吐或 PCU 容量。
+
 JSON 只新增字段，原有字段的类型和测量阶段保持不变。对比运行时应记录源码、可执行文件身份和 `sample_interval_ms`；资源收集开销与更精确的 CPU 时间戳意味着新旧结果不会完全相同。其他基准程序的输出保持原样。
 
 ## 小规模正确性检查
@@ -144,8 +155,8 @@ JSON 只新增字段，原有字段的类型和测量阶段保持不变。对比
 `arknet_asio_connection_control` 随 benchmark 选项构建，是用于诊断的 TCP 对端。
 它直接使用 Boost.Asio 1.90.0 及以上或 Standalone Asio 1.38.0 及以上，不链接 arknet 的
 endpoint 或运行时。结果记录实际 header 版本。冻结的诊断运行必须校验预期的精确版本；
-本轮小规模检查使用官方 Boost 1.90.0 和 Standalone Asio 1.38.2。唯一共享的协议实现是仅含标准库的
-`connections_protocol.hpp`。
+本轮小规模检查使用官方 Boost 1.90.0 和 Standalone Asio 1.38.2。共享的 `connections_protocol.hpp` 和资源采样辅助代码只使用标准库与 OS API，
+不引入 arknet 运行时依赖。
 
 ```sh
 cmake --build build --target arknet_asio_connection_control --parallel 2
@@ -186,9 +197,16 @@ C++ 分配。额度拒绝使本轮失败。server 必须配置非零预期连接
 前缀并检查正文可用长度，不复用 arknet matcher；未来比较必须保留这一解析实现差异。小规模协议
 通过不代表压力负载等价，也不证明停顿根因。
 
+原生对照程序还新增周期 `sample` 记录，包含相同的协议阶段、待发送字节与资源字段。
+采样间隔固定为一秒（`sample_interval_ms: 1000`），仍拒绝 `--sample-ms`；
+短运行可以没有周期记录。原有最终结果字段保持不变。
+原生采样同样使用前述连续两个端点的空闲区间规则。
+
 启用测试后，`benchmark_asio_connections_self_test` 无需 socket 即检查容量、分帧及
 身份／序号门禁。Unix 下的 `benchmark_asio_connections_processes` 以独立原生
 server／client 进程验证 1、8、32 连接，覆盖 idle、payload 边界、非法 CLI 和实际
 deadline／清理失败，并以 8 连接验证与 arknet 对端的两个互通方向。子进程日志和原始
-退出码文件保留在输出的 `/tmp/arknet-native-process-test-*` 目录。这些仅是正确性检查，
+退出码文件保留在输出的 `/tmp/arknet-native-process-test-*` 目录。另以两个程序各自的
+三连接 idle 进程对，在有界 hold 中验证 START 前采样、阶段计数单调递增、连续两个
+全部 START 且尚未 FIN 的采样端点，以及最终 FIN 完成计数。这些仅是正确性检查，
 不构成 5000 连接或性能验收。

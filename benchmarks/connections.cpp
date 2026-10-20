@@ -403,10 +403,15 @@ public:
         {
             return;
         }
+        // Monotonic phase counts bracket the CPU query: a full START count at
+        // the previous endpoint and no FIN at this endpoint bound an idle interval.
+        const auto started_before_resources = values_.started.load();
         const auto resources = resources_.sample();
+        const auto finished_after_resources = values_.finished.load();
         std::cout << "{\"event\":\"sample\",\"role\":" << quoted(settings_.role)
                   << ",\"elapsed_s\":" << std::chrono::duration<double>(now - started_).count()
                   << ",\"active\":" << values_.active << ",\"ready\":" << values_.ready
+                  << ",\"started\":" << started_before_resources << ",\"finished\":" << finished_after_resources
                   << ",\"pending_send_bytes\":" << values_.pending_bytes;
         connection_load::write_resource_fields(std::cout, resources, false);
         std::cout << "}\n" << std::flush;

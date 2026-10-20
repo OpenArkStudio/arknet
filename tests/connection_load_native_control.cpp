@@ -1,11 +1,14 @@
 // Copyright (c) 2026 OpenArkStudio. Distributed under BSL-1.0. See LICENSE.
 #include <cerrno>
+#include <charconv>
 #include <chrono>
 #include <csignal>
+#include <cstdint>
 #include <cstdlib>
 #include <fcntl.h>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <sys/wait.h>
@@ -127,11 +130,79 @@ struct child
     }
 };
 
+std::uint64_t counter(const std::string& line, const std::string& name) {
+    const auto key = "\"" + name + "\":";
+    const auto offset = line.find(key);
+    if (offset == std::string::npos)
+    {
+        throw std::runtime_error("missing counter " + name + ": " + line);
+    }
+    const auto begin = line.data() + offset + key.size();
+    std::uint64_t value{};
+    const auto parsed = std::from_chars(begin, line.data() + line.size(), value);
+    if (parsed.ec != std::errc{} || parsed.ptr == line.data() + line.size() ||
+        (*parsed.ptr != ',' && *parsed.ptr != '}'))
+    {
+        throw std::runtime_error("invalid counter " + name + ": " + line);
+    }
+    return value;
+}
+
+void sample_phases(const std::string& path, unsigned count, bool native) {
+    std::istringstream lines(read_file(path));
+    std::uint64_t previous_ready{}, previous_started{}, previous_finished{};
+    bool before_start{}, previous_idle{}, idle_interval{}, complete{};
+    unsigned samples{};
+    std::string line;
+    while (std::getline(lines, line))
+    {
+        if (line.find("\"event\":\"sample\"") != std::string::npos)
+        {
+            ++samples;
+            const auto ready = counter(line, "ready");
+            const auto started = counter(line, "started");
+            const auto finished = counter(line, "finished");
+            if (ready < previous_ready || started < previous_started || finished < previous_finished || ready > count ||
+                started > count || finished > count)
+            {
+                throw std::runtime_error("nonmonotonic phase counter: " + path + " " + line);
+            }
+            if (native && counter(line, "sample_interval_ms") != 1000)
+            {
+                throw std::runtime_error("native sampling cadence changed: " + path);
+            }
+            if (line.find("\"resource_cpu_interval_s\":") == std::string::npos)
+            {
+                throw std::runtime_error("missing CPU interval evidence: " + path);
+            }
+            before_start = before_start || (ready < count && !started && !finished);
+            const auto idle = counter(line, "active") == count && ready == count && started == count && !finished &&
+                              !counter(line, "pending_send_bytes");
+            idle_interval = idle_interval || (previous_idle && idle);
+            previous_idle = idle;
+            previous_ready = ready;
+            previous_started = started;
+            previous_finished = finished;
+        }
+        else if (line.find("\"event\":\"result\"") != std::string::npos)
+        {
+            complete = counter(line, "ready") == count && counter(line, "started") == count &&
+                       counter(line, "finished") == count;
+        }
+    }
+    if (!before_start || !idle_interval || !complete)
+    {
+        throw std::runtime_error("missing handshake/idle interval/finish evidence: " + path + "\n" + read_file(path));
+    }
+    std::cout << "phase samples=" << samples << " include consecutive idle endpoints and completed FIN: " << path
+              << '\n';
+}
+
 void pair(const std::string& server_binary, const std::string& client_binary, unsigned count,
-    const std::string& scenario = "traffic", unsigned payload = 1024) {
+    const std::string& scenario = "traffic", unsigned payload = 1024, bool phases = false) {
     const std::vector<std::string> common{"--run-id", "71", "--scenario", scenario, "--payload",
-        std::to_string(payload), "--window", "4", "--max-connections", std::to_string(count), "--hold-seconds", "0.03",
-        "--deadline-seconds", "5", "--cleanup-seconds", "1"};
+        std::to_string(payload), "--window", "4", "--max-connections", std::to_string(count), "--hold-seconds",
+        phases ? "3.2" : "0.03", "--deadline-seconds", phases ? "7" : "5", "--cleanup-seconds", "1"};
     auto server_args = common;
     server_args.insert(server_args.end(),
         {"--role", "server", "--listen", "127.0.0.1", "--port", "0", "--expected-connections", std::to_string(count)});
@@ -139,7 +210,7 @@ void pair(const std::string& server_binary, const std::string& client_binary, un
     auto client_args = common;
     client_args.insert(
         client_args.end(), {"--role", "client", "--target", "127.0.0.1", "--port", server.port(), "--client-id", "91",
-                               "--connections", std::to_string(count), "--connect-rate", "1000"});
+                               "--connections", std::to_string(count), "--connect-rate", phases ? "1" : "1000"});
     child client(client_binary, client_args);
     const auto client_status = client.wait();
     const auto server_status = server.wait();
@@ -163,6 +234,10 @@ void pair(const std::string& server_binary, const std::string& client_binary, un
                 output.find("\"initial_buffer_bytes\":4096") == std::string::npos))
         {
             throw std::runtime_error("native terminal/cleanup evidence missing: " + path);
+        }
+        if (phases)
+        {
+            sample_phases(path, count, output.find("arknet_asio_connection_control") != std::string::npos);
         }
     }
     std::cout << "separate-process " << scenario << " connections=" << count << " payload=" << payload << " passed\n";
@@ -216,6 +291,8 @@ int main(int argc, char** argv) {
         std::cout << "child logs and exits: " << directory << '\n';
         invalid_arguments(argv[1]);
         pair(argv[1], argv[1], 1, "idle");
+        pair(argv[1], argv[1], 3, "idle", 1024, true);
+        pair(argv[2], argv[2], 3, "idle", 1024, true);
         for (const auto count : {1u, 8u, 32u})
         {
             pair(argv[1], argv[1], count);
