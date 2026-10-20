@@ -71,6 +71,7 @@ const tree: Entry[] = [
     ["performance/steady-workloads", "Five-second workload comparison", "5 秒负载对照"],
     ["performance/asio-execution-control", "Asio callbacks and coroutines", "Asio 回调与协程"],
     ["performance/rudp", "RUDP", "RUDP"],
+    ["performance/rudp-concurrency", "RUDP concurrency", "RUDP 并发"],
     ["performance/methodology", "Methodology and metrics", "测量方法与指标"],
     ["performance/io-comparison", "IO and coroutine comparison", "IO 与协程对比"],
     ["performance/dimensions-native-tcp", "Matched callbacks, coroutines and CPU", "同负载回调、协程与 CPU"],

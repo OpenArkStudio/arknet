@@ -2,6 +2,8 @@
 
 All 96 configurations and 276 measured runs passed, completing 7,960,439 message round trips. Content, ordering, send completion and drain checks passed, with zero relay errors or queue overflows.
 
+[Concurrency and endpoint threads](rudp-concurrency.md) compares 128/512/1,024 clients with one shared io_context and one or four endpoint threads.
+
 ## Test Environment
 
 | Item | Recorded Parameters |

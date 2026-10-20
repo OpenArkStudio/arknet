@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1140" height="430" viewBox="0 0 1140 430" role="img" aria-labelledby="title description"><title id="title">RUDP 并发：吞吐量（同一个 io_context）</title><desc id="description">同一个 io_context；各 FEC 策略下的 128、512、1024 个客户端；1 或 4 个端点线程；点为三轮中位数，误差线为实际最小值和最大值。</desc><rect width="1140" height="430" fill="#fff"/><g font-family="Arial, PingFang SC, sans-serif" fill="#20252b">
+<text x="570" y="29" font-size="22" text-anchor="middle">RUDP 并发：吞吐量（同一个 io_context）</text>
+<text x="570" y="53" font-size="14" text-anchor="middle">1024 B · 窗口 4 · 无主动损伤 · 每组 3 轮</text>
+<line x1="390" y1="77" x2="414" y2="77" stroke="#2563eb" stroke-width="2"/>
+<text x="423" y="81" font-size="13" text-anchor="start">1 个端点线程</text>
+<line x1="620" y1="77" x2="644" y2="77" stroke="#c25a00" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="653" y="81" font-size="13" text-anchor="start">4 个端点线程</text>
+<text x="210" y="109" font-size="16" text-anchor="middle">仅 ARQ</text>
+<text x="70" y="131" font-size="12" text-anchor="start">千次消息往返 / 秒</text>
+<line x1="70" y1="355" x2="350" y2="355" stroke="#e2e8f0"/>
+<text x="61" y="359" font-size="12" text-anchor="end">0</text>
+<line x1="70" y1="295" x2="350" y2="295" stroke="#e2e8f0"/>
+<text x="61" y="299" font-size="12" text-anchor="end">20</text>
+<line x1="70" y1="235" x2="350" y2="235" stroke="#e2e8f0"/>
+<text x="61" y="239" font-size="12" text-anchor="end">40</text>
+<line x1="70" y1="175" x2="350" y2="175" stroke="#e2e8f0"/>
+<text x="61" y="179" font-size="12" text-anchor="end">60</text>
+<g><title>128 个客户端；1 个端点线程；中位数 61.183；最小值 60.870；最大值 61.251</title><path d="M 110 172.39057076679998 V 171.2470500859 M 105 172.39057076679998 H 115 M 105 171.2470500859 H 115" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="110" cy="171.4509985483" r="4.5" fill="#2563eb"/></g>
+<g><title>512 个客户端；1 个端点线程；中位数 53.687；最小值 52.271；最大值 53.926</title><path d="M 205 198.1867933099 V 193.2211305412 M 200 198.1867933099 H 210 M 200 193.2211305412 H 210" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="205" cy="193.9401136138" r="4.5" fill="#2563eb"/></g>
+<g><title>1024 个客户端；1 个端点线程；中位数 53.360；最小值 47.187；最大值 53.364</title><path d="M 300 213.43913574549998 V 194.9070100645 M 295 213.43913574549998 H 305 M 295 194.9070100645 H 305" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="300" cy="194.9196551905" r="4.5" fill="#2563eb"/></g>
+<polyline points="110,171.4509985483 205,193.9401136138 300,194.9196551905" fill="none" stroke="#2563eb" stroke-width="1.4"/>
+<g><title>128 个客户端；4 个端点线程；中位数 52.089；最小值 51.345；最大值 52.707</title><path d="M 120 200.9635072408 V 196.87884349750001 M 115 200.9635072408 H 125 M 115 196.87884349750001 H 125" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 120 193.7337888935 L 125 198.7337888935 L 120 203.7337888935 L 115 198.7337888935 Z" fill="#c25a00"/></g>
+<g><title>512 个客户端；4 个端点线程；中位数 47.092；最小值 46.260；最大值 47.663</title><path d="M 215 216.2194030837 V 212.0119969525 M 210 216.2194030837 H 220 M 210 212.0119969525 H 220" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 215 208.7251091315 L 220 213.7251091315 L 215 218.7251091315 L 210 213.7251091315 Z" fill="#c25a00"/></g>
+<g><title>1024 个客户端；4 个端点线程；中位数 38.462；最小值 35.373；最大值 38.522</title><path d="M 310 248.8795440157 V 239.43442519119998 M 305 248.8795440157 H 315 M 305 239.43442519119998 H 315" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 310 234.6152589341 L 315 239.6152589341 L 310 244.6152589341 L 305 239.6152589341 Z" fill="#c25a00"/></g>
+<polyline points="120,198.7337888935 215,213.7251091315 310,239.6152589341" fill="none" stroke="#c25a00" stroke-width="1.4" stroke-dasharray="5 3"/>
+<text x="115" y="377" font-size="13" text-anchor="middle">128</text>
+<text x="210" y="377" font-size="13" text-anchor="middle">512</text>
+<text x="305" y="377" font-size="13" text-anchor="middle">1024</text>
+<text x="210" y="397" font-size="12" text-anchor="middle">客户端数</text>
+<text x="580" y="109" font-size="16" text-anchor="middle">固定 FEC</text>
+<text x="440" y="131" font-size="12" text-anchor="start">千次消息往返 / 秒</text>
+<line x1="440" y1="355" x2="720" y2="355" stroke="#e2e8f0"/>
+<text x="431" y="359" font-size="12" text-anchor="end">0</text>
+<line x1="440" y1="295" x2="720" y2="295" stroke="#e2e8f0"/>
+<text x="431" y="299" font-size="12" text-anchor="end">20</text>
+<line x1="440" y1="235" x2="720" y2="235" stroke="#e2e8f0"/>
+<text x="431" y="239" font-size="12" text-anchor="end">40</text>
+<line x1="440" y1="175" x2="720" y2="175" stroke="#e2e8f0"/>
+<text x="431" y="179" font-size="12" text-anchor="end">60</text>
+<g><title>128 个客户端；1 个端点线程；中位数 23.333；最小值 23.245；最大值 23.619</title><path d="M 480 285.2657007286 V 284.1435738886 M 475 285.2657007286 H 485 M 475 284.1435738886 H 485" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="480" cy="284.9999390803" r="4.5" fill="#2563eb"/></g>
+<g><title>512 个客户端；1 个端点线程；中位数 24.079；最小值 22.043；最大值 25.161</title><path d="M 575 288.8695461292 V 279.5173892752 M 570 288.8695461292 H 580 M 570 279.5173892752 H 580" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="575" cy="282.7637799571" r="4.5" fill="#2563eb"/></g>
+<g><title>1024 个客户端；1 个端点线程；中位数 16.114；最小值 15.411；最大值 16.266</title><path d="M 670 308.7660131263 V 306.2019189844 M 665 308.7660131263 H 675 M 665 306.2019189844 H 675" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="670" cy="306.6568246522" r="4.5" fill="#2563eb"/></g>
+<polyline points="480,284.9999390803 575,282.7637799571 670,306.6568246522" fill="none" stroke="#2563eb" stroke-width="1.4"/>
+<g><title>128 个客户端；4 个端点线程；中位数 31.326；最小值 31.049；最大值 31.372</title><path d="M 490 261.8518110934 V 260.8847525422 M 485 261.8518110934 H 495 M 485 260.8847525422 H 495" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 490 256.0208987012 L 495 261.0208987012 L 490 266.0208987012 L 485 261.0208987012 Z" fill="#c25a00"/></g>
+<g><title>512 个客户端；4 个端点线程；中位数 25.115；最小值 25.102；最大值 25.148</title><path d="M 585 279.6949916494 V 279.55510968190003 M 580 279.6949916494 H 590 M 580 279.55510968190003 H 590" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 585 274.6543763258 L 590 279.6543763258 L 585 284.6543763258 L 580 279.6543763258 Z" fill="#c25a00"/></g>
+<g><title>1024 个客户端；4 个端点线程；中位数 14.173；最小值 10.920；最大值 14.342</title><path d="M 680 322.2412548859 V 311.9729365612 M 675 322.2412548859 H 685 M 675 311.9729365612 H 685" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 680 307.4810957423 L 685 312.4810957423 L 680 317.4810957423 L 675 312.4810957423 Z" fill="#c25a00"/></g>
+<polyline points="490,261.0208987012 585,279.6543763258 680,312.4810957423" fill="none" stroke="#c25a00" stroke-width="1.4" stroke-dasharray="5 3"/>
+<text x="485" y="377" font-size="13" text-anchor="middle">128</text>
+<text x="580" y="377" font-size="13" text-anchor="middle">512</text>
+<text x="675" y="377" font-size="13" text-anchor="middle">1024</text>
+<text x="580" y="397" font-size="12" text-anchor="middle">客户端数</text>
+<text x="950" y="109" font-size="16" text-anchor="middle">自适应 FEC</text>
+<text x="810" y="131" font-size="12" text-anchor="start">千次消息往返 / 秒</text>
+<line x1="810" y1="355" x2="1090" y2="355" stroke="#e2e8f0"/>
+<text x="801" y="359" font-size="12" text-anchor="end">0</text>
+<line x1="810" y1="295" x2="1090" y2="295" stroke="#e2e8f0"/>
+<text x="801" y="299" font-size="12" text-anchor="end">20</text>
+<line x1="810" y1="235" x2="1090" y2="235" stroke="#e2e8f0"/>
+<text x="801" y="239" font-size="12" text-anchor="end">40</text>
+<line x1="810" y1="175" x2="1090" y2="175" stroke="#e2e8f0"/>
+<text x="801" y="179" font-size="12" text-anchor="end">60</text>
+<g><title>128 个客户端；1 个端点线程；中位数 36.287；最小值 36.273；最大值 36.308</title><path d="M 850 246.1814753677 V 246.074854732 M 845 246.1814753677 H 855 M 845 246.074854732 H 855" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="850" cy="246.1393634611" r="4.5" fill="#2563eb"/></g>
+<g><title>512 个客户端；1 个端点线程；中位数 30.018；最小值 29.775；最大值 30.177</title><path d="M 945 265.6752866668 V 264.4681338751 M 940 265.6752866668 H 950 M 940 264.4681338751 H 950" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="945" cy="264.94453849210004" r="4.5" fill="#2563eb"/></g>
+<g><title>1024 个客户端；1 个端点线程；中位数 21.010；最小值 20.889；最大值 21.169</title><path d="M 1040 292.3335972184 V 291.4918944634 M 1035 292.3335972184 H 1045 M 1035 291.4918944634 H 1045" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="1040" cy="291.97030989309997" r="4.5" fill="#2563eb"/></g>
+<polyline points="850,246.1393634611 945,264.94453849210004 1040,291.97030989309997" fill="none" stroke="#2563eb" stroke-width="1.4"/>
+<g><title>128 个客户端；4 个端点线程；中位数 42.526；最小值 42.430；最大值 42.802</title><path d="M 860 227.71088505880002 V 226.59390365529998 M 855 227.71088505880002 H 865 M 855 226.59390365529998 H 865" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 860 222.42094973300001 L 865 227.42094973300001 L 860 232.42094973300001 L 855 227.42094973300001 Z" fill="#c25a00"/></g>
+<g><title>512 个客户端；4 个端点线程；中位数 26.302；最小值 25.354；最大值 34.539</title><path d="M 955 278.93678233599996 V 251.3819407732 M 950 278.93678233599996 H 960 M 950 251.3819407732 H 960" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 955 271.0935899807 L 960 276.0935899807 L 955 281.0935899807 L 950 276.0935899807 Z" fill="#c25a00"/></g>
+<g><title>1024 个客户端；4 个端点线程；中位数 18.757；最小值 18.489；最大值 19.127</title><path d="M 1050 299.53330190229997 V 297.6187748797 M 1045 299.53330190229997 H 1055 M 1045 297.6187748797 H 1055" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 1050 293.7302165066 L 1055 298.7302165066 L 1050 303.7302165066 L 1045 298.7302165066 Z" fill="#c25a00"/></g>
+<polyline points="860,227.42094973300001 955,276.0935899807 1050,298.7302165066" fill="none" stroke="#c25a00" stroke-width="1.4" stroke-dasharray="5 3"/>
+<text x="855" y="377" font-size="13" text-anchor="middle">128</text>
+<text x="950" y="377" font-size="13" text-anchor="middle">512</text>
+<text x="1045" y="377" font-size="13" text-anchor="middle">1024</text>
+<text x="950" y="397" font-size="12" text-anchor="middle">客户端数</text>
+<text x="570" y="421" font-size="12" text-anchor="middle">点：三轮中位数；误差线：实际最小／最大值，非置信区间。中继另有 1 个线程。</text>
+</g></svg>

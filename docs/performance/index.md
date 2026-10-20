@@ -23,6 +23,8 @@ in-flight requests and injected loss. SVG charts compare throughput, p99 RTT,
 CPU, wire overhead, recovery, retransmissions and retained memory.
 The public RUDP API currently uses callbacks; RUDP coroutines remain TODO.
 
+[RUDP concurrency report](rudp-concurrency.md): 128/512/1,024 clients on one shared io_context, comparing one and four endpoint threads; 18 cases and 54 rounds with throughput, CPU, p99 and whole-process peak RSS.
+
 ## Database clients
 
 - [MySQL](../features/mysql/performance.md): read-only text and prepared queries,

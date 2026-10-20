@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1140" height="430" viewBox="0 0 1140 430" role="img" aria-labelledby="title description"><title id="title">RUDP concurrency: p99 RTT</title><desc id="description">One shared io_context; 128, 512 and 1024 clients for each FEC policy; one or four endpoint threads. Points are three-round medians; whiskers are actual minimum and maximum.</desc><rect width="1140" height="430" fill="#fff"/><g font-family="Arial, PingFang SC, sans-serif" fill="#20252b">
+<text x="570" y="29" font-size="22" text-anchor="middle">RUDP concurrency: p99 RTT</text>
+<text x="570" y="53" font-size="14" text-anchor="middle">1 shared io_context · 1024 B · window 4 · no injected impairment · 3 rounds/case</text>
+<line x1="390" y1="77" x2="414" y2="77" stroke="#2563eb" stroke-width="2"/>
+<text x="423" y="81" font-size="13" text-anchor="start">1 endpoint thread</text>
+<line x1="620" y1="77" x2="644" y2="77" stroke="#c25a00" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="653" y="81" font-size="13" text-anchor="start">4 endpoint threads</text>
+<text x="210" y="109" font-size="16" text-anchor="middle">ARQ only</text>
+<text x="70" y="131" font-size="12" text-anchor="start">p99 RTT / ms (log scale)</text>
+<line x1="70" y1="355" x2="350" y2="355" stroke="#e2e8f0"/>
+<text x="61" y="359" font-size="12" text-anchor="end">5</text>
+<line x1="70" y1="330.70528761822527" x2="350" y2="330.70528761822527" stroke="#e2e8f0"/>
+<text x="61" y="334.70528761822527" font-size="12" text-anchor="end">10</text>
+<line x1="70" y1="292.19907952730637" x2="350" y2="292.19907952730637" stroke="#e2e8f0"/>
+<text x="61" y="296.19907952730637" font-size="12" text-anchor="end">30</text>
+<line x1="70" y1="249.99999999999997" x2="350" y2="249.99999999999997" stroke="#e2e8f0"/>
+<text x="61" y="253.99999999999997" font-size="12" text-anchor="end">100</text>
+<line x1="70" y1="211.49379190908112" x2="350" y2="211.49379190908112" stroke="#e2e8f0"/>
+<text x="61" y="215.49379190908112" font-size="12" text-anchor="end">300</text>
+<line x1="70" y1="169.29471238177473" x2="350" y2="169.29471238177473" stroke="#e2e8f0"/>
+<text x="61" y="173.29471238177473" font-size="12" text-anchor="end">1000</text>
+<line x1="70" y1="145" x2="350" y2="145" stroke="#e2e8f0"/>
+<text x="61" y="149" font-size="12" text-anchor="end">2000</text>
+<g><title>128 clients; 1 endpoint thread; median 10.323; min 9.483; max 10.490</title><path d="M 110 332.5663494623447 V 329.02956818951316 M 105 332.5663494623447 H 115 M 105 329.02956818951316 H 115" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="110" cy="329.5909336783276" r="4.5" fill="#2563eb"/></g>
+<g><title>512 clients; 1 endpoint thread; median 84.894; min 81.376; max 97.724</title><path d="M 205 257.2234906740688 V 250.80704286790746 M 200 257.2234906740688 H 210 M 200 250.80704286790746 H 210" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="205" cy="255.740037096597" r="4.5" fill="#2563eb"/></g>
+<g><title>1024 clients; 1 endpoint thread; median 192.774; min 178.832; max 244.529</title><path d="M 300 229.62636754638373 V 218.6597454229533 M 295 229.62636754638373 H 305 M 295 218.6597454229533 H 305" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="300" cy="226.99506704565806" r="4.5" fill="#2563eb"/></g>
+<polyline points="110,329.5909336783276 205,255.740037096597 300,226.99506704565806" fill="none" stroke="#2563eb" stroke-width="1.4"/>
+<g><title>128 clients; 4 endpoint threads; median 12.766; min 12.643; max 12.893</title><path d="M 120 322.4846362195025 V 321.7983439090508 M 115 322.4846362195025 H 125 M 115 321.7983439090508 H 125" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 120 317.14587336413837 L 125 322.14587336413837 L 120 327.14587336413837 L 115 322.14587336413837 Z" fill="#c25a00"/></g>
+<g><title>512 clients; 4 endpoint threads; median 73.505; min 49.700; max 98.962</title><path d="M 215 274.50552720773584 V 250.36582235930965 M 210 274.50552720773584 H 220 M 210 250.36582235930965 H 220" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 215 255.78885486262232 L 220 260.7888548626223 L 215 265.7888548626223 L 210 260.7888548626223 Z" fill="#c25a00"/></g>
+<g><title>1024 clients; 4 endpoint threads; median 298.834; min 298.578; max 313.415</title><path d="M 310 211.66036233302208 V 209.96053858905955 M 305 211.66036233302208 H 315 M 305 209.96053858905955 H 315" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 310 206.63025021017083 L 315 211.63025021017083 L 310 216.63025021017083 L 305 211.63025021017083 Z" fill="#c25a00"/></g>
+<polyline points="120,322.14587336413837 215,260.7888548626223 310,211.63025021017083" fill="none" stroke="#c25a00" stroke-width="1.4" stroke-dasharray="5 3"/>
+<text x="115" y="377" font-size="13" text-anchor="middle">128</text>
+<text x="210" y="377" font-size="13" text-anchor="middle">512</text>
+<text x="305" y="377" font-size="13" text-anchor="middle">1024</text>
+<text x="210" y="397" font-size="12" text-anchor="middle">Clients</text>
+<text x="580" y="109" font-size="16" text-anchor="middle">Fixed FEC</text>
+<text x="440" y="131" font-size="12" text-anchor="start">p99 RTT / ms (log scale)</text>
+<line x1="440" y1="355" x2="720" y2="355" stroke="#e2e8f0"/>
+<text x="431" y="359" font-size="12" text-anchor="end">5</text>
+<line x1="440" y1="330.70528761822527" x2="720" y2="330.70528761822527" stroke="#e2e8f0"/>
+<text x="431" y="334.70528761822527" font-size="12" text-anchor="end">10</text>
+<line x1="440" y1="292.19907952730637" x2="720" y2="292.19907952730637" stroke="#e2e8f0"/>
+<text x="431" y="296.19907952730637" font-size="12" text-anchor="end">30</text>
+<line x1="440" y1="249.99999999999997" x2="720" y2="249.99999999999997" stroke="#e2e8f0"/>
+<text x="431" y="253.99999999999997" font-size="12" text-anchor="end">100</text>
+<line x1="440" y1="211.49379190908112" x2="720" y2="211.49379190908112" stroke="#e2e8f0"/>
+<text x="431" y="215.49379190908112" font-size="12" text-anchor="end">300</text>
+<line x1="440" y1="169.29471238177473" x2="720" y2="169.29471238177473" stroke="#e2e8f0"/>
+<text x="431" y="173.29471238177473" font-size="12" text-anchor="end">1000</text>
+<line x1="440" y1="145" x2="720" y2="145" stroke="#e2e8f0"/>
+<text x="431" y="149" font-size="12" text-anchor="end">2000</text>
+<g><title>128 clients; 1 endpoint thread; median 25.467; min 25.171; max 26.973</title><path d="M 480 298.35119615035563 V 295.92647649807844 M 475 298.35119615035563 H 485 M 475 295.92647649807844 H 485" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="480" cy="297.9401595404097" r="4.5" fill="#2563eb"/></g>
+<g><title>512 clients; 1 endpoint thread; median 123.018; min 111.968; max 238.750</title><path d="M 575 246.03797838948424 V 219.49795860818162 M 570 246.03797838948424 H 580 M 570 219.49795860818162 H 580" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="575" cy="242.73913644597116" r="4.5" fill="#2563eb"/></g>
+<g><title>1024 clients; 1 endpoint thread; median 819.410; min 781.677; max 869.935</title><path d="M 670 177.92797403736878 V 174.17844895235305 M 665 177.92797403736878 H 675 M 665 174.17844895235305 H 675" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="670" cy="176.2756198898347" r="4.5" fill="#2563eb"/></g>
+<polyline points="480,297.9401595404097 575,242.73913644597116 670,176.2756198898347" fill="none" stroke="#2563eb" stroke-width="1.4"/>
+<g><title>128 clients; 4 endpoint threads; median 19.266; min 19.165; max 19.327</title><path d="M 490 307.90601758017544 V 307.6108313826339 M 485 307.90601758017544 H 495 M 485 307.6108313826339 H 495" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 490 302.7208757772781 L 495 307.7208757772781 L 490 312.7208757772781 L 485 307.7208757772781 Z" fill="#c25a00"/></g>
+<g><title>512 clients; 4 endpoint threads; median 228.107; min 227.054; max 228.753</title><path d="M 585 221.25850041831424 V 220.99722476538057 M 580 221.25850041831424 H 590 M 580 220.99722476538057 H 590" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 585 216.09630103751712 L 590 221.09630103751712 L 585 226.09630103751712 L 580 221.09630103751712 Z" fill="#c25a00"/></g>
+<g><title>1024 clients; 4 endpoint threads; median 880.704; min 867.561; max 1405.128</title><path d="M 680 174.2742151622561 V 157.37326331602554 M 675 174.2742151622561 H 685 M 675 157.37326331602554 H 685" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 680 168.7472405388938 L 685 173.7472405388938 L 680 178.7472405388938 L 675 173.7472405388938 Z" fill="#c25a00"/></g>
+<polyline points="490,307.7208757772781 585,221.09630103751712 680,173.7472405388938" fill="none" stroke="#c25a00" stroke-width="1.4" stroke-dasharray="5 3"/>
+<text x="485" y="377" font-size="13" text-anchor="middle">128</text>
+<text x="580" y="377" font-size="13" text-anchor="middle">512</text>
+<text x="675" y="377" font-size="13" text-anchor="middle">1024</text>
+<text x="580" y="397" font-size="12" text-anchor="middle">Clients</text>
+<text x="950" y="109" font-size="16" text-anchor="middle">Adaptive FEC</text>
+<text x="810" y="131" font-size="12" text-anchor="start">p99 RTT / ms (log scale)</text>
+<line x1="810" y1="355" x2="1090" y2="355" stroke="#e2e8f0"/>
+<text x="801" y="359" font-size="12" text-anchor="end">5</text>
+<line x1="810" y1="330.70528761822527" x2="1090" y2="330.70528761822527" stroke="#e2e8f0"/>
+<text x="801" y="334.70528761822527" font-size="12" text-anchor="end">10</text>
+<line x1="810" y1="292.19907952730637" x2="1090" y2="292.19907952730637" stroke="#e2e8f0"/>
+<text x="801" y="296.19907952730637" font-size="12" text-anchor="end">30</text>
+<line x1="810" y1="249.99999999999997" x2="1090" y2="249.99999999999997" stroke="#e2e8f0"/>
+<text x="801" y="253.99999999999997" font-size="12" text-anchor="end">100</text>
+<line x1="810" y1="211.49379190908112" x2="1090" y2="211.49379190908112" stroke="#e2e8f0"/>
+<text x="801" y="215.49379190908112" font-size="12" text-anchor="end">300</text>
+<line x1="810" y1="169.29471238177473" x2="1090" y2="169.29471238177473" stroke="#e2e8f0"/>
+<text x="801" y="173.29471238177473" font-size="12" text-anchor="end">1000</text>
+<line x1="810" y1="145" x2="1090" y2="145" stroke="#e2e8f0"/>
+<text x="801" y="149" font-size="12" text-anchor="end">2000</text>
+<g><title>128 clients; 1 endpoint thread; median 15.301; min 15.286; max 15.304</title><path d="M 850 315.83170501372587 V 315.78969157854704 M 845 315.83170501372587 H 855 M 845 315.78969157854704 H 855" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="850" cy="315.79656280918545" r="4.5" fill="#2563eb"/></g>
+<g><title>512 clients; 1 endpoint thread; median 98.725; min 86.665; max 99.158</title><path d="M 945 255.01628817768722 V 250.29638379584537 M 940 255.01628817768722 H 950 M 940 250.29638379584537 H 950" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="945" cy="250.44993658781124" r="4.5" fill="#2563eb"/></g>
+<g><title>1024 clients; 1 endpoint thread; median 535.283; min 526.731; max 548.624</title><path d="M 1040 191.7639758943585 V 190.3366357300808 M 1035 191.7639758943585 H 1045 M 1035 190.3366357300808 H 1045" fill="none" stroke="#2563eb" stroke-width="1.6"/><circle cx="1040" cy="191.1994603576551" r="4.5" fill="#2563eb"/></g>
+<polyline points="850,315.79656280918545 945,250.44993658781124 1040,191.1994603576551" fill="none" stroke="#2563eb" stroke-width="1.4"/>
+<g><title>128 clients; 4 endpoint threads; median 13.186; min 12.819; max 13.393</title><path d="M 860 321.9998623060162 V 320.4653528917932 M 855 321.9998623060162 H 865 M 855 320.4653528917932 H 865" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 860 316.01230116260416 L 865 321.01230116260416 L 860 326.01230116260416 L 855 321.01230116260416 Z" fill="#c25a00"/></g>
+<g><title>512 clients; 4 endpoint threads; median 223.348; min 65.054; max 234.706</title><path d="M 955 265.069977147631 V 220.09678197170064 M 950 265.069977147631 H 960 M 950 220.09678197170064 H 960" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 955 216.83532804565107 L 960 221.83532804565107 L 955 226.83532804565107 L 950 221.83532804565107 Z" fill="#c25a00"/></g>
+<g><title>1024 clients; 4 endpoint threads; median 572.790; min 565.839; max 574.205</title><path d="M 1050 189.25369708608034 V 188.73930226198607 M 1045 189.25369708608034 H 1055 M 1045 188.73930226198607 H 1055" fill="none" stroke="#c25a00" stroke-width="1.6"/><path d="M 1050 183.82578140508485 L 1055 188.82578140508485 L 1050 193.82578140508485 L 1045 188.82578140508485 Z" fill="#c25a00"/></g>
+<polyline points="860,321.01230116260416 955,221.83532804565107 1050,188.82578140508485" fill="none" stroke="#c25a00" stroke-width="1.4" stroke-dasharray="5 3"/>
+<text x="855" y="377" font-size="13" text-anchor="middle">128</text>
+<text x="950" y="377" font-size="13" text-anchor="middle">512</text>
+<text x="1045" y="377" font-size="13" text-anchor="middle">1024</text>
+<text x="950" y="397" font-size="12" text-anchor="middle">Clients</text>
+<text x="570" y="421" font-size="12" text-anchor="middle">Points: three-round median; whiskers: actual min/max, not confidence intervals. Relay adds one thread.</text>
+</g></svg>
