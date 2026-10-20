@@ -103,6 +103,7 @@ if(ARKNET_BUILD_TESTS AND UNIX)
     add_executable(arknet_asio_control_process_test ../tests/connection_load_native_control.cpp)
     add_dependencies(arknet_asio_control_process_test arknet_asio_connection_control arknet_connection_benchmark)
     target_compile_features(arknet_asio_control_process_test PRIVATE cxx_std_20)
+    add_dependencies(arknet_asio_control_process_test arknet_asio_connection_control arknet_connection_benchmark)
     target_link_libraries(arknet_asio_control_process_test PRIVATE Threads::Threads)
     arknet_add_check(benchmark_asio_connections_processes 90 arknet_asio_control_process_test
         "$<TARGET_FILE:arknet_asio_connection_control>" "$<TARGET_FILE:arknet_connection_benchmark>")

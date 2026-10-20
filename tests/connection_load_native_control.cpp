@@ -8,9 +8,11 @@
 #include <fcntl.h>
 #include <fstream>
 #include <iostream>
+#include <netinet/in.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <sys/socket.h>
 #include <sys/wait.h>
 #include <thread>
 #include <unistd.h>
@@ -272,6 +274,54 @@ void invalid_arguments(const std::string& executable) {
         throw std::runtime_error("deadline/cleanup evidence missing: " + server.log);
     }
 }
+
+void silent_peer(const std::string& executable) {
+    struct listener
+    {
+        int fd = socket(AF_INET, SOCK_STREAM, 0);
+
+        ~listener() {
+            if (fd != -1)
+            {
+                close(fd);
+            }
+        }
+    } peer;
+
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    if (peer.fd == -1 || fcntl(peer.fd, F_SETFD, FD_CLOEXEC) == -1 ||
+        bind(peer.fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == -1 || listen(peer.fd, 1) == -1)
+    {
+        throw std::runtime_error("silent peer setup failed");
+    }
+    socklen_t length = sizeof(address);
+    if (getsockname(peer.fd, reinterpret_cast<sockaddr*>(&address), &length) == -1)
+    {
+        throw std::runtime_error("silent peer port lookup failed");
+    }
+    // The kernel accepts the connection, but no application replies to HELLO.
+    child client(
+        executable, {"--role", "client", "--target", "127.0.0.1", "--port", std::to_string(ntohs(address.sin_port)),
+                        "--run-id", "41", "--connections", "1", "--request-timeout-ms", "100", "--hold-seconds", "0.01",
+                        "--deadline-seconds", "3", "--cleanup-seconds", "1"});
+    const auto status = client.wait();
+    const auto output = read_file(client.log);
+    const auto snapshot = output.find("\"event\":\"connection_diagnostic\"");
+    const auto result = output.find("\"event\":\"result\"");
+    if (status != 1 || snapshot == std::string::npos || result == std::string::npos || snapshot >= result ||
+        output.find("\"snapshot_phase\":\"before_socket_cancel\"") == std::string::npos ||
+        output.find("\"connection_id\":1") == std::string::npos ||
+        output.find("\"read_pending\":true") == std::string::npos ||
+        output.find("\"last_write_kind\":1") == std::string::npos ||
+        output.find("\"incomplete_sessions\":1,\"emitted\":1,\"omitted\":0") == std::string::npos ||
+        output.find("\"cleanup_complete\":true") == std::string::npos ||
+        output.find("request timeout:") == std::string::npos)
+    {
+        throw std::runtime_error("pre-cancel connection diagnostics missing: " + client.log);
+    }
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -290,6 +340,7 @@ int main(int argc, char** argv) {
         directory = result;
         std::cout << "child logs and exits: " << directory << '\n';
         invalid_arguments(argv[1]);
+        silent_peer(argv[1]);
         pair(argv[1], argv[1], 1, "idle");
         pair(argv[1], argv[1], 3, "idle", 1024, true);
         pair(argv[2], argv[2], 3, "idle", 1024, true);

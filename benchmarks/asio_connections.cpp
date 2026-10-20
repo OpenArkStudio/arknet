@@ -2,6 +2,7 @@
 // Native callback control: deliberately no arknet headers or runtime objects.
 #include <array>
 #include <atomic>
+#include <cerrno>
 #include <charconv>
 #include <chrono>
 #include <cmath>
@@ -21,6 +22,12 @@
 #include <string_view>
 #include <thread>
 #include <vector>
+
+#if defined(__APPLE__)
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+
+#endif
 
 #if ARKNET_CONTROL_BOOST
 #include <boost/asio.hpp>
@@ -376,6 +383,7 @@ struct session : std::enable_shared_from_this<session>
     void fill();
     void finish();
     void receive(std::string_view bytes);
+    void diagnose();
 
     application& app;
     asio::strand<asio::io_context::executor_type> strand;
@@ -388,6 +396,9 @@ struct session : std::enable_shared_from_this<session>
     std::atomic<clock_type::time_point> pending_since{}, connect_since{};
     std::atomic<bool> connecting{};
     bool active{}, closed{}, peer_eof{};
+    bool read_pending{};
+    std::uint64_t read_completions{}, write_completions{}, last_write_kind{}, last_write_sequence{};
+    clock_type::time_point last_read_at{}, last_write_at{};
 };
 
 struct application
@@ -496,6 +507,26 @@ void application::stop() {
     stopped_at = clock_type::now();
     asio::post(io, [this] {
         cleanup_started = true;
+        if (failed)
+        {
+            std::size_t incomplete{}, emitted{};
+            for (const auto& value : sessions)
+            {
+                if (!value->state.finished || value->writing || !value->queued.empty())
+                {
+                    ++incomplete;
+                    if (emitted < 16)
+                    {
+                        value->diagnose();
+                        ++emitted;
+                    }
+                }
+            }
+            std::cout << "{\"event\":\"diagnostic_summary\",\"role\":" << std::quoted(o.role)
+                      << ",\"incomplete_sessions\":" << incomplete << ",\"emitted\":" << emitted
+                      << ",\"omitted\":" << incomplete - emitted << "}\n"
+                      << std::flush;
+        }
         error_code ignored;
         acceptor.close(ignored);
         signals.cancel();
@@ -581,6 +612,10 @@ void session::write() {
             else
             {
                 const auto kind = static_cast<frame_kind>(connection_load::read_integer(value->body, 8));
+                ++self->write_completions;
+                self->last_write_at = clock_type::now();
+                self->last_write_kind = static_cast<std::uint64_t>(kind);
+                self->last_write_sequence = connection_load::read_integer(value->body, 40);
                 if (kind == frame_kind::data)
                 {
                     ++a.data_sent;
@@ -605,10 +640,14 @@ void session::read() {
         return;
     }
     ++app.callbacks;
+    read_pending = true;
     asio::async_read_until(socket, input, dgram_match{},
         asio::bind_executor(strand, [self = shared_from_this()](error_code error, std::size_t size) {
             auto& a = self->app;
             --a.callbacks;
+            self->read_pending = false;
+            ++self->read_completions;
+            self->last_read_at = clock_type::now();
             if (error)
             {
                 if (!a.stopping && error == asio::error::eof && self->state.finished)
@@ -648,6 +687,71 @@ void session::read() {
             }
             a.drained();
         }));
+}
+
+void session::diagnose() {
+    // Called only on the single IO worker, before stop cancels any socket.
+    // Diagnostic queries neither consume bytes nor alter workload counters.
+    const auto now = clock_type::now();
+    auto age = [now](clock_type::time_point value) {
+        return value == clock_type::time_point{} ? -1.0
+                                                 : std::chrono::duration<double, std::milli>(now - value).count();
+    };
+    auto endpoint_name = [](tcp::endpoint value, const error_code& error) {
+        return error ? std::string{} : value.address().to_string() + ":" + std::to_string(value.port());
+    };
+    error_code local_error, remote_error, available_error, receive_error, send_error;
+    const auto local = socket.local_endpoint(local_error);
+    const auto remote = socket.remote_endpoint(remote_error);
+    const auto available = socket.available(available_error);
+    asio::socket_base::receive_buffer_size receive_buffer;
+    asio::socket_base::send_buffer_size send_buffer;
+    socket.get_option(receive_buffer, receive_error);
+    socket.get_option(send_buffer, send_error);
+    const auto buffers = input.data();
+    const auto begin = asio::buffers_begin(buffers), end = asio::buffers_end(buffers);
+    const auto match = dgram_match{}(begin, end);
+    std::cout << "{\"event\":\"connection_diagnostic\",\"snapshot_phase\":\"before_socket_cancel\",\"role\":"
+              << std::quoted(app.o.role) << ",\"run_id\":" << app.o.run << ",\"client_id\":" << state.owner.client
+              << ",\"connection_id\":" << state.owner.connection
+              << ",\"local_endpoint\":" << std::quoted(endpoint_name(local, local_error))
+              << ",\"remote_endpoint\":" << std::quoted(endpoint_name(remote, remote_error))
+              << ",\"hello\":" << (state.hello ? "true" : "false")
+              << ",\"started\":" << (state.started ? "true" : "false")
+              << ",\"finish_sent\":" << (state.finish_sent ? "true" : "false")
+              << ",\"finished\":" << (state.finished ? "true" : "false")
+              << ",\"closed\":" << (closed ? "true" : "false")
+              << ",\"read_pending\":" << (read_pending ? "true" : "false") << ",\"input_bytes\":" << input.size()
+              << ",\"input_frame_ready\":" << (match.second ? "true" : "false") << ",\"next_send\":" << state.next_send
+              << ",\"next_receive\":" << state.next_receive << ",\"queued_writes\":" << queued.size()
+              << ",\"writing\":" << (writing ? "true" : "false") << ",\"read_completions\":" << read_completions
+              << ",\"write_completions\":" << write_completions << ",\"last_write_kind\":" << last_write_kind
+              << ",\"last_write_sequence\":" << last_write_sequence
+              << ",\"pending_age_ms\":" << age(pending_since.load()) << ",\"last_read_age_ms\":" << age(last_read_at)
+              << ",\"last_write_age_ms\":" << age(last_write_at) << ",\"kernel_readable_bytes\":" << available
+              << ",\"available_error\":" << available_error.value()
+              << ",\"receive_buffer_bytes\":" << (receive_error ? -1 : receive_buffer.value())
+              << ",\"send_buffer_bytes\":" << (send_error ? -1 : send_buffer.value());
+#if defined(__APPLE__) && defined(TCP_CONNECTION_INFO)
+    tcp_connection_info info{};
+    socklen_t length = sizeof(info);
+    if (socket.is_open() && getsockopt(socket.native_handle(), IPPROTO_TCP, TCP_CONNECTION_INFO, &info, &length) == 0)
+    {
+        std::cout << ",\"tcp_info\":{\"state\":" << unsigned(info.tcpi_state)
+                  << ",\"send_buffer_bytes\":" << info.tcpi_snd_sbbytes
+                  << ",\"send_window_bytes\":" << info.tcpi_snd_wnd << ",\"receive_window_bytes\":" << info.tcpi_rcv_wnd
+                  << ",\"rto_ms\":" << info.tcpi_rto << ",\"tx_bytes\":" << info.tcpi_txbytes
+                  << ",\"rx_bytes\":" << info.tcpi_rxbytes << ",\"retransmit_bytes\":" << info.tcpi_txretransmitbytes
+                  << ",\"out_of_order_bytes\":" << info.tcpi_rxoutoforderbytes << '}';
+    }
+    else
+    {
+        std::cout << ",\"tcp_info\":null,\"tcp_info_error\":" << (socket.is_open() ? errno : -1);
+    }
+#else
+    std::cout << ",\"tcp_info\":null";
+#endif
+    std::cout << "}\n";
 }
 
 void session::receive(std::string_view bytes) {
