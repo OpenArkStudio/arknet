@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
-import { cellName, expectedCells, validateRequired } from "../../.github/scripts/ci-required.mjs";
+import { cellName, expectedCells, optionalCacheSteps, validateRequired } from "../../.github/scripts/ci-required.mjs";
 import { planChecks } from "../../.github/scripts/ci-scope.mjs";
 
 const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
@@ -43,14 +43,17 @@ function fixture(eventName, files, extra = {}) {
   }));
   for (const [index, matrix] of actualCells().entries()) {
     const context = { matrix, needs, runner: { os: { "ubuntu-latest": "Linux", "macos-latest": "macOS", "windows-latest": "Windows" }[matrix.os] },
-      always: () => true };
+      always: () => true, steps: {
+        "vcpkg-cache": { outputs: { enabled: "true" } },
+        "compiler-cache": { outputs: { enabled: "true" } },
+      } };
     context.env = { ARKNET_RUN_NATIVE: String(runInNewContext(nativeExpression, context)) };
     jobs.push({ databaseId: index + 3,
       name: jobNameExpression.replaceAll(/\$\{\{ (.*?) \}\}/g, (_, expression) => runInNewContext(expression, context)),
       status: "completed", conclusion: "success", steps: steps("test").map((step, number) => {
         const expression = step.match(/^        if: \$\{\{ (.+) \}\}$/m)?.[1];
         return { name: stepName(step), number: number + 1, status: "completed",
-          conclusion: !expression || runInNewContext(expression, context) ? "success" : "skipped" };
+          conclusion: !expression || runInNewContext(expression.replace(/steps\.([a-z0-9-]+)/g, 'steps["$1"]'), context) ? "success" : "skipped" };
       }) });
   }
   // gh run view includes the still-running aggregate itself; it is not a prerequisite.
@@ -134,7 +137,7 @@ test("successful jobs cannot hide skipped full checks, executed scope-only check
     const valid = fixture(event, files);
     for (let index = 2; index < 14; index++) {
       const actual = valid.metadata.jobs[index];
-      for (const step of actual.steps) {
+      for (const step of actual.steps.filter(step => !optionalCacheSteps.includes(step.name))) {
         for (const conclusion of [step.conclusion === "success" ? "skipped" : "success", "failure", "cancelled", "neutral", "unknown", "", undefined]) {
           const input = structuredClone(valid);
           findStep(input.metadata.jobs[index], step.name).conclusion = conclusion;
@@ -188,6 +191,96 @@ test("scope output substitutions and contradictory event tiers fail closed", () 
     const input = structuredClone(valid);
     mutation(input);
     assert.throws(() => validateRequired(input));
+  }
+});
+
+const cacheActionNames = steps("test").filter(step => /^        continue-on-error: true$/m.test(step) && /^        uses:/m.test(step)).map(stepName);
+const addPost = (job, name, conclusion) => job.steps.push({ name: `Post ${name}`,
+  number: Math.max(...job.steps.map(step => step.number)) + 1, status: "completed", conclusion });
+
+test("the failure allowance matches only explicit optional cache steps and their action posts", () => {
+  assert.deepEqual(steps("test").filter(step => /^        continue-on-error: true$/m.test(step)).map(stepName), optionalCacheSteps);
+  assert.deepEqual(cacheActionNames, ["Restore dependency archives", "Install compiler cache", "Restore compiler cache"]);
+});
+
+test("unavailable optional caches and their posts permit cold builds only when all required native steps succeed", () => {
+  for (const event of ["pull_request", "merge_group"]) {
+    for (const mode of ["restore-failure", "install-failure", "disabled"]) {
+      const input = fixture(event, ["tests/rudp.cpp"]);
+      for (const job of input.metadata.jobs.slice(2, -1)) {
+        if (findStep(job, "Configure").conclusion !== "success") continue;
+        findStep(job, "Restore dependency archives").conclusion = mode === "disabled" ? "skipped" : "failure";
+        findStep(job, "Install compiler cache").conclusion = mode === "install-failure" ? "failure" : "success";
+        findStep(job, "Restore compiler cache").conclusion = mode === "restore-failure" ? "failure" : "skipped";
+        findStep(job, "Start compiler cache after archive restore").conclusion = mode === "restore-failure" ? "success" : "skipped";
+        findStep(job, "Report cache statistics").conclusion = "failure";
+        for (const name of cacheActionNames) {
+          addPost(job, name, findStep(job, name).conclusion === "skipped" ? "skipped" : "failure");
+        }
+      }
+      assert.equal(validateRequired(input).native_cells, event === "merge_group" ? 12 : 1);
+      for (const name of ["Configure", "Build planned native targets", "Test"]) {
+        const invalid = structuredClone(input);
+        const job = invalid.metadata.jobs.find(job => job.steps.some(step => step.name === name && step.conclusion === "success"));
+        findStep(job, name).conclusion = "failure";
+        assert.throws(() => validateRequired(invalid), `${mode}/${name}`);
+      }
+    }
+  }
+});
+
+test("cache fallback rejects unknown outcomes, missing steps, contradictory activation and unknown failed cleanup", () => {
+  const valid = fixture("merge_group", ["tests/rudp.cpp"]);
+  for (const name of optionalCacheSteps) {
+    for (const conclusion of ["cancelled", "neutral", "unknown", "timed_out", "", null, undefined]) {
+      const input = structuredClone(valid);
+      findStep(input.metadata.jobs[2], name).conclusion = conclusion;
+      assert.throws(() => validateRequired(input), `${name}/${conclusion}`);
+    }
+    const missing = structuredClone(valid);
+    missing.metadata.jobs[2].steps = missing.metadata.jobs[2].steps.filter(step => step.name !== name);
+    assert.throws(() => validateRequired(missing));
+  }
+  for (const name of ["Install compiler cache", "Report cache statistics"]) {
+    const skipped = structuredClone(valid);
+    findStep(skipped.metadata.jobs[2], name).conclusion = "skipped";
+    assert.throws(() => validateRequired(skipped));
+  }
+  for (const name of ["Report cache statistics", "Prepare compiler launcher", "Configure", "unknown cache cleanup"]) {
+    const unknown = structuredClone(valid);
+    addPost(unknown.metadata.jobs[2], name, "failure");
+    assert.throws(() => validateRequired(unknown));
+  }
+  const contradictory = structuredClone(valid);
+  findStep(contradictory.metadata.jobs[2], "Install compiler cache").conclusion = "failure";
+  assert.throws(() => validateRequired(contradictory), "failed installation cannot activate a compiler launcher");
+  const missingStart = structuredClone(valid);
+  findStep(missingStart.metadata.jobs[2], "Start compiler cache after archive restore").conclusion = "skipped";
+  assert.throws(() => validateRequired(missingStart), "an enabled restore still requires launcher startup");
+  const nonCacheJob = structuredClone(valid);
+  nonCacheJob.metadata.jobs[0].steps.push({ name: "Restore dependency archives", number: 999, status: "completed", conclusion: "failure" });
+  assert.throws(() => validateRequired(nonCacheJob), "cache exceptions do not apply to documentation jobs");
+});
+
+test("scope-only cells cannot execute cache steps or their posts", () => {
+  for (const [event, files] of [["pull_request", ["tests/rudp.cpp"]], ["merge_group", ["README.md"]]]) {
+    const valid = fixture(event, files);
+    const index = valid.metadata.jobs.findIndex(job => job.steps.some(step => step.name === "Configure" && step.conclusion === "skipped"));
+    for (const name of optionalCacheSteps) for (const conclusion of ["success", "failure"]) {
+      const input = structuredClone(valid);
+      findStep(input.metadata.jobs[index], name).conclusion = conclusion;
+      assert.throws(() => validateRequired(input), `${name}/${conclusion}`);
+    }
+    for (const name of cacheActionNames) {
+      const skippedPost = structuredClone(valid);
+      addPost(skippedPost.metadata.jobs[index], name, "skipped");
+      validateRequired(skippedPost);
+      for (const conclusion of ["success", "failure", "unknown"]) {
+        const input = structuredClone(valid);
+        addPost(input.metadata.jobs[index], name, conclusion);
+        assert.throws(() => validateRequired(input), `Post ${name}/${conclusion}`);
+      }
+    }
   }
 });
 

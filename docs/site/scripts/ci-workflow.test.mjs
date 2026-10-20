@@ -42,7 +42,7 @@ function checkPolicy(source) {
   const required = source.indexOf("  required:\n");
   const jobs = source.slice(source.indexOf("jobs:\n"), required === -1 ? undefined : required);
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
-    "a4c440dd760584907b2b4f31a6191ab5f5dd68838463821a00d00d07801ec7e6",
+    "8ba8b41b26e8980f0289a6905279fe6f502174e7597cadd1365d61583d13dafe",
     "review the complete 14-check and scope contract before changing it");
 }
 
@@ -95,6 +95,12 @@ test("real workflow selector keeps all twelve queue cells and only the source re
   const make = eventName => planChecks({ eventName, known: true, files: ["tests/rudp.cpp"] });
   assert.equal(cells(make("merge_group")).length, 12);
   assert.equal(cells(make("workflow_dispatch")).length, 12);
+  // An explicit dispatch on main seeds its shared caches even when a future
+  // change detector reports documentation-only files. It must keep every profile.
+  const manualSeed = planChecks({ eventName: "workflow_dispatch", known: true, files: ["README.md"] });
+  assert.equal(manualSeed.tier, "full");
+  assert.equal(manualSeed.source_tests, "");
+  assert.equal(cells(manualSeed).length, 12);
   assert.deepEqual(cells(make("pull_request")), [
     { os: "ubuntu-latest", boost: "ON", ssl: "ON", sanitize: "OFF" },
   ]);

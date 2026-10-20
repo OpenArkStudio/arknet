@@ -74,6 +74,10 @@ jobs:
           - {os: ubuntu-latest, boost: "ON", ssl: "ON", sanitize: "THREAD"}
     runs-on: ${{ matrix.os }}
     env:
+      VCPKG_CACHE_REVISION: 0699a19d0c6386247ce50d4dedbb8217d484d536
+      VCPKG_CACHE_FEATURES: boost;ssl
+      VCPKG_CACHE_DEFAULT_FEATURES: 'true'
+      VCPKG_CACHE_PROFILE: ${{ matrix.boost }}-${{ matrix.ssl }}-${{ matrix.sanitize }}-${{ matrix.sanitize != 'OFF' && 'Debug' || 'Release' }}
       ARKNET_RUN_NATIVE: ${{ needs.format.outputs.full_cpp == 'true' && (needs.format.outputs.tier == 'full' || (needs.format.outputs.tier == 'modules' && matrix.os == 'ubuntu-latest' && matrix.boost == 'ON' && matrix.ssl == 'ON' && matrix.sanitize == 'OFF')) }}
     steps:
       - name: Validate scope result
@@ -104,10 +108,57 @@ jobs:
         if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (runner.os == 'Windows') }}
       - uses: lukka/get-cmake@latest
         if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
+      - uses: actions/setup-node@v4
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
+        with:
+          node-version: 26
+      - name: Prepare dependency archive cache
+        id: vcpkg-cache
+        env:
+          VCPKG_DEFAULT_TRIPLET: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}-${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'osx' || 'linux' }}
+          VCPKG_DEFAULT_HOST_TRIPLET: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}-${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'osx' || 'linux' }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
+        run: node .github/scripts/vcpkg-cache.mjs
+      - name: Restore dependency archives
+        id: vcpkg-restore
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && steps.vcpkg-cache.outputs.enabled == 'true' }}
+        continue-on-error: true
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.vcpkg-cache.outputs.directory }}
+          key: ${{ steps.vcpkg-cache.outputs.key }}
+      - name: Install compiler cache
+        id: sccache-setup
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
+        continue-on-error: true
+        uses: Mozilla-Actions/sccache-action@v0.0.11
+        with:
+          version: v0.16.0
+          disable_annotations: true
+      - name: Prepare compiler launcher
+        id: compiler-cache
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
+        env:
+          SCCACHE_SETUP_OUTCOME: ${{ steps.sccache-setup.outcome }}
+        run: node .github/scripts/compiler-cache.mjs --prepare
+      - name: Restore compiler cache
+        id: compiler-restore
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && steps.compiler-cache.outputs.enabled == 'true' }}
+        continue-on-error: true
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.compiler-cache.outputs.directory }}
+          key: ${{ steps.compiler-cache.outputs.key }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: ${{ steps.compiler-cache.outputs.key }}-
+      - name: Start compiler cache after archive restore
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && steps.compiler-cache.outputs.enabled == 'true' }}
+        env:
+          SCCACHE_SETUP_OUTCOME: ${{ steps.sccache-setup.outcome }}
+        run: node .github/scripts/compiler-cache.mjs
       - uses: lukka/run-vcpkg@v11
         if: ${{ env.ARKNET_RUN_NATIVE == 'true' }}
         with:
-          vcpkgGitCommitId: 0699a19d0c6386247ce50d4dedbb8217d484d536
+          vcpkgGitCommitId: ${{ env.VCPKG_CACHE_REVISION }}
           vcpkgJsonGlob: vcpkg.json
       - name: Configure TSan address space
         if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (matrix.sanitize == 'THREAD') }}
@@ -118,7 +169,9 @@ jobs:
         run: >-
           cmake -S . -B build -G Ninja
           "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          "-DVCPKG_MANIFEST_FEATURES=boost;ssl"
+          "-DVCPKG_MANIFEST_FEATURES=$env:VCPKG_CACHE_FEATURES"
+          "-DCMAKE_C_COMPILER_LAUNCHER=$env:ARKNET_COMPILER_LAUNCHER"
+          "-DCMAKE_CXX_COMPILER_LAUNCHER=$env:ARKNET_COMPILER_LAUNCHER"
           -DCMAKE_BUILD_TYPE=${{ matrix.sanitize != 'OFF' && 'Debug' || 'Release' }}
           "-DARKNET_CHECK_TESTS=${{ needs.format.outputs.source_tests }}"
           -DARKNET_USE_BOOST_ASIO=${{ matrix.boost }}
@@ -161,6 +214,14 @@ jobs:
           node benchmarks/report_rudp_fec.mjs --self-check
           python3 -m unittest discover -s benchmarks -p 'test_*.py' -v
           python3 -m unittest discover -s scripts -p 'test_udp_limits_report.py' -v
+      - name: Report cache statistics
+        continue-on-error: true
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && always() }}
+        env:
+          VCPKG_ARCHIVE_DIRECTORY: ${{ steps.vcpkg-cache.outputs.directory }}
+          VCPKG_ARCHIVE_HIT: ${{ steps.vcpkg-restore.outputs.cache-hit }}
+          COMPILER_ARCHIVE_HIT: ${{ steps.compiler-restore.outputs.cache-hit }}
+        run: node .github/scripts/cache-stats.mjs
       - name: Upload test results
         if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (always()) }}
         uses: actions/upload-artifact@v4

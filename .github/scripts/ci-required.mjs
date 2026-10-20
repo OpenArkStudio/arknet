@@ -14,14 +14,23 @@ export const expectedCells = [
 export const cellName = ({ os, boost, ssl, sanitize }) =>
   `Test - ${os} - ${boost === "ON" ? "Boost" : "Standalone"} - ${ssl === "ON" ? "TLS" : "NoTLS"} - ${sanitize === "THREAD" ? "TSan" : sanitize === "ON" ? "ASan+UBSan" : "Release"}`;
 
-function completed(job) {
+export const optionalCacheSteps = [
+  "Restore dependency archives", "Install compiler cache", "Restore compiler cache", "Report cache statistics",
+];
+const cacheActions = optionalCacheSteps.slice(0, 3);
+const optionalCacheFailures = new Set([...optionalCacheSteps, ...cacheActions.map(name => `Post ${name}`)]);
+const runNative = (plan, profile) => plan.full_cpp && (plan.tier === "full" ||
+  (profile.os === "ubuntu-latest" && profile.boost === "ON" && profile.ssl === "ON" && profile.sanitize === "OFF"));
+
+function completed(job, allowCacheFailure = false) {
   if (job.status !== "completed" || job.conclusion !== "success" || !Array.isArray(job.steps) || job.steps.length === 0) {
     throw new Error(`${job.name}: job must be completed successfully with actual steps`);
   }
   const numbers = new Set();
   for (const step of job.steps) {
     if (!step || typeof step.name !== "string" || !Number.isInteger(step.number) || step.number < 1 || numbers.has(step.number) ||
-        step.status !== "completed" || !["success", "skipped"].includes(step.conclusion)) {
+        step.status !== "completed" || (!["success", "skipped"].includes(step.conclusion) &&
+          !(allowCacheFailure && step.conclusion === "failure" && optionalCacheFailures.has(step.name)))) {
       throw new Error(`${job.name}: invalid, incomplete or unsuccessful step`);
     }
     numbers.add(step.number);
@@ -30,8 +39,31 @@ function completed(job) {
 
 function outcome(job, name, expected = "success") {
   const steps = job.steps.filter(step => step.name === name);
-  if (steps.length !== 1 || steps[0].conclusion !== expected) {
-    throw new Error(`${job.name}: ${name} must occur once with conclusion ${expected}`);
+  const allowed = Array.isArray(expected) ? expected : [expected];
+  if (steps.length !== 1 || !allowed.includes(steps[0].conclusion)) {
+    throw new Error(`${job.name}: ${name} must occur once with conclusion ${allowed.join(" or ")}`);
+  }
+  return steps[0].conclusion;
+}
+
+function cacheOutcomes(job, native) {
+  for (const name of ["Run actions/setup-node@v4", "Prepare dependency archive cache", "Prepare compiler launcher"]) {
+    outcome(job, name, native ? "success" : "skipped");
+  }
+  const installed = outcome(job, "Install compiler cache", native ? ["success", "failure"] : "skipped");
+  outcome(job, "Report cache statistics", native ? ["success", "failure"] : "skipped");
+  outcome(job, "Restore dependency archives", native ? ["success", "skipped", "failure"] : "skipped");
+  const restored = outcome(job, "Restore compiler cache", native ? ["success", "skipped", "failure"] : "skipped");
+  outcome(job, "Start compiler cache after archive restore", restored === "skipped" ? "skipped" : "success");
+  if (installed === "failure" && restored !== "skipped") {
+    throw new Error(`${job.name}: a failed compiler cache installation must use the direct compiler`);
+  }
+  for (const name of cacheActions) {
+    const post = job.steps.filter(step => step.name === `Post ${name}`);
+    if (post.length > 0) {
+      const ran = native && job.steps.find(step => step.name === name).conclusion !== "skipped";
+      outcome(job, `Post ${name}`, ran ? ["success", "skipped", "failure"] : "skipped");
+    }
   }
 }
 
@@ -67,7 +99,8 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
   for (const name of expectedNames) {
     const job = jobs.get(name);
     if (!job) throw new Error(`Missing required job profile: ${name}`);
-    completed(job);
+    const profile = expectedCells.find(profile => cellName(profile) === name);
+    completed(job, profile !== undefined && runNative(plan, profile));
   }
   const docs = jobs.get("Documentation checks");
   outcome(docs, "Run npm ci --prefix docs/site");
@@ -79,9 +112,9 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
   let nativeCells = 0;
   for (const profile of expectedCells) {
     const job = jobs.get(cellName(profile));
-    const native = plan.full_cpp && (plan.tier === "full" ||
-      (profile.os === "ubuntu-latest" && profile.boost === "ON" && profile.ssl === "ON" && profile.sanitize === "OFF"));
+    const native = runNative(plan, profile);
     nativeCells += Number(native);
+    cacheOutcomes(job, native);
     outcome(job, "Validate scope result");
     outcome(job, "Record planned coverage", native ? "skipped" : "success");
     for (const name of ["Run actions/checkout@v4", "Run lukka/get-cmake@latest", "Run lukka/run-vcpkg@v11",

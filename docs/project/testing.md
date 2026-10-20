@@ -47,6 +47,16 @@ coverage. A successful job conclusion cannot substitute for a skipped required
 step, a different test profile or a source result on a merge candidate. The gate
 also checks the benchmark/report steps wherever the existing plan requires them.
 
+The gate tolerates `failure` only for the explicitly optional cache installation,
+archive restore and statistics steps, plus the corresponding action post steps,
+when that cell runs native checks. The job itself and all required preparation,
+configuration, build and test steps must still succeed. Disabled restores may be
+skipped; a failed compiler-cache installation must skip its restore and startup
+and use the direct compiler. Scope-only cells must skip every cache step and any
+recorded cache post step. Missing steps, unknown outcomes and failures from other
+steps remain errors. Fixture coverage establishes these fallback rules, not cache
+hits, hosted acceptance or a measured speedup.
+
 A future change may replace fixed protected contexts with the aggregate and
 introduce a dynamic source/documentation matrix only after this gate has passed
 real source, documentation and full merge-candidate runs. That protection migration
@@ -294,9 +304,13 @@ and thread schedules exercised; it does not prove that all errors are absent.
 ## CI and Remaining Coverage
 
 CI checks Linux/macOS/Windows with both dependency configurations; Linux also runs
-ASan/UBSan and TSan. Job names include OS, dependency, TLS and check mode.
-The full 14 checks run for pull requests, merge-queue candidates and manual
-dispatches. A successful PR head does not validate the queue candidate containing
+AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer. Job names include
+OS, dependency, TLS and check mode. All 14 check names remain present. Known source
+modules on PR branches run their selected native checks in Linux/Boost/TLS/Release;
+other cells record scope-only coverage. Code-bearing merge-queue candidates,
+manual dispatches and changes outside the reviewed module map run all twelve native
+cells. Documentation-only candidates run documentation and formatting. A successful
+PR head does not validate the queue candidate containing
 the latest main and preceding queued changes. CI does not repeat the same matrix
 after the candidate is merged into main. The README badge shows merge-queue runs.
 
@@ -317,3 +331,48 @@ All 14 independent client/server usage programs were also built with both
 dependency configurations. The seven protocol pairs per dependency configuration verified echo contents and all
 28 processes exited normally. [Build/run logs and reproduction scripts](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/usage/README.md)
 retain this check separately from timed performance measurements.
+
+### Native build caches
+
+Every active native matrix cell uses the official Mozilla sccache action `v0.0.11`
+with sccache `v0.16.0`. CMake passes the cache through both compiler launcher options;
+the compiler, build type, flags, selected targets and test commands stay the same.
+Compiler setup or server startup failure selects direct compilation. Server IO failure
+uses `SCCACHE_IGNORE_SERVER_IO_ERROR=1` to fall back to the local compiler.
+
+GitHub Actions persists the local compiler cache and vcpkg `files` binary archives
+separately. Each compiler cache is bounded to 512 MiB. Cache keys cover OS,
+architecture, runner image/version, target and host triplets, pinned vcpkg revision, manifest/configuration/overlay contents, requested
+features, default features and the matrix build profile. Release,
+AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer profiles remain
+separate. vcpkg also validates each package ABI before reuse. Dependency archives
+require an exact key; compiler caches use a profile-specific prefix plus a unique
+run suffix so later runs can add objects. No build directory or test result is cached.
+
+Actions cache visibility also depends on the workflow ref. Runs can restore matching
+caches from their current ref and the default branch. A PR merge-ref cache is limited
+to that PR; another PR or `main` cannot restore it. Merge-queue refs are temporary, so
+their writes also do not populate `main`. Routine PR and queue runs therefore do not
+maintain a shared default-branch cache.
+
+After this change merges, seed shared caches explicitly with the existing **CI**
+workflow: select **Run workflow**, choose branch **main**, then run it. This manual
+`workflow_dispatch` executes the full native matrix and saves successful cache
+entries under `main`. Repeat after runner image, dependency or build-profile changes,
+or when refreshing compiled objects after source changes. Until the next explicit
+seed, new PRs and queue candidates may recompile objects absent from the main cache.
+No push-triggered or scheduled matrix is added, and PR/queue artifacts are not
+promoted into main caches. See [GitHub cache scope restrictions](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache).
+
+Missing cache identity or unavailable archive storage disables persistence. Cache
+restore/save failures do not replace compilation or testing. The job summary records
+archive restore status, dependency archive count and `sccache --show-stats`; Configure
+logs provide vcpkg package restore/build counts. An Actions archive hit alone does not
+prove compiler or package hits. Compare cold and warm runs of the same revision and
+profile on hosted runners before claiming a speedup; local contract checks do not
+measure hosted performance. Existing source-PR scope and all twelve full-matrix cells
+are unchanged.
+
+References: [Mozilla action](https://github.com/Mozilla-Actions/sccache-action/tree/v0.0.11),
+[sccache launchers and fallback](https://github.com/mozilla/sccache/tree/v0.16.0),
+[vcpkg binary cache configuration](https://learn.microsoft.com/en-us/vcpkg/reference/binarycaching).
