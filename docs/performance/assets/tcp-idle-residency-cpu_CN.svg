@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="330" viewBox="0 0 800 330" role="img" aria-labelledby="title description">
+<title id="title">12,500 条空闲 TCP 连接对照 · CPU</title>
+<desc id="description">区间时长加权的各次均值；圆点为中位数，误差线为三次最小/最大值 CPU 范围重叠；驱动不同，不能据此归因库开销或判定 CPU 优胜 arknet 客户端: 1.824608 %, range 1.145939 to 2.074826; 原生 Asio 客户端: 1.846484 %, range 1.815026 to 1.995347; arknet 服务端: 1.415771 %, range 0.873033 to 1.618167; 原生 Asio 服务端: 1.513240 %, range 1.504232 to 1.680562</desc>
+<metadata>Benchmark code: 2852f6030568797061ab50681f79c500a5f7039f; native run checkout: docs-only descendant 9ae08dd1ff7ae1849fac61e0c5e0acb681fa6f62; local Release IPv4 loopback; Boost 1.90; TLS off; three runs per implementation; error bars are min/max, not confidence intervals; driver implementations differ.</metadata>
+<rect width="800" height="330" rx="12" fill="#fff"/>
+<g font-family="Inter, Noto Sans CJK SC, PingFang SC, system-ui, sans-serif" fill="#102a43">
+<text x="28" y="35" font-size="21" font-weight="650">12,500 条空闲 TCP 连接对照 · CPU</text>
+<text x="28" y="61" font-size="11.5" fill="#486581">同一主机与负载 · 回调接口 · 每进程 1 个 IO 工作线程 · 每种实现 3 次运行</text>
+<path d="M 180.000 95 V 245" stroke="#d9e2ec"/><text x="180.000" y="261" font-size="12" text-anchor="middle" fill="#486581">0</text>
+<path d="M 248.000 95 V 245" stroke="#d9e2ec"/><text x="248.000" y="261" font-size="12" text-anchor="middle" fill="#486581">0.5</text>
+<path d="M 316.000 95 V 245" stroke="#d9e2ec"/><text x="316.000" y="261" font-size="12" text-anchor="middle" fill="#486581">1</text>
+<path d="M 384.000 95 V 245" stroke="#d9e2ec"/><text x="384.000" y="261" font-size="12" text-anchor="middle" fill="#486581">1.5</text>
+<path d="M 452.000 95 V 245" stroke="#d9e2ec"/><text x="452.000" y="261" font-size="12" text-anchor="middle" fill="#486581">2</text>
+<path d="M 520.000 95 V 245" stroke="#d9e2ec"/><text x="520.000" y="261" font-size="12" text-anchor="middle" fill="#486581">2.5</text>
+<text x="550" y="100" font-size="12" fill="#486581">中位数 [最小值, 最大值]</text>
+<text x="160" y="124" text-anchor="end" font-size="13.5">arknet 客户端</text>
+<path d="M 335.848 120 H 462.176 M 335.848 113 V 127 M 462.176 113 V 127" fill="none" stroke="#087f8c" stroke-width="2"/>
+<circle cx="428.147" cy="120" r="4" fill="#087f8c"/>
+<text x="550" y="124" font-size="12.5">1.825 % [1.146, 2.075]</text>
+<text x="160" y="158" text-anchor="end" font-size="13.5">原生 Asio 客户端</text>
+<path d="M 426.844 154 H 451.367 M 426.844 147 V 161 M 451.367 147 V 161" fill="none" stroke="#7754a6" stroke-width="2"/>
+<circle cx="431.122" cy="154" r="4" fill="#7754a6"/>
+<text x="550" y="158" font-size="12.5">1.846 % [1.815, 1.995]</text>
+<text x="160" y="206" text-anchor="end" font-size="13.5">arknet 服务端</text>
+<path d="M 298.732 202 H 400.071 M 298.732 195 V 209 M 400.071 195 V 209" fill="none" stroke="#087f8c" stroke-width="2"/>
+<circle cx="372.545" cy="202" r="4" fill="#087f8c"/>
+<text x="550" y="206" font-size="12.5">1.416 % [0.873, 1.618]</text>
+<text x="160" y="240" text-anchor="end" font-size="13.5">原生 Asio 服务端</text>
+<path d="M 384.576 236 H 408.556 M 384.576 229 V 243 M 408.556 229 V 243" fill="none" stroke="#7754a6" stroke-width="2"/>
+<circle cx="385.801" cy="236" r="4" fill="#7754a6"/>
+<text x="550" y="240" font-size="12.5">1.513 % [1.504, 1.681]</text>
+<text x="350" y="283" text-anchor="middle" font-size="12" fill="#486581">进程 CPU (%)；100% = 1 个逻辑核心</text>
+<text x="28" y="306" font-size="11" fill="#486581">区间时长加权的各次均值；圆点为中位数，误差线为三次最小/最大值</text>
+<text x="28" y="322" font-size="10.5" fill="#486581">CPU 范围重叠；驱动不同，不能据此归因库开销或判定 CPU 优胜</text>
+</g>
+</svg>

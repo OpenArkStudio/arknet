@@ -48,6 +48,7 @@ constexpr auto dependency_version = ASIO_VERSION;
 #endif
 
 #include "connections_protocol.hpp"
+#include "connections_resources.hpp"
 
 namespace {
 
@@ -412,6 +413,7 @@ struct application
     void accept();
     void launch();
     void poll();
+    void sample();
     void fail(const std::string& scope, const std::string& reason);
     void stop();
     void drained();
@@ -439,6 +441,8 @@ struct application
     std::string failure;
     clock_type::time_point began = clock_type::now(), next_launch = began, next_timeout_scan = began, until{},
                            stopped_at{}, drained_at{};
+    clock_type::time_point sampled = began;
+    connection_load::resource_observer resources{began};
 };
 
 session::session(application& owner, asio::io_context& context)
@@ -1034,6 +1038,27 @@ void application::poll() {
     }
 }
 
+void application::sample() {
+    const auto now = clock_type::now();
+    if (now - sampled < std::chrono::seconds(1))
+    {
+        return;
+    }
+    // Bracket the CPU query with monotonic phase counts so consecutive sample
+    // endpoints exclude overlapping START and FIN processing from idle intervals.
+    const auto started_before_resources = started.load();
+    const auto metrics = resources.sample();
+    const auto finished_after_resources = finished.load();
+    std::cout << "{\"event\":\"sample\",\"role\":" << std::quoted(o.role)
+              << ",\"elapsed_s\":" << std::chrono::duration<double>(now - began).count()
+              << ",\"sample_interval_ms\":1000,\"active\":" << active << ",\"ready\":" << ready
+              << ",\"started\":" << started_before_resources << ",\"finished\":" << finished_after_resources
+              << ",\"pending_send_bytes\":" << pending_bytes;
+    connection_load::write_resource_fields(std::cout, metrics, false);
+    std::cout << "}\n" << std::flush;
+    sampled = now;
+}
+
 void application::run() {
     if (o.role == "server")
     {
@@ -1071,6 +1096,7 @@ void application::run() {
         }
         if (!stopping)
         {
+            sample();
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }

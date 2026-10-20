@@ -6,6 +6,61 @@ Measurements come from independent local Release loopback processes, not CI.
 
 Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
 
+## 12,500 idle connections
+
+arknet and the native Asio control each completed three independent process-pair
+runs of 12,500 idle connections. All connections finished with clean shutdown,
+zero reported errors and no DATA frames. Both used benchmark code `2852f603`,
+including unreleased changes outside v0.2.2; the native run's recorded checkout
+`9ae08dd` adds documentation only.
+
+![Idle connection process CPU comparison](assets/tcp-idle-residency-cpu.svg)
+
+![Idle connection process RSS comparison](assets/tcp-idle-residency-rss.svg)
+
+| Shared configuration | Value |
+| --- | --- |
+| Host | Apple M4 Pro / Mac16,11; 14 physical and logical cores; 48 GiB; macOS 27.0.1 (26A434) |
+| Build | AppleClang 21.0.0, Release `-O3 -DNDEBUG`; Boost 1.90; TLS off |
+| Execution | IPv4 loopback, callbacks; one `io_context` and one IO worker per process |
+| Connections / hold | 12,500; 10 s requested; three runs per implementation; arknet's recorded client hold 10.000–10.002 s |
+| Ramp / traffic settings | Up to 1,000 connects/s, parallel 32; payload 1 KiB / window 4 configured, no DATA during idle |
+| Bounds per process | Receive buffer initial/max 4 KiB; pending-send limit 64 MiB; buffer budget 256 MiB; FD limit 20,000; deadline 60 s + cleanup 5 s |
+| Sampling | 1 s: arknet `--sample-ms 1000`; native control fixed cadence, without `--sample-ms` |
+
+| Implementation / endpoint | CPU %: median [min, max] | RSS MiB: median [min, max] | FD median | Total thread median |
+| --- | ---: | ---: | ---: | ---: |
+| arknet / client | 1.825 [1.146, 2.075] | 191.016 [190.859, 191.047] | 12,506 | 5 |
+| Native Asio / client | 1.846 [1.815, 1.995] | 122.047 [121.859, 122.047] | 12,508 | 3 |
+| arknet / server | 1.416 [0.873, 1.618] | 165.203 [165.156, 165.391] | 12,507 | 4 |
+| Native Asio / server | 1.513 [1.504, 1.681] | 114.844 [114.656, 114.906] | 12,509 | 3 |
+
+For each endpoint, only consecutive samples with
+`active=ready=started=12500` and `finished=pending_send_bytes=0` qualify.
+The sample captures `started` before the resource query and `finished` after it.
+Each run has nine valid CPU intervals (about 9.00 s): weight the ending CPU sample
+by its interval duration, then take the median and min/max of the three run means.
+RSS, FD and thread counts use each run's ten valid sample medians, then the
+three-run median/range. Whiskers are min/max, not confidence intervals.
+CPU includes the benchmark driver; 100% is one logical core. RSS excludes kernel
+socket memory; total threads include benchmark/helper threads. The native final
+result does not expose a hold-only duration.
+
+CPU ranges overlap. The drivers and helper-thread setups differ, so this comparison
+does not isolate library overhead or establish a CPU winner. The RSS difference
+is a lead for further analysis, with no per-connection or PCU extrapolation.
+
+Batch preflight checked source ports 49152–65535 and waited up to 33 s for natural
+release between runs, with about 12,500 `TIME_WAIT` sockets after each batch and
+no system socket tuning. A separate arknet immediate-repeat batch failed with
+`EADDRNOTAVAIL` after 3,815 connections in its second run; these completed runs
+do not establish uninterrupted back-to-back capacity. See
+[connection benchmark bounds](../../benchmarks/CONNECTIONS.md#bounds).
+
+Idle residency establishes no throughput, RTT or production PCU claim and does
+not resolve the known 5,000-active-connection Echo deadline issue; see
+[production acceptance](../project/production-readiness.md).
+
 ## No added computation
 
 ![Throughput](assets/tcp-work0-throughput.svg)

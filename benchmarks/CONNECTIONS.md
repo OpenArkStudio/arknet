@@ -98,6 +98,8 @@ The buffer preflight reservation is `N * max-buffer-bytes + max-inflight-bytes +
 
 Large local client runs also consume ephemeral source ports. Closed TCP connections can remain in `TIME_WAIT`, so consecutive runs can exhaust the available ports and fail with `EADDRNOTAVAIL` even below the FD and memory limits. Record the OS port range and TCP states; allow previous connections to retire before an independent run, or distribute clients across suitable hosts/addresses. Preserve the failed run rather than counting it as a completed connection target. A local client's port limit is not the server's connection capacity.
 
+Before every batch, check free source-port headroom against the connection target, including ports held in `TIME_WAIT`. Wait for natural release or fail preflight when headroom is insufficient; a previous process's clean exit does not imply that its source ports are reusable.
+
 There is one main scheduling thread and one cleanup-watchdog thread in addition to the configured IO workers. It does not create a thread for each connection. Ctrl+C or SIGTERM requests a failed run with normal cleanup. If the run, final output or cleanup cannot finish by the overall deadline plus cleanup grace, the watchdog requests immediate OS process termination: `TerminateProcess` with code 124 on Windows, or `SIGKILL` on POSIX. POSIX shells commonly display 137 for signal 9, but it is a signal termination, not a portable exit-code guarantee. This path means `clean_shutdown=false`; no complete success summary is produced. Termination does not depend on another log record, a C-runtime flush or sanitizer exit handlers.
 
 ## Output and interpretation
@@ -129,6 +131,19 @@ Normal exit codes: 0 for completed target/observation with clean shutdown, 1 for
 
 The resource metrics use independent interval and whole-run samplers, called serially by the main thread. Each CPU interval uses the real monotonic query times, not the nominal cadence or an unweighted mean of samples. The default cadence remains one second; FD enumeration and OS thread queries have a cost that is included in the measured process. Queries and connection counters do not form an atomic snapshot. A run shorter than the cadence can have no periodic event and still have a valid whole-run CPU percentage. Final RSS/FD/handle/thread readings are explicitly after cleanup; use periodic samples to observe the load phase. Unsupported OS counters remain null, including Windows thread counts when the compilation target does not support the required API. The metrics do not change OS limits or impose an RSS cap.
 
+Each periodic sample includes cumulative `ready`, `started` and `finished` protocol
+counters. An `idle` CPU interval is eligible only when **both consecutive sample
+endpoints** report `active == ready == started == N`, `finished == 0` and
+`pending_send_bytes == 0`, for the declared target `N`. Use the CPU percentage and
+`resource_cpu_interval_s` from the second endpoint, which describe the preceding
+interval. A first full-start sample alone may overlap handshake or START processing;
+it is not a proven idle interval. Require available CPU metrics and retain both
+records. `started` is read before the resource query and `finished` after it; their
+monotonicity excludes START/FIN overlap at the interval boundaries. The remaining
+counters and OS queries are not an atomic snapshot, and client processes still have
+independent hold boundaries. CPU 100% means one logical core; these
+intervals measure process idle CPU, not throughput or a PCU capacity limit.
+
 The JSON changes are additive; existing fields retain their types and measurement phases. Record source/executable identity and `sample_interval_ms` when comparing runs: added resource collection and more precise CPU timestamps do not make old and new numbers identical. Other benchmark programs retain their existing output.
 
 ## Small correctness checks
@@ -145,8 +160,9 @@ Before increasing scale, run both idle and traffic with a few connections, IPv4 
 option. It uses Boost.Asio 1.90.0 or newer, or Standalone Asio 1.38.0 or newer directly;
 it links neither arknet endpoints nor its runtime. The result records the actual
 header version. A frozen diagnostic run must check the intended exact versions;
-the small checks here use official Boost 1.90.0 and Standalone Asio 1.38.2. `connections_protocol.hpp` is its only shared protocol
-implementation, and contains only standard-library code.
+the small checks here use official Boost 1.90.0 and Standalone Asio 1.38.2. The shared
+protocol and resource observation helpers use only the standard library and OS APIs;
+they do not introduce an arknet runtime dependency.
 
 ```sh
 cmake --build build --target arknet_asio_connection_control --parallel 2
@@ -213,11 +229,22 @@ small protocol checks do not establish an equivalent pressure workload or a stal
 
 With tests enabled, `benchmark_asio_connections_self_test` checks capacity,
 framing and identity/sequence gates without sockets. On Unix,
+The native control also emits additive periodic `sample` events with the same phase,
+pending-send and resource fields. Its cadence is fixed at one second
+(`sample_interval_ms: 1000`); it still rejects `--sample-ms`, and a short run may
+emit no samples. Its existing final result fields remain unchanged. Apply the same
+two-endpoint idle rule above to native samples.
+
+Batch validators must keep the final formats distinct: arknet uses `outcome` / `clean_shutdown`, while the native control uses `success` / `cleanup_complete`. Check exit statuses, completed targets and each program's error/pending counters before aggregating resources.
+
 `benchmark_asio_connections_processes` launches separate native server/client
 processes at 1, 8 and 32 connections, checks idle and payload boundaries, malformed
 CLI and actual deadline/cleanup failure, and checks both interoperability directions
 against the arknet peer at 8 connections. Child logs and original exit files are
-retained in the printed `/tmp/arknet-native-process-test-*` directory. These are
+retained in the printed `/tmp/arknet-native-process-test-*` directory. Additional
+three-connection idle pairs for each executable verify pre-START samples, monotonic
+phase counts, consecutive full-start/no-finish sample endpoints and completed FIN
+counts during bounded holds. These are
 correctness checks only; they do not certify 5000 connections or performance.
 An additional silent TCP peer verifies that a real request timeout emits the
 connection snapshot before the final result and still completes socket cleanup.
