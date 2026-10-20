@@ -270,9 +270,13 @@ and thread schedules exercised; it does not prove that all errors are absent.
 ## CI and Remaining Coverage
 
 CI checks Linux/macOS/Windows with both dependency configurations; Linux also runs
-ASan/UBSan and TSan. Job names include OS, dependency, TLS and check mode.
-The full 14 checks run for pull requests, merge-queue candidates and manual
-dispatches. A successful PR head does not validate the queue candidate containing
+AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer. Job names include
+OS, dependency, TLS and check mode. All 14 check names remain present. Known source
+modules on PR branches run their selected native checks in Linux/Boost/TLS/Release;
+other cells record scope-only coverage. Code-bearing merge-queue candidates,
+manual dispatches and changes outside the reviewed module map run all twelve native
+cells. Documentation-only candidates run documentation and formatting. A successful
+PR head does not validate the queue candidate containing
 the latest main and preceding queued changes. CI does not repeat the same matrix
 after the candidate is merged into main. The README badge shows merge-queue runs.
 
@@ -293,3 +297,33 @@ All 14 independent client/server usage programs were also built with both
 dependency configurations. The seven protocol pairs per dependency configuration verified echo contents and all
 28 processes exited normally. [Build/run logs and reproduction scripts](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/usage/README.md)
 retain this check separately from timed performance measurements.
+
+### Native build caches
+
+Every active native matrix cell uses the official Mozilla sccache action `v0.0.11`
+with sccache `v0.16.0`. CMake passes the cache through both compiler launcher options;
+the compiler, build type, flags, selected targets and test commands stay the same.
+Compiler setup or server startup failure selects direct compilation. Server IO failure
+uses `SCCACHE_IGNORE_SERVER_IO_ERROR=1` to fall back to the local compiler.
+
+GitHub Actions persists the local compiler cache and vcpkg `files` binary archives
+separately. Each compiler cache is bounded to 512 MiB. Cache keys cover OS,
+architecture, runner image/version, target and host triplets, pinned vcpkg revision, manifest/configuration/overlay contents, requested
+features, default features and the matrix build profile. Release,
+AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer profiles remain
+separate. vcpkg also validates each package ABI before reuse. Dependency archives
+require an exact key; compiler caches use a profile-specific prefix plus a unique
+run suffix so later runs can add objects. No build directory or test result is cached.
+
+Missing cache identity or unavailable archive storage disables persistence. Cache
+restore/save failures do not replace compilation or testing. The job summary records
+archive restore status, dependency archive count and `sccache --show-stats`; Configure
+logs provide vcpkg package restore/build counts. An Actions archive hit alone does not
+prove compiler or package hits. Compare cold and warm runs of the same revision and
+profile on hosted runners before claiming a speedup; local contract checks do not
+measure hosted performance. Existing source-PR scope and all twelve full-matrix cells
+are unchanged.
+
+References: [Mozilla action](https://github.com/Mozilla-Actions/sccache-action/tree/v0.0.11),
+[sccache launchers and fallback](https://github.com/mozilla/sccache/tree/v0.16.0),
+[vcpkg binary cache configuration](https://learn.microsoft.com/en-us/vcpkg/reference/binarycaching).

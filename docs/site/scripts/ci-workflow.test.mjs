@@ -41,7 +41,7 @@ function checkPolicy(source) {
   // An intentional job change needs a new review before updating this fingerprint.
   const jobs = source.slice(source.indexOf("jobs:\n"));
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
-    "a4c440dd760584907b2b4f31a6191ab5f5dd68838463821a00d00d07801ec7e6",
+    "8ba8b41b26e8980f0289a6905279fe6f502174e7597cadd1365d61583d13dafe",
     "review the complete 14-check and scope contract before changing it");
 }
 
