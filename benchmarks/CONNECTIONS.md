@@ -235,6 +235,8 @@ pending-send and resource fields. Its cadence is fixed at one second
 emit no samples. Its existing final result fields remain unchanged. Apply the same
 two-endpoint idle rule above to native samples.
 
+Batch validators must keep the final formats distinct: arknet uses `outcome` / `clean_shutdown`, while the native control uses `success` / `cleanup_complete`. Check exit statuses, completed targets and each program's error/pending counters before aggregating resources.
+
 `benchmark_asio_connections_processes` launches separate native server/client
 processes at 1, 8 and 32 connections, checks idle and payload boundaries, malformed
 CLI and actual deadline/cleanup failure, and checks both interoperability directions

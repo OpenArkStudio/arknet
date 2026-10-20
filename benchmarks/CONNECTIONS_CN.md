@@ -213,6 +213,8 @@ macOS 的 `tcp_info` 还包含 TCP 状态、窗口、发送缓冲字节数、收
 短运行可以没有周期记录。原有最终结果字段保持不变。
 原生采样同样使用前述连续两个端点的空闲区间规则。
 
+批次校验应区分最终结果格式：arknet 使用 `outcome` / `clean_shutdown`，原生对照使用 `success` / `cleanup_complete`。汇总资源前，先检查退出状态、目标完成数，以及各程序对应的错误和未完成计数。
+
 启用测试后，`benchmark_asio_connections_self_test` 无需 socket 即检查容量、分帧及
 身份／序号门禁。Unix 下的 `benchmark_asio_connections_processes` 以独立原生
 server／client 进程验证 1、8、32 连接，覆盖 idle、payload 边界、非法 CLI 和实际
