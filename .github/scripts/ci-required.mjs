@@ -1,4 +1,4 @@
-// Copyright (c) 2026 OpenArkStudio. SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2026 OpenArkStudio. SPDX-License-Identifier: BSL-1.0
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";

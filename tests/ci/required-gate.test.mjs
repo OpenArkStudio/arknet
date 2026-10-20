@@ -1,4 +1,4 @@
-// Copyright (c) 2026 OpenArkStudio. SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2026 OpenArkStudio. SPDX-License-Identifier: BSL-1.0
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
