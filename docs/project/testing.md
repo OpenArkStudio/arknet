@@ -19,7 +19,8 @@ Linux Boost/TLS Release suite, examples and benchmark smoke checks.
 
 Code-bearing merge-queue candidates and manual runs retain the complete native
 matrix: Linux/macOS/Windows, Boost/Standalone Asio, TLS, Linux without TLS, and
-Linux ASan/UBSan and TSan. A green source PR is not full-matrix acceptance.
+Linux AddressSanitizer（内存错误检测） with UndefinedBehaviorSanitizer（未定义行为检测）
+and ThreadSanitizer（线程数据竞争检测）. A green source PR is not full-matrix acceptance.
 
 Strictly classified README/documentation-only changes run documentation and
 formatting checks in both stages. The twelve matrix jobs retain their required
@@ -28,6 +29,29 @@ validation, not executed native tests. Missing or malformed change ranges select
 the complete matrix. Failed scope validation blocks every native gate. Rename
 classification includes both old and new paths. Active runs are not cancelled to
 schedule a newer commit.
+
+The first stage of aggregate-gate migration adds `CI - required` while retaining
+all fourteen existing check names, the static twelve-cell matrix and its native
+commands. This stage does not remove scope-only runner jobs or change branch
+protection. The gate uses the built-in token with job-local `contents: read` and
+`actions: read` to read this run's actual job and step metadata. It recomputes the
+scope from the event's exact commit range and requires matching scope outputs,
+successful documentation and formatting, and exactly one successful job for each
+reviewed matrix profile. Missing, duplicate, incomplete or unknown results fail.
+
+For full coverage, every cell must actually complete configuration, build and its
+matching test steps. A source-module plan runs native checks only in Linux Boost/TLS
+Release; other cells must successfully record scope-only coverage and skip native
+steps. Documentation-only plans require all twelve cells to record scope-only
+coverage. A successful job conclusion cannot substitute for a skipped required
+step, a different test profile or a source result on a merge candidate. The gate
+also checks the benchmark/report steps wherever the existing plan requires them.
+
+A future change may replace fixed protected contexts with the aggregate and
+introduce a dynamic source/documentation matrix only after this gate has passed
+real source, documentation and full merge-candidate runs. That protection migration
+and runner reduction are separate work; local fixture tests establish the gate's
+validation rules and do not establish hosted native acceptance.
 
 For a focused local run, pass exact registered check names. Omit the option to
 run all checks; unknown or unavailable names fail during configuration:
