@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="330" viewBox="0 0 800 330" role="img" aria-labelledby="title description">
+<title id="title">12,500 idle TCP connections · CPU</title>
+<desc id="description">Duration-weighted run means; marker = median, whiskers = three-run min/max. 9 valid intervals (~9.00 s) per endpoint/run; benchmark driver included. client: 1.824608 %, range 1.145939 to 2.074826; server: 1.415771 %, range 0.873033 to 1.618167</desc>
+<metadata>Source: 2852f6030568797061ab50681f79c500a5f7039f; local Release IPv4 loopback; Boost 1.90; TLS off; three runs; error bars are min/max, not confidence intervals.</metadata>
+<rect width="800" height="330" rx="12" fill="#fff"/>
+<g font-family="Inter, Noto Sans CJK SC, PingFang SC, system-ui, sans-serif" fill="#102a43">
+<text x="28" y="35" font-size="21" font-weight="650">12,500 idle TCP connections · CPU</text>
+<text x="28" y="61" font-size="12" fill="#486581">Separate endpoint processes · callbacks · 1 IO worker · 3 local runs</text>
+<path d="M 150.000 95 V 238" stroke="#d9e2ec"/><text x="150.000" y="258" font-size="12" text-anchor="middle" fill="#486581">0</text>
+<path d="M 224.000 95 V 238" stroke="#d9e2ec"/><text x="224.000" y="258" font-size="12" text-anchor="middle" fill="#486581">0.5</text>
+<path d="M 298.000 95 V 238" stroke="#d9e2ec"/><text x="298.000" y="258" font-size="12" text-anchor="middle" fill="#486581">1</text>
+<path d="M 372.000 95 V 238" stroke="#d9e2ec"/><text x="372.000" y="258" font-size="12" text-anchor="middle" fill="#486581">1.5</text>
+<path d="M 446.000 95 V 238" stroke="#d9e2ec"/><text x="446.000" y="258" font-size="12" text-anchor="middle" fill="#486581">2</text>
+<path d="M 520.000 95 V 238" stroke="#d9e2ec"/><text x="520.000" y="258" font-size="12" text-anchor="middle" fill="#486581">2.5</text>
+<text x="550" y="100" font-size="12" fill="#486581">Median [min, max]</text>
+<text x="130" y="143" text-anchor="end" font-size="15">Client</text>
+<path d="M 319.599 139 H 457.074 M 319.599 132 V 146 M 457.074 132 V 146" fill="none" stroke="#087f8c" stroke-width="2"/>
+<circle cx="420.042" cy="139" r="4.5" fill="#087f8c"/>
+<text x="550" y="143" font-size="13">1.825 % [1.146, 2.075]</text>
+<text x="130" y="215" text-anchor="end" font-size="15">Server</text>
+<path d="M 279.209 211 H 389.489 M 279.209 204 V 218 M 389.489 204 V 218" fill="none" stroke="#7754a6" stroke-width="2"/>
+<circle cx="359.534" cy="211" r="4.5" fill="#7754a6"/>
+<text x="550" y="215" font-size="13">1.416 % [0.873, 1.618]</text>
+<text x="335" y="281" text-anchor="middle" font-size="12" fill="#486581">Process CPU (%) · 100% = one logical core</text>
+<text x="28" y="306" font-size="11.5" fill="#486581">Duration-weighted run means; marker = median, whiskers = three-run min/max.</text>
+<text x="28" y="322" font-size="11" fill="#486581">9 valid intervals (~9.00 s) per endpoint/run; benchmark driver included.</text>
+</g>
+</svg>

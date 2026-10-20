@@ -98,6 +98,8 @@ The buffer preflight reservation is `N * max-buffer-bytes + max-inflight-bytes +
 
 Large local client runs also consume ephemeral source ports. Closed TCP connections can remain in `TIME_WAIT`, so consecutive runs can exhaust the available ports and fail with `EADDRNOTAVAIL` even below the FD and memory limits. Record the OS port range and TCP states; allow previous connections to retire before an independent run, or distribute clients across suitable hosts/addresses. Preserve the failed run rather than counting it as a completed connection target. A local client's port limit is not the server's connection capacity.
 
+Before every batch, check free source-port headroom against the connection target, including ports held in `TIME_WAIT`. Wait for natural release or fail preflight when headroom is insufficient; a previous process's clean exit does not imply that its source ports are reusable.
+
 There is one main scheduling thread and one cleanup-watchdog thread in addition to the configured IO workers. It does not create a thread for each connection. Ctrl+C or SIGTERM requests a failed run with normal cleanup. If the run, final output or cleanup cannot finish by the overall deadline plus cleanup grace, the watchdog requests immediate OS process termination: `TerminateProcess` with code 124 on Windows, or `SIGKILL` on POSIX. POSIX shells commonly display 137 for signal 9, but it is a signal termination, not a portable exit-code guarantee. This path means `clean_shutdown=false`; no complete success summary is produced. Termination does not depend on another log record, a C-runtime flush or sanitizer exit handlers.
 
 ## Output and interpretation
