@@ -235,9 +235,13 @@ ASan/UBSan 与 TSan 使用独立构建。它们会增加运行开销，发布的
 
 ## CI 与未覆盖范围
 
-CI 在 Linux／macOS／Windows 检查两种依赖方案，Linux 另运行 ASan/UBSan 和 TSan。
-Job 名称包含系统、依赖方案、TLS 和检查模式。PR、合并队列候选和手动触发均运行完整
-14 项检查。PR 源分支通过，不代表包含最新 main 和前序队列改动的候选已经通过。
+CI 在 Linux／macOS／Windows 检查两种依赖方案，Linux 另运行
+AddressSanitizer/UndefinedBehaviorSanitizer 和 ThreadSanitizer。
+Job 名称包含系统、依赖方案、TLS 和检查模式，保留全部 14 项检查名称。
+源分支 PR 修改已映射的模块时，在 Linux/Boost/TLS/Release 执行选中的原生检查；
+其他矩阵单元只记录检查范围。包含代码的合并队列候选、手动触发和模块映射之外的改动
+执行完整的 12 格原生检查。纯文档候选执行文档和格式检查。
+PR 源分支通过，不代表包含最新 main 和前序队列改动的候选已经通过。
 候选合入 main 后，不重复运行同一套矩阵。README 徽章展示合并队列运行结果。
 
 运行保留现有的 PR 或 ref 并发组。新运行不会取消同组内正在执行的运行，而是等待并发组。
@@ -254,3 +258,42 @@ CI 上传测试日志、执行基准冒烟；性能报告矩阵来自本机测�
 的七组协议检查了回显内容，全部 28 个进程正常退出。
 [构建、运行日志与复现脚本](https://github.com/OpenArkStudio/arknet/blob/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261010/usage/README_CN.md)
 独立保留这项检查，不混入性能测量。
+
+### 原生构建缓存
+
+每个实际执行原生检查的矩阵单元使用 Mozilla 官方 sccache action `v0.0.11`
+和 sccache `v0.16.0`。CMake 通过两个 compiler launcher 选项传入缓存工具；
+编译器、构建类型、编译参数、选择的目标和测试命令保持不变。
+缓存工具安装或服务启动失败时，直接调用编译器。服务通信失败时，
+`SCCACHE_IGNORE_SERVER_IO_ERROR=1` 使编译回退到本地编译器。
+
+GitHub Actions 分别持久化本地编译缓存和 vcpkg `files` 二进制归档。
+每份编译缓存限制为 512 MiB。缓存键包含操作系统、架构、runner 镜像及版本、
+目标与宿主 triplet、固定的 vcpkg 版本、manifest／配置／overlay 内容、请求的 features、默认 features 和矩阵构建配置。
+Release、AddressSanitizer/UndefinedBehaviorSanitizer 与 ThreadSanitizer 使用独立配置。
+vcpkg 复用依赖前还会校验各软件包的 ABI。依赖归档要求缓存键完全匹配；
+编译缓存通过配置专属前缀恢复，并使用每次运行的独立后缀保存新增对象。
+缓存不包含构建目录或测试结果。
+
+Actions 缓存的可见范围也取决于工作流 ref。运行可以恢复当前 ref 和默认分支中的
+匹配缓存。PR merge ref 写入的缓存只供同一个 PR 使用，其他 PR 和 `main` 无法恢复。
+合并队列 ref 是临时 ref，写入的缓存也不会进入 `main`。
+因此，日常 PR 和队列运行不会更新默认分支的共享缓存。
+
+本改动合入后，使用现有的 **CI** 工作流手动预热共享缓存：选择 **Run workflow**，
+将分支设为 **main**，然后启动运行。这个手动 `workflow_dispatch` 执行完整原生矩阵，
+并将成功生成的缓存保存在 `main` 下。runner 镜像、依赖或构建配置变化后，需要重新预热；
+源码变化后，也可通过再次预热更新编译对象。下次手动预热之前，新的 PR 和队列候选
+可能重新编译 main 缓存中尚未包含的对象。
+这里不新增 push 或定时触发的矩阵，也不将 PR／队列产物提升为 main 缓存。
+详见 [GitHub 缓存范围限制](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache)。
+
+缺少缓存标识或归档目录不可用时，关闭持久化。恢复或保存缓存失败不替代编译和测试。
+Job 摘要记录归档恢复状态、依赖归档数量和 `sccache --show-stats`；Configure
+日志记录 vcpkg 软件包恢复与构建数量。Actions 归档命中本身不能证明编译或依赖命中。
+声明性能改善前，需要在 hosted runner 上比较相同源码版本、相同配置的冷、热缓存运行；
+本地契约检查不测量 hosted 性能。现有源分支检查范围和完整矩阵的 12 格检查保持不变。
+
+参考资料：[Mozilla action](https://github.com/Mozilla-Actions/sccache-action/tree/v0.0.11)、
+[sccache launcher 与回退](https://github.com/mozilla/sccache/tree/v0.16.0)、
+[vcpkg 二进制缓存配置](https://learn.microsoft.com/en-us/vcpkg/reference/binarycaching)。
