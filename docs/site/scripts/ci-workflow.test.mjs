@@ -94,6 +94,12 @@ test("real workflow selector keeps all twelve queue cells and only the source re
   const make = eventName => planChecks({ eventName, known: true, files: ["tests/rudp.cpp"] });
   assert.equal(cells(make("merge_group")).length, 12);
   assert.equal(cells(make("workflow_dispatch")).length, 12);
+  // An explicit dispatch on main seeds its shared caches even when a future
+  // change detector reports documentation-only files. It must keep every profile.
+  const manualSeed = planChecks({ eventName: "workflow_dispatch", known: true, files: ["README.md"] });
+  assert.equal(manualSeed.tier, "full");
+  assert.equal(manualSeed.source_tests, "");
+  assert.equal(cells(manualSeed).length, 12);
   assert.deepEqual(cells(make("pull_request")), [
     { os: "ubuntu-latest", boost: "ON", ssl: "ON", sanitize: "OFF" },
   ]);

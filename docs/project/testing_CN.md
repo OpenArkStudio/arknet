@@ -275,6 +275,19 @@ vcpkg 复用依赖前还会校验各软件包的 ABI。依赖归档要求缓存�
 编译缓存通过配置专属前缀恢复，并使用每次运行的独立后缀保存新增对象。
 缓存不包含构建目录或测试结果。
 
+Actions 缓存的可见范围也取决于工作流 ref。运行可以恢复当前 ref 和默认分支中的
+匹配缓存。PR merge ref 写入的缓存只供同一个 PR 使用，其他 PR 和 `main` 无法恢复。
+合并队列 ref 是临时 ref，写入的缓存也不会进入 `main`。
+因此，日常 PR 和队列运行不会更新默认分支的共享缓存。
+
+本改动合入后，使用现有的 **CI** 工作流手动预热共享缓存：选择 **Run workflow**，
+将分支设为 **main**，然后启动运行。这个手动 `workflow_dispatch` 执行完整原生矩阵，
+并将成功生成的缓存保存在 `main` 下。runner 镜像、依赖或构建配置变化后，需要重新预热；
+源码变化后，也可通过再次预热更新编译对象。下次手动预热之前，新的 PR 和队列候选
+可能重新编译 main 缓存中尚未包含的对象。
+这里不新增 push 或定时触发的矩阵，也不将 PR／队列产物提升为 main 缓存。
+详见 [GitHub 缓存范围限制](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache)。
+
 缺少缓存标识或归档目录不可用时，关闭持久化。恢复或保存缓存失败不替代编译和测试。
 Job 摘要记录归档恢复状态、依赖归档数量和 `sccache --show-stats`；Configure
 日志记录 vcpkg 软件包恢复与构建数量。Actions 归档命中本身不能证明编译或依赖命中。

@@ -315,6 +315,21 @@ separate. vcpkg also validates each package ABI before reuse. Dependency archive
 require an exact key; compiler caches use a profile-specific prefix plus a unique
 run suffix so later runs can add objects. No build directory or test result is cached.
 
+Actions cache visibility also depends on the workflow ref. Runs can restore matching
+caches from their current ref and the default branch. A PR merge-ref cache is limited
+to that PR; another PR or `main` cannot restore it. Merge-queue refs are temporary, so
+their writes also do not populate `main`. Routine PR and queue runs therefore do not
+maintain a shared default-branch cache.
+
+After this change merges, seed shared caches explicitly with the existing **CI**
+workflow: select **Run workflow**, choose branch **main**, then run it. This manual
+`workflow_dispatch` executes the full native matrix and saves successful cache
+entries under `main`. Repeat after runner image, dependency or build-profile changes,
+or when refreshing compiled objects after source changes. Until the next explicit
+seed, new PRs and queue candidates may recompile objects absent from the main cache.
+No push-triggered or scheduled matrix is added, and PR/queue artifacts are not
+promoted into main caches. See [GitHub cache scope restrictions](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache).
+
 Missing cache identity or unavailable archive storage disables persistence. Cache
 restore/save failures do not replace compilation or testing. The job summary records
 archive restore status, dependency archive count and `sccache --show-stats`; Configure
