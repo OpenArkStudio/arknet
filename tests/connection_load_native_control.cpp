@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <netinet/in.h>
+#include <poll.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -17,6 +18,8 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+
+#include "../benchmarks/connections_protocol.hpp"
 
 namespace {
 
@@ -322,6 +325,182 @@ void silent_peer(const std::string& executable) {
         throw std::runtime_error("pre-cancel connection diagnostics missing: " + client.log);
     }
 }
+
+void fragmented_window(const std::string& executable) {
+    using connection_load::frame_kind;
+    const connection_load::identity owner{83, 1, 1};
+    child server(executable,
+        {"--role", "server", "--listen", "127.0.0.1", "--port", "0", "--run-id", "83", "--scenario", "traffic",
+            "--payload", "1024", "--window", "4", "--max-connections", "1", "--expected-connections", "1",
+            "--hold-seconds", "0.01", "--deadline-seconds", "5", "--cleanup-seconds", "1"});
+    const auto port = std::stoi(server.port());
+
+    struct raw_peer
+    {
+        int fd = socket(AF_INET, SOCK_STREAM, 0);
+
+        ~raw_peer() {
+            if (fd != -1)
+            {
+                close(fd);
+            }
+        }
+    } peer;
+
+    if (peer.fd == -1 || fcntl(peer.fd, F_SETFD, FD_CLOEXEC) == -1)
+    {
+        throw std::runtime_error("fragmented peer socket setup failed");
+    }
+#if defined(SO_NOSIGPIPE)
+    const int no_sigpipe = 1;
+    if (setsockopt(peer.fd, SOL_SOCKET, SO_NOSIGPIPE, &no_sigpipe, sizeof(no_sigpipe)))
+    {
+        throw std::runtime_error("fragmented peer SIGPIPE setup failed");
+    }
+#endif
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    address.sin_port = htons(static_cast<unsigned short>(port));
+    if (connect(peer.fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) ||
+        fcntl(peer.fd, F_SETFL, O_NONBLOCK) == -1)
+    {
+        throw std::runtime_error("fragmented peer connect failed");
+    }
+    const auto deadline = clock_type::now() + std::chrono::seconds(4);
+    auto wait_ready = [&](short events) {
+        while (clock_type::now() < deadline)
+        {
+            pollfd descriptor{peer.fd, events, 0};
+            const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - clock_type::now());
+            const auto result = ::poll(&descriptor, 1, static_cast<int>(remaining.count()) + 1);
+            if (result > 0)
+            {
+                return;
+            }
+            if (result < 0 && errno != EINTR)
+            {
+                throw std::runtime_error("fragmented peer poll failed");
+            }
+        }
+        throw std::runtime_error("fragmented peer IO deadline exceeded: " + server.log);
+    };
+    auto send_bytes = [&](std::string_view bytes) {
+        while (!bytes.empty())
+        {
+            wait_ready(POLLOUT);
+#if defined(MSG_NOSIGNAL)
+            constexpr int flags = MSG_NOSIGNAL;
+#else
+            constexpr int flags = 0;
+#endif
+            const auto written = send(peer.fd, bytes.data(), bytes.size(), flags);
+            if (written > 0)
+            {
+                bytes.remove_prefix(static_cast<std::size_t>(written));
+            }
+            else if (written == -1 && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK))
+            {
+                continue;
+            }
+            else
+            {
+                throw std::runtime_error("fragmented peer send failed: " + server.log);
+            }
+        }
+    };
+    auto receive_exact = [&](const std::string& expected) {
+        std::string received(expected.size(), '\0');
+        std::size_t offset{};
+        while (offset < received.size())
+        {
+            wait_ready(POLLIN);
+            const auto size = recv(peer.fd, received.data() + offset, received.size() - offset, 0);
+            if (size > 0)
+            {
+                offset += static_cast<std::size_t>(size);
+            }
+            else if (size == -1 && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK))
+            {
+                continue;
+            }
+            else
+            {
+                throw std::runtime_error("fragmented peer receive failed: " + server.log);
+            }
+        }
+        if (received != expected)
+        {
+            throw std::runtime_error("fragmented peer response content/order mismatch: " + server.log);
+        }
+    };
+    auto wire = [&](frame_kind kind, std::uint64_t sequence = 0) {
+        const auto body = connection_load::make_frame(kind, owner, sequence, kind == frame_kind::data ? 1024 : 0);
+        std::string prefix;
+        if (body.size() < 254)
+        {
+            prefix += static_cast<char>(body.size());
+        }
+        else
+        {
+            prefix += '\xfe';
+            prefix += static_cast<char>(body.size());
+            prefix += static_cast<char>(body.size() >> 8);
+        }
+        return prefix + body;
+    };
+    auto require_incomplete = [&] {
+        // An intentionally incomplete frame must not produce an Echo. Polling
+        // only gates this withheld-byte phase; elapsed time is not a throughput assertion.
+        pollfd descriptor{peer.fd, POLLIN, 0};
+        const auto result = ::poll(&descriptor, 1, 100);
+        if (result != 0)
+        {
+            throw std::runtime_error("incomplete frame unexpectedly produced socket input: " + server.log);
+        }
+    };
+    send_bytes(wire(frame_kind::hello, 1));
+    receive_exact(wire(frame_kind::hello_ack));
+    send_bytes(wire(frame_kind::start));
+    receive_exact(wire(frame_kind::start_ack));
+    std::string first_window;
+    for (unsigned sequence = 1; sequence <= 4; ++sequence)
+    {
+        first_window += wire(frame_kind::data, sequence);
+    }
+    if (first_window.size() != 4364)
+    {
+        throw std::runtime_error("fragmented window no longer covers the 4096-byte receive cap");
+    }
+    send_bytes(std::string_view(first_window).substr(0, 1)); // Partial three-byte prefix.
+    require_incomplete();
+    send_bytes(std::string_view(first_window).substr(1, 1089)); // One body byte still withheld.
+    require_incomplete();
+    send_bytes(std::string_view(first_window).substr(1090)); // Complete frame plus three queued frames.
+    receive_exact(first_window);
+    std::string second_window;
+    for (unsigned sequence = 5; sequence <= 8; ++sequence)
+    {
+        second_window += wire(frame_kind::data, sequence);
+    }
+    send_bytes(second_window); // One application write larger than the receive cap.
+    receive_exact(second_window);
+    send_bytes(wire(frame_kind::finish, 8));
+    receive_exact(wire(frame_kind::finish_ack, 8));
+    shutdown(peer.fd, SHUT_RDWR);
+    close(peer.fd);
+    peer.fd = -1;
+    const auto status = server.wait();
+    const auto output = read_file(server.log);
+    if (status || output.find("\"finished\":1") == std::string::npos ||
+        output.find("\"data_sent\":8,") == std::string::npos ||
+        output.find("\"data_received\":8,") == std::string::npos)
+    {
+        throw std::runtime_error("fragmented window did not finish cleanly: " + server.log + "\n" + output);
+    }
+    std::cout << "fragmented prefix/body and two 4364-byte windows recovered 8 exact Echo frames: " << server.log
+              << '\n';
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -341,6 +520,8 @@ int main(int argc, char** argv) {
         std::cout << "child logs and exits: " << directory << '\n';
         invalid_arguments(argv[1]);
         silent_peer(argv[1]);
+        fragmented_window(argv[1]);
+        fragmented_window(argv[2]);
         pair(argv[1], argv[1], 1, "idle");
         pair(argv[1], argv[1], 3, "idle", 1024, true);
         pair(argv[2], argv[2], 3, "idle", 1024, true);

@@ -68,6 +68,31 @@ cause for the arknet and native-control failures or identify why TCP recovery
 stalled. The capture recorded 1,675,186 packets and dropped 364,705; absent packets
 cannot be treated as proof that no transmission occurred. All packet headers and
 raw logs remain local. Capacity acceptance and cross-host validation are pending.
+
+The failure is not deterministic under the available local controls. Each case
+below ran once on the same Mac, with 5,000 native Asio connections, 1 KiB payloads,
+one IO worker, a 5 s request deadline and a 40 s overall deadline:
+
+| Source / binary | Outstanding requests per connection | Server port | Result |
+| --- | ---: | --- | --- |
+| `36e4e184`, Boost 1.90 Release, TLS off | 1 and 4, one case each | Dynamically allocated | Both cases finished all 5,000 connections; no protocol errors or timeouts; cleanup completed |
+| `c945ce9`, exact binary from the captured failure | 4 | Dynamically allocated and fixed `56379`, one case each | Both cases finished all 5,000 connections; no protocol errors or timeouts; cleanup completed |
+
+These controls used no external packet capture or live socket observer. The newer
+binary includes periodic resource sampling; the historical binary does not.
+Neither binary, window size nor server port has been isolated as the cause.
+Successful controls do not establish a fix or capacity acceptance; OS/background
+effects and the captured failure's conditions remain unresolved.
+
+A separate `36e4e184` arknet client/server case with the same connection count,
+payload, four-request window and deadlines also completed all 5,000 connections
+without errors and cleaned up. The two drivers differ in global admission checks
+and DATA counter timing, so these cases do not establish performance equivalence.
+
+One historical-binary case with buffered packet capture also completed. That
+capture reported zero capture drops, but reached its 2,000,000-record limit before
+any FIN packet was recorded. It cannot establish complete trace coverage or why
+the historical TCP recovery stalled.
 The reusable control and reproduction parameters are described in
 [connection benchmarks](../../benchmarks/CONNECTIONS.md).
 

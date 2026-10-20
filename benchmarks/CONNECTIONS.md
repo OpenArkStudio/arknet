@@ -246,5 +246,14 @@ three-connection idle pairs for each executable verify pre-START samples, monoto
 phase counts, consecutive full-start/no-finish sample endpoints and completed FIN
 counts during bounded holds. These are
 correctness checks only; they do not certify 5000 connections or performance.
+
+The process check also drives each server with a raw TCP peer: it splits a
+three-byte frame prefix and then withholds the last body byte, completes a four-frame
+4,364-byte window across the 4,096-byte receive cap, and sends a second complete
+window in one application write. Both windows must return eight exact, ordered
+Echo frames before FIN acknowledgement and clean exit. This bounds a specific
+framing/write-queue hypothesis without a high-connection retry loop. It does not
+inject TCP loss or out-of-order segments, reproduce kernel retransmission recovery,
+isolate high-load capture overhead, or resolve the known response timeout.
 An additional silent TCP peer verifies that a real request timeout emits the
 connection snapshot before the final result and still completes socket cleanup.
