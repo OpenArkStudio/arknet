@@ -229,3 +229,29 @@ jobs:
           name: results-${{ matrix.os }}-${{ matrix.boost == 'ON' && 'Boost' || 'Standalone' }}-${{ matrix.ssl == 'ON' && 'TLS' || 'NoTLS' }}-${{ matrix.sanitize == 'THREAD' && 'TSan' || matrix.sanitize == 'ON' && 'ASan+UBSan' || 'Release' }}
           path: |
             build/tests/logs/**/*.log
+  required:
+    name: CI - required
+    if: always()
+    needs: [docs, format, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - name: Read this run's actual prerequisite jobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --json jobs > "$RUNNER_TEMP/arknet-ci-jobs.json"
+      - name: Validate required coverage and actual step conclusions
+        env:
+          CI_NEEDS_JSON: ${{ toJSON(needs) }}
+          CI_JOBS_PATH: ${{ runner.temp }}/arknet-ci-jobs.json
+        run: node .github/scripts/ci-required.mjs

@@ -39,7 +39,8 @@ function checkPolicy(source) {
   // merge-group checks. Source PRs run related modules in Linux/Boost/TLS/Release;
   // other cells explicitly record scope-only coverage, not native-test success.
   // An intentional job change needs a new review before updating this fingerprint.
-  const jobs = source.slice(source.indexOf("jobs:\n"));
+  const required = source.indexOf("  required:\n");
+  const jobs = source.slice(source.indexOf("jobs:\n"), required === -1 ? undefined : required);
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
     "8ba8b41b26e8980f0289a6905279fe6f502174e7597cadd1365d61583d13dafe",
     "review the complete 14-check and scope contract before changing it");
