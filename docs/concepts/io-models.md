@@ -73,9 +73,10 @@ state; a sequential coroutine alone does not serialize those other operations.
 These are starting choices, not universal rankings. One busy connection remains
 serialized by its strand in either model. More IO runners cannot parallelize its
 state machine. Measure the actual connection distribution and handler cost.
-The first release provides callback-based arknet endpoints; the coroutine
-benchmark uses native Asio `awaitable`/`co_spawn` to test scheduler choices.
-A public coroutine endpoint API is deferred.
+arknet endpoints and native database clients provide callback interfaces; the coroutine
+benchmark uses native Asio `awaitable`/`co_spawn` to test scheduler choices. Dedicated
+arknet coroutine endpoint APIs remain TODO. The separate ark framework already has
+public database coroutine modules; see the [integration boundary](../project/production-readiness.md#framework-coroutine-and-database-boundary).
 
 ## Caller-driven execution
 

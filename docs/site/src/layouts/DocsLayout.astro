@@ -10,6 +10,7 @@ import BaseLayout from "./BaseLayout.astro";
 import Header from "@/components/Header.astro";
 import { Banner } from "@/components/ui/banner";
 import { Sidebar, SidebarFilter } from "@/components/ui/sidebar";
+import { getUiLabels } from "@/lib/ui-labels";
 import { TOC, MobileTOC } from "@/components/ui/toc";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Pagination } from "@/components/ui/pagination";
@@ -21,6 +22,8 @@ import { getVersionStatus, getVersionAlternates, withBase } from "@cloudflare/ni
 type Props = DocsPageProps & { audience?: "human" };
 
 const { title, description, sidebar, headings, breadcrumbs, prevNext, mode = "doc", banner, head = [], searchable, noindex, markdownUrl, socialImage, lastUpdated, editUrl, draft, audience, collection, entryId } = Astro.props;
+const locale = collection === "zh" ? "zh-CN" : "en";
+const labels = getUiLabels(locale);
 
 // `searchable` derives from `noindex` when omitted: a non-crawlable page is
 // by default not in the site search either. Explicit `searchable: true`
@@ -97,7 +100,7 @@ const hasPagination = Astro.slots.has("pagination");
                   <slot name="sidebar" />
                 ) : (
                   <nav class="px-4 pb-12 pt-5">
-                    <SidebarFilter />
+                    <SidebarFilter locale={locale} />
                     <Sidebar items={sidebar} persist />
                   </nav>
                 )}
@@ -209,7 +212,7 @@ const hasPagination = Astro.slots.has("pagination");
                     <PageActions markdownUrl={markdownUrl} lastUpdated={lastUpdated} locale={collection === "zh" ? "zh-CN" : "en"} class={description ? undefined : "mt-3"} />
                     {headings !== false && headings.length > 0 && (
                       <div class="border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-14 z-20 -mx-4 mt-3 border-y px-4 py-2 backdrop-blur md:-mx-6 md:px-6 xl:hidden">
-                        <MobileTOC headings={headings} />
+                        <MobileTOC headings={headings} locale={locale} />
                       </div>
                     )}
                     {(markdownUrl || audience === "human") && (
@@ -235,19 +238,19 @@ const hasPagination = Astro.slots.has("pagination");
                   <div class="mt-8 mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <a href={editUrl} class="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors no-underline" target="_blank" rel="noopener">
                       <Icon name="ph:pencil-simple" class="w-3.5 h-3.5" />
-                      Edit this page
+                      {labels.editPage}
                     </a>
                   </div>
                 )}
               </div>
-              {hasPagination ? <slot name="pagination" /> : <Pagination prevNext={prevNext} />}
+              {hasPagination ? <slot name="pagination" /> : <Pagination prevNext={prevNext} locale={locale} />}
             </div>
           </main>
 
           {headings !== false && (hasToc || headings.length > 0) && (
             <aside data-nb-toc-scroll-host class="hidden xl:block w-(--nb-toc-width) shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
               <div class="pt-6 pb-8 pl-8 pr-6">
-                {hasToc ? <slot name="toc" /> : <TOC headings={headings} />}
+                {hasToc ? <slot name="toc" /> : <TOC headings={headings} locale={locale} />}
               </div>
             </aside>
           )}
@@ -263,12 +266,12 @@ const hasPagination = Astro.slots.has("pagination");
       data-mobile-sidebar
       data-state="closed"
       class="group fixed inset-0 m-0 h-full w-full max-h-full max-w-full border-0 bg-transparent p-0 [&::backdrop]:bg-transparent"
-      aria-label="Site navigation"
+      aria-label={labels.siteNavigation}
     >
       <div data-mobile-sidebar-panel class="flex h-full w-(--nb-sidebar-width) max-w-[85vw] -translate-x-full flex-col border-r border-border bg-card transition-transform duration-250 ease-out group-data-[state=open]:translate-x-0 motion-reduce:transition-none">
         <div class="sticky top-0 z-[1] flex items-center justify-between border-b border-border bg-card px-4 py-3">
-          <span class="font-semibold text-sm text-foreground">Navigation</span>
-          <button data-close-sidebar class="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors" aria-label="Close sidebar">
+          <span class="font-semibold text-sm text-foreground">{labels.navigation}</span>
+          <button data-close-sidebar class="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors" aria-label={labels.closeSidebar}>
             <Icon name="ph:x" class="w-5 h-5" />
           </button>
         </div>

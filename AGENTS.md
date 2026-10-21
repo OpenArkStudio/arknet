@@ -29,7 +29,8 @@ branch or worktree when the existing checkout contains uncommitted changes.
   are resolved. Outside the merge queue, synchronize the PR head with `main`
   before acceptance. With the merge queue enabled, validate the queue candidate
   containing the latest `main` and preceding queued changes; a green PR head alone
-  does not validate that combination. Add eligible PRs to the queue promptly.
+  does not validate that combination. Admit eligible PRs in the creation order
+  defined below.
   Another maintainer's approval is not currently mandatory. Merge eligible PRs
   without asking for confirmation again.
 - Explicitly set the squash commit subject to the Conventional Commit PR title.
@@ -91,8 +92,8 @@ branch or worktree when the existing checkout contains uncommitted changes.
 - Keep correctness tests under `tests/` and permanent native C++ benchmarks under
   `benchmarks/`. Users must be able to compile and run them without Python or Ruby;
   shell scripts may orchestrate internal batches.
-- Keep raw measurement JSON and build logs outside the source repository. Use
-  release attachments or CI artifacts for detailed evidence.
+- Keep raw measurement JSON and build logs outside the source repository. Raw
+  evidence remains local unless publication of the exact files is separately authorized.
 - Write performance reports from actual local measurements. Identify the machine,
   source revision, workload, repeated runs and limits. Use CPU utilization percent
   (100% is one logical core), throughput and response-time units consistently.
@@ -119,3 +120,90 @@ branch or worktree when the existing checkout contains uncommitted changes.
 - Only describe changes contained in the release tag. Verify the release commit,
   assets and checks before publishing. Never move a published tag or attribute
   later `main` fixes, measurements or pending PRs to an earlier version.
+
+## Task execution and CI admission
+
+- Use `gh` CLI for GitHub operations; do not replace it with direct REST/GraphQL
+  requests or `gh api`. Normal Git fetch/push commands remain appropriate.
+- The root agent alone observes CI and controls PR readiness and queue admission.
+  Order admission by PR creation time: finish the oldest unfinished PR before
+  admitting newer ones. A newer PR becoming green first is not permission to
+  overtake an older PR. Account for shared runner capacity across ark and arknet.
+- Continue independent implementation and local validation in parallel. Publish
+  focused modules without starting newer native matrices ahead of the backlog.
+  Use drafts only when the deployed workflow actually defers draft native jobs;
+  otherwise retain a reviewable local branch until admission is available.
+- Do not enable automatic merge for held PRs. Release them in creation order;
+  after required checks pass, squash through the protected merge queue promptly.
+  Do not repeatedly ask for already-authorized merges or bypass any check.
+- When a draft-preview workflow is deployed, verify fresh ready-for-review checks
+  at the intended head before enabling merge or queue admission. Preview success,
+  an absent required context, or older green checks on the same SHA do not
+  establish fresh admission. Verify the hosted behavior before claiming it works.
+- Give jobs unique, descriptive names. Consolidate compatible jobs/steps to reduce
+  setup time without dropping required platforms, protocols or verification.
+- Preserve active acceptance runs. If correcting scheduling requires cancellation,
+  record its reason and arrange fresh acceptance; cancellation never counts as
+  a successful test. GitHub Actions concurrency groups do not by themselves
+  enforce PR-creation order.
+- Keep one observer per PR batch. Batch status reads, back off unchanged polling,
+  and let scripts collect logs and exit codes. Read summaries and relevant failure
+  excerpts, not entire repeated logs. Communicate completion, failures, interface
+  changes and decisions; do not repeatedly ask agents for unchanged progress.
+- Delegate only concrete independent deliveries with a scope and acceptance
+  criteria. Do not wake finished agents just to keep them busy. Record a short
+  handoff at module completion and preserve unrelated work in dirty checkouts.
+- Current-session monitoring does not authorize recurring/background automation.
+  Stop owned observers before ending the session unless separately authorized.
+
+## Keep documentation synchronized
+
+- Resolve legacy page aliases to their canonical source before editing. Nimbus
+  may skip retired Markdown files even when they remain in Git. Check the emitted
+  HTML and Markdown for the changed content; a successful build alone does not
+  prove that an edited source is published.
+- Treat documentation as part of each functional change. Review both languages,
+  README, feature/support tables, API and client/server examples, configuration,
+  installation, lifecycle, navigation and affected performance/validation reports.
+  Update the relevant material in the same PR; do not routinely defer it.
+- Describe the final supported behavior. Remove stale TODO/experimental/private
+  development-layer claims when accepted code supersedes them, and avoid
+  redundant "implemented", "retest" or "latest test" labels. Keep actual future
+  capabilities clearly marked TODO; do not imply they already work.
+- Keep ark and arknet boundaries clear. Cross-link the other project's accepted
+  public APIs rather than copying them or claiming pending integration is merged.
+  Never attribute later main changes or unpublished results to an older release.
+- Run the relevant Nimbus/link checks. After publication, verify the Pages run
+  succeeded for the intended source revision and inspect affected published pages.
+  A local preview, merged PR and deployed site are distinct evidence states.
+- Use the full names AddressSanitizer, UndefinedBehaviorSanitizer and
+  ThreadSanitizer in explanatory prose. Preserve command flags, paths, workflow
+  identifiers and machine-readable fields. Call Asio/Beast dependencies rather
+  than backends; capitalize Standalone Asio in prose.
+- Prefer SVG or Mermaid for editable diagrams and charts. Show labeled units and
+  readable legends, retain useful error bars, and avoid repeating chart contents
+  in long prose. Keep the README concise, with properly formatted dependency lists;
+  detailed guidance belongs in the bilingual documentation site.
+
+## Evidence and performance boundaries
+
+- Keep raw measurement JSON, packet captures, logs and credentials local, outside
+  version control. Do not upload them as release assets, CI artifacts or public
+  downloads without separate explicit authorization for those exact files.
+- Extend existing doctest correctness tests rather than adding a Boost test
+  dependency. Prefer standard C++20 facilities over obsolete wrappers/macros when
+  behavior and ownership can be preserved; keep necessary platform/ABI boundaries.
+- Maintain compile-and-run C++ tests and benchmarks in their project directories;
+  do not require Python or Ruby as the user's test entry point. Shell scripts may
+  orchestrate internal batches. Do not replace permanent tests with temporary ones.
+- Measure performance locally before writing reports. Identify machine, OS,
+  compiler, dependency versions, source/binary identity, duration and units.
+  Compare payload sizes, in-flight batches, repeated runs, coroutine/callback
+  interfaces and IO/thread models, including one context/one thread and one
+  context/multiple threads. Report throughput, latency and CPU utilization;
+  100% CPU denotes one logical core, with the measurement scope stated.
+- Retain the final valid results and material limitations, not a retesting diary.
+  Functional checks, sanitizer checks, performance measurements and deployment
+  capacity are separate claims. Loopback tests do not prove production PCU or
+  cross-host capacity; successful controls do not establish an unresolved root
+  cause. Do not extend timeouts or rerun to green to conceal failures.

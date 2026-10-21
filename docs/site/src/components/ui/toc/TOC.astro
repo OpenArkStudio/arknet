@@ -5,20 +5,23 @@
  * lives in toc.client.ts.
  */
 import { cn } from "@/lib/cn";
+import { getUiLabels, type UiLocale } from "@/lib/ui-labels";
 import type { HTMLAttributes } from "astro/types";
 import type { TOCItem } from "@cloudflare/nimbus-docs/types";
 
 interface Props extends HTMLAttributes<"div"> {
   headings: TOCItem[];
+  locale?: UiLocale;
 }
 
-const { headings, class: className, ...attrs } = Astro.props;
+const { headings, locale = "en", class: className, ...attrs } = Astro.props;
+const labels = getUiLabels(locale);
 ---
 
 {headings.length > 0 && (
   <div data-nb-toc class={cn("toc-container", className)} {...attrs}>
-    <h2 class="mb-2 text-sm font-semibold text-foreground">On this page</h2>
-    <nav aria-label="Table of contents" class="relative">
+    <h2 class="mb-2 text-sm font-semibold text-foreground">{labels.onThisPage}</h2>
+    <nav aria-label={labels.tableOfContents} class="relative">
       <svg
         data-nb-toc-rail
         aria-hidden="true"

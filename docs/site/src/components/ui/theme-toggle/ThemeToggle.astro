@@ -6,11 +6,15 @@
  */
 import Icon from "@cloudflare/nimbus-docs/components/Icon.astro";
 import { cn } from "@/lib/cn";
+import { getUiLabels, type UiLocale } from "@/lib/ui-labels";
 import type { HTMLAttributes } from "astro/types";
 
-interface Props extends HTMLAttributes<"button"> {}
+interface Props extends HTMLAttributes<"button"> {
+  locale?: UiLocale;
+}
 
-const { class: className, ...attrs } = Astro.props;
+const { locale = "en", class: className, ...attrs } = Astro.props;
+const labels = getUiLabels(locale);
 ---
 
 <button
@@ -20,7 +24,7 @@ const { class: className, ...attrs } = Astro.props;
     className,
   )}
   {...attrs}
-  aria-label="Toggle dark mode"
+  aria-label={labels.toggleDarkMode}
   data-nb-state="light"
 >
   <Icon name="ph:sun" class="w-[1.125rem] h-[1.125rem] hidden group-data-[nb-state=dark]:block" />

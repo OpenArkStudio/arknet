@@ -135,6 +135,12 @@ internal page links, anchors, SVG paths and AI reading endpoints. The language
 dropdown preserves the current page; legacy Docsify hash links still redirect.
 Keep `@cloudflare/nimbus-docs` pinned and review starter updates before upgrading.
 
+Use fenced `mermaid` blocks for editable diagrams. Diagram pages load the bundled
+renderer without a CDN, follow the color theme and keep wide diagrams scrollable.
+Readers can expand the original source; Markdown exports retain the Mermaid block.
+If JavaScript is unavailable or rendering fails, the code remains readable.
+The site build also emits [licenses for its bundled dependencies](/third-party-licenses.txt).
+
 Use Nimbus's `<Steps>` with `<Step title="…">` for sequential tasks, and
 `<Aside type="note|tip|caution|danger" title="…">` for notes, suggestions,
 warnings and errors. Keep a blank line between a component tag and its Markdown

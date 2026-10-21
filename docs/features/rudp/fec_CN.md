@@ -5,7 +5,7 @@ RUDP 默认只使用 ARQ。可选的 Reed–Solomon FEC 在发送数据报的同
 无需 Python 或额外链接库。
 
 ```mermaid
-flowchart LR
+flowchart TB
     A[应用消息] --> B[ARQ 分片与确认]
     B --> C[FEC 数据与校验分片]
     C --> D[UDP]

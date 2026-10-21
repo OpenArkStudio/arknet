@@ -38,8 +38,9 @@ HTTP/3 需要 QUIC/QPACK 协议栈，具体引擎与依赖形式待定。现有 
 原生单节点 [MySQL](../features/mysql/index_CN.md) 与 [Redis](../features/redis/index_CN.md)
 客户端提供认证、验证证书的 TLS、连接池独占租约、时限与请求限额。
 [数据库客户端指南](../features/database-clients_CN.md)说明失败处理与所有权约定。
-Redis Cluster、Sentinel、Pub/Sub 和公开数据库协程接口仍为 TODO。
-ark 插件接入需另行完成应用回归与关闭流程验证。
+Redis Cluster、Sentinel、Pub/Sub 和 arknet 原生数据库专用协程接口仍为 TODO。
+ark 已提供公开的 MySQL／Redis 协程插件；它们属于独立框架，使用管理器共享业务执行器。
+接口与验收边界见[框架接入说明](production-readiness_CN.md#框架协程与数据库边界)。
 
 ## 后续范围
 

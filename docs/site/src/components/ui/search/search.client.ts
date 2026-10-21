@@ -1,4 +1,5 @@
 import { mount } from "@cloudflare/nimbus-docs/client";
+import { getUiLabels, type UiLocale } from "@/lib/ui-labels";
 import type { SearchProvider, SearchResult } from "@cloudflare/nimbus-docs/types";
 import { provider } from "./providers/pagefind";
 
@@ -7,6 +8,7 @@ export interface SearchConfig {
   resultsContainer: HTMLElement;
   emptyState: HTMLElement;
   provider: SearchProvider;
+  locale?: UiLocale;
   onNavigate?: () => void;
 }
 
@@ -16,7 +18,8 @@ export interface SearchInstance {
 }
 
 export function initSearch(config: SearchConfig): SearchInstance {
-  const { input, resultsContainer, emptyState, provider, onNavigate } = config;
+  const { input, resultsContainer, emptyState, provider, locale = "en", onNavigate } = config;
+  const labels = getUiLabels(locale);
 
   let initialized = false;
   let activeIndex = -1;
@@ -104,8 +107,8 @@ export function initSearch(config: SearchConfig): SearchInstance {
       return true;
     } catch {
       emptyState.textContent = import.meta.env.DEV
-        ? "Search is available after a production build."
-        : "Search could not load. Check your connection and reload the page. If it persists, ask the site owner to rebuild and deploy the search index.";
+        ? labels.searchBuildRequired
+        : labels.searchLoadError;
       return false;
     }
   }
@@ -116,7 +119,7 @@ export function initSearch(config: SearchConfig): SearchInstance {
     const signal = activeController.signal;
 
     emptyState.style.display = "";
-    emptyState.textContent = "Searching…";
+    emptyState.textContent = labels.searching;
     clearResults();
 
     if (!(await ensureInitialized()) || signal.aborted) return;
@@ -130,7 +133,7 @@ export function initSearch(config: SearchConfig): SearchInstance {
 
       if (results.length === 0) {
         emptyState.style.display = "";
-        emptyState.textContent = "No results found.";
+        emptyState.textContent = labels.noResults;
         return;
       }
 
@@ -141,7 +144,7 @@ export function initSearch(config: SearchConfig): SearchInstance {
       if (signal.aborted) return;
       clearResults();
       emptyState.style.display = "";
-      emptyState.textContent = "Search is temporarily unavailable.";
+      emptyState.textContent = labels.searchUnavailable;
     }
   }
 
@@ -153,7 +156,7 @@ export function initSearch(config: SearchConfig): SearchInstance {
         activeController?.abort();
         clearResults();
         emptyState.style.display = "";
-        emptyState.textContent = "Type to search…";
+        emptyState.textContent = labels.typeToSearch;
         return;
       }
       void runSearch(query);
@@ -192,7 +195,7 @@ export function initSearch(config: SearchConfig): SearchInstance {
       activeIndex = -1;
       clearResults();
       emptyState.style.display = "";
-      emptyState.textContent = "Type to search…";
+      emptyState.textContent = labels.typeToSearch;
       await ensureInitialized();
     },
     destroy() {
@@ -263,6 +266,7 @@ mount("[data-search-dialog]", (root) => {
     resultsContainer,
     emptyState,
     provider,
+    locale: dialog.dataset.searchLocale === "zh-CN" ? "zh-CN" : "en",
     onNavigate: () => dialog.close(),
   });
 

@@ -84,7 +84,7 @@ Redis 服务端错误保留为 `error` 或 `bulk_error` 类型回复；`bool(res
 | MySQL 密码交换 | 不降级为明文完整密码，不提供 RSA 密钥交换、`mysql_clear_password`、`sha256_password` 或 MFA；不支持的交互明确失败 |
 | Redis | 一个配置的端点；禁止回复或要求其他回复模型的命令会被拒绝 |
 | Redis TODO | Cluster 重定向、Sentinel 发现、Pub/Sub 订阅、复制与 `MONITOR` |
-| 共同 TODO | 公开协程数据库接口；按实际负载进行部署验收 |
+| arknet TODO | 原生数据库专用协程接口；按实际负载进行部署验收 |
 
 HTTP/2、HTTP/3、named pipe、Unix domain socket 与 RPC 仍是[路线图](../project/roadmap_CN.md)中的独立事项。RESP3 推送回调不等同于 Pub/Sub 订阅接口。
 
@@ -101,9 +101,13 @@ HTTP/2、HTTP/3、named pipe、Unix domain socket 与 RPC 仍是[路线图](../p
 
 MySQL 在异步投递返回前保留运行时持有者，允许完成回调销毁连接。
 独立的无效连接参数和命令拒绝回归覆盖这些快速完成路径。
-MySQL 连接与连接池测试在两种 Asio 依赖下通过 TSan，并在 Boost.Asio 下通过 ASan+UBSan；
+MySQL 连接与连接池测试在两种 Asio 依赖下通过 ThreadSanitizer，并在 Boost.Asio 下通过 AddressSanitizer+UndefinedBehaviorSanitizer；
 [测试记录](../project/testing_CN.md)列出范围与计数。
 
 [MySQL](mysql/performance_CN.md) 与 [Redis](redis/performance_CN.md) 性能页提供可编译的基准程序、负载维度和报告入口。报告需记录机器与服务端配置、包体、排队或流水线深度、连接数、重复轮次、每秒操作数、RT 分位数和 CPU 占用比例。容量需经过[部署验收](../project/production-readiness_CN.md)。
 
 arknet 负责协议 IO、认证、回复关联、连接池与关闭；ark 数据库插件负责框架配置与模块集成；应用负责事务边界、业务结果与重试决策。客户端发布后，ark 插件仍需通过应用回归测试才能确认兼容。
+
+ark 的公开 [MySQL](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/mysql_CN.md) 与 [Redis](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/redis_CN.md)
+模块已提供框架协程接口，通过管理器共享执行器在所属线程交付结果。它们属于 ark，
+不改变 arknet 客户端的回调、IO 归属或关闭契约；详见[框架接入边界](../project/production-readiness_CN.md#框架协程与数据库边界)。

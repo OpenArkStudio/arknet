@@ -64,8 +64,9 @@ strand。详见 [发送与生命周期](sending_CN.md)。
 
 这些是选型起点，不是固定性能排名。单个繁忙连接在两种模型中都会被 strand
 串行化，增加 IO 线程不能把它的状态机并行化。应测试实际连接分布和回调成本。
-首版 arknet 端点提供回调接口；协程基准使用原生 Asio `awaitable` 和
-`co_spawn` 比较调度模型。公开协程端点 API 延后提供。
+arknet 端点与原生数据库客户端提供回调接口；协程基准使用原生 Asio `awaitable` 和
+`co_spawn` 比较调度模型。arknet 专用协程端点 API 仍为 TODO。独立 ark 框架已提供
+公开数据库协程模块，不能把这些框架接口当作 arknet API；见[接入边界](../project/production-readiness_CN.md#框架协程与数据库边界)。
 
 ## 由调用方驱动执行
 

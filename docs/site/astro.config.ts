@@ -23,6 +23,9 @@ export default defineConfig({
   // Astro 7's Vite 8 bundler).
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      license: { fileName: "third-party-licenses.txt" },
+    },
   },
   // Hover-prefetch link targets so full-page navigations feel instant without
   // a client-side router.

@@ -113,6 +113,11 @@ npm run check
 语言下拉框保持当前页面；旧 Docsify hash 链接仍可跳转。
 `@cloudflare/nimbus-docs` 固定版本，升级前审查 starter 的变更。
 
+可编辑图表使用 `mermaid` 代码块。含图表的页面加载本地打包的渲染器，无需 CDN，
+支持深浅色主题，较宽的图表可横向滚动。读者可展开原始代码；Markdown 导出保留
+Mermaid 代码块。JavaScript 不可用或渲染失败时，代码仍可阅读。
+站点构建同时生成[所打包依赖的许可证](/third-party-licenses.txt)。
+
 连续操作使用 Nimbus 的 `<Steps>` 和 `<Step title="…">`；说明、建议、注意和错误
 使用 `<Aside type="note|tip|caution|danger" title="…">`。组件标签与 Markdown 正文之间
 保留空行，标题使用对应页面的语言，提示框用于需要读者留意的信息。

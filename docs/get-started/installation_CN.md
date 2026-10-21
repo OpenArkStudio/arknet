@@ -111,6 +111,15 @@ target_link_libraries(my_app PRIVATE arknet::arknet)
 配置应用时传入 `-DCMAKE_PREFIX_PATH=/path/to/prefix`。安装包会保留安装时的依赖方案
 和 TLS 配置，并在使用端查找这些依赖。需要不同依赖方案或 TLS 配置时，使用不同安装前缀。
 
+## 编译器缓存与安装包消费项目
+
+编译缓存属于每个 CMake 构建的配置，不由安装的 `arknet::arknet` 目标导出。
+需要缓存时，在消费项目中设置可选的 `CMAKE_CXX_COMPILER_LAUNCHER`，例如
+`-DCMAKE_CXX_COMPILER_LAUNCHER=sccache`；不设置时不增加工具依赖。
+当前 main 的 `install_consumer` 检查将父构建的 C++ launcher 转发到独立子配置，
+保留路径与参数列表，且不改变真实编译失败的传播。
+缓存命中仍取决于工具、配置和源码，详见[构建缓存](../project/testing_CN.md#原生构建缓存)。
+
 ## 使用 vcpkg
 
 仓库的 `vcpkg.json` 默认启用 Boost，并安装 Standalone Asio 以运行两种依赖方案的测试。`boost` feature 默认启用，可选的 `ssl` feature 安装 OpenSSL。feature 用于安装依赖；arknet 的对应

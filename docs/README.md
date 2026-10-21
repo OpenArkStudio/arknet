@@ -43,7 +43,7 @@ records correctness checks and their coverage.
 
 [Project](project/index.md) covers architecture, contribution guidelines and the
 roadmap. HTTP/2, HTTP/3, named pipes, Unix domain sockets and RPC remain TODO.
-[Version 0.2.0](project/releases.md) adds native database clients and simplifies dependencies.
+[Release notes](project/releases.md) cover published v0.2.2 and earlier tags; current-main documentation and test scopes are identified separately.
 Deployment capacity and endurance are covered by [production acceptance](project/production-readiness.md).
 
 [Source](https://github.com/OpenArkStudio/arknet) ·

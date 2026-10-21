@@ -19,8 +19,8 @@ Linux Boost/TLS Release suite, examples and benchmark smoke checks.
 
 Code-bearing merge-queue candidates and manual runs retain the complete native
 matrix: Linux/macOS/Windows, Boost/Standalone Asio, TLS, Linux without TLS, and
-Linux AddressSanitizer（内存错误检测） with UndefinedBehaviorSanitizer（未定义行为检测）
-and ThreadSanitizer（线程数据竞争检测）. A green source PR is not full-matrix acceptance.
+Linux AddressSanitizer with UndefinedBehaviorSanitizer, and separate ThreadSanitizer
+checks. A green source PR is not full-matrix acceptance.
 
 Strictly classified README/documentation-only changes run documentation and
 formatting checks in both stages. The twelve matrix jobs retain their required
@@ -30,10 +30,10 @@ the complete matrix. Failed scope validation blocks every native gate. Rename
 classification includes both old and new paths. Active runs are not cancelled to
 schedule a newer commit.
 
-The first stage of aggregate-gate migration adds `CI - required` while retaining
-all fourteen existing check names, the static twelve-cell matrix and its native
-commands. This stage does not remove scope-only runner jobs or change branch
-protection. The gate uses the built-in token with job-local `contents: read` and
+`CI - required` accompanies twelve static native matrix checks, documentation
+and formatting: fifteen required check contexts in total. Scope-only runner jobs
+retain their existing contexts and native commands. The gate uses the built-in
+token with job-local `contents: read` and
 `actions: read` to read this run's actual job and step metadata. It recomputes the
 scope from the event's exact commit range and requires matching scope outputs,
 successful documentation and formatting, and exactly one successful job for each
@@ -57,11 +57,9 @@ recorded cache post step. Missing steps, unknown outcomes and failures from othe
 steps remain errors. Fixture coverage establishes these fallback rules, not cache
 hits, hosted acceptance or a measured speedup.
 
-A future change may replace fixed protected contexts with the aggregate and
-introduce a dynamic source/documentation matrix only after this gate has passed
-real source, documentation and full merge-candidate runs. That protection migration
-and runner reduction are separate work; local fixture tests establish the gate's
-validation rules and do not establish hosted native acceptance.
+The matrix retains its static job contexts even for scope-only plans. Local
+fixture tests establish the gate's validation rules; they do not establish hosted
+native acceptance or a reduction in runner use.
 
 For a focused local run, pass exact registered check names. Omit the option to
 run all checks; unknown or unavailable names fail during configuration:
@@ -122,7 +120,8 @@ and `shasum` are not prerequisites for these C++ tests or single benchmarks.
 | IPv6 | TCP, UDP/session/cast, WS/WSS, HTTP/HTTPS, TLS IP identity and handshake Host |
 | MySQL | Packet/authentication/command codecs, verified TLS, queries, prepared statements, transactions, result limits, cancellation, bounded admission and exclusive pool reset/database isolation |
 | Redis | RESP2/RESP3, authentication, TCP/TLS/mTLS, ordered pipelines, cancellation reply draining, bounded admission, unsupported replication commands and exclusive pool reset/authentication/database isolation |
-| Installed consumer | Provider/TLS configuration propagation and installed public headers |
+| Installed consumer | Provider/TLS configuration, installed public headers and optional C++ compiler launcher forwarding; empty launcher, paths with spaces, launcher argument lists and real compiler failure propagation |
+| Connection-load process | Raw TCP peers split the frame prefix/body and combine eight requests across a 4 KiB receive capacity against both arknet and native Asio servers; ordered byte-exact replies and FIN exchange, not a high-concurrency or TCP-loss test |
 
 Sustained stress validates content/sequence, completion counts, connection and
 server restarts, pending writes and queue cleanup. Each protocol splits
@@ -155,8 +154,8 @@ Compilation finishes before checks run serially with real database services.
 | --- | ---: | ---: | ---: | --- |
 | Boost.Asio | 52/52 | 470 | 978,433 | Passed |
 | Standalone Asio | 51/51 | 410 | 576,824 | Passed |
-| Boost.Asio / ASan+UBSan | 52/52 | 470 | 615,937 | Passed |
-| Standalone Asio / TSan | 51/51 | 410 | 333,108 | Passed |
+| Boost.Asio / AddressSanitizer+UndefinedBehaviorSanitizer | 52/52 | 470 | 615,937 | Passed |
+| Standalone Asio / ThreadSanitizer | 51/51 | 410 | 333,108 | Passed |
 
 Checks count programs invoked by `arknet_check`; cases count doctest executions.
 Assertion totals are observed counts, including duration-based stress cases.
@@ -194,11 +193,11 @@ These results do not establish dynamic-library unloading safety.
 | Scope | Checks | Cases | Assertions | Result |
 | --- | ---: | ---: | ---: | --- |
 | Boost.Asio, TLS OFF: eight selected targets | 8/8 | 66 | 1,515 | Passed |
-| Boost.Asio ASan+UBSan: queued-connect, HTTP external-context and external-stop repetitions | 72/72 | 280 | 4,664 | Passed |
+| Boost.Asio AddressSanitizer+UndefinedBehaviorSanitizer: queued-connect, HTTP external-context and external-stop repetitions | 72/72 | 280 | 4,664 | Passed |
 
 The NoTLS selection covers TCP, external-stop, manual-runtime, queued-connect
 cancellation and four Redis shutdown/publication-failure targets; it is not a
-complete NoTLS matrix or a MySQL-without-OpenSSL result. The 72 ASan executions
+complete NoTLS matrix or a MySQL-without-OpenSSL result. The 72 AddressSanitizer executions
 comprise 32 queued-connect runs, 32 selected HTTP cases and eight external-stop
 runs. Cases excluded by the explicit HTTP filter are not environment skips.
 The complete unfiltered HTTP suite passes in the complete checks above.
@@ -207,10 +206,10 @@ The test-only allocation and connect-ordering snapshot has separate coverage:
 
 | Dependency / instrumentation | Focused cases | Assertions | Selected native-error executions |
 | --- | ---: | ---: | ---: |
-| Boost.Asio / ASan+UBSan | 30 | 927 | 32/32 passed |
-| Standalone Asio / ASan+UBSan | 30 | 927 | 32/32 passed |
-| Boost.Asio / TSan | 30 | 926 | 32/32 passed |
-| Standalone Asio / TSan | 30 | 926 | 32/32 passed |
+| Boost.Asio / AddressSanitizer+UndefinedBehaviorSanitizer | 30 | 927 | 32/32 passed |
+| Standalone Asio / AddressSanitizer+UndefinedBehaviorSanitizer | 30 | 927 | 32/32 passed |
+| Boost.Asio / ThreadSanitizer | 30 | 926 | 32/32 passed |
+| Standalone Asio / ThreadSanitizer | 30 | 926 | 32/32 passed |
 
 All focused cases pass without sanitizer diagnostics. The 128 selected
 native-error executions each check nine assertions; other cases excluded by the
@@ -229,10 +228,10 @@ through permanent closure on fatal assertion paths.
 
 | Dependency / instrumentation | MySQL shutdown cases / assertions | Redis shutdown cases / assertions |
 | --- | ---: | ---: |
-| Boost.Asio / ASan+UBSan | 14 / 1,067 | 19 / 596 |
-| Standalone Asio / ASan+UBSan | 14 / 1,067 | 19 / 596 |
-| Boost.Asio / TSan | 14 / 1,067 | 19 / 595 |
-| Standalone Asio / TSan | 14 / 1,066 | 19 / 595 |
+| Boost.Asio / AddressSanitizer+UndefinedBehaviorSanitizer | 14 / 1,067 | 19 / 596 |
+| Standalone Asio / AddressSanitizer+UndefinedBehaviorSanitizer | 14 / 1,067 | 19 / 596 |
+| Boost.Asio / ThreadSanitizer | 14 / 1,067 | 19 / 595 |
+| Standalone Asio / ThreadSanitizer | 14 / 1,066 | 19 / 595 |
 
 All eight target runs pass with zero failures, skips or sanitizer reports.
 The four configurations also pass unchanged MySQL return-failure tests
@@ -242,13 +241,13 @@ source files and both pool headers match this snapshot. These are focused
 checks, not a complete-suite run of this snapshot.
 
 Redis diagnostic tests retain inspected exception snapshots until their
-concurrent observer joins. The original Linux TSan and Windows fault-injection
+concurrent observer joins. The original Linux ThreadSanitizer and Windows fault-injection
 failures, source mapping and focused logs remain in the validation archive.
 The pool correction removes one allocation boundary; it does not guarantee
 that every child-close path can recover from heap exhaustion. Performance
 measurements remain tied to `2aa5bc0`, before this shutdown-only correction.
 
-ASan leak checking is disabled on this macOS host. The complete-suite ASan runs
+AddressSanitizer leak checking is disabled on this macOS host. The complete-suite AddressSanitizer runs
 also disable online symbolization to avoid a diagnosed symbolizer hang; memory
 instrumentation remains enabled. No sanitizer suppressions or forced-include
 workarounds were added. Only the existing reference-KCP test translation unit
@@ -262,11 +261,11 @@ not describe the current project.
 
 | Instrumentation | Scope | Cases | Result |
 | --- | --- | ---: | --- |
-| ASan/UBSan | Standalone Asio: ARQ, reference ARQ/FEC interop, RUDP/FEC, lifecycle, detail and concurrency | 109 | Passed |
-| TSan | Standalone Asio: FEC, reference FEC interop, RUDP/FEC, lifecycle, detail and concurrency | 86 | Passed |
+| AddressSanitizer/UndefinedBehaviorSanitizer | Standalone Asio: ARQ, reference ARQ/FEC interop, RUDP/FEC, lifecycle, detail and concurrency | 109 | Passed |
+| ThreadSanitizer | Standalone Asio: FEC, reference FEC interop, RUDP/FEC, lifecycle, detail and concurrency | 86 | Passed |
 
 The RUDP FEC endpoint suite passed 11 cases and 2,564 assertions in both Release
-dependency configurations and the separate ASan/UBSan and TSan builds. Real zephyr/arknet process
+dependency configurations and the separate AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer builds. Real zephyr/arknet process
 pairs passed all 12 scenarios per dependency configuration, including reconnect, ARK-style binary
 headers, 4096-byte bodies, ARQ packet loss and reordering. The relay preserves
 SYN/ACK/FIN; this does not establish reliable shutdown when FIN is lost.
@@ -285,7 +284,7 @@ production-duration endurance and ARK workload acceptance require separate tests
 </Aside>
 
 Sanitizers run separately from performance measurements. LeakSanitizer support
-differs by platform; a passing Apple ASan run is not a Linux leak-check result.
+differs by platform; a passing Apple AddressSanitizer run is not a Linux leak-check result.
 
 ### Sanitizer Checks
 
@@ -293,11 +292,11 @@ Sanitizers instrument a development build and report errors observed while tests
 
 | Tool | Checks |
 | --- | --- |
-| ASan (AddressSanitizer) | Memory errors such as out-of-bounds access, use-after-free and double-free |
-| TSan (ThreadSanitizer) | Unsynchronized concurrent memory accesses where at least one access is a write |
-| UBSan (UndefinedBehaviorSanitizer) | Selected undefined behavior, such as signed integer overflow, invalid shifts and misaligned access |
+| AddressSanitizer | Memory errors such as out-of-bounds access, use-after-free and double-free |
+| ThreadSanitizer | Unsynchronized concurrent memory accesses where at least one access is a write |
+| UndefinedBehaviorSanitizer | Selected undefined behavior, such as signed integer overflow, invalid shifts and misaligned access |
 
-ASan/UBSan and TSan use separate builds. They add execution overhead and are
+AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer use separate builds. They add execution overhead and are
 disabled for published performance measurements. A passing run covers the paths
 and thread schedules exercised; it does not prove that all errors are absent.
 
@@ -305,7 +304,8 @@ and thread schedules exercised; it does not prove that all errors are absent.
 
 CI checks Linux/macOS/Windows with both dependency configurations; Linux also runs
 AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer. Job names include
-OS, dependency, TLS and check mode. All 14 check names remain present. Known source
+OS, dependency, TLS and check mode. The twelve native checks, documentation and
+formatting accompany `CI - required`. Known source
 modules on PR branches run their selected native checks in Linux/Boost/TLS/Release;
 other cells record scope-only coverage. Code-bearing merge-queue candidates,
 manual dispatches and changes outside the reviewed module map run all twelve native
@@ -389,6 +389,14 @@ the compiler, build type, flags, selected targets and test commands stay the sam
 Compiler setup or server startup failure selects direct compilation. Server IO failure
 uses `SCCACHE_IGNORE_SERVER_IO_ERROR=1` to fall back to the local compiler.
 
+The installed-consumer child configure also receives the parent build's optional
+`CMAKE_CXX_COMPILER_LAUNCHER`, including spaces in its executable path and
+semicolon-separated launcher arguments. An empty value adds no cache-tool
+dependency; compiler errors still fail the build. The `consumer_launcher`
+regression uses real child builds for these boundaries; the complete
+`install_consumer` check remains independent. Forwarding a launcher does not
+establish a cache hit or compilation-time saving.
+
 GitHub Actions persists the local compiler cache and vcpkg `files` binary archives
 separately. Each compiler cache is bounded to 512 MiB. Cache keys cover OS,
 architecture, runner image/version, target and host triplets, pinned vcpkg revision, manifest/configuration/overlay contents, requested
@@ -404,7 +412,7 @@ to that PR; another PR or `main` cannot restore it. Merge-queue refs are tempora
 their writes also do not populate `main`. Routine PR and queue runs therefore do not
 maintain a shared default-branch cache.
 
-After this change merges, seed shared caches explicitly with the existing **CI**
+Seed shared caches explicitly with the existing **CI**
 workflow: select **Run workflow**, choose branch **main**, then run it. This manual
 `workflow_dispatch` executes the full native matrix and saves successful cache
 entries under `main`. Repeat after runner image, dependency or build-profile changes,
