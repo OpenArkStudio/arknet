@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { parse } from "parse5";
+import { assertUiControls } from "./ui-controls.mjs";
 
 const root = resolve("dist");
 const pages = [];
@@ -72,7 +73,16 @@ for (const file of ["llms.txt", "llms-full.txt", "zh/llms.txt", "features/udp/pe
 }
 console.log(`Checked ${pages.length} static HTML pages and ${references.size} internal references, including AI Markdown endpoints.`);
 
+const bundledLicenses = await readFile(join(root, "third-party-licenses.txt"), "utf8");
+assert.match(bundledLicenses, /mermaid/, "missing bundled diagram renderer license");
+assert.match(bundledLicenses, /Knut Sveidqvist/, "missing Mermaid copyright notice");
+
 for (const prefix of ["", "zh/"]) {
+  const diagramHtml = await readFile(join(root, prefix, "features/rudp/fec/index.html"), "utf8");
+  assert.match(diagramHtml, /<figure[^>]*data-nb-lang="mermaid"/, `${prefix}FEC: missing diagram source`);
+  assert.match(diagramHtml, /src="\/arknet\/_astro\/Mermaid\.[^"]+\.js"/, `${prefix}FEC: missing bundled diagram renderer`);
+  const diagramMarkdown = await readFile(join(root, prefix, "features/rudp/fec/index.md"), "utf8");
+  assert.match(diagramMarkdown, /```mermaid\nflowchart /, `${prefix}FEC: diagram source lost from Markdown export`);
   for (const route of ["get-started/installation", "get-started/first-application", "project/troubleshooting"]) {
     const html = await readFile(join(root, prefix, route, "index.html"), "utf8");
     assert.match(html, /data-steps/, `${prefix}${route}: missing Nimbus steps`);
@@ -90,3 +100,8 @@ for (const prefix of ["", "zh/"]) {
   }
 }
 console.log("Checked bilingual Nimbus steps, callouts and plain Markdown exports.");
+
+for (const [page, locale] of [["features/rudp/fec/index.html", "en"], ["zh/features/rudp/fec/index.html", "zh-CN"]]) {
+  assertUiControls(await readFile(join(root, page), "utf8"), locale);
+}
+console.log("Checked English/Chinese FEC controls, including the search dialog locale.");

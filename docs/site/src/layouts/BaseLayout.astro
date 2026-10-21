@@ -17,6 +17,7 @@ import WebMCP from "@/components/WebMCP.astro";
 import type { BasePageProps } from "@cloudflare/nimbus-docs/types";
 import BackToTop from "../components/BackToTop.astro";
 import LegacyLinks from "../components/LegacyLinks.astro";
+import Mermaid from "../components/Mermaid.astro";
 
 type Props = BasePageProps;
 
@@ -130,13 +131,14 @@ const resolvedMarkdownUrl =
       href="#main-content"
       class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-100 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:no-underline focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
     >
-      Skip to content
+      {collection === "zh" ? "跳转到正文" : "Skip to content"}
     </a>
     {!isHiddenVersion && (
       <AgentDirective markdownUrl={resolvedMarkdownUrl ?? null} llmsUrl={llmsUrl} />
     )}
     <slot />
     <BackToTop chinese={collection === "zh"} />
+    <Mermaid />
     {config.search !== false && <SearchDialog />}
 
     <script>

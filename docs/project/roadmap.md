@@ -40,8 +40,10 @@ HTTP/1 transports remain independently usable.
 Native single-node [MySQL](../features/mysql/index.md) and [Redis](../features/redis/index.md)
 clients provide authentication, verified TLS, exclusive pool leases, deadlines and bounded requests.
 The [database client guide](../features/database-clients.md) describes their failure and ownership contracts.
-Redis Cluster, Sentinel, Pub/Sub and public database coroutine APIs remain TODO.
-ark plugin integration requires separate application regression and shutdown validation.
+Redis Cluster, Sentinel, Pub/Sub and dedicated native arknet database coroutine APIs
+remain TODO. The separate ark framework already provides public MySQL/Redis coroutine
+plugins on its manager shared business executor. See the [framework integration
+boundary](production-readiness.md#framework-coroutine-and-database-boundary).
 
 ## Future Scope
 

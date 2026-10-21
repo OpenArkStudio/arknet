@@ -25,8 +25,8 @@ UndefinedBehaviorSanitizer（未定义行为检测）组合、ThreadSanitizer（
 改动范围缺失或格式错误时运行完整矩阵；范围验证失败会阻止所有原生检查通过。
 重命名同时分类新旧路径，不为新提交取消正在执行的检查。
 
-聚合 gate 迁移的第一阶段新增 `CI - required`，保留已有十四个检查名称、固定十二格矩阵和全部原生命令。
-这一阶段不移除只验证范围的执行机任务，也不修改分支保护。gate 使用内置 token，并仅为自己的 job 授予
+`CI - required` 与固定十二格原生检查、文档和格式检查共同构成十五个必需检查。
+只验证范围的执行机任务保留既有名称与原生命令。gate 使用内置 token，并仅为自己的 job 授予
 `contents: read` 与 `actions: read`，读取本轮实际任务及步骤元数据。它按事件中的精确提交范围重新计算计划，
 要求范围输出一致、文档与格式检查真实成功，且每个已审定矩阵配置恰好有一个成功任务。
 结果缺失、重复、不完整或未知时均失败。
@@ -41,9 +41,8 @@ gate 还核对现有计划要求执行的基准与报告检查步骤。
 必须跳过其恢复与启动，直接调用编译器。只验证范围的格子必须跳过全部缓存步骤及任何已记录的缓存 post 步骤。
 步骤缺失、结果未知或其他步骤失败仍会报错。fixture 只验证这些回退规则，不证明缓存命中、托管验收或耗时改善。
 
-只有这个 gate 已通过真实源分支、纯文档及完整合并候选运行后，后续改动才可考虑用聚合检查替换固定的受保护上下文，
-并引入动态的源分支／文档矩阵。分支保护迁移与执行机任务减少属于后续工作；本地 fixture 测试只验证 gate 规则，
-不能替代托管环境的原生验收。
+矩阵在仅验证范围时仍保留固定的任务上下文。本地 fixture 测试只验证 gate 规则，
+不代表已完成托管原生验收或减少执行机使用。
 
 本地可以选择已注册的检查名称；省略此选项时运行全部检查，未知或不可用的名称会使配置失败：
 
@@ -102,7 +101,8 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 | IPv6 | TCP、UDP/session/cast、WS/WSS、HTTP/HTTPS、TLS IP 身份验证和握手 Host |
 | MySQL | 报文／认证／命令编解码、TLS 身份验证、查询、预处理、事务、结果上限、取消、有界准入，以及独占连接池的重置与数据库隔离 |
 | Redis | RESP2/RESP3、认证、TCP/TLS/mTLS、有序流水线、取消后的回复排空、有界准入、拒绝复制命令，以及独占连接池的重置、认证与数据库隔离 |
-| 安装包消费项目 | 依赖方案／TLS 配置传播与已安装公开头文件 |
+| 安装包消费项目 | 依赖方案／TLS、公开头文件和可选 C++ compiler launcher 转发；空 launcher、带空格路径、launcher 参数列表与真实编译错误传播 |
+| 连接负载进程 | 原始 TCP 对端拆分帧前缀／消息体，并跨 4 KiB 接收容量合并八个请求，分别对接 arknet 与原生 Asio 服务端；检查按序逐字节回复和 FIN，不代表高并发或 TCP 丢包验收 |
 
 持续压力测试验证数据与序号、完成计数、连接／服务端重启、未完成写入和队列清理。
 每种协议将 `--seconds` 分配给四种配置：库内置调度器、单 context 单线程、
@@ -131,8 +131,8 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 | --- | ---: | ---: | ---: | --- |
 | Boost.Asio | 52/52 | 470 | 978,433 | 通过 |
 | Standalone Asio | 51/51 | 410 | 576,824 | 通过 |
-| Boost.Asio／ASan+UBSan | 52/52 | 470 | 615,937 | 通过 |
-| Standalone Asio／TSan | 51/51 | 410 | 333,108 | 通过 |
+| Boost.Asio／AddressSanitizer+UndefinedBehaviorSanitizer | 52/52 | 470 | 615,937 | 通过 |
+| Standalone Asio／ThreadSanitizer | 51/51 | 410 | 333,108 | 通过 |
 
 检查数是 `arknet_check` 执行的程序数，用例数是 doctest 执行的用例数。
 断言数为实际执行计数，包含按时长运行的压力用例。
@@ -164,21 +164,21 @@ Redis 协议的性能测量使用 Valkey 8.0.11，与这里的 Redis 7.4.2 互�
 | 范围 | 检查数 | 用例数 | 断言数 | 结果 |
 | --- | ---: | ---: | ---: | --- |
 | Boost.Asio、关闭 TLS：八个指定目标 | 8/8 | 66 | 1,515 | 通过 |
-| Boost.Asio ASan+UBSan：排队连接、HTTP 外部 context 与外部停止重复执行 | 72/72 | 280 | 4,664 | 通过 |
+| Boost.Asio AddressSanitizer+UndefinedBehaviorSanitizer：排队连接、HTTP 外部 context 与外部停止重复执行 | 72/72 | 280 | 4,664 | 通过 |
 
 无 TLS 检查覆盖 TCP、外部停止、manual-runtime、排队连接取消，以及四个 Redis
 停止／任务提交失败目标；不代表完整无 TLS 矩阵，也不代表 MySQL 可以不依赖 OpenSSL。
-72 次 ASan 执行包括 32 次排队连接测试、32 次指定 HTTP 用例及八次外部停止测试。
+72 次 AddressSanitizer 执行包括 32 次排队连接测试、32 次指定 HTTP 用例及八次外部停止测试。
 HTTP 显式过滤器排除的用例不属于环境条件导致的跳过；完整 HTTP 测试组已在上表通过。
 
 纯测试改动的分配失败与连接顺序验证单独记录：
 
 | 依赖／检测工具 | 专项用例数 | 断言数 | 指定原生错误用例执行次数 |
 | --- | ---: | ---: | ---: |
-| Boost.Asio／ASan+UBSan | 30 | 927 | 32/32 通过 |
-| Standalone Asio／ASan+UBSan | 30 | 927 | 32/32 通过 |
-| Boost.Asio／TSan | 30 | 926 | 32/32 通过 |
-| Standalone Asio／TSan | 30 | 926 | 32/32 通过 |
+| Boost.Asio／AddressSanitizer+UndefinedBehaviorSanitizer | 30 | 927 | 32/32 通过 |
+| Standalone Asio／AddressSanitizer+UndefinedBehaviorSanitizer | 30 | 927 | 32/32 通过 |
+| Boost.Asio／ThreadSanitizer | 30 | 926 | 32/32 通过 |
+| Standalone Asio／ThreadSanitizer | 30 | 926 | 32/32 通过 |
 
 全部专项用例通过，未出现 Sanitizer 诊断。指定原生错误用例共执行 128 次，
 每次检查九项断言；过滤器排除的其他用例不属于环境条件导致的跳过。
@@ -194,22 +194,22 @@ close／cancel／acquire、完成通知恰好执行一次及捕获释放。测�
 
 | 依赖／检测工具 | MySQL 关闭用例／断言 | Redis 关闭用例／断言 |
 | --- | ---: | ---: |
-| Boost.Asio／ASan+UBSan | 14／1,067 | 19／596 |
-| Standalone Asio／ASan+UBSan | 14／1,067 | 19／596 |
-| Boost.Asio／TSan | 14／1,067 | 19／595 |
-| Standalone Asio／TSan | 14／1,066 | 19／595 |
+| Boost.Asio／AddressSanitizer+UndefinedBehaviorSanitizer | 14／1,067 | 19／596 |
+| Standalone Asio／AddressSanitizer+UndefinedBehaviorSanitizer | 14／1,067 | 19／596 |
+| Boost.Asio／ThreadSanitizer | 14／1,067 | 19／595 |
+| Standalone Asio／ThreadSanitizer | 14／1,066 | 19／595 |
 
 八次目标程序执行均通过，无失败、跳过或 Sanitizer 诊断。四套配置另通过未改动的
 MySQL 归还失败测试（5 个用例／222 项断言）与 Redis 归还失败测试（4／107）。
 归还失败检查在仅调整测试关闭守卫之前执行，其测试文件和两个连接池头文件与本快照相同。
 这些是专项检查，不是本快照的完整测试运行。
 
-Redis 诊断测试将被检查的异常快照保留到并发观察线程退出。验证归档保留原 Linux TSan、
+Redis 诊断测试将被检查的异常快照保留到并发观察线程退出。验证归档保留原 Linux ThreadSanitizer、
 Windows 故障注入失败记录、源码对应关系和专项日志。连接池修正移除了一处分配边界，
 不保证所有子连接关闭路径都能从堆内存耗尽中恢复。性能测量继续对应这项关闭修正之前的
 `2aa5bc0`。
 
-本机 macOS ASan 关闭泄漏检测。完整检查的 ASan 还关闭了在线符号化，以避开已定位的
+本机 macOS AddressSanitizer 关闭泄漏检测。完整检查的 AddressSanitizer 还关闭了在线符号化，以避开已定位的
 符号化程序挂起问题，内存检测仍然启用。没有新增 Sanitizer 抑制规则或强制预包含参数。
 仅沿用原版 KCP 测试编译单元的 `null,object-size` 检测排除项。
 
@@ -220,10 +220,10 @@ Windows 故障注入失败记录、源码对应关系和专项日志。连接池
 
 | 检测工具 | 范围 | 用例 | 结果 |
 | --- | --- | ---: | --- |
-| ASan/UBSan | Standalone Asio：ARQ、独立 ARQ/FEC 实现互通、RUDP/FEC、lifecycle、detail 与 concurrency | 109 | 通过 |
-| TSan | Standalone Asio：FEC、独立 FEC 实现互通、RUDP/FEC、lifecycle、detail 与 concurrency | 86 | 通过 |
+| AddressSanitizer/UndefinedBehaviorSanitizer | Standalone Asio：ARQ、独立 ARQ/FEC 实现互通、RUDP/FEC、lifecycle、detail 与 concurrency | 109 | 通过 |
+| ThreadSanitizer | Standalone Asio：FEC、独立 FEC 实现互通、RUDP/FEC、lifecycle、detail 与 concurrency | 86 | 通过 |
 
-RUDP FEC 端点测试在两种 Release 依赖方案及独立 ASan/UBSan、TSan 构建中均通过 11 个用例、
+RUDP FEC 端点测试在两种 Release 依赖方案及独立 AddressSanitizer/UndefinedBehaviorSanitizer、ThreadSanitizer 构建中均通过 11 个用例、
 2,564 项断言。真实 zephyr/arknet 混合进程测试每种依赖方案均通过 12 组，覆盖重连、ARK 二进制
 消息头、4096 字节消息体、ARQ 报文丢失和乱序。中继保留 SYN/ACK/FIN，未验证 FIN 丢失后的可靠关闭。
 
@@ -239,7 +239,7 @@ arknet 自有代码保留完整检测。性能数据见独立的 [RUDP 报告](.
 </Aside>
 
 Sanitizer 单独执行，不混入性能测量。LeakSanitizer 的支持依平台而异；
-Apple ASan 通过不等同于 Linux 泄漏检查通过。
+Apple AddressSanitizer 通过不等同于 Linux 泄漏检查通过。
 
 ### Sanitizer 检查
 
@@ -247,18 +247,19 @@ Sanitizer 在开发构建中插入检测代码，报告测试运行时发现的�
 
 | 工具 | 检查范围 |
 | --- | --- |
-| ASan（AddressSanitizer） | 内存错误，例如越界访问、释放后继续访问和重复释放 |
-| TSan（ThreadSanitizer） | 未正确同步的并发内存访问，且至少一次访问是写入 |
-| UBSan（UndefinedBehaviorSanitizer） | 部分未定义行为，例如有符号整数溢出、无效移位和未对齐访问 |
+| AddressSanitizer | 内存错误，例如越界访问、释放后继续访问和重复释放 |
+| ThreadSanitizer | 未正确同步的并发内存访问，且至少一次访问是写入 |
+| UndefinedBehaviorSanitizer | 部分未定义行为，例如有符号整数溢出、无效移位和未对齐访问 |
 
-ASan/UBSan 与 TSan 使用独立构建。它们会增加运行开销，发布的性能测量关闭这些
+AddressSanitizer/UndefinedBehaviorSanitizer 与 ThreadSanitizer 使用独立构建。它们会增加运行开销，发布的性能测量关闭这些
 工具。测试通过只覆盖本次执行的代码路径和线程调度，不能证明所有错误都不存在。
 
 ## CI 与未覆盖范围
 
 CI 在 Linux／macOS／Windows 检查两种依赖方案，Linux 另运行
 AddressSanitizer/UndefinedBehaviorSanitizer 和 ThreadSanitizer。
-Job 名称包含系统、依赖方案、TLS 和检查模式，保留全部 14 项检查名称。
+Job 名称包含系统、依赖方案、TLS 和检查模式；十二项原生检查、文档与格式检查
+和 `CI - required` 一并保留。
 源分支 PR 修改已映射的模块时，在 Linux/Boost/TLS/Release 执行选中的原生检查；
 其他矩阵单元只记录检查范围。包含代码的合并队列候选、手动触发和模块映射之外的改动
 执行完整的 12 格原生检查。纯文档候选执行文档和格式检查。
@@ -324,6 +325,11 @@ API 语义参考：[Node 操作系统资源接口](https://nodejs.org/api/os.htm
 缓存工具安装或服务启动失败时，直接调用编译器。服务通信失败时，
 `SCCACHE_IGNORE_SERVER_IO_ERROR=1` 使编译回退到本地编译器。
 
+安装包消费项目的独立子配置也会接收父构建可选的 `CMAKE_CXX_COMPILER_LAUNCHER`，
+包括可执行文件路径中的空格和分号分隔的 launcher 参数。空值不引入缓存工具依赖；
+编译器错误仍使构建失败。`consumer_launcher` 回归使用真实子构建验证这些边界，
+完整 `install_consumer` 检查独立运行。转发 launcher 不代表发生缓存命中或节省了编译时间。
+
 GitHub Actions 分别持久化本地编译缓存和 vcpkg `files` 二进制归档。
 每份编译缓存限制为 512 MiB。缓存键包含操作系统、架构、runner 镜像及版本、
 目标与宿主 triplet、固定的 vcpkg 版本、manifest／配置／overlay 内容、请求的 features、默认 features 和矩阵构建配置。
@@ -337,7 +343,7 @@ Actions 缓存的可见范围也取决于工作流 ref。运行可以恢复当�
 合并队列 ref 是临时 ref，写入的缓存也不会进入 `main`。
 因此，日常 PR 和队列运行不会更新默认分支的共享缓存。
 
-本改动合入后，使用现有的 **CI** 工作流手动预热共享缓存：选择 **Run workflow**，
+使用现有的 **CI** 工作流手动预热共享缓存：选择 **Run workflow**，
 将分支设为 **main**，然后启动运行。这个手动 `workflow_dispatch` 执行完整原生矩阵，
 并将成功生成的缓存保存在 `main` 下。runner 镜像、依赖或构建配置变化后，需要重新预热；
 源码变化后，也可通过再次预热更新编译对象。下次手动预热之前，新的 PR 和队列候选

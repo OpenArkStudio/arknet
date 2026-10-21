@@ -1,0 +1,101 @@
+<script>
+  type Diagram = { source: string; output: HTMLElement; theme: string };
+  const diagrams = new WeakMap<HTMLElement, Diagram>();
+  let sequence = 0;
+  let pending = Promise.resolve();
+
+  async function renderDiagrams() {
+    const figures = [...document.querySelectorAll<HTMLElement>('figure[data-nb-lang="mermaid"]')];
+    if (!figures.length) return;
+
+    // Load the locally bundled renderer only on pages containing diagrams.
+    const { default: mermaid } = await import("mermaid");
+    const theme = document.documentElement.dataset.mode === "dark" ? "dark" : "default";
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "strict",
+      suppressErrorRendering: true,
+      theme,
+      flowchart: { htmlLabels: false },
+    });
+
+    for (const figure of figures) {
+      if (!figure.isConnected || diagrams.get(figure)?.theme === theme) continue;
+      const source = diagrams.get(figure)?.source ?? figure.querySelector("code")?.textContent;
+      if (!source) continue;
+
+      try {
+        const { svg } = await mermaid.render(`arknet-mermaid-${++sequence}`, source);
+        // A navigation may have replaced the page while the renderer loaded.
+        if (!figure.isConnected) continue;
+        let diagram = diagrams.get(figure);
+        if (!diagram) {
+          const chinese = document.documentElement.lang.startsWith("zh");
+          const container = document.createElement("div");
+          container.className = "mermaid-diagram";
+          const output = document.createElement("div");
+          output.className = "mermaid-diagram-output";
+          output.tabIndex = 0;
+          output.setAttribute("role", "group");
+          output.setAttribute("aria-label", chinese ? "Mermaid 图表，可横向滚动" : "Mermaid diagram, scroll horizontally");
+          const details = document.createElement("details");
+          const summary = document.createElement("summary");
+          summary.textContent = chinese ? "查看图表源码" : "View diagram source";
+          details.append(summary);
+          container.append(output, details);
+          figure.before(container);
+          details.append(figure);
+          diagram = { source, output, theme };
+          diagrams.set(figure, diagram);
+        }
+        diagram.output.innerHTML = svg;
+        const image = diagram.output.querySelector("svg");
+        if (image) {
+          // Keep labels readable; wide diagrams scroll within the article.
+          image.style.width = `${image.viewBox.baseVal.width}px`;
+          image.style.maxWidth = "none";
+        }
+        diagram.theme = theme;
+      } catch (error) {
+        // Keep the original code visible if rendering fails.
+        console.error("Unable to render Mermaid diagram", error);
+      }
+    }
+  }
+
+  function refresh() {
+    // Mermaid configuration is shared; serialize theme and navigation renders.
+    pending = pending.then(renderDiagrams).catch(error => console.error("Unable to load Mermaid", error));
+  }
+
+  document.addEventListener("astro:page-load", refresh);
+  new MutationObserver(refresh).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-mode"],
+  });
+  refresh();
+</script>
+
+<style is:global>
+  .mermaid-diagram {
+    margin-block: 1.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+  .mermaid-diagram-output {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .mermaid-diagram-output svg {
+    display: block;
+    height: auto;
+    margin-inline: auto;
+  }
+  .mermaid-diagram summary {
+    cursor: pointer;
+    margin-top: 0.75rem;
+    color: var(--color-muted-foreground);
+    font-size: 0.875rem;
+  }
+</style>

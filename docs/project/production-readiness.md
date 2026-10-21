@@ -4,6 +4,10 @@ arknet is intended for production use and direct replacement of zephyr in ARK.
 A working echo example is only a functional check. Adoption also requires bounded
 resources, failure recovery, concurrency checks and regression tests of the consumer.
 
+This page describes current main capabilities and ark adoption. [Release notes](releases.md)
+retain their tag boundaries; later main tests, build fixes and framework interfaces
+are not additions to v0.2.2.
+
 ## Acceptance criteria
 
 | Area | Required evidence |
@@ -12,15 +16,16 @@ resources, failure recovery, concurrency checks and regression tests of the cons
 | Lifecycle | Concurrent sends and statistics, callback-triggered stop, reconnect, server restart and completion exactly once |
 | Resource limits | Bounded ARQ/FEC/socket queues, server admission limits and explicit overload errors |
 | Execution | One context/one thread, one context/multiple threads and multiple contexts/one thread each; endpoint state serialized through strands |
-| Platforms | Standalone Asio and Boost.Asio; Linux, macOS and Windows build and test results; separate ASan/UBSan and TSan checks |
+| Platforms | Standalone Asio and Boost.Asio; Linux, macOS and Windows build and test results; separate AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer checks |
 | Performance | Local Release measurements: repeated rounds, payloads, in-flight requests, loss/bursts, throughput, p50/p99 RTT, CPU percentage and wire overhead |
 | Sustained operation | Delivery and completion counts, disconnects and retained resources under sustained traffic; short checks must state their duration |
 | ARK compatibility | Real zephyr/arknet mixed peers, then ARK framing, event dispatch, session ownership, reconnect and shutdown tests after replacement |
 | Deployment | Cross-host traffic on the intended network, configured MTU and socket buffers, representative concurrency and operating duration |
 | Identity and access control | RUDP provides no authentication or encryption; validate deployment access control and application identity checks for the target network |
 
-[Testing](testing.md) and the [RUDP report](../performance/rudp.md) record measured
-scope and results. Local loopback and simulated loss do not establish production
+[Testing](testing.md), the [RUDP/FEC report](../performance/rudp.md) and the separate
+[RUDP concurrency report](../performance/rudp-concurrency.md) retain their own
+measured scopes and results. Local loopback and simulated loss do not establish production
 capacity on a deployment network. Deployment acceptance requires the remaining
 evidence below.
 
@@ -29,17 +34,17 @@ evidence below.
 | Scope | Evidence |
 | --- | --- |
 | Complete local checks, snapshot `6c8418e` | Debug + TLS: Boost.Asio 52 checks / 470 cases / 978,433 assertions; Standalone Asio 51 / 410 / 576,824. Enabled default suites pass without failures or environment skips; archived Zephyr interoperability is not enabled |
-| Memory and concurrency, same snapshot | Full Boost.Asio ASan+UBSan: 52 checks / 470 cases / 615,937 assertions; full Standalone Asio TSan: 51 / 410 / 333,108; no sanitizer diagnostics. Leak checking is disabled and installed-consumer child binaries are not instrumented |
+| Memory and concurrency, same snapshot | Full Boost.Asio AddressSanitizer+UndefinedBehaviorSanitizer: 52 checks / 470 cases / 615,937 assertions; full Standalone Asio ThreadSanitizer: 51 / 410 / 333,108; no sanitizer diagnostics. Leak checking is disabled and installed-consumer child binaries are not instrumented |
 | Real databases | Isolated MySQL Community 8.4.11 with TLS and Redis 7.4.2 with TCP/TLS/mTLS in all four complete configurations; includes client/pool shutdown and publication-failure recovery |
-| Additional shutdown coverage | Selected Boost NoTLS targets: 8 checks / 66 cases / 1,515 assertions; ASan queued-connect, HTTP external-context and external-stop: 72 process checks / 280 cases / 4,664 assertions |
+| Additional shutdown coverage | Selected Boost NoTLS targets: 8 checks / 66 cases / 1,515 assertions; AddressSanitizer queued-connect, HTTP external-context and external-stop: 72 process checks / 280 cases / 4,664 assertions |
 | Test-only snapshot `25bb9f8` | Four dependency/sanitizer combinations, 30 focused cases each, plus 128 selected native-error executions; all pass locally. The MSVC CRT allocation path is covered by Windows CI, outside this macOS validation |
-| Pool-shutdown snapshot `550fb58` | Both dependencies pass the MySQL and Redis shutdown suites under ASan+UBSan and TSan, including queued acquire cancellation and callback reentry. Unchanged return-failure targets also pass all four configurations; exact counts and source boundaries are in [testing](testing.md) |
+| Pool-shutdown snapshot `550fb58` | Both dependencies pass the MySQL and Redis shutdown suites under AddressSanitizer+UndefinedBehaviorSanitizer and ThreadSanitizer, including queued acquire cancellation and callback reentry. Unchanged return-failure targets also pass all four configurations; exact counts and source boundaries are in [testing](testing.md) |
 | Cross-platform release gate | Published v0.2.2, source `c5432ca`, passed all 14 required checks on its [actual merge candidate](https://github.com/OpenArkStudio/arknet/actions/runs/39034278627); local results do not substitute for release-candidate validation |
 | Local performance | Release measurements identify product revision `2aa5bc0`; see the [comparison reports](../performance/index.md). Redis-protocol performance uses Valkey 8.0.11, separately from Redis 7.4.2 correctness checks |
 | Real legacy peers, 2026-10-13 | Both dependency configurations: 12 process-pair scenarios, 16 sessions and 512 messages plus echoes each; independent archived evidence |
 | Measured RUDP/FEC load | 96 configurations, 276 runs, 7,960,439 successful message round trips; six 120-second sustained runs |
 | ark integration | Direct replacement and C++20 in [#38](https://github.com/OpenArkStudio/ark/pull/38); core/official plugin organization in [#41](https://github.com/OpenArkStudio/ark/pull/41), snake_case interfaces/style in [#43](https://github.com/OpenArkStudio/ark/pull/43), and receive buffering in [#42](https://github.com/OpenArkStudio/ark/pull/42), all merged |
-| ark database development | [#46](https://github.com/OpenArkStudio/ark/pull/46) adds private native services, Asio awaitables and a library-owned runtime driven from the module thread; [#49](https://github.com/OpenArkStudio/ark/pull/49) adds the standalone callback/coroutine benchmark. Formal database-plugin activation remains separate |
+| ark public database plugins | Accepted ark `cbb65971` provides optional [MySQL](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/mysql.md) and [Redis](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/redis.md) coroutine modules with owning configuration, the manager shared executor, natural task drain and native-resource retirement contracts; these framework APIs are separate from arknet callback clients |
 | Production deployment | Target-network cross-host capacity, production-duration endurance, business acceptance and deployment access control pending |
 
 The released v0.2.2 source has missed the response deadline in a local
@@ -107,6 +112,26 @@ The [RUDP/FEC record](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd0
 retains its independent interoperability evidence. The ark replacement is merged;
 business behavior and deployment acceptance still need their own workload tests.
 
+## Framework coroutine and database boundary
+
+arknet supplies native callback clients, pools and the standard Asio executor from
+`manual_runtime`; it has no dedicated public database `co_await` facade. The separate
+ark framework provides `mysql_module` and `redis_module`, owning `configure()` options
+and manager-owned task groups. arknet still runs native IO. Module updates dispatch
+completions; the manager polls its shared business executor centrally and resumes
+consumer coroutines on its owner thread. See ark's [MySQL](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/mysql.md),
+[Redis](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/redis.md) and [task lifecycle](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/guides/tasks.md) guides.
+
+Natural manager stop first seals top-level task admission, lets accepted workflows
+submit their remaining steps, then retires native resources from the host lifecycle
+frame. A zero task count does not establish callback/thread drain or safe library
+unloading. Public-module protocol-peer regressions, plugin DSO loading checks and
+explicit real-service programs have different scopes. `check-database` compiles the
+real-service programs without connecting them to databases. The [ark database test
+guide](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/tests/database/README.md) records prerequisites and limits. Compilation
+and fixture checks do not substitute for explicit real-service execution or
+establish arbitrary DSO unload, hot-update or production capacity acceptance.
+
 ## Deployment capacity target
 
 ARK uses multiple processes, targeting **100,000-200,000 peak concurrent users
@@ -153,7 +178,7 @@ session ID in `user_data`; it is distinct from the RUDP conversation ID.
 
 ## Replacement rules
 
-- Raise ARK's minimum standard to C++20, without a coroutine or language-feature rewrite.
+- ARK uses C++20; direct transport callback replacement and framework database coroutines follow their separate lifecycle contracts.
 - Replace endpoint and callback types directly, remove zephyr includes and its build compatibility overlay.
 - Use `async_send()` for ARK's asynchronous send admission. arknet `send()` waits and returns a byte count.
 - Handle asynchronous completion errors as well as the admission boolean. An admitted RUDP send can later fail its ARQ quota; dispatch the failure through ARK's update/event path and define the retry or rejection policy.

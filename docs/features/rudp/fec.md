@@ -6,7 +6,7 @@ retransmits anything FEC cannot recover. The bundled header-only engine requires
 neither Python nor an additional linked library.
 
 ```mermaid
-flowchart LR
+flowchart TB
     A[Application message] --> B[ARQ fragmentation and ACK]
     B --> C[FEC data and parity]
     C --> D[UDP]

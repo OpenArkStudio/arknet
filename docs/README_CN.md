@@ -40,7 +40,7 @@ RUDP、WebSocket、HTTP、TLS，以及原生 MySQL 和 Redis 客户端。端点�
 
 [项目](project/index_CN.md)包含架构、贡献规范与路线图。HTTP/2、HTTP/3、
 named pipe、Unix domain socket 和 RPC 仍为 TODO。
-[0.2.0 版本](project/releases_CN.md)新增原生数据库客户端并简化依赖。
+[版本说明](project/releases_CN.md)记录已发布的 v0.2.2 及更早标签；当前 main 的文档与测试范围另行说明。
 部署容量与耐久验证见[生产验收](project/production-readiness_CN.md)。
 
 [源码](https://github.com/OpenArkStudio/arknet) ·

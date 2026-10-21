@@ -119,6 +119,17 @@ package remembers the provider and TLS settings used at installation and finds
 those dependencies on the consuming machine. Install separate prefixes for
 configurations that need different providers or TLS settings.
 
+## Compiler caches and installed consumers
+
+Compiler caching belongs to each CMake build configuration; the installed
+`arknet::arknet` target does not export a launcher setting. Set the optional
+`CMAKE_CXX_COMPILER_LAUNCHER` in the consuming project when needed, for example
+`-DCMAKE_CXX_COMPILER_LAUNCHER=sccache`; leaving it unset adds no tool dependency.
+Current main's `install_consumer` check forwards the parent C++ launcher to its
+independent child configure, preserving paths and argument lists without changing
+real compiler-failure propagation. Cache hits still depend on the tool, settings
+and source. See [build caches](../project/testing.md#native-build-caches).
+
 ## Use vcpkg
 
 The development `vcpkg.json` enables Boost by default and also installs Standalone Asio for the two-configuration test matrix. The `boost` feature is enabled by default; the optional `ssl` feature installs OpenSSL. Features

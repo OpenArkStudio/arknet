@@ -1,9 +1,17 @@
 ---
 import Icon from "@cloudflare/nimbus-docs/components/Icon.astro";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import { getUiLabels, uiLocaleFromPath, type UiLocale } from "@/lib/ui-labels";
+
+interface Props {
+  locale?: UiLocale;
+}
+
+const { locale = uiLocaleFromPath(Astro.url.pathname, import.meta.env.BASE_URL) } = Astro.props;
+const labels = getUiLabels(locale);
 ---
 
-<Dialog aria-label="Search documentation" data-search-dialog>
+<Dialog aria-label={labels.searchDocumentation} data-search-dialog data-search-locale={locale}>
   <DialogContent class="max-w-xl bg-muted shadow-xl ring-border">
     <div class="flex flex-col overflow-hidden rounded-t-lg bg-card border-b border-border">
       <div class="flex items-center gap-3 border-b border-border px-4 py-3">
@@ -16,14 +24,14 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
           aria-autocomplete="list"
           aria-controls="search-listbox"
           type="text"
-          placeholder="Search documentation…"
+          placeholder={labels.searchPlaceholder}
           class="min-w-0 flex-1 border-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           autocomplete="off"
           spellcheck="false"
           autocorrect="off"
           autocapitalize="none"
         />
-        <DialogClose class="rounded border border-border bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+        <DialogClose aria-label={labels.closeSearch} class="rounded border border-border bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
           Esc
         </DialogClose>
       </div>
@@ -36,15 +44,15 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
         class="min-h-40 overflow-y-auto p-2"
       >
         <p data-search-empty class="py-8 text-center text-sm text-muted-foreground">
-          Type to search…
+          {labels.typeToSearch}
         </p>
       </div>
     </div>
 
     <div class="flex items-center gap-4 px-4 py-2.5 text-xs text-muted-foreground/80">
-      <span>↑↓ navigate</span>
-      <span>↵ select</span>
-      <span>Esc close</span>
+      <span>↑↓ {labels.navigate}</span>
+      <span>↵ {labels.select}</span>
+      <span>Esc {labels.close}</span>
     </div>
   </DialogContent>
 </Dialog>

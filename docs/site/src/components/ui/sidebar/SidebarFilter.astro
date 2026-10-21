@@ -1,22 +1,25 @@
 ---
 /** SidebarFilter — text input that filters the adjacent Sidebar. Press "/" to focus. */
 import { cn } from "@/lib/cn";
+import { getUiLabels, type UiLocale } from "@/lib/ui-labels";
 import type { HTMLAttributes } from "astro/types";
 
 interface Props extends HTMLAttributes<"div"> {
   placeholder?: string;
+  locale?: UiLocale;
 }
 
-const { class: className, placeholder = "Filter…", ...attrs } = Astro.props;
+const { locale = "en", class: className, placeholder, ...attrs } = Astro.props;
+const labels = getUiLabels(locale);
 ---
 
 <div class={cn("relative mb-3", className)} {...attrs}>
   <input
     data-nb-sidebar-filter-input
     type="search"
-    placeholder={placeholder}
+    placeholder={placeholder ?? labels.filterPlaceholder}
     class="peer w-full rounded-md border border-border bg-card py-1.5 pl-3 pr-9 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-ring [&:not(:placeholder-shown)]:pr-2"
-    aria-label="Filter navigation"
+    aria-label={labels.filterNavigation}
     autocomplete="off"
   />
   {/* Shortcut hint — press "/" to focus. Hidden once the input is focused or has a value. */}

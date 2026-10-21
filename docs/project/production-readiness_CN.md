@@ -3,6 +3,9 @@
 arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 回显示例只能验证基本功能。正式采用还需要资源上限、故障恢复、并发检查与调用方业务回归。
 
+本文说明当前 main 的能力与 ark 接入边界。[版本说明](releases_CN.md)单独记录标签内的变更；
+后续 main 的测试、构建修复和框架接口不归入 v0.2.2。
+
 ## 验收条件
 
 | 范围 | 所需证据 |
@@ -11,14 +14,15 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 | 生命周期 | 并发发送与统计、回调内停止、重连、服务端重启，以及完成通知恰好执行一次 |
 | 资源限制 | ARQ、FEC、socket 队列与服务端会话数量均有上限；过载时明确返回错误 |
 | 执行模型 | 单 context 单线程、单 context 多线程、多 context 各一线程；端点状态经 strand 串行执行 |
-| 平台 | Standalone Asio 与 Boost.Asio；Linux、macOS、Windows 构建和测试；独立 ASan/UBSan 与 TSan 检查 |
+| 平台 | Standalone Asio 与 Boost.Asio；Linux、macOS、Windows 构建和测试；独立 AddressSanitizer/UndefinedBehaviorSanitizer 与 ThreadSanitizer 检查 |
 | 性能 | 本机 Release 构建，多轮测量、包体、在途请求、随机与突发丢包，吞吐量、p50/p99 RTT、CPU 占用和报文开销 |
 | 持续运行 | 持续流量下的交付与完成计数、断连及保留资源；短时检查必须写明时长 |
 | ARK 兼容 | 真实 zephyr/arknet 混合对端；替换后的 ARK 拆包、事件派发、Session 所有权、重连与关闭 |
 | 部署链路 | 目标网络上的跨主机传输、MTU 与 socket 缓冲配置、实际并发量和运行时长 |
 | 身份与访问控制 | RUDP 不提供认证与加密；按目标网络验收部署侧访问控制和应用身份验证 |
 
-[测试与验证](testing_CN.md)及 [RUDP 报告](../performance/rudp_CN.md)记录实际执行范围与结果。
+[测试与验证](testing_CN.md)、[RUDP/FEC 报告](../performance/rudp_CN.md)和独立的
+[RUDP 并发报告](../performance/rudp-concurrency_CN.md)分别记录实际范围与结果。
 本机回环与模拟丢包不能确定部署网络上的生产容量。生产部署仍需补齐下面列出的验收证据。
 
 ## 验收状态
@@ -26,17 +30,17 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 | 范围 | 证据 |
 | --- | --- |
 | 本机完整检查，源码快照 `6c8418e` | Debug + TLS：Boost.Asio 为 52 项检查／470 个用例／978,433 项断言；Standalone Asio 为 51／410／576,824。已启用的默认测试均通过，无失败或环境条件导致的跳过；未启用归档的 Zephyr 互通测试 |
-| 内存与并发，同一源码快照 | 完整 Boost.Asio ASan+UBSan 为 52 项检查／470 个用例／615,937 项断言；完整 Standalone Asio TSan 为 51／410／333,108；无 Sanitizer 诊断。关闭泄漏检测，安装包消费项目的子构建未启用检测 |
+| 内存与并发，同一源码快照 | 完整 Boost.Asio AddressSanitizer+UndefinedBehaviorSanitizer 为 52 项检查／470 个用例／615,937 项断言；完整 Standalone Asio ThreadSanitizer 为 51／410／333,108；无 Sanitizer 诊断。关闭泄漏检测，安装包消费项目的子构建未启用检测 |
 | 真实数据库 | 四套完整配置均使用隔离的 MySQL Community 8.4.11（TLS）和 Redis 7.4.2（TCP/TLS/mTLS）；覆盖客户端／连接池停止及任务提交失败恢复 |
-| 补充停止行为验证 | 指定 Boost 无 TLS 目标：8 项检查／66 个用例／1,515 项断言；ASan 排队连接、HTTP 外部 context 与外部停止：72 次进程检查／280 个用例／4,664 项断言 |
+| 补充停止行为验证 | 指定 Boost 无 TLS 目标：8 项检查／66 个用例／1,515 项断言；AddressSanitizer 排队连接、HTTP 外部 context 与外部停止：72 次进程检查／280 个用例／4,664 项断言 |
 | 纯测试改动 `25bb9f8` | 四种依赖／检测工具组合各通过 30 个专项用例，另通过 128 次指定原生错误用例；MSVC CRT 分配路径在 Windows CI 中执行，本机 macOS 验证不覆盖 |
-| 连接池关闭快照 `550fb58` | 两种依赖均通过 ASan+UBSan 与 TSan 下的 MySQL／Redis 关闭测试，覆盖排队 acquire 取消和回调重入；未改动的归还失败目标也通过四套配置。准确计数与源码边界见[测试与验证](testing_CN.md) |
+| 连接池关闭快照 `550fb58` | 两种依赖均通过 AddressSanitizer+UndefinedBehaviorSanitizer 与 ThreadSanitizer 下的 MySQL／Redis 关闭测试，覆盖排队 acquire 取消和回调重入；未改动的归还失败目标也通过四套配置。准确计数与源码边界见[测试与验证](testing_CN.md) |
 | 跨平台发布条件 | 已发布的 v0.2.2，源码 `c5432ca`，已在[实际合并候选](https://github.com/OpenArkStudio/arknet/actions/runs/39034278627)通过全部 14 项必需检查；本机结果不代替发行候选自身的验证 |
 | 本机性能 | Release 测量标识产品版本 `2aa5bc0`，见[性能对比报告](../performance/index_CN.md)。Redis 协议性能使用 Valkey 8.0.11，与 Redis 7.4.2 正确性检查分开记录 |
 | 真实旧库对端，2026-10-13 | 两种依赖方案各完成 12 组进程场景、16 个会话、512 条消息及回显；独立归档证据 |
 | RUDP/FEC 实测负载 | 96 组配置、276 次测量、7,960,439 次成功消息往返；六组 120 秒持续运行 |
 | ark 整合 | [#38](https://github.com/OpenArkStudio/ark/pull/38) 完成直接替换与 C++20 升级；[#41](https://github.com/OpenArkStudio/ark/pull/41) 整理核心／官方插件；[#43](https://github.com/OpenArkStudio/ark/pull/43) 统一 snake_case 接口与风格；[#42](https://github.com/OpenArkStudio/ark/pull/42) 调整接收缓冲；均已合并 |
-| ark 数据库开发层 | [#46](https://github.com/OpenArkStudio/ark/pull/46) 增加私有原生服务、Asio awaitable 和库提供的运行时，由模块线程驱动；[#49](https://github.com/OpenArkStudio/ark/pull/49) 增加独立回调／协程基准程序。正式数据库插件另行接入 |
+| ark 公开数据库插件 | 已接受的 ark `cbb65971` 提供可选 [MySQL](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/mysql_CN.md) 与 [Redis](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/redis_CN.md) 协程模块；拥有型配置、管理器共享执行器、自然任务排空与原生资源回收均有明确接口契约。框架能力与 arknet 原生回调 API 分开 |
 | 生产部署 | 目标网络跨主机容量、生产时长耐久、业务验收及部署访问控制待完成 |
 
 已发布的 v0.2.2 源码在 macOS 27.0.1 的本机 5,000 连接 TCP 回显负载中出现过响应超时：
@@ -89,6 +93,22 @@ TCP 恢复为何停滞仍待确认。抓包记录了 1,675,186 个报文，自�
 [RUDP/FEC 记录](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/tests/results/macmini-m4pro-20261013/rudp-fec)
 保留独立的互通专项证据。ark 直接替换已合并，业务行为与部署验收仍需使用对应负载测试。
 
+## 框架协程与数据库边界
+
+arknet 提供原生回调客户端、连接池与 `manual_runtime` 的标准 Asio executor；
+它本身没有公开的数据库 `co_await` 外观。ark 的 `mysql_module` 与 `redis_module`
+属于独立框架，使用公开的拥有型 `configure()` options 和管理器所拥有的任务组。
+原生 IO 仍由 arknet 运行；模块 update 派发完成通知，管理器集中轮询共享业务执行器，
+在所属线程恢复业务协程。用法见 [MySQL](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/mysql_CN.md)、
+[Redis](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/redis_CN.md) 和 [任务生命周期](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/guides/tasks_CN.md)。
+
+管理器自然停止时先关闭顶层任务准入，让已受理流程继续提交后续步骤，随后在宿主生命周期帧中
+回收原生资源。任务计数归零不代表回调、线程或动态库已安全卸载。
+公开模块协议对端回归、插件 DSO 加载检查，以及显式选择的真实服务程序验证范围不同；
+`check-database` 编译真实服务程序，不连接真实数据库。
+[ark 数据库测试指南](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/tests/database/README_CN.md)说明运行前提和边界。
+编译和 fixture 检查不能代替显式真实服务运行，也不代表任意 DSO 卸载、热更新或生产容量验收。
+
 ## 部署容量目标
 
 ARK 采用多进程部署，目标为集群同时在线 **10 万至 20 万用户（PCU）**。
@@ -129,7 +149,7 @@ ARK 的业务 Session ID 存入 `user_data`，与 RUDP conversation ID 区分。
 
 ## 替换规则
 
-- 将 ARK 最低标准提高到 C++20，暂不进行协程或新语言特性改造。
+- ARK 使用 C++20；传输回调的直接替换与框架数据库协程接口分别遵循各自的生命周期契约。
 - 直接替换端点和回调类型，移除 zephyr 头文件及构建兼容层。
 - 使用 `async_send()` 保持 ARK 的异步发送接纳语义。arknet `send()` 会等待，并返回字节数。
 - 同时处理接纳返回值和异步完成错误。RUDP 入队后仍可能因 ARQ 配额不足而失败；将错误转到 ARK 更新线程的事件路径，并定义重试或拒绝策略。

@@ -85,7 +85,7 @@ for owned runtimes and global owners.
 | MySQL password exchange | No plaintext full-password fallback, RSA key exchange, `mysql_clear_password`, `sha256_password` or MFA; unsupported exchanges fail explicitly |
 | Redis | One configured endpoint; commands that suppress replies or require a different response model are rejected |
 | Redis TODO | Cluster redirection, Sentinel discovery, Pub/Sub subscriptions, replication and `MONITOR` |
-| Shared TODO | Public coroutine database APIs; workload-specific deployment acceptance |
+| arknet TODO | Dedicated native database coroutine APIs; workload-specific deployment acceptance |
 
 HTTP/2, HTTP/3, named pipes, Unix domain sockets and RPC remain separate items on the [roadmap](../project/roadmap.md). RESP3 push delivery does not constitute a Pub/Sub subscription API.
 
@@ -103,9 +103,15 @@ Deadline tests include nonpositive durations, integer extremes and clock-additio
 MySQL retains its runtime while asynchronous posting returns, including when a
 completion destroys the connection. Separate invalid-connect and rejected-command
 destruction cases cover these immediate completion paths. MySQL connection/pool
-suites pass TSan with both Asio dependencies and ASan+UBSan with Boost.Asio;
+suites pass ThreadSanitizer with both Asio dependencies and AddressSanitizer+UndefinedBehaviorSanitizer with Boost.Asio;
 the [testing record](../project/testing.md) identifies their scope and counts.
 
 The [MySQL](mysql/performance.md) and [Redis](redis/performance.md) performance pages describe their compilable benchmarks, workload dimensions and reports. Record the machine/server configuration, payload, queue/pipeline depth, connections, repeated rounds, operations/s, RT percentiles and CPU percentage. Capacity requires [deployment acceptance](../project/production-readiness.md).
 
 arknet owns protocol IO, authentication, reply correlation, pools and shutdown. ark database plugins own framework configuration and module integration; applications own transaction boundaries, business results and retry decisions. Client release does not establish ark plugin compatibility without application regression tests.
+
+The ark framework already exposes public [MySQL](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/mysql.md) and
+[Redis](https://github.com/OpenArkStudio/ark/blob/cbb659717e7d145cd1b48975a9b3ef9e6913b849/docs/reference/redis.md) coroutine modules with owner-thread delivery
+on its manager shared executor. They belong to ark and do not change the native
+arknet callback, IO-ownership or shutdown contracts. See the [framework integration
+boundary](../project/production-readiness.md#framework-coroutine-and-database-boundary).
