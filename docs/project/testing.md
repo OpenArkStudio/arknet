@@ -30,6 +30,13 @@ the complete matrix. Failed scope validation blocks every native gate. Rename
 classification includes both old and new paths. Active runs are not cancelled to
 schedule a newer commit.
 
+Documentation paths include `AGENTS.md`, Markdown and documentation assets, plus
+the explicitly mapped Nimbus site configuration, dependencies, Astro/TypeScript
+components, pages and content tooling. This is not a blanket `docs/site/**`
+exemption: CI scope/workflow tests, native release/report checks, C++/CMake files,
+unknown scripts and unmapped file types retain native coverage. A mixed change
+uses the native plan at both stages.
+
 `CI - required` accompanies twelve static native matrix checks, documentation
 and formatting: fifteen required check contexts in total. Scope-only runner jobs
 retain their existing contexts and native commands. The gate uses the built-in

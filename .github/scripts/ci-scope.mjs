@@ -33,9 +33,22 @@ export function sourceTests(files) {
   return [...selected].sort();
 }
 
+// Review site tooling individually: CI scope/workflow and native metadata checks
+// also live under docs/site/scripts and must retain native coverage.
+const documentationSiteFiles = new Set([
+  "docs/site/.gitignore", "docs/site/LICENSE", "docs/site/astro.config.ts", "docs/site/nimbus.json",
+  "docs/site/package.json", "docs/site/package-lock.json", "docs/site/tsconfig.json",
+  "docs/site/src/content.config.ts", "docs/site/src/navigation.ts", "docs/site/src/legacy-routes.json",
+  ...["check-site.mjs", "content.mjs", "content.test.mjs", "prepare-content.mjs", "redirects.mjs",
+    "structure.test.mjs", "ui-controls.mjs", "ui-controls.test.mjs"].map(name => `docs/site/scripts/${name}`),
+]);
+
 export function isDocumentationPath(file) {
   if (!relativePath(file)) return false;
-  return file === "README.md" || file === "README_CN.md" ||
+  return file === "README.md" || file === "README_CN.md" || file === "AGENTS.md" ||
+    documentationSiteFiles.has(file) ||
+    /^docs\/site\/src\/(?:components|layouts|lib|pages)\/.+\.(?:astro|ts)$/.test(file) ||
+    /^docs\/site\/public\/.+\.(?:ico|ttf|woff2?)$/.test(file) ||
     (file.startsWith("docs/") && /\.(?:md|mdx|svg|css|png|jpe?g|webp|gif)$/.test(file));
 }
 
