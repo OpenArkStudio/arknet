@@ -91,6 +91,26 @@ test("real workflow step conditions produce accepted full, source-suite, module 
   }
 });
 
+test("the gate requires successful planning in both Linux sanitizer dependency profiles and nowhere else", () => {
+  const name = "Select bounded compiler parallelism";
+  for (const [event, files, expected] of [["merge_group", ["tests/rudp.cpp"], 2],
+    ["workflow_dispatch", ["README.md"], 2], ["pull_request", ["tests/rudp.cpp"], 0],
+    ["merge_group", ["docs/site/package.json"], 0]]) {
+    const input = fixture(event, files);
+    const selected = input.metadata.jobs.filter(job => findStep(job, name)?.conclusion === "success");
+    assert.equal(selected.length, expected);
+    if (expected) assert.deepEqual(new Set(selected.map(job => job.name)), new Set(["OFF", "ON"].map(boost =>
+      cellName({ os: "ubuntu-latest", boost, ssl: "ON", sanitize: "ON" }))));
+    validateRequired(input);
+    for (const job of input.metadata.jobs.filter(job => findStep(job, name))) {
+      const invalid = structuredClone(input);
+      const step = findStep(invalid.metadata.jobs.find(candidate => candidate.name === job.name), name);
+      step.conclusion = step.conclusion === "success" ? "skipped" : "success";
+      assert.throws(() => validateRequired(invalid), `${event}: ${job.name}`);
+    }
+  }
+});
+
 test("omitted empty job outputs cannot grant a narrower source plan", () => {
   for (const [event, files] of [["merge_group", ["tests/rudp.cpp"]], ["pull_request", [".github/workflows/ci.yml"]], ["merge_group", ["README.md"]]]) {
     const input = fixture(event, files);

@@ -351,7 +351,7 @@ minutes. They describe one hosted run, not a controlled performance comparison:
 | Linux Standalone TLS, AddressSanitizer + UndefinedBehaviorSanitizer | 33.02 | 2.92 | 27.28 | 2.27 |
 | Windows Boost TLS Release | 56.47 | 10.88 | 37.77 | 6.35 |
 
-Only the Linux Boost build with AddressSanitizer and
+Linux Boost and Standalone Asio builds with AddressSanitizer and
 UndefinedBehaviorSanitizer can experimentally select two compiler
 slots. Immediately before building, a small Node helper requires all of:
 
@@ -373,7 +373,7 @@ nonfinite, negative, fractional or string constraints are invalid. Missing,
 invalid, inconsistent or insufficient resource observations select one slot. Other profiles keep their existing parallelism,
 and source-module targets, sccache launchers, all twelve matrix profiles, native
 tests and the 60-minute job limit remain unchanged. The required gate verifies
-that the planning step ran successfully only in its intended native cell.
+that the planning step ran successfully only in the two intended native cells.
 
 The helper prints the actual observations, thresholds, selected bound and reason
 to the job log and summary. This is a conservative scheduling heuristic: 12 GiB

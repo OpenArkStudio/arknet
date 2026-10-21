@@ -181,7 +181,7 @@ jobs:
           ${{ matrix.sanitize == 'ON' && '"-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"' || matrix.sanitize == 'THREAD' && '"-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer" "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=thread"' || '' }}
       - name: Select bounded compiler parallelism
         id: build-parallel
-        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && runner.os == 'Linux' && matrix.boost == 'ON' && matrix.sanitize == 'ON' }}
+        if: ${{ env.ARKNET_RUN_NATIVE == 'true' && runner.os == 'Linux' && matrix.sanitize == 'ON' }}
         env:
           MATRIX_BOOST: ${{ matrix.boost }}
           MATRIX_SANITIZE: ${{ matrix.sanitize }}

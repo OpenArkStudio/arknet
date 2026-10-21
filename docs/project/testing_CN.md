@@ -298,7 +298,7 @@ CI 上传测试日志、执行基准冒烟；性能报告矩阵来自本机测�
 | Linux Standalone TLS，AddressSanitizer（内存错误检测）+ UndefinedBehaviorSanitizer（未定义行为检测） | 33.02 | 2.92 | 27.28 | 2.27 |
 | Windows Boost TLS Release | 56.47 | 10.88 | 37.77 | 6.35 |
 
-只有 Linux Boost 的 AddressSanitizer（内存错误检测）与 UndefinedBehaviorSanitizer（未定义行为检测）构建
+Linux Boost 和 Standalone Asio 的 AddressSanitizer（内存错误检测）与 UndefinedBehaviorSanitizer（未定义行为检测）构建
 可以试验性选择两个编译槽。构建开始前，Node helper 要求以下条件同时满足：
 
 - `os.availableParallelism()` 报告至少四个可用 CPU 槽。
@@ -311,7 +311,7 @@ CI 上传测试日志、执行基准冒烟；性能报告矩阵来自本机测�
 CPU、物理总量和可用内存仍须为正的安全整数；非有限、负数、小数或字符串形式的约束无效。
 观测缺失、非法、矛盾或不足时选择一个槽。
 其他配置保留现有并行度；源模块目标、sccache launcher、全部十二格矩阵、原生测试和 60 分钟期限保持不变。
-required gate 核对规划步骤仅在目标原生格中实际成功执行。
+required gate 核对规划步骤仅在两个目标原生格中实际成功执行。
 
 helper 在任务日志和摘要中输出真实观测、阈值、所选并行度与原因。这是保守的调度启发式：
 12 GiB 可用内存是两个编译槽及其开销的准入预算，不是实测编译峰值或强制单槽上限。

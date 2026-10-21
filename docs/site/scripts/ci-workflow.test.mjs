@@ -42,7 +42,7 @@ function checkPolicy(source) {
   const required = source.indexOf("  required:\n");
   const jobs = source.slice(source.indexOf("jobs:\n"), required === -1 ? undefined : required);
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
-    "5f313e9e281071823303dc0b82d599ca491493f2e1ae20d9a8d85dac0dd6b351",
+    "a3cc5bc8303b01148c9697e04a04618c668904ea81ea7ac4e4bfd19cd25cb200",
     "review the complete 14-check and scope contract before changing it");
 }
 
