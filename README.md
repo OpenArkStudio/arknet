@@ -1,6 +1,15 @@
 # arknet
 
-[![Merge queue checks](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml/badge.svg?event=merge_group)](https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml?query=event%3Amerge_group)
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/OpenArkStudio/.github/main/assets/arknet-logo-dark.svg">
+    <img src="https://raw.githubusercontent.com/OpenArkStudio/.github/main/assets/arknet-logo-light.svg" alt="arknet" width="451">
+  </picture>
+</p>
+
+<p align="center">
+  <a href="https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml?query=event%3Amerge_group"><img src="https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml/badge.svg?event=merge_group" alt="Merge queue checks"></a>
+</p>
 
 [中文](README_CN.md)
 

@@ -127,7 +127,7 @@ test("documentation publishing retains its separate main-push workflow", async (
 test("both README badges describe and select merge-group checks", async () => {
   for (const [file, label] of [["README.md", "Merge queue checks"], ["README_CN.md", "合并队列检查"]]) {
     const source = await readFile(new URL(`../../../${file}`, import.meta.url), "utf8");
-    assert.ok(source.includes(`[![${label}]`), file);
+    assert.ok(source.includes(`alt="${label}"`), file);
     assert.ok(source.includes("ci.yml/badge.svg?event=merge_group"), file);
     assert.ok(source.includes("ci.yml?query=event%3Amerge_group"), file);
   }
