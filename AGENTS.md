@@ -59,10 +59,11 @@ branch or worktree when the existing checkout contains uncommitted changes.
 - Code-bearing merge-group candidates and manual runs require the full configured
   operating-system, Boost/Standalone, TLS and sanitizer matrix. Source-only green
   checks do not establish that acceptance. Strictly classified documentation-only
-  changes require documentation and formatting at both stages. Matrix cells keep
-  their required names and explicitly record scope-only coverage when no native
-  tests are planned. Failed/missing scope validation must fail required checks;
-  never describe a scope-only cell as an executed native test.
+  changes require documentation and formatting at both stages. Grouped native
+  jobs retain all twelve configuration profiles and explicitly record scope-only
+  coverage when no native tests are planned. Required context changes need a
+  protected, staged migration after hosted acceptance. Failed/missing scope
+  validation must fail required checks; never describe a scope-only cell as an executed native test.
 - Include what changed, why, validation and remaining limits in PR descriptions.
   Verify the merge result before saying that a PR has merged.
 

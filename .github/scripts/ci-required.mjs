@@ -14,6 +14,15 @@ export const expectedCells = [
 export const cellName = ({ os, boost, ssl, sanitize }) =>
   `Test - ${os} - ${boost === "ON" ? "Boost" : "Standalone"} - ${ssl === "ON" ? "TLS" : "NoTLS"} - ${sanitize === "THREAD" ? "TSan" : sanitize === "ON" ? "ASan+UBSan" : "Release"}`;
 
+export const expectedGroups = [
+  ...["ubuntu-latest", "macos-latest", "windows-latest"].map(os => ({ os, sanitize: "OFF" })),
+  ...["ON", "THREAD"].map(sanitize => ({ os: "ubuntu-latest", sanitize })),
+];
+export const groupName = ({ os, sanitize }) =>
+  `Native - ${os} - ${sanitize === "THREAD" ? "TSan" : sanitize === "ON" ? "ASan+UBSan" : "Release"}`;
+export const slotName = ({ boost, ssl }) => `${boost === "ON" ? "Boost" : "Standalone"} - ${ssl === "ON" ? "TLS" : "NoTLS"}`;
+const slots = ["ON", "OFF"].flatMap(boost => ["ON", "OFF"].map(ssl => ({ boost, ssl })));
+
 export const optionalCacheSteps = [
   "Restore dependency archives", "Install compiler cache", "Restore compiler cache", "Report cache statistics",
 ];
@@ -88,7 +97,7 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
   if (!Array.isArray(metadata?.jobs)) throw new Error("Missing same-run job metadata");
   const jobs = new Map();
   const identities = new Set();
-  const expectedNames = new Set(["Documentation checks", "Style - clang-format 18", ...expectedCells.map(cellName)]);
+  const expectedNames = new Set(["Documentation checks", "Style - clang-format 18", ...expectedGroups.map(groupName)]);
   for (const job of metadata.jobs) {
     if (!job || typeof job.name !== "string" || jobs.has(job.name) || !Number.isSafeInteger(job.databaseId) ||
         job.databaseId <= 0 || identities.has(job.databaseId)) throw new Error("Missing or duplicate job identity");
@@ -99,8 +108,9 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
   for (const name of expectedNames) {
     const job = jobs.get(name);
     if (!job) throw new Error(`Missing required job profile: ${name}`);
-    const profile = expectedCells.find(profile => cellName(profile) === name);
-    completed(job, profile !== undefined && runNative(plan, profile));
+    const group = expectedGroups.find(group => groupName(group) === name);
+    completed(job, group !== undefined && expectedCells.some(profile => profile.os === group.os &&
+      profile.sanitize === group.sanitize && runNative(plan, profile)));
   }
   const docs = jobs.get("Documentation checks");
   outcome(docs, "Run npm ci --prefix docs/site");
@@ -110,25 +120,32 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
     "Run node .github/scripts/ci-scope.mjs", "Install clang-format 18", "Check project C++ formatting"]) outcome(format, name);
 
   let nativeCells = 0;
-  for (const profile of expectedCells) {
-    const job = jobs.get(cellName(profile));
-    const native = runNative(plan, profile);
-    nativeCells += Number(native);
+  for (const group of expectedGroups) {
+    const job = jobs.get(groupName(group));
+    const native = expectedCells.some(profile => profile.os === group.os && profile.sanitize === group.sanitize && runNative(plan, profile));
     cacheOutcomes(job, native);
-    outcome(job, "Select bounded compiler parallelism", native && profile.os === "ubuntu-latest" &&
-      profile.sanitize === "ON" ? "success" : "skipped");
     outcome(job, "Validate scope result");
     outcome(job, "Record planned coverage", native ? "skipped" : "success");
-    for (const name of ["Run actions/checkout@v4", "Run lukka/get-cmake@latest", "Run lukka/run-vcpkg@v11",
-      "Configure", "Build planned native targets", "Upload test results"]) outcome(job, name, native ? "success" : "skipped");
-    outcome(job, "Run ilammy/msvc-dev-cmd@v1", native && profile.os === "windows-latest" ? "success" : "skipped");
-    outcome(job, "Configure TSan address space", native && profile.sanitize === "THREAD" ? "success" : "skipped");
-    for (const [name, sanitizer] of [["Test", "OFF"], ["Test with sanitizers", "ON"], ["Test with thread sanitizer", "THREAD"]]) {
-      outcome(job, name, native && profile.sanitize === sanitizer ? "success" : "skipped");
+    for (const name of ["Run actions/checkout@v4", "Run lukka/get-cmake@latest", "Run lukka/run-vcpkg@v11", "Upload test results"]) {
+      outcome(job, name, native ? "success" : "skipped");
     }
-    const benchmark = native && (plan.tier === "full" || plan.source_tests === "") &&
-      profile.os === "ubuntu-latest" && profile.ssl === "ON" && profile.sanitize === "OFF";
-    outcome(job, "Check benchmark batch runner and report calculations", benchmark ? "success" : "skipped");
+    outcome(job, "Run ilammy/msvc-dev-cmd@v1", native && group.os === "windows-latest" ? "success" : "skipped");
+    outcome(job, "Configure TSan address space", native && group.sanitize === "THREAD" ? "success" : "skipped");
+    outcome(job, "Prepare benchmark tools", native && group.os === "ubuntu-latest" && group.sanitize === "OFF" &&
+      (plan.tier === "full" || plan.source_tests === "") ? "success" : "skipped");
+    for (const slot of slots) {
+      const profile = { ...group, ...slot };
+      const available = expectedCells.some(cell => Object.keys(cell).every(key => cell[key] === profile[key]));
+      const active = available && runNative(plan, profile);
+      nativeCells += Number(active);
+      const suffix = ` - ${slotName(slot)}`;
+      outcome(job, `Record planned coverage${suffix}`, active ? "skipped" : "success");
+      for (const name of ["Configure", "Build planned native targets", "Test"]) outcome(job, name + suffix, active ? "success" : "skipped");
+      if (slot.ssl === "ON") outcome(job, "Select bounded compiler parallelism" + suffix, active && group.sanitize === "ON" ? "success" : "skipped");
+      const benchmark = active && (plan.tier === "full" || plan.source_tests === "") &&
+        group.os === "ubuntu-latest" && slot.ssl === "ON" && group.sanitize === "OFF";
+      if (slot.ssl === "ON") outcome(job, "Check benchmark batch runner and report calculations" + suffix, benchmark ? "success" : "skipped");
+    }
   }
   return { tier: plan.tier, native_cells: nativeCells, scope_only_cells: expectedCells.length - nativeCells };
 }

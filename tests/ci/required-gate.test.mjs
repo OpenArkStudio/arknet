@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
-import { cellName, expectedCells, optionalCacheSteps, validateRequired } from "../../.github/scripts/ci-required.mjs";
+import { cellName, expectedCells, expectedGroups, groupName, optionalCacheSteps, validateRequired } from "../../.github/scripts/ci-required.mjs";
 import { planChecks } from "../../.github/scripts/ci-scope.mjs";
 
 const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
@@ -20,18 +20,13 @@ const outputs = plan => Object.fromEntries(["full_cpp", "tier", "source_tests"].
 const nativeExpression = block("test").match(/ARKNET_RUN_NATIVE: \$\{\{ (.+) \}\}/)[1];
 const jobNameExpression = block("test").match(/^    name: (.+)$/m)[1];
 
+function actualGroups() {
+  return [...block("test").matchAll(/- \{os: ([^,]+), sanitize: "([^"]+)"\}/g)].map(([, os, sanitize]) => ({ os, sanitize }));
+}
 function actualCells() {
-  const matrix = block("test").split("      matrix:\n")[1].split("    runs-on:")[0];
-  const values = key => JSON.parse("[" + matrix.match(new RegExp(`^        ${key}: \\[([^\\]]+)\\]$`, "m"))[1]
-    .split(",").map(value => JSON.stringify(value.trim().replaceAll('"', ""))).join(",") + "]");
-  const cells = [];
-  for (const os of values("os")) for (const boost of values("boost")) {
-    for (const ssl of values("ssl")) for (const sanitize of values("sanitize")) cells.push({ os, boost, ssl, sanitize });
-  }
-  for (const [, os, boost, ssl, sanitize] of matrix.matchAll(/- \{os: ([^,]+), boost: "([^"]+)", ssl: "([^"]+)", sanitize: "([^"]+)"\}/g)) {
-    cells.push({ os, boost, ssl, sanitize });
-  }
-  return cells;
+  return actualGroups().flatMap(group => ["OFF", "ON"].flatMap(boost =>
+    (group.os === "ubuntu-latest" && group.sanitize === "OFF" ? ["ON", "OFF"] : ["ON"])
+      .map(ssl => ({ ...group, boost, ssl }))));
 }
 
 function fixture(eventName, files, extra = {}) {
@@ -41,11 +36,14 @@ function fixture(eventName, files, extra = {}) {
     databaseId: index + 1, name: block(name).match(/^    name: (.+)$/m)[1], status: "completed", conclusion: "success",
     steps: steps(name).map((step, number) => ({ name: stepName(step), number: number + 1, status: "completed", conclusion: "success" })),
   }));
-  for (const [index, matrix] of actualCells().entries()) {
+  for (const [index, matrix] of actualGroups().entries()) {
     const context = { matrix, needs, runner: { os: { "ubuntu-latest": "Linux", "macos-latest": "macOS", "windows-latest": "Windows" }[matrix.os] },
       always: () => true, steps: {
         "vcpkg-cache": { outputs: { enabled: "true" } },
         "compiler-cache": { outputs: { enabled: "true" } },
+        "native-setup": { outcome: "success" },
+        ...Object.fromEntries(["boost", "standalone"].flatMap(dep => ["tls", "notls"].flatMap(tls =>
+          ["configure", "parallel", "build", "test"].map(stage => [`${dep}-${tls}-${stage}`, { outcome: "success" }])))),
       } };
     context.env = { ARKNET_RUN_NATIVE: String(runInNewContext(nativeExpression, context)) };
     jobs.push({ databaseId: index + 3,
@@ -60,15 +58,15 @@ function fixture(eventName, files, extra = {}) {
   jobs.push({ databaseId: 100, name: "CI - required", status: "in_progress", conclusion: "", steps: [] });
   return { plan, needs, metadata: { jobs }, eventName };
 }
-const findStep = (job, name) => job.steps.find(step => step.name === name);
+const findStep = (job, name) => job.steps.find(step => step.name === name) ?? job.steps.find(step => step.name === `${name} - Boost - TLS`);
 
-test("the independently reviewed manifest matches all twelve actual matrix profiles and names", () => {
+test("the independently reviewed manifests match five groups and all twelve actual native profiles", () => {
   const cells = actualCells();
   assert.equal(cells.length, 12);
   assert.deepEqual(new Set(cells.map(cellName)), new Set(expectedCells.map(cellName)));
   assert.equal(new Set(expectedCells.map(cellName)).size, 12);
   const full = fixture("merge_group", ["tests/rudp.cpp"]);
-  assert.deepEqual(new Set(full.metadata.jobs.slice(2, -1).map(job => job.name)), new Set(expectedCells.map(cellName)));
+  assert.deepEqual(new Set(full.metadata.jobs.slice(2, -1).map(job => job.name)), new Set(expectedGroups.map(groupName)));
 });
 
 test("real workflow step conditions produce accepted full, source-suite, module and documentation coverage", () => {
@@ -91,23 +89,16 @@ test("real workflow step conditions produce accepted full, source-suite, module 
   }
 });
 
-test("the gate requires successful planning in both Linux sanitizer dependency profiles and nowhere else", () => {
-  const name = "Select bounded compiler parallelism";
-  for (const [event, files, expected] of [["merge_group", ["tests/rudp.cpp"], 2],
-    ["workflow_dispatch", ["README.md"], 2], ["pull_request", ["tests/rudp.cpp"], 0],
-    ["merge_group", ["docs/site/package.json"], 0]]) {
-    const input = fixture(event, files);
-    const selected = input.metadata.jobs.filter(job => findStep(job, name)?.conclusion === "success");
-    assert.equal(selected.length, expected);
-    if (expected) assert.deepEqual(new Set(selected.map(job => job.name)), new Set(["OFF", "ON"].map(boost =>
-      cellName({ os: "ubuntu-latest", boost, ssl: "ON", sanitize: "ON" }))));
-    validateRequired(input);
-    for (const job of input.metadata.jobs.filter(job => findStep(job, name))) {
-      const invalid = structuredClone(input);
-      const step = findStep(invalid.metadata.jobs.find(candidate => candidate.name === job.name), name);
-      step.conclusion = step.conclusion === "success" ? "skipped" : "success";
-      assert.throws(() => validateRequired(invalid), `${event}: ${job.name}`);
-    }
+test("the gate requires separate bounded planning for both sanitizer dependency profiles", () => {
+  const input = fixture("merge_group", ["tests/rudp.cpp"]);
+  const planned = input.metadata.jobs.flatMap(job => job.steps.filter(step =>
+    step.name.startsWith("Select bounded compiler parallelism") && step.conclusion === "success").map(step => [job, step]));
+  assert.equal(planned.length, 2);
+  assert.deepEqual(planned.map(([job]) => job.name), Array(2).fill(groupName({ os: "ubuntu-latest", sanitize: "ON" })));
+  for (const [job, step] of planned) {
+    const invalid = structuredClone(input);
+    findStep(invalid.metadata.jobs.find(candidate => candidate.name === job.name), step.name).conclusion = "skipped";
+    assert.throws(() => validateRequired(invalid));
   }
 });
 
@@ -136,7 +127,7 @@ test("failed, skipped, cancelled, pending, duplicate and missing prerequisite jo
     input.needs[prerequisite].result = result;
     assert.throws(() => validateRequired(input));
   }
-  for (let index = 0; index < 14; index++) {
+  for (let index = 0; index < 7; index++) {
     for (const change of [job => { job.status = "in_progress"; }, job => { job.conclusion = "failure"; },
       job => { job.conclusion = "skipped"; }, job => { job.conclusion = undefined; }, job => { job.steps = []; }]) {
       const input = structuredClone(valid);
@@ -161,7 +152,7 @@ test("failed, skipped, cancelled, pending, duplicate and missing prerequisite jo
 test("successful jobs cannot hide skipped full checks, executed scope-only checks or wrong sanitizer test steps", () => {
   for (const [event, files] of [["merge_group", ["tests/rudp.cpp"]], ["pull_request", ["tests/rudp.cpp"]], ["merge_group", ["README.md"]]]) {
     const valid = fixture(event, files);
-    for (let index = 2; index < 14; index++) {
+    for (let index = 2; index < 7; index++) {
       const actual = valid.metadata.jobs[index];
       for (const step of actual.steps.filter(step => !optionalCacheSteps.includes(step.name))) {
         for (const conclusion of [step.conclusion === "success" ? "skipped" : "success", "failure", "cancelled", "neutral", "unknown", "", undefined]) {
@@ -247,7 +238,7 @@ test("unavailable optional caches and their posts permit cold builds only when a
       assert.equal(validateRequired(input).native_cells, event === "merge_group" ? 12 : 1);
       for (const name of ["Configure", "Build planned native targets", "Test"]) {
         const invalid = structuredClone(input);
-        const job = invalid.metadata.jobs.find(job => job.steps.some(step => step.name === name && step.conclusion === "success"));
+        const job = invalid.metadata.jobs.find(job => job.steps.some(step => (step.name === name || step.name === name + " - Boost - TLS") && step.conclusion === "success"));
         findStep(job, name).conclusion = "failure";
         assert.throws(() => validateRequired(invalid), `${mode}/${name}`);
       }
@@ -291,7 +282,7 @@ test("cache fallback rejects unknown outcomes, missing steps, contradictory acti
 test("scope-only cells cannot execute cache steps or their posts", () => {
   for (const [event, files] of [["pull_request", ["tests/rudp.cpp"]], ["merge_group", ["README.md"]]]) {
     const valid = fixture(event, files);
-    const index = valid.metadata.jobs.findIndex(job => job.steps.some(step => step.name === "Configure" && step.conclusion === "skipped"));
+    const index = valid.metadata.jobs.findIndex(job => job.steps.some(step => step.name === "Configure - Boost - TLS" && step.conclusion === "skipped"));
     for (const name of optionalCacheSteps) for (const conclusion of ["success", "failure"]) {
       const input = structuredClone(valid);
       findStep(input.metadata.jobs[index], name).conclusion = conclusion;

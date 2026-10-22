@@ -20,8 +20,8 @@ Boost/Standalone Asio、TLS、Linux 无 TLS，以及 Linux AddressSanitizer（�
 UndefinedBehaviorSanitizer（未定义行为检测）组合、ThreadSanitizer（线程数据竞争检测）。
 源分支通过不代表已完成全矩阵验收。
 
-严格分类的 README／纯文档改动在两个阶段均运行文档和格式检查。十二个矩阵任务保留必需
-检查名称；源分支中不属于计划范围的任务明确记录仅验证范围，不声称执行了原生测试。
+严格分类的 README／纯文档改动在两个阶段均运行文档和格式检查。五个原生分组任务保留全部十二种配置；
+源分支中不属于计划范围的配置明确记录仅验证范围，不声称执行了原生测试。
 改动范围缺失或格式错误时运行完整矩阵；范围验证失败会阻止所有原生检查通过。
 重命名同时分类新旧路径，不为新提交取消正在执行的检查。
 
@@ -30,24 +30,81 @@ Astro/TypeScript 组件、页面与内容工具。规则不会整体豁免 `docs
 CI 范围和工作流测试、原生版本与报告检查、C++/CMake 文件、未知脚本及未映射文件类型
 仍保留原生检查。混合改动在两个阶段均采用原生检查计划。
 
-`CI - required` 与固定十二格原生检查、文档和格式检查共同构成十五个必需检查。
-只验证范围的执行机任务保留既有名称与原生命令。gate 使用内置 token，并仅为自己的 job 授予
-`contents: read` 与 `actions: read`，读取本轮实际任务及步骤元数据。它按事件中的精确提交范围重新计算计划，
-要求范围输出一致、文档与格式检查真实成功，且每个已审定矩阵配置恰好有一个成功任务。
-结果缺失、重复、不完整或未知时均失败。
+工作流定义五个原生分组、文档、格式和 `CI - required`，保护迁移后共八个检查上下文。
+现有十五项保护规则属于独立的部署状态；修改工作流源码不会迁移保护。
+gate 使用内置 token，并仅为自己的 job 授予 `contents: read` 和 `actions: read`，
+读取本轮实际任务及步骤元数据，按事件中的精确提交范围重新计算计划。
+它要求范围输出一致、文档与格式检查真实成功、每组恰好有一个成功任务，
+并逐项核对全部十二种配置的步骤结论。结果缺失、重复、不完整或未知时均失败。
 
-完整验收要求每格真正完成配置、构建和对应测试。源分支模块计划只在 Linux Boost/TLS Release 执行原生检查；
-其他格必须成功记录仅验证范围，并跳过原生步骤。纯文档计划要求十二格全部记录仅验证范围。
-任务结论成功不能替代被跳过的必需步骤、其他测试配置或合并候选所需的完整验证。
-gate 还核对现有计划要求执行的基准与报告检查步骤。
+完整验收要求每种配置真正完成独立的配置、构建和测试步骤。
+源分支计划只在 Linux Boost/TLS Release 执行原生检查；其他配置记录仅验证范围并跳过原生步骤。
+纯文档计划跳过全部原生步骤。任务结论成功不能替代被跳过的必需步骤、其他检测配置，
+也不能代替合并候选所需的完整验证。完整套件计划保留 Linux TLS Release 下两种依赖配置的基准与报告检查。
 
-只有实际运行原生检查的格子，才允许明确标为可选的缓存安装、归档恢复、统计步骤及对应 action 的 post 步骤报告 `failure`。
-任务本身及全部必需的准备、配置、构建和测试步骤仍须成功。关闭的缓存恢复可跳过；编译缓存安装失败后，
-必须跳过其恢复与启动，直接调用编译器。只验证范围的格子必须跳过全部缓存步骤及任何已记录的缓存 post 步骤。
-步骤缺失、结果未知或其他步骤失败仍会报错。fixture 只验证这些回退规则，不证明缓存命中、托管验收或耗时改善。
+只有实际运行原生检查的分组，才允许明确标为可选的缓存安装、归档恢复、统计步骤及对应 action 的 post 步骤报告 `failure`。
+分组本身及必需的准备、配置、构建和测试步骤仍须成功。编译缓存安装失败后，必须跳过恢复与启动并直接调用编译器。
+只验证范围的分组必须跳过全部缓存步骤及任何已记录的缓存 post 步骤。
+步骤缺失、结果未知或其他步骤失败仍会报错。本地 fixture 只验证规则，不证明托管验收或耗时改善。
 
-矩阵在仅验证范围时仍保留固定的任务上下文。本地 fixture 测试只验证 gate 规则，
-不代表已完成托管原生验收或减少执行机使用。
+### 原生任务分组与保护迁移
+
+Release 任务按操作系统共用一次准备步骤。Linux 依次验证 Boost 和 Standalone Asio 的 TLS／无 TLS 配置；
+macOS 与 Windows 分别验证两种依赖的 TLS 配置。Linux AddressSanitizer（内存错误检测）与
+UndefinedBehaviorSanitizer（未定义行为检测）组合、ThreadSanitizer（线程数据竞争检测）仍使用独立任务，
+各自依次验证 Boost 和 Standalone Asio 的 TLS 配置。不增加操作系统或 TLS／检测模式组合。
+
+每种配置使用独立的 `build/ci-<boost>-<ssl>-<sanitize>` 构建目录，阶段日志位于对应 `tests/logs/`，
+并保留具名的配置、构建和测试结论。前一种配置失败后，后续配置仍执行；失败配置内部跳过不满足前置条件的步骤。
+任何必需配置缺失、失败或被跳过都会使分组和汇总 gate 失败。分组超时可能阻止后续配置运行，仍属于验收失败。
+
+只共用准备步骤与缓存容器。全部配置继续请求相同的 `boost;ssl` 依赖 feature 超集。
+缓存键保留操作系统、架构、runner 镜像、编译器环境、依赖身份及 Release／检测分组；
+`grouped-v1` 将新命名空间与原有逐配置缓存隔离。sccache 在共享容器内通过编译命令哈希区分 Boost／TLS 参数。
+不缓存构建目录或测试结果；vcpkg 仍校验依赖 ABI。同一 runner 不并发运行原生配置：
+Release 保留三个构建槽，ThreadSanitizer 保留两个，AddressSanitizer／UndefinedBehaviorSanitizer
+保留一个槽，或在原有资源准入条件满足时使用两个槽；每种依赖构建前重新观测资源。
+每个分组保留 60 分钟任务期限，没有通过延长期限让串行执行通过。
+
+下表将原有十二个原生必需检查映射到五个新上下文。每行两种依赖名称对应两个精确的旧上下文。
+`Documentation checks`、`Style - clang-format 18` 和 `CI - required` 保持名称。
+
+| 原有原生上下文（前缀为 `Test - `） | 新上下文 |
+| --- | --- |
+| `ubuntu-latest - Boost - TLS - Release`；`ubuntu-latest - Standalone - TLS - Release` | `Native - ubuntu-latest - Release` |
+| `ubuntu-latest - Boost - NoTLS - Release`；`ubuntu-latest - Standalone - NoTLS - Release` | `Native - ubuntu-latest - Release` |
+| `macos-latest - Boost - TLS - Release`；`macos-latest - Standalone - TLS - Release` | `Native - macos-latest - Release` |
+| `windows-latest - Boost - TLS - Release`；`windows-latest - Standalone - TLS - Release` | `Native - windows-latest - Release` |
+| `ubuntu-latest - Boost - TLS - ASan+UBSan`；`ubuntu-latest - Standalone - TLS - ASan+UBSan` | `Native - ubuntu-latest - ASan+UBSan` |
+| `ubuntu-latest - Boost - TLS - TSan`；`ubuntu-latest - Standalone - TLS - TSan` | `Native - ubuntu-latest - TSan` |
+
+保护迁移由维护者分阶段验收。先保留原有十五项要求，对新分支的精确 head 执行 `workflow_dispatch`。
+修改保护前，验证新分组的完整覆盖：冷缓存与已有缓存运行、十二种配置结论、源分支模块和文档范围以及失败传播。
+更早的发版候选仍在验收时，不修改已部署矩阵或保护。新分组证据验收后，
+用五个映射后的原生检查替换十二个旧检查，全程保留文档、格式与汇总 gate，
+随后要求包含最新 main 的实际合并候选重新完成全量检查。不能为了获得首次绿色 PR 而先删除旧要求。
+记录精确版本、运行记录及保护规则前后状态；手动运行通过不能替代最终合并候选验收。
+本分支定义目标工作流与 gate，不创建伪装原生检查的兼容上下文。
+维护者执行迁移之前，旧要求继续生效；实现完成不代表保护已迁移。
+
+分组减少重复准备和 runner 分配，同时将原生工作串行化。
+[运行 39715538690](https://github.com/OpenArkStudio/arknet/actions/runs/39715538690) 的离线元数据给出以下分钟数；
+求和只用于调度建模，不是分组任务实测：
+
+| 分组 | 旧任务最大耗时 | 旧任务耗时之和 |
+| --- | ---: | ---: |
+| Linux Release | 18.08 | 46.30 |
+| macOS Release | 4.53 | 8.23 |
+| Windows Release | 44.98 | 51.22 |
+| Linux AddressSanitizer + UndefinedBehaviorSanitizer | 22.18 | 27.68 |
+| Linux ThreadSanitizer | 21.92 | 25.47 |
+
+共用准备步骤和缓存可能减少总 runner 分钟数，同时增加最长任务耗时和从排队到 gate 完成的等待时间。
+Windows 求和接近 60 分钟；此前记录的检测任务中，Boost 单独就耗时 58.35 分钟。
+历史求和不能限定冷缓存分组任务耗时。各任务的 runner 可用性和缓存状态不同，
+这些求和或源分支只验证范围的成功都不能证明合入更快。
+托管冷缓存与已有缓存测量必须在同一版本比较总 runner 分钟数、最长分组、排队至 gate 完成耗时和逐配置耗时。
+60 分钟超时属于覆盖失败，不能作为延长期限的依据。
 
 本地可以选择已注册的检查名称；省略此选项时运行全部检查，未知或不可用的名称会使配置失败：
 
@@ -263,11 +320,11 @@ AddressSanitizer/UndefinedBehaviorSanitizer 与 ThreadSanitizer 使用独立构�
 
 CI 在 Linux／macOS／Windows 检查两种依赖方案，Linux 另运行
 AddressSanitizer/UndefinedBehaviorSanitizer 和 ThreadSanitizer。
-Job 名称包含系统、依赖方案、TLS 和检查模式；十二项原生检查、文档与格式检查
+分组名称包含系统和检查模式；步骤名称区分依赖与 TLS 配置。五个原生分组、文档与格式检查
 和 `CI - required` 一并保留。
 源分支 PR 修改已映射的模块时，在 Linux/Boost/TLS/Release 执行选中的原生检查；
-其他矩阵单元只记录检查范围。包含代码的合并队列候选、手动触发和模块映射之外的改动
-执行完整的 12 格原生检查。纯文档候选执行文档和格式检查。
+其他配置只记录检查范围。包含代码的合并队列候选和手动触发执行完整的 12 种原生配置。
+源分支模块映射之外的改动执行完整 Linux Boost/TLS Release 套件。纯文档候选执行文档和格式检查。
 PR 源分支通过，不代表包含最新 main 和前序队列改动的候选已经通过。
 候选合入 main 后，不重复运行同一套矩阵。README 徽章展示合并队列运行结果。
 
@@ -311,7 +368,7 @@ Linux Boost 和 Standalone Asio 的 AddressSanitizer（内存错误检测）与 
 CPU、物理总量和可用内存仍须为正的安全整数；非有限、负数、小数或字符串形式的约束无效。
 观测缺失、非法、矛盾或不足时选择一个槽。
 其他配置保留现有并行度；源模块目标、sccache launcher、全部十二格矩阵、原生测试和 60 分钟期限保持不变。
-required gate 核对规划步骤仅在两个目标原生格中实际成功执行。
+required gate 核对分组内的逐配置规划步骤仅在两个目标原生配置中实际成功执行。
 
 helper 在任务日志和摘要中输出真实观测、阈值、所选并行度与原因。这是保守的调度启发式：
 12 GiB 可用内存是两个编译槽及其开销的准入预算，不是实测编译峰值或强制单槽上限。
@@ -324,7 +381,7 @@ API 语义参考：[Node 操作系统资源接口](https://nodejs.org/api/os.htm
 
 ### 原生构建缓存
 
-每个实际执行原生检查的矩阵单元使用 Mozilla 官方 sccache action `v0.0.11`
+每个实际执行原生检查的分组使用 Mozilla 官方 sccache action `v0.0.11`
 和 sccache `v0.16.0`。CMake 通过两个 compiler launcher 选项传入缓存工具；
 编译器、构建类型、编译参数、选择的目标和测试命令保持不变。
 缓存工具安装或服务启动失败时，直接调用编译器。服务通信失败时，
@@ -337,7 +394,8 @@ API 语义参考：[Node 操作系统资源接口](https://nodejs.org/api/os.htm
 
 GitHub Actions 分别持久化本地编译缓存和 vcpkg `files` 二进制归档。
 每份编译缓存限制为 512 MiB。缓存键包含操作系统、架构、runner 镜像及版本、
-目标与宿主 triplet、固定的 vcpkg 版本、manifest／配置／overlay 内容、请求的 features、默认 features 和矩阵构建配置。
+目标与宿主 triplet、固定的 vcpkg 版本、manifest／配置／overlay 内容、请求的 features、默认 features 和分组构建配置。
+组内 Boost／TLS 配置共用缓存容器，编译命令仍分别计算哈希。
 Release、AddressSanitizer/UndefinedBehaviorSanitizer 与 ThreadSanitizer 使用独立配置。
 vcpkg 复用依赖前还会校验各软件包的 ABI。依赖归档要求缓存键完全匹配；
 编译缓存通过配置专属前缀恢复，并使用每次运行的独立后缀保存新增对象。

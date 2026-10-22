@@ -23,9 +23,9 @@ Linux AddressSanitizer with UndefinedBehaviorSanitizer, and separate ThreadSanit
 checks. A green source PR is not full-matrix acceptance.
 
 Strictly classified README/documentation-only changes run documentation and
-formatting checks in both stages. The twelve matrix jobs retain their required
-names; cells outside the planned source coverage explicitly record scope-only
-validation, not executed native tests. Missing or malformed change ranges select
+formatting checks in both stages. Five grouped native jobs retain all twelve
+configuration profiles; cells outside the planned source coverage explicitly
+record scope-only validation. Missing or malformed change ranges select
 the complete matrix. Failed scope validation blocks every native gate. Rename
 classification includes both old and new paths. Active runs are not cancelled to
 schedule a newer commit.
@@ -37,36 +37,108 @@ exemption: CI scope/workflow tests, native release/report checks, C++/CMake file
 unknown scripts and unmapped file types retain native coverage. A mixed change
 uses the native plan at both stages.
 
-`CI - required` accompanies twelve static native matrix checks, documentation
-and formatting: fifteen required check contexts in total. Scope-only runner jobs
-retain their existing contexts and native commands. The gate uses the built-in
-token with job-local `contents: read` and
-`actions: read` to read this run's actual job and step metadata. It recomputes the
-scope from the event's exact commit range and requires matching scope outputs,
-successful documentation and formatting, and exactly one successful job for each
-reviewed matrix profile. Missing, duplicate, incomplete or unknown results fail.
+The workflow defines five native group contexts, documentation, formatting and
+`CI - required`: eight contexts after the protection migration described below.
+The existing fifteen-context protection is a separate deployment state; changing
+this source does not migrate it. The gate uses the built-in token with job-local
+`contents: read` and `actions: read` to read this run's actual job and step metadata.
+It recomputes scope from the event's exact commit range and requires matching scope
+outputs, successful documentation and formatting, exactly one successful job for
+each group, and configuration-specific step conclusions for all twelve profiles.
+Missing, duplicate, incomplete or unknown results fail.
 
-For full coverage, every cell must actually complete configuration, build and its
-matching test steps. A source-module plan runs native checks only in Linux Boost/TLS
-Release; other cells must successfully record scope-only coverage and skip native
-steps. Documentation-only plans require all twelve cells to record scope-only
-coverage. A successful job conclusion cannot substitute for a skipped required
-step, a different test profile or a source result on a merge candidate. The gate
-also checks the benchmark/report steps wherever the existing plan requires them.
+Full coverage requires each configuration to finish its own configure, build and
+test steps. Source plans execute only Linux Boost/TLS Release; other profiles
+record scope-only coverage and skip native steps. Documentation-only plans skip
+all native steps. A successful job conclusion cannot replace a skipped required
+step, a different sanitizer profile or a source result on a merge candidate.
+Benchmark/report checks retain their existing Linux TLS Release coverage for both
+dependency configurations when the plan selects the complete suite.
 
-The gate tolerates `failure` only for the explicitly optional cache installation,
-archive restore and statistics steps, plus the corresponding action post steps,
-when that cell runs native checks. The job itself and all required preparation,
-configuration, build and test steps must still succeed. Disabled restores may be
-skipped; a failed compiler-cache installation must skip its restore and startup
-and use the direct compiler. Scope-only cells must skip every cache step and any
-recorded cache post step. Missing steps, unknown outcomes and failures from other
-steps remain errors. Fixture coverage establishes these fallback rules, not cache
-hits, hosted acceptance or a measured speedup.
+Only explicit optional cache installation, archive restore and statistics steps,
+and the corresponding cache action post steps, may report `failure` in active
+native groups. The group and required preparation/configure/build/test steps must
+succeed. Failed compiler-cache installation disables its restore and startup and
+selects direct compilation. Scope-only groups skip all cache steps and any recorded
+cache post steps. Missing steps, unknown outcomes and other failures remain errors.
+Local fixtures establish these rules, not hosted acceptance or a measured speedup.
 
-The matrix retains its static job contexts even for scope-only plans. Local
-fixture tests establish the gate's validation rules; they do not establish hosted
-native acceptance or a reduction in runner use.
+### Grouped native jobs and protection migration
+
+Release jobs share setup once per operating system. Linux executes Boost and
+Standalone Asio with TLS and without TLS; macOS and Windows execute both dependency
+configurations with TLS. Linux AddressSanitizer with UndefinedBehaviorSanitizer
+and ThreadSanitizer remain separate jobs, each executing Boost and Standalone
+Asio with TLS. No new platforms or TLS/sanitizer combinations are added.
+
+Each configuration has a separate `build/ci-<boost>-<ssl>-<sanitize>` tree, stage
+logs under its own `tests/logs/`, and named configure/build/test conclusions.
+Configuration steps explicitly run after earlier configurations fail; dependencies
+within the failed configuration still skip invalid work. Any missing, failed or
+skipped required configuration fails the group and aggregate gate. A group timeout
+can prevent later configurations from running and therefore fails acceptance.
+
+Only setup and cache containers are shared. All configurations continue requesting
+the same `boost;ssl` dependency feature superset. Cache keys retain OS, architecture,
+runner image, compiler environment, dependency identity and Release/sanitizer group;
+`grouped-v1` separates the new namespace from old per-cell archives. Compiler
+invocation hashes distinguish Boost/TLS flags inside the shared sccache container.
+Build trees and results are never cached. Dependency ABI validation remains in
+vcpkg. No concurrent native profiles share a runner: Release stays at three build
+slots, ThreadSanitizer at two, and AddressSanitizer/UndefinedBehaviorSanitizer at
+one or the existing resource-admitted two slots, re-evaluated for each dependency.
+Every group retains the 60-minute job deadline; it has not been extended to make
+serial execution pass.
+
+The following names map the twelve existing native required contexts to five
+new contexts. Each pair of dependency names denotes two exact old contexts.
+Documentation checks, `Style - clang-format 18` and `CI - required` retain their names.
+
+| Existing native contexts (`Test - ` prefix) | New context |
+| --- | --- |
+| `ubuntu-latest - Boost - TLS - Release`; `ubuntu-latest - Standalone - TLS - Release` | `Native - ubuntu-latest - Release` |
+| `ubuntu-latest - Boost - NoTLS - Release`; `ubuntu-latest - Standalone - NoTLS - Release` | `Native - ubuntu-latest - Release` |
+| `macos-latest - Boost - TLS - Release`; `macos-latest - Standalone - TLS - Release` | `Native - macos-latest - Release` |
+| `windows-latest - Boost - TLS - Release`; `windows-latest - Standalone - TLS - Release` | `Native - windows-latest - Release` |
+| `ubuntu-latest - Boost - TLS - ASan+UBSan`; `ubuntu-latest - Standalone - TLS - ASan+UBSan` | `Native - ubuntu-latest - ASan+UBSan` |
+| `ubuntu-latest - Boost - TLS - TSan`; `ubuntu-latest - Standalone - TLS - TSan` | `Native - ubuntu-latest - TSan` |
+
+Protection migration requires maintainer-controlled staged acceptance. Keep all
+fifteen old requirements while running `workflow_dispatch` against the exact new
+branch head. Verify full grouped coverage before changing protection: cold and
+populated-cache runs, all twelve configuration conclusions, source/module and
+documentation scopes, and failure propagation. Do not change the deployed matrix
+or protection during an older release candidate's active acceptance. After the
+new grouped evidence is accepted, save the five mapped native requirements in
+place of the twelve old ones, preserving documentation, formatting and the aggregate
+gate, then require a fresh full merge candidate containing the latest main. Do not
+remove old checks simply to obtain an initial green PR. Record exact revisions,
+runs and protection before/after; a green dispatch does not validate the final
+merge candidate. This branch defines the target workflow and gate, without fake
+native compatibility contexts. Old requirements remain until the maintainer
+executes the migration; implementation alone does not complete it.
+
+Grouping reduces repeated setup and runner allocations but serializes native work.
+The offline metadata for [run 39715538690](https://github.com/OpenArkStudio/arknet/actions/runs/39715538690)
+gives these minutes; sums are a scheduling model, not measured grouped jobs:
+
+| Group | Old longest job | Sum of old jobs |
+| --- | ---: | ---: |
+| Linux Release | 18.08 | 46.30 |
+| macOS Release | 4.53 | 8.23 |
+| Windows Release | 44.98 | 51.22 |
+| Linux AddressSanitizer + UndefinedBehaviorSanitizer | 22.18 | 27.68 |
+| Linux ThreadSanitizer | 21.92 | 25.47 |
+
+Total runner minutes may decrease through shared setup/cache reuse while the
+longest job and end-to-end queue wait increase. The Windows sum leaves little
+room within 60 minutes, and an earlier documented sanitizer run took 58.35 minutes
+for Boost alone. The historical sums do not bound cold-cache grouped duration.
+Runner availability and cache state differ between jobs, so neither these sums
+nor source-PR scope-only successes demonstrate faster merging. Hosted cold-cache
+and populated-cache measurements must compare total runner minutes, longest group,
+queue-to-gate completion and per-configuration times at the same revision. A
+60-minute timeout is failed coverage, not evidence for raising the limit.
 
 For a focused local run, pass exact registered check names. Omit the option to
 run all checks; unknown or unavailable names fail during configuration:
@@ -310,13 +382,13 @@ and thread schedules exercised; it does not prove that all errors are absent.
 ## CI and Remaining Coverage
 
 CI checks Linux/macOS/Windows with both dependency configurations; Linux also runs
-AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer. Job names include
-OS, dependency, TLS and check mode. The twelve native checks, documentation and
-formatting accompany `CI - required`. Known source
+AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer. Group names include
+OS and check mode; named steps distinguish dependency and TLS profiles. Five
+groups, documentation and formatting accompany `CI - required`. Known source
 modules on PR branches run their selected native checks in Linux/Boost/TLS/Release;
 other cells record scope-only coverage. Code-bearing merge-queue candidates,
-manual dispatches and changes outside the reviewed module map run all twelve native
-cells. Documentation-only candidates run documentation and formatting. A successful
+manual dispatches run all twelve native configurations. Source PR changes outside
+the reviewed module map run the complete Linux Boost/TLS Release suite. Documentation-only candidates run documentation and formatting. A successful
 PR head does not validate the queue candidate containing
 the latest main and preceding queued changes. CI does not repeat the same matrix
 after the candidate is merged into main. The README badge shows merge-queue runs.
@@ -373,7 +445,8 @@ nonfinite, negative, fractional or string constraints are invalid. Missing,
 invalid, inconsistent or insufficient resource observations select one slot. Other profiles keep their existing parallelism,
 and source-module targets, sccache launchers, all twelve matrix profiles, native
 tests and the 60-minute job limit remain unchanged. The required gate verifies
-that the planning step ran successfully only in the two intended native cells.
+that each configuration-specific planning step ran successfully only for the two
+intended native profiles inside the sanitizer group.
 
 The helper prints the actual observations, thresholds, selected bound and reason
 to the job log and summary. This is a conservative scheduling heuristic: 12 GiB
@@ -390,7 +463,7 @@ and [available memory](https://nodejs.org/api/process.html#processavailablememor
 
 ### Native build caches
 
-Every active native matrix cell uses the official Mozilla sccache action `v0.0.11`
+Every active native group uses the official Mozilla sccache action `v0.0.11`
 with sccache `v0.16.0`. CMake passes the cache through both compiler launcher options;
 the compiler, build type, flags, selected targets and test commands stay the same.
 Compiler setup or server startup failure selects direct compilation. Server IO failure
@@ -407,7 +480,8 @@ establish a cache hit or compilation-time saving.
 GitHub Actions persists the local compiler cache and vcpkg `files` binary archives
 separately. Each compiler cache is bounded to 512 MiB. Cache keys cover OS,
 architecture, runner image/version, target and host triplets, pinned vcpkg revision, manifest/configuration/overlay contents, requested
-features, default features and the matrix build profile. Release,
+features, default features and the grouped build profile. Boost/TLS combinations
+within one group share cache containers and retain separate compiler command hashes. Release,
 AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer profiles remain
 separate. vcpkg also validates each package ABI before reuse. Dependency archives
 require an exact key; compiler caches use a profile-specific prefix plus a unique
