@@ -1,4 +1,4 @@
-# arknet
+<p align="right">English · <a href="README_CN.md">简体中文</a></p>
 
 <p align="center">
   <picture>
@@ -7,11 +7,19 @@
   </picture>
 </p>
 
+<h3 align="center">A C++20 header-only networking library.</h3>
+
+<p align="center">Connect applications. Exchange messages. Access databases.</p>
+
 <p align="center">
   <a href="https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml?query=event%3Amerge_group"><img src="https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml/badge.svg?event=merge_group" alt="Merge queue checks"></a>
+  <a href="CMakeLists.txt"><img src="https://img.shields.io/badge/C%2B%2B-20-5267df" alt="C++20"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL--1.0-5267df" alt="BSL-1.0"></a>
 </p>
 
-[中文](README_CN.md)
+<p align="center"><a href="docs/get-started/installation.md"><strong>Get started →</strong></a> &nbsp; · &nbsp; <a href="https://openarkstudio.github.io/arknet/">Documentation</a> &nbsp; · &nbsp; <a href="examples/">Examples</a> &nbsp; · &nbsp; <a href="docs/project/roadmap.md">Roadmap</a></p>
+
+---
 
 arknet is a general-purpose C++20, header-only networking library maintained by OpenArkStudio.
 
