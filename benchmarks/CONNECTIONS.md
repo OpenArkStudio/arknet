@@ -219,6 +219,48 @@ Snapshots describe cleanup entry, not the exact instant of failure. Per-frame
 diagnostic bookkeeping affects scheduling, so these runs are for diagnosis and
 must not be used as performance measurements.
 
+### Opt-in operation history
+
+The native control accepts `--operation-trace on|off` (default `off`). Add
+`--operation-trace on` to an otherwise unchanged diagnostic command on either
+peer. Disabled mode allocates no session history and posts no worker probes;
+the existing result fields and failure snapshots remain unchanged. This option
+belongs only to `arknet_asio_connection_control`, not the arknet peer.
+
+Enabled mode retains the last 16 composed read/write start/completion events per
+admitted session. Each event has an ordinal, operation ID, microseconds since
+process start, byte count, sequence and numeric error. Read sequence is the
+expected application sequence; read-completion bytes are the matched frame size,
+not a low-level socket read count. Write-start bytes include the frame prefix.
+At the existing one-second controller sampling cadence, at most one worker marker
+is pending; retained markers report submission and execution times.
+
+When failure cleanup begins, the IO worker freezes history before cancelling
+sockets and emits `operation_trace` for at most 16 incomplete/write-pending
+sessions, followed by `operation_trace_summary`. A successful run emits no trace.
+The opt-in final result adds `operation_trace_enabled` and
+`operation_trace_emitted`; a missing final result still means incomplete execution.
+Recorder storage, the 256 KiB serialized-output reservation and fixed scratch
+reservation together stay within 16 MiB per process, excluding allocator overhead
+and existing session/socket memory. Larger declared capacities leave later
+sessions unrecorded, without changing workload admission. Summary counts expose
+unrecorded/omitted sessions, overwritten history, pending/skipped/overwritten
+worker markers and output truncation. `history_complete` concerns only the
+retained session's composed-operation history; it does not certify full trace
+coverage. `worker_history_complete` also requires no pending/skipped marker.
+Cleanup callbacks cannot overwrite the frozen snapshot; overflow never emits a
+partial JSON record. Trace output and raw evidence must remain local.
+
+There is no socket forwarding adaptor: original handlers and their associations
+remain in place. `operation_scope: "composed_only"` and
+`low_level_operations: false` explicitly exclude `async_read_some`/
+`async_write_some` visibility. Worker progress can distinguish global callback
+starvation from continued worker execution, but cannot exclude per-session
+readiness/scheduling effects or identify TCP recovery behavior. The known
+5,000-active-connection timeout remains unresolved. Enabling diagnostics changes
+observation cost; success is neither a fix nor capacity acceptance. Do not extend
+deadlines or automatically retry to obtain a preferred outcome.
+
 Admission, phase changes and timeout scans execute on a separate main/owner
 thread; one IO worker executes socket callbacks and per-session strand commands.
 Counters and pending timestamps cross that boundary through atomics, without a
@@ -257,3 +299,12 @@ inject TCP loss or out-of-order segments, reproduce kernel retransmission recove
 isolate high-load capture overhead, or resolve the known response timeout.
 An additional silent TCP peer verifies that a real request timeout emits the
 connection snapshot before the final result and still completes socket cleanup.
+
+Its opt-in silent-peer counterpart checks frozen composed history and a real
+worker marker; an enabled successful pair checks that no failure trace is emitted.
+`connection_operation_trace` checks ring wrap/order, pending operation IDs,
+freeze, completeness metadata, memory admission and bounded complete JSON output
+without sockets. The native self-test also dispatches a cancelled timer with
+explicit executor, allocator and cancellation-slot associations while recording
+inside its original completion body. These checks do not validate a low-level
+forwarding adaptor, which is deliberately absent.

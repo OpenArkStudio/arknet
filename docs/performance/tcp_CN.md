@@ -53,6 +53,12 @@ CPU 范围存在重叠。两个驱动的实现及辅助线程配置不同，因�
 空闲驻留不代表吞吐量、RTT 或生产 PCU 验收，也未解决已知的 5,000 条活动连接 Echo
 响应超时问题；参见[生产验收](../project/production-readiness_CN.md)。
 
+独立原生诊断对照提供 `--operation-trace on`，默认为 `off`，用于保留有界的组合读写操作
+历史及一秒工作线程进度标记。失败清理时冻结历史，并输出最多 16 个会话；输出明确报告
+缺失／被覆盖历史及 `low_level_operations: false`。它不观察单次底层 socket 读写，
+也不确定超时根因。按需诊断不属于上述测量，5,000 条活动连接问题仍未解决。
+原始轨迹保留本地，负载和期限保持原值；参见[操作历史](../../benchmarks/CONNECTIONS_CN.md#按需启用操作历史)。
+
 ## 无额外业务计算
 
 ![吞吐量](assets/tcp-work0-throughput.svg)

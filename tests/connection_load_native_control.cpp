@@ -204,10 +204,14 @@ void sample_phases(const std::string& path, unsigned count, bool native) {
 }
 
 void pair(const std::string& server_binary, const std::string& client_binary, unsigned count,
-    const std::string& scenario = "traffic", unsigned payload = 1024, bool phases = false) {
-    const std::vector<std::string> common{"--run-id", "71", "--scenario", scenario, "--payload",
-        std::to_string(payload), "--window", "4", "--max-connections", std::to_string(count), "--hold-seconds",
-        phases ? "3.2" : "0.03", "--deadline-seconds", phases ? "7" : "5", "--cleanup-seconds", "1"};
+    const std::string& scenario = "traffic", unsigned payload = 1024, bool phases = false, bool trace = false) {
+    std::vector<std::string> common{"--run-id", "71", "--scenario", scenario, "--payload", std::to_string(payload),
+        "--window", "4", "--max-connections", std::to_string(count), "--hold-seconds", phases ? "3.2" : "0.03",
+        "--deadline-seconds", phases ? "7" : "5", "--cleanup-seconds", "1"};
+    if (trace)
+    {
+        common.insert(common.end(), {"--operation-trace", "on"});
+    }
     auto server_args = common;
     server_args.insert(server_args.end(),
         {"--role", "server", "--listen", "127.0.0.1", "--port", "0", "--expected-connections", std::to_string(count)});
@@ -240,6 +244,16 @@ void pair(const std::string& server_binary, const std::string& client_binary, un
         {
             throw std::runtime_error("native terminal/cleanup evidence missing: " + path);
         }
+        if (trace &&
+            (output.find("\"operation_trace_enabled\":true,\"operation_trace_emitted\":false") == std::string::npos ||
+                output.find("\"event\":\"operation_trace\"") != std::string::npos))
+        {
+            throw std::runtime_error("successful opt-in run emitted a failure trace: " + path);
+        }
+        if (!trace && output.find("operation_trace") != std::string::npos)
+        {
+            throw std::runtime_error("default run changed diagnostic output: " + path);
+        }
         if (phases)
         {
             sample_phases(path, count, output.find("arknet_asio_connection_control") != std::string::npos);
@@ -253,7 +267,9 @@ void invalid_arguments(const std::string& executable) {
     for (const auto& suffix : std::vector<std::vector<std::string>>{{"--connections", "-1"}, {"--connections", "1x"},
              {"--io-threads", "2"}, {"--max-buffer-bytes", "8192"}, {"--sample-ms", "1000"}, {"--hold-seconds", "nan"},
              {"--hold-seconds", "inf"}, {"--port", "2"}, {"--unknown", "1"}, {"--connections"},
-             {"--connections", "5000", "--window", "4", "--max-inflight", "19999"}})
+             {"--connections", "5000", "--window", "4", "--max-inflight", "19999"}, {"--operation-trace", "true"},
+             {"--operation-trace", "ON"}, {"--operation-trace"},
+             {"--operation-trace", "on", "--operation-trace", "off"}})
     {
         auto args = base;
         args.insert(args.end(), suffix.begin(), suffix.end());
@@ -278,7 +294,7 @@ void invalid_arguments(const std::string& executable) {
     }
 }
 
-void silent_peer(const std::string& executable) {
+void silent_peer(const std::string& executable, bool trace = false) {
     struct listener
     {
         int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -305,10 +321,14 @@ void silent_peer(const std::string& executable) {
         throw std::runtime_error("silent peer port lookup failed");
     }
     // The kernel accepts the connection, but no application replies to HELLO.
-    child client(
-        executable, {"--role", "client", "--target", "127.0.0.1", "--port", std::to_string(ntohs(address.sin_port)),
-                        "--run-id", "41", "--connections", "1", "--request-timeout-ms", "100", "--hold-seconds", "0.01",
-                        "--deadline-seconds", "3", "--cleanup-seconds", "1"});
+    std::vector<std::string> args{"--role", "client", "--target", "127.0.0.1", "--port",
+        std::to_string(ntohs(address.sin_port)), "--run-id", "41", "--connections", "1", "--request-timeout-ms",
+        trace ? "1200" : "100", "--hold-seconds", "0.01", "--deadline-seconds", "3", "--cleanup-seconds", "1"};
+    if (trace)
+    {
+        args.insert(args.end(), {"--operation-trace", "on"});
+    }
+    child client(executable, args);
     const auto status = client.wait();
     const auto output = read_file(client.log);
     const auto snapshot = output.find("\"event\":\"connection_diagnostic\"");
@@ -323,6 +343,29 @@ void silent_peer(const std::string& executable) {
         output.find("request timeout:") == std::string::npos)
     {
         throw std::runtime_error("pre-cancel connection diagnostics missing: " + client.log);
+    }
+    const auto trace_position = output.find("\"event\":\"operation_trace\"");
+    if (trace)
+    {
+        const auto summary = output.find("\"event\":\"operation_trace_summary\"");
+        if (trace_position == std::string::npos || summary == std::string::npos || summary >= snapshot ||
+            trace_position >= summary ||
+            output.find("\"frozen\":true,\"history_complete\":true") == std::string::npos ||
+            output.find("\"operation_scope\":\"composed_only\",\"low_level_operations\":false") == std::string::npos ||
+            output.find("\"phase\":\"read_start\"") == std::string::npos ||
+            output.find("\"phase\":\"write_complete\"") == std::string::npos ||
+            output.find("\"phase\":\"read_complete\"") != std::string::npos ||
+            output.find("\"output_truncated\":false") == std::string::npos ||
+            output.find("\"emitted_sessions\":1,\"omitted_incomplete_sessions\":0") == std::string::npos ||
+            output.find("\"operation_trace_enabled\":true,\"operation_trace_emitted\":true") == std::string::npos ||
+            counter(output.substr(summary), "worker_markers_completed") < 1 || snapshot - trace_position > 256 * 1024)
+        {
+            throw std::runtime_error("bounded frozen trace/worker progress evidence missing: " + client.log);
+        }
+    }
+    else if (output.find("operation_trace") != std::string::npos)
+    {
+        throw std::runtime_error("disabled diagnostics emitted a trace: " + client.log);
     }
 }
 
@@ -520,6 +563,8 @@ int main(int argc, char** argv) {
         std::cout << "child logs and exits: " << directory << '\n';
         invalid_arguments(argv[1]);
         silent_peer(argv[1]);
+        silent_peer(argv[1], true);
+        pair(argv[1], argv[1], 1, "idle", 1024, false, true);
         fragmented_window(argv[1]);
         fragmented_window(argv[2]);
         pair(argv[1], argv[1], 1, "idle");
