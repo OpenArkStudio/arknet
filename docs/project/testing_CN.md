@@ -100,15 +100,15 @@ Release 保留三个构建槽，ThreadSanitizer 保留两个，AddressSanitizer�
 | --- | ---: | ---: | ---: | ---: |
 | Linux Boost Release，TLS + NoTLS | 6.28 | 37.03 | 6.85 | 50.16 |
 | Linux Standalone Release，TLS + NoTLS | 5.45 | 15.20 | 4.38 | 25.03 |
-| Windows Boost TLS Release | 9.33 | 33.22 | 快照中尚未完成 | 至少 42.55 |
+| Windows Boost TLS Release | 9.33 | 33.22 | 6.45 | 49.00 |
 | Windows Standalone TLS Release | 11.25 | 20.45 | 4.03 | 35.73 |
 | macOS Release，两种 TLS 依赖 | 7.55 | 14.67 | 5.57 | 27.79 |
 | Linux AddressSanitizer + UndefinedBehaviorSanitizer，两种 TLS 依赖 | 6.40 | 40.35 | 6.00 | 52.75 |
 | Linux ThreadSanitizer，两种 TLS 依赖 | 6.08 | 21.81 | 6.35 | 34.24 |
 
 原先五组串行模型合并 Linux Release 的全部四种配置，仅 Build + Test 就达到 63.46 分钟，
-尚未计入 Configure 和 Setup。Windows 两种配置的已记录阶段合计也已至少 78.28 分钟，
-此时 Boost Test 仍在执行。该模型在本基线上超过不变的 60 分钟期限，
+尚未计入 Configure 和 Setup。Windows 两种配置的已记录阶段合计为 84.73 分钟。
+该模型在本基线上超过不变的 60 分钟期限，
 因此 Linux Release 改为按依赖分组，Windows 两种 TLS 依赖分别保留独立任务。
 
 七组方案减少部分重复准备步骤，但阶段求和不构成耗时上限或验收。

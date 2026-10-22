@@ -134,7 +134,7 @@ measuring new grouped jobs. Setup and other job overhead are excluded:
 | --- | ---: | ---: | ---: | ---: |
 | Linux Boost Release, TLS + NoTLS | 6.28 | 37.03 | 6.85 | 50.16 |
 | Linux Standalone Release, TLS + NoTLS | 5.45 | 15.20 | 4.38 | 25.03 |
-| Windows Boost TLS Release | 9.33 | 33.22 | Not complete in snapshot | At least 42.55 |
+| Windows Boost TLS Release | 9.33 | 33.22 | 6.45 | 49.00 |
 | Windows Standalone TLS Release | 11.25 | 20.45 | 4.03 | 35.73 |
 | macOS Release, both TLS dependencies | 7.55 | 14.67 | 5.57 | 27.79 |
 | Linux AddressSanitizer + UndefinedBehaviorSanitizer, both TLS dependencies | 6.40 | 40.35 | 6.00 | 52.75 |
@@ -142,8 +142,7 @@ measuring new grouped jobs. Setup and other job overhead are excluded:
 
 The rejected five-group serial model combines all four Linux Release profiles:
 Build plus Test alone totals 63.46 minutes before Configure or Setup. Combining
-the two Windows profiles already totals at least 78.28 recorded stage minutes,
-while Boost Test was still in progress in this snapshot. That model exceeds the
+the two Windows profiles totals 84.73 recorded stage minutes. That model exceeds the
 unchanged 60-minute deadline on this baseline, so Linux Release is split by
 dependency and Windows TLS dependencies keep separate jobs.
 
