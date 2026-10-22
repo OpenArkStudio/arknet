@@ -13,6 +13,7 @@ function fixture(t) {
   writeFileSync(join(root, 'vcpkg.json'), '{}');
   writeFileSync(join(root, 'vcpkg-configuration.json'), '{"overlay-ports":["ports"]}');
   const env = {
+    GITHUB_RUN_ID: '1001', GITHUB_RUN_ATTEMPT: '1',
     RUNNER_OS: 'Linux', RUNNER_ARCH: 'X64', RUNNER_TEMP: join(root, 'runner temp'),
     ImageOS: 'ubuntu24', ImageVersion: '20261020.1', VCPKG_CACHE_REVISION: 'a'.repeat(40),
     VCPKG_CACHE_FEATURES: 'boost;ssl', VCPKG_CACHE_DEFAULT_FEATURES: 'true',

@@ -547,9 +547,10 @@ architecture, runner image/version, target and host triplets, pinned vcpkg revis
 features, default features and the grouped build profile. Boost/TLS combinations
 within one group share cache containers and retain separate compiler command hashes. Release,
 AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer profiles remain
-separate. vcpkg also validates each package ABI before reuse. Dependency archives
-require an exact key; compiler caches use a profile-specific prefix plus a unique
-run suffix so later runs can add objects. No build directory or test result is cached.
+separate. vcpkg also validates each package ABI before reuse. In `auto` mode,
+dependency archives keep their exact primary key and may fall back only to that
+identity's `-cold-` prefix. Compiler caches keep their existing identity-specific
+prefix plus a unique run suffix so later runs can add objects. No build directory or test result is cached.
 
 Actions cache visibility also depends on the workflow ref. Runs can restore matching
 caches from their current ref and the default branch. A PR merge-ref cache is limited
@@ -565,6 +566,55 @@ or when refreshing compiled objects after source changes. Until the next explici
 seed, new PRs and queue candidates may recompile objects absent from the main cache.
 No push-triggered or scheduled matrix is added, and PR/queue artifacts are not
 promoted into main caches. See [GitHub cache scope restrictions](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache).
+
+#### Repeatable cold and populated-cache validation
+
+Manual `workflow_dispatch` offers `cache_mode=auto` (default) or `cold`.
+PR and merge-group runs always use `auto`. Invalid modes and nonmanual cold
+requests fail validation. Scope-only groups still skip cache setup and native work.
+Both manual modes execute all seven groups and twelve profiles with the same
+targets, tests, resource admission, scheduling and 60-minute deadline.
+
+`cold` uses fresh archive keys for each run ID, attempt and group identity:
+`<identity>-cold-<run-id>-<attempt>-archive`, with no restore-prefix lookup.
+The terminating suffix prevents another attempt's key from being a partial match.
+The dependency/compiler ABI identity and `SCCACHE_C_CUSTOM_CACHE_BUSTER` stay
+unchanged. Both archive families start without restoring prior archives; in-job
+reuse across translation units and later profiles remains enabled. This is
+archive-cold validation, not an uncached OS, toolchain or source-download test.
+No existing cache is deleted. Successful native jobs can save their cold-produced
+archives for later `auto` runs, subject to cache availability and ref visibility.
+
+Run the cold matrix first, wait for completion, then run `auto` at the same
+unchanged ref and source SHA. For shared default-branch validation:
+
+```sh
+gh workflow run ci.yml --repo OpenArkStudio/arknet --ref main -f cache_mode=cold
+# After the cold run completes successfully at the recorded SHA:
+gh workflow run ci.yml --repo OpenArkStudio/arknet --ref main -f cache_mode=auto
+```
+
+Use the intended branch or tag in place of `main` when validating a candidate;
+record each run ID and verify both `headSha` values. Respect the existing admission
+order and preserve active runs. A successful old run or another head cannot
+replace either current-head acceptance run.
+
+In `auto`, existing primary keys remain compatible. Dependency lookup first tries
+its unchanged exact key, then the same full identity's `-cold-` prefix; compiler
+lookup retains its existing identity prefix, which also includes cold-produced
+entries. A prefix restore can succeed while Actions reports `cache-hit=false`:
+that flag identifies an exact primary-key match. Inspect each restore action's
+matched-key log and vcpkg restore/build counts plus sccache counters; a false flag
+alone does not prove a miss, and an archive restore does not prove useful object
+hits. Auto may choose an older exact dependency entry before a cold-produced one.
+Runner-image/compiler or dependency identity changes can legitimately miss again.
+
+Cold acceptance requires actual archive misses and successful full native/gate
+coverage at that head. Populated-cache acceptance requires demonstrated archive
+restores and observed package/compiler reuse in the subsequent full run. Do not
+label an `auto` run warm without those logs. Cache failures retain normal compiler
+fallback, but do not establish populated-cache acceptance. Local key/CLI contracts
+do not establish either hosted result, native memory viability or speedup.
 
 Missing cache identity or unavailable archive storage disables persistence. Cache
 restore/save failures do not replace compilation or testing. The job summary records

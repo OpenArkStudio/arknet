@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, lstatSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { posix, resolve, win32 } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { archiveSelection, cacheMode } from './cache-mode.mjs';
 
 const cold = reason => ({ enabled: false, reason, directory: '', key: '', binarySources: 'clear' });
 const lineValue = value => typeof value === 'string' && value.trim() !== '' && !/[\x00-\x1f\x7f]/.test(value);
@@ -29,6 +30,7 @@ function dependencyFiles(root) {
 }
 
 export function cachePlan({ root, env }) {
+  cacheMode(env);
   const required = ['RUNNER_OS', 'RUNNER_ARCH', 'RUNNER_TEMP', 'ImageOS', 'ImageVersion',
     'VCPKG_CACHE_REVISION', 'VCPKG_CACHE_FEATURES', 'VCPKG_CACHE_DEFAULT_FEATURES', 'VCPKG_CACHE_PROFILE', 'VCPKG_DEFAULT_TRIPLET', 'VCPKG_DEFAULT_HOST_TRIPLET'];
   if (required.some(name => !lineValue(env[name]))) return cold('missing runner or cache identity');
@@ -81,6 +83,7 @@ export function prepareCache({ root, env }) {
       plan = cold('archive directory unavailable');
     }
   }
+  const selection = plan.enabled ? archiveSelection(plan.key, env) : { archiveKey: '', restoreKeys: '' };
   // Export the same explicit triplets used by the key to later vcpkg/CMake steps.
   for (const name of ['VCPKG_DEFAULT_TRIPLET', 'VCPKG_DEFAULT_HOST_TRIPLET']) {
     if (/^[a-z0-9-]+$/.test(env[name] ?? '')) appendFileSync(env.GITHUB_ENV, `${name}=${env[name]}\n`, 'utf8');
@@ -88,7 +91,7 @@ export function prepareCache({ root, env }) {
   // run-vcpkg preserves an existing nonempty value. Always export clear on fallback to suppress x-gha.
   appendFileSync(env.GITHUB_ENV, `VCPKG_BINARY_SOURCES=${plan.binarySources}\n`, 'utf8');
   appendFileSync(env.GITHUB_OUTPUT,
-    `enabled=${plan.enabled}\ndirectory=${plan.directory}\nkey=${plan.key}\n`, 'utf8');
+    `enabled=${plan.enabled}\ndirectory=${plan.directory}\nkey=${selection.archiveKey}\nrestore_keys=${selection.restoreKeys}\n`, 'utf8');
   return plan;
 }
 
@@ -96,8 +99,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   try {
     const plan = prepareCache({ root: process.cwd(), env: process.env });
     console.log(plan.enabled ? 'vcpkg files archive cache prepared' : `vcpkg cache disabled: ${plan.reason}; building dependencies from source`);
-  } catch {
-    console.error('Unable to export vcpkg cache configuration to GitHub file-command channels');
+  } catch (error) {
+    console.error(/^(Invalid native cache mode|Compiler archive requires)/.test(error.message) ? error.message : 'Unable to export vcpkg cache configuration to GitHub file-command channels');
     process.exitCode = 1;
   }
 }

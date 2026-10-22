@@ -441,8 +441,9 @@ GitHub Actions 分别持久化本地编译缓存和 vcpkg `files` 二进制归�
 目标与宿主 triplet、固定的 vcpkg 版本、manifest／配置／overlay 内容、请求的 features、默认 features 和分组构建配置。
 组内 Boost／TLS 配置共用缓存容器，编译命令仍分别计算哈希。
 Release、AddressSanitizer/UndefinedBehaviorSanitizer 与 ThreadSanitizer 使用独立配置。
-vcpkg 复用依赖前还会校验各软件包的 ABI。依赖归档要求缓存键完全匹配；
-编译缓存通过配置专属前缀恢复，并使用每次运行的独立后缀保存新增对象。
+vcpkg 复用依赖前还会校验各软件包的 ABI。在 `auto` 模式下，依赖归档先使用原有精确主键，
+未命中时只允许回退到相同完整身份的 `-cold-` 前缀。
+编译缓存保留原有配置专属恢复前缀，并使用每次运行的独立后缀保存新增对象。
 缓存不包含构建目录或测试结果。
 
 Actions 缓存的可见范围也取决于工作流 ref。运行可以恢复当前 ref 和默认分支中的
@@ -457,6 +458,47 @@ Actions 缓存的可见范围也取决于工作流 ref。运行可以恢复当�
 可能重新编译 main 缓存中尚未包含的对象。
 这里不新增 push 或定时触发的矩阵，也不将 PR／队列产物提升为 main 缓存。
 详见 [GitHub 缓存范围限制](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache)。
+
+#### 可重复的冷缓存与已有缓存验收
+
+手动 `workflow_dispatch` 可选择 `cache_mode=auto`（默认）或 `cold`。
+PR 和合并队列运行始终使用 `auto`。非法模式和非手动运行的冷缓存请求会使校验失败。
+只验证范围的分组仍跳过缓存准备和原生执行。两种手动模式均执行七个分组、十二种配置，
+保留相同的构建目标、测试、资源准入、调度和 60 分钟期限。
+
+`cold` 为每个运行 ID、尝试次数和分组身份生成新的归档键：
+`<identity>-cold-<run-id>-<attempt>-archive`，不查询恢复前缀。
+末尾固定后缀可避免另一次尝试的键成为部分匹配。
+依赖／编译器 ABI 身份和 `SCCACHE_C_CUSTOM_CACHE_BUSTER` 保持不变。
+两类归档均不恢复此前内容，组内翻译单元和后续配置之间仍可复用缓存。
+这里验证的是归档冷启动，不是完全未缓存的操作系统、工具链或源码下载环境。
+不删除已有缓存。原生任务成功后可保存冷构建产生的归档，供后续 `auto` 使用；
+保存和恢复仍受缓存服务可用性及 ref 可见范围限制。
+
+先运行冷缓存矩阵，等待完成后，在同一未变动的 ref 和源码 SHA 上运行 `auto`。
+默认分支的共享缓存验收命令如下：
+
+```sh
+gh workflow run ci.yml --repo OpenArkStudio/arknet --ref main -f cache_mode=cold
+# 冷缓存运行在已记录的 SHA 上成功完成后：
+gh workflow run ci.yml --repo OpenArkStudio/arknet --ref main -f cache_mode=auto
+```
+
+验收候选时，将 `main` 替换为目标分支或标签，记录两次运行 ID，并核对两个 `headSha`。
+遵守现有准入顺序，保留正在执行的运行。旧运行或其他版本的成功不能替代当前版本的两轮验收。
+
+`auto` 保持原有主键兼容：依赖先查询原有精确键，再查询相同完整身份的 `-cold-` 前缀；
+编译器保留原有身份前缀，该前缀也覆盖冷构建保存的归档。
+前缀恢复成功时，Actions 的 `cache-hit` 仍可能为 `false`；该标志只表示是否精确命中主键。
+应核对各恢复 action 日志中的匹配键，以及 vcpkg 恢复／构建数量和 sccache 计数。
+仅凭 `false` 不能判定恢复未命中，归档恢复也不能证明其中对象被有效复用。
+Auto 可能优先选择较早的精确依赖归档，而不是冷构建新保存的归档。
+runner 镜像、编译器或依赖身份变化后，再次未命中属于正常情况。
+
+冷缓存验收要求当前版本实际未恢复旧归档，并成功完成全量原生检查与汇总 gate。
+已有缓存验收要求后续全量运行确实恢复归档，并观察到软件包／编译器复用。
+没有这些日志，不能将 `auto` 运行称为热缓存运行。缓存失败仍回退到正常编译，
+但不能据此认定已有缓存验收通过。本地键规则／CLI 契约不能证明托管结果、原生内存可行性或提速。
 
 缺少缓存标识或归档目录不可用时，关闭持久化。恢复或保存缓存失败不替代编译和测试。
 Job 摘要记录归档恢复状态、依赖归档数量和 `sccache --show-stats`；Configure

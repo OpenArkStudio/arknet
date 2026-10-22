@@ -26,6 +26,13 @@ function checkPolicy(source) {
     "  merge_group:",
     "    types: [checks_requested]",
     "  workflow_dispatch:",
+    "    inputs:",
+    "      cache_mode:",
+    "        description: Native dependency/compiler archives (cold bypasses prior archives)",
+    "        type: choice",
+    "        options: [auto, cold]",
+    "        default: auto",
+    "        required: false",
   ].join("\n"));
   assert.equal(block(source, "permissions"), "permissions:\n  contents: read");
   assert.equal(block(source, "concurrency"), [
@@ -39,7 +46,7 @@ function checkPolicy(source) {
   const required = source.indexOf("  required:\n");
   const jobs = source.slice(source.indexOf("jobs:\n"), required === -1 ? undefined : required);
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
-    "bd32b16254c883e78852825924cdcce36fa43e07381e264f3d6e2d2134e551d5",
+    "b7d4c94d76e3ccf2fe8a9691b37378668fc257e9a34cfe4fc5b00150010c4a1a",
     "review the complete grouped workflow and scope contract before changing it");
 }
 

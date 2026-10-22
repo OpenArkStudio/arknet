@@ -155,7 +155,7 @@ test('prepare exports a nonempty files provider before the action and preserves 
   const environment = readFileSync(f.env.GITHUB_ENV, 'utf8');
   assert.equal(environment, `EXISTING_VALUE=preserved\nVCPKG_DEFAULT_TRIPLET=x64-linux\nVCPKG_DEFAULT_HOST_TRIPLET=x64-linux\nVCPKG_BINARY_SOURCES=${plan.binarySources}\n`);
   assert.equal(readFileSync(f.env.GITHUB_OUTPUT, 'utf8'),
-    `existing_output=preserved\nenabled=true\ndirectory=${plan.directory}\nkey=${plan.key}\n`);
+    `existing_output=preserved\nenabled=true\ndirectory=${plan.directory}\nkey=${plan.key}\nrestore_keys=${plan.key}-cold-\n`);
   assert.doesNotMatch(environment, /x-gha|nuget/);
   assert.equal(f.env.VCPKG_BINARY_SOURCES, 'clear;x-gha,readwrite'); // Only later GitHub steps receive file commands.
 });
@@ -166,7 +166,7 @@ test('cold fallback still explicitly exports clear instead of leaving the action
     const plan = prepareCache({ root: f.root, env: { ...f.env, ...extra } });
     assert.equal(plan.enabled, false);
     assert.match(readFileSync(f.env.GITHUB_ENV, 'utf8'), /\nVCPKG_BINARY_SOURCES=clear\n$/);
-    assert.match(readFileSync(f.env.GITHUB_OUTPUT, 'utf8'), /\nenabled=false\ndirectory=\nkey=\n$/);
+    assert.match(readFileSync(f.env.GITHUB_OUTPUT, 'utf8'), /\nenabled=false\ndirectory=\nkey=\nrestore_keys=\n$/);
   }
 });
 

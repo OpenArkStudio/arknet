@@ -12,14 +12,14 @@ function checkCacheContract(source) {
     'VCPKG_CACHE_PROFILE: grouped-v2-${{ matrix.boost }}-${{ matrix.sanitize }}-',
     'VCPKG_DEFAULT_TRIPLET: ${{ runner.arch', 'VCPKG_DEFAULT_HOST_TRIPLET: ${{ runner.arch',
     'vcpkgGitCommitId: ${{ env.VCPKG_CACHE_REVISION }}',
-    'key: ${{ steps.compiler-cache.outputs.key }}-${{ github.run_id }}-${{ github.run_attempt }}',
-    'restore-keys: ${{ steps.compiler-cache.outputs.key }}-',
+    'key: ${{ steps.compiler-cache.outputs.archive_key }}',
+    'restore-keys: ${{ steps.compiler-cache.outputs.restore_keys }}',
     "if: ${{ env.ARKNET_RUN_NATIVE == 'true' && always() }}",
   ]) assert.ok(source.includes(value), value);
   const dependencyRestore = source.slice(source.indexOf('      - name: Restore dependency archives'), source.indexOf('      - name: Install compiler cache'));
   assert.match(dependencyRestore, /continue-on-error: true/);
   assert.match(dependencyRestore, /key: \$\{\{ steps.vcpkg-cache.outputs.key \}\}/);
-  assert.doesNotMatch(dependencyRestore, /restore-keys/);
+  assert.match(dependencyRestore, /restore-keys: \$\{\{ steps.vcpkg-cache.outputs.restore_keys \}\}/);
   assert.ok(source.indexOf('      - name: Restore compiler cache') < source.indexOf('      - name: Start compiler cache after archive restore'));
   assert.ok(source.indexOf('node .github/scripts/vcpkg-cache.mjs') < source.indexOf('uses: lukka/run-vcpkg@v11'));
   for (const name of ['Configure - Boost - TLS', 'Build planned native targets - Boost - TLS', 'Test - Boost - TLS']) {
