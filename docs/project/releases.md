@@ -1,5 +1,23 @@
 # Releases
 
+## 0.2.3
+
+This maintenance release improves RUDP failure recovery and TCP connection-load validation. The C++20 header-only library and public APIs remain unchanged.
+
+### Fixes
+
+- RUDP send queues update byte accounting only after enqueue succeeds. If native asynchronous send submission runs out of memory, the transport clears its write-in-progress state and reports the failure, avoiding inconsistent queue state.
+
+### Improvements
+
+- TCP validation covers fragmented request windows, receive limits and invalid frame prefixes. RUDP regressions cover lost handshake replies with FEC.
+- Native TCP load tools add a direct Asio callback control alongside coroutine workloads and separate idle-connection residency from active traffic. Connection diagnostics are captured before cancellation so timeout analysis retains the original state.
+- Installed-consumer builds inherit compiler launchers, making configured compiler caches effective in package integration checks.
+
+### Upgrade notes
+
+No API migration is required from 0.2.2. Rebuild applications to consume the header fix. The 5,000-active-connection TCP Echo timeout on local macOS remains under investigation; this release does not claim that workload or production PCU capacity has passed acceptance. See [connection workloads](../performance/tcp.md) and [validation](testing.md) for tested revisions and limits.
+
 ## 0.2.2
 
 This maintenance release strengthens Redis cleanup when native stop submission fails and adds native tools for measuring TCP connection loads and process resources. arknet remains C++20 and header-only.
