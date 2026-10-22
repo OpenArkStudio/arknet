@@ -146,9 +146,9 @@ place of the twelve old ones, preserving documentation, formatting and the aggre
 gate, then require a fresh full merge candidate containing the latest main. Do not
 remove old checks simply to obtain an initial green PR. Record exact revisions,
 runs and protection before/after; a green dispatch does not validate the final
-merge candidate. This branch defines the target workflow and gate, without fake
-native compatibility contexts. Old requirements remain until the maintainer
-executes the migration; implementation alone does not complete it.
+merge candidate. Use the actual grouped contexts rather than fake native
+compatibility contexts. Changing workflow source alone does not migrate the
+repository's protection requirements.
 
 The original-matrix measured baseline for [run 39770711811](https://github.com/OpenArkStudio/arknet/actions/runs/39770711811)
 uses candidate `a0dfe09cd543e75cfb5996e537ce2fa49f2a758f`. The local timing snapshot
@@ -511,15 +511,12 @@ cache or a configured compiler launcher. All default build targets, examples,
 benchmarks, translation units, compiler flags and test commands remain intact;
 there is no retry at a lower bound after a build failure.
 
-The cold Windows Boost job in [run 39790248908](https://github.com/OpenArkStudio/arknet/actions/runs/39790248908)
-recorded 11.60 minutes configuring, 40.21 building and 7.89 testing before its
-cancelled conclusion, with no restored dependency/compiler archive and 165
-compiler misses, zero hits. It does not establish successful coverage. Four-slot
-admission is a candidate correction: local resource and CMake graph contracts do
-not prove compiler peak memory, speedup or completion within 60 minutes. A fresh
-complete hosted run must validate the unchanged twelve profiles and cold-build
-budget; populated-cache acceptance remains separate. Cache hits are not a
-prerequisite for correctness or budget acceptance.
+Validate the selected bound in the actual build log and require all twelve
+profiles to complete within the unchanged job budgets. Test archive-cold and
+populated-cache behavior separately; a cancelled run is not successful coverage.
+Local resource and CMake graph contracts do not measure compiler peak memory,
+speedup or hosted duration. Cache hits are not a prerequisite for correctness or
+budget acceptance.
 
 API semantics: [Node OS resource APIs](https://nodejs.org/api/os.html#osavailableparallelism),
 [constrained memory](https://nodejs.org/api/process.html#processconstrainedmemory),
