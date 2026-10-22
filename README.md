@@ -2,8 +2,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/OpenArkStudio/.github/main/assets/arknet-logo-dark.svg">
-    <img src="https://raw.githubusercontent.com/OpenArkStudio/.github/main/assets/arknet-logo-light.svg" alt="arknet" width="451">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/OpenArkStudio/.github/main/assets/arknet-logo-dark.svg?v=20261022">
+    <img src="https://raw.githubusercontent.com/OpenArkStudio/.github/main/assets/arknet-logo-light.svg?v=20261022" alt="ArkNet" width="442">
   </picture>
 </p>
 
