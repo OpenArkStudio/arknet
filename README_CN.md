@@ -1,4 +1,4 @@
-# arknet
+<p align="right">简体中文 · <a href="README.md">English</a></p>
 
 <p align="center">
   <picture>
@@ -7,11 +7,19 @@
   </picture>
 </p>
 
+<h3 align="center">C++20 header-only 网络库。</h3>
+
+<p align="center">连接应用，交换消息，访问数据库。</p>
+
 <p align="center">
   <a href="https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml?query=event%3Amerge_group"><img src="https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml/badge.svg?event=merge_group" alt="合并队列检查"></a>
+  <a href="CMakeLists.txt"><img src="https://img.shields.io/badge/C%2B%2B-20-5267df" alt="C++20"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL--1.0-5267df" alt="BSL-1.0"></a>
 </p>
 
-[English](README.md)
+<p align="center"><a href="docs/get-started/installation_CN.md"><strong>开始使用 →</strong></a> &nbsp; · &nbsp; <a href="https://openarkstudio.github.io/arknet/zh/">在线文档</a> &nbsp; · &nbsp; <a href="examples/">示例</a> &nbsp; · &nbsp; <a href="docs/project/roadmap_CN.md">路线图</a></p>
+
+---
 
 arknet 是 OpenArkStudio 维护的通用 C++20 header-only 网络库。
 
