@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join, matchesGlob } from 'node:path';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
-import { expectedCells, expectedGroups, groupName, slotName } from '../../.github/scripts/ci-required.mjs';
+import { expectedCells, expectedGroups, groupName, inGroup, slotName } from '../../.github/scripts/ci-required.mjs';
 import { profilePlan, runStage } from '../../.github/scripts/native-profile.mjs';
 import { cachePlan } from '../../.github/scripts/vcpkg-cache.mjs';
 
@@ -159,7 +159,7 @@ test('later configurations still run after any previous profile fails; native er
       assert.ok(step.includes(`MATRIX_SSL: '${tls === 'TLS' ? 'ON' : 'OFF'}'`));
     }
     const configure = steps.filter(step => /^      - name: Configure - /m.test(step));
-    for (const cell of expectedCells.filter(cell => cell.os === group.os && cell.sanitize === group.sanitize)) {
+    for (const cell of expectedCells.filter(cell => inGroup(cell, group))) {
       const step = configure.find(step => step.includes(`name: Configure - ${slotName(cell)}\n`));
       const expression = step.match(/if: \$\{\{ (.+) \}\}/)[1].replace(/steps\.([a-z0-9-]+)/g, 'steps["$1"]');
       // There is no success() dependency on an unrelated earlier profile.
@@ -167,7 +167,7 @@ test('later configurations still run after any previous profile fails; native er
         matrix: group, needs: { format: { outputs: { tier: 'full' } } }, steps: { 'native-setup': { outcome: 'success' } } }), true);
     }
   }
-  assert.equal(new Set(expectedGroups.map(groupName)).size, 5);
+  assert.equal(new Set(expectedGroups.map(groupName)).size, 7);
   assert.match(native, /timeout-minutes: 60/);
   assert.equal((native.match(/uses: lukka\/run-vcpkg/g) ?? []).length, 1);
   assert.equal((native.match(/name: Restore compiler cache/g) ?? []).length, 1);
@@ -179,12 +179,15 @@ test('shared archives isolate OS and sanitizer groups while dependency flags sta
     VCPKG_CACHE_DEFAULT_FEATURES: 'true', VCPKG_DEFAULT_TRIPLET: 'x64-linux', VCPKG_DEFAULT_HOST_TRIPLET: 'x64-linux' };
   const keys = expectedGroups.map(group => cachePlan({ root, env: { ...env, RUNNER_OS: environment({ ...group, boost: 'ON', ssl: 'ON' }).RUNNER_OS,
     RUNNER_TEMP: group.os === 'windows-latest' ? 'C:/temp/cache-fixture' : env.RUNNER_TEMP,
-    VCPKG_CACHE_PROFILE: `grouped-v1-${group.sanitize}-${group.sanitize === 'OFF' ? 'Release' : 'Debug'}` } }).key);
-  assert.equal(new Set(keys).size, 5);
+    VCPKG_CACHE_PROFILE: `grouped-v2-${group.boost}-${group.sanitize}-${group.sanitize === 'OFF' ? 'Release' : 'Debug'}` } }).key);
+  assert.equal(new Set(keys).size, 7);
   assert.ok(keys.every(Boolean));
-  const profile = 'grouped-v1-OFF-Release';
-  const cache = cachePlan({ root, env: { ...env, VCPKG_CACHE_PROFILE: profile } });
-  for (const boost of ['ON', 'OFF']) for (const ssl of ['ON', 'OFF']) {
-    assert.equal(cachePlan({ root, env: { ...env, VCPKG_CACHE_PROFILE: profile, MATRIX_BOOST: boost, MATRIX_SSL: ssl } }).key, cache.key);
+  for (const [index, group] of expectedGroups.entries()) {
+    const groupEnv = { ...env, RUNNER_OS: environment({ ...group, boost: 'ON', ssl: 'ON' }).RUNNER_OS,
+      RUNNER_TEMP: group.os === 'windows-latest' ? 'C:/temp/cache-fixture' : env.RUNNER_TEMP,
+      VCPKG_CACHE_PROFILE: `grouped-v2-${group.boost}-${group.sanitize}-${group.sanitize === 'OFF' ? 'Release' : 'Debug'}` };
+    for (const cell of expectedCells.filter(cell => inGroup(cell, group))) {
+      assert.equal(cachePlan({ root, env: { ...groupEnv, MATRIX_BOOST: cell.boost, MATRIX_SSL: cell.ssl } }).key, keys[index]);
+    }
   }
 });

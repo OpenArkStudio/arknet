@@ -15,11 +15,15 @@ export const cellName = ({ os, boost, ssl, sanitize }) =>
   `Test - ${os} - ${boost === "ON" ? "Boost" : "Standalone"} - ${ssl === "ON" ? "TLS" : "NoTLS"} - ${sanitize === "THREAD" ? "TSan" : sanitize === "ON" ? "ASan+UBSan" : "Release"}`;
 
 export const expectedGroups = [
-  ...["ubuntu-latest", "macos-latest", "windows-latest"].map(os => ({ os, sanitize: "OFF" })),
-  ...["ON", "THREAD"].map(sanitize => ({ os: "ubuntu-latest", sanitize })),
+  ...["ON", "OFF"].map(boost => ({ os: "ubuntu-latest", boost, sanitize: "OFF" })),
+  { os: "macos-latest", boost: "BOTH", sanitize: "OFF" },
+  ...["ON", "OFF"].map(boost => ({ os: "windows-latest", boost, sanitize: "OFF" })),
+  ...["ON", "THREAD"].map(sanitize => ({ os: "ubuntu-latest", boost: "BOTH", sanitize })),
 ];
-export const groupName = ({ os, sanitize }) =>
-  `Native - ${os} - ${sanitize === "THREAD" ? "TSan" : sanitize === "ON" ? "ASan+UBSan" : "Release"}`;
+export const groupName = ({ os, boost, sanitize }) =>
+  `Native - ${os} - ${boost === "ON" ? "Boost - " : boost === "OFF" ? "Standalone - " : ""}${sanitize === "THREAD" ? "TSan" : sanitize === "ON" ? "ASan+UBSan" : "Release"}`;
+export const inGroup = (profile, group) => profile.os === group.os && profile.sanitize === group.sanitize &&
+  (group.boost === "BOTH" || profile.boost === group.boost);
 export const slotName = ({ boost, ssl }) => `${boost === "ON" ? "Boost" : "Standalone"} - ${ssl === "ON" ? "TLS" : "NoTLS"}`;
 const slots = ["ON", "OFF"].flatMap(boost => ["ON", "OFF"].map(ssl => ({ boost, ssl })));
 
@@ -109,8 +113,7 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
     const job = jobs.get(name);
     if (!job) throw new Error(`Missing required job profile: ${name}`);
     const group = expectedGroups.find(group => groupName(group) === name);
-    completed(job, group !== undefined && expectedCells.some(profile => profile.os === group.os &&
-      profile.sanitize === group.sanitize && runNative(plan, profile)));
+    completed(job, group !== undefined && expectedCells.some(profile => inGroup(profile, group) && runNative(plan, profile)));
   }
   const docs = jobs.get("Documentation checks");
   outcome(docs, "Run npm ci --prefix docs/site");
@@ -122,7 +125,7 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
   let nativeCells = 0;
   for (const group of expectedGroups) {
     const job = jobs.get(groupName(group));
-    const native = expectedCells.some(profile => profile.os === group.os && profile.sanitize === group.sanitize && runNative(plan, profile));
+    const native = expectedCells.some(profile => inGroup(profile, group) && runNative(plan, profile));
     cacheOutcomes(job, native);
     outcome(job, "Validate scope result");
     outcome(job, "Record planned coverage", native ? "skipped" : "success");
@@ -135,7 +138,7 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
       (plan.tier === "full" || plan.source_tests === "") ? "success" : "skipped");
     for (const slot of slots) {
       const profile = { ...group, ...slot };
-      const available = expectedCells.some(cell => Object.keys(cell).every(key => cell[key] === profile[key]));
+      const available = inGroup(profile, group) && expectedCells.some(cell => Object.keys(cell).every(key => cell[key] === profile[key]));
       const active = available && runNative(plan, profile);
       nativeCells += Number(active);
       const suffix = ` - ${slotName(slot)}`;

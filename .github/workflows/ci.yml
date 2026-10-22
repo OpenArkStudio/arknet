@@ -54,7 +54,7 @@ jobs:
           bash scripts/test_format.sh
           bash scripts/format.sh --check
   test:
-    name: Native - ${{ matrix.os }} - ${{ matrix.sanitize == 'THREAD' && 'TSan' || matrix.sanitize == 'ON' && 'ASan+UBSan' || 'Release' }}
+    name: Native - ${{ matrix.os }} - ${{ matrix.boost == 'ON' && 'Boost - ' || matrix.boost == 'OFF' && 'Standalone - ' || '' }}${{ matrix.sanitize == 'THREAD' && 'TSan' || matrix.sanitize == 'ON' && 'ASan+UBSan' || 'Release' }}
     timeout-minutes: 60
     needs: format
     if: ${{ !cancelled() }}
@@ -62,18 +62,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: ubuntu-latest, sanitize: "OFF"}
-          - {os: macos-latest, sanitize: "OFF"}
-          - {os: windows-latest, sanitize: "OFF"}
-          - {os: ubuntu-latest, sanitize: "ON"}
-          - {os: ubuntu-latest, sanitize: "THREAD"}
+          - {os: ubuntu-latest, boost: "ON", sanitize: "OFF"}
+          - {os: ubuntu-latest, boost: "OFF", sanitize: "OFF"}
+          - {os: macos-latest, boost: "BOTH", sanitize: "OFF"}
+          - {os: windows-latest, boost: "ON", sanitize: "OFF"}
+          - {os: windows-latest, boost: "OFF", sanitize: "OFF"}
+          - {os: ubuntu-latest, boost: "BOTH", sanitize: "ON"}
+          - {os: ubuntu-latest, boost: "BOTH", sanitize: "THREAD"}
     runs-on: ${{ matrix.os }}
     env:
       VCPKG_CACHE_REVISION: 0699a19d0c6386247ce50d4dedbb8217d484d536
       VCPKG_CACHE_FEATURES: boost;ssl
       VCPKG_CACHE_DEFAULT_FEATURES: 'true'
-      VCPKG_CACHE_PROFILE: grouped-v1-${{ matrix.sanitize }}-${{ matrix.sanitize != 'OFF' && 'Debug' || 'Release' }}
-      ARKNET_RUN_NATIVE: ${{ needs.format.outputs.full_cpp == 'true' && (needs.format.outputs.tier == 'full' || (needs.format.outputs.tier == 'modules' && matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF')) }}
+      VCPKG_CACHE_PROFILE: grouped-v2-${{ matrix.boost }}-${{ matrix.sanitize }}-${{ matrix.sanitize != 'OFF' && 'Debug' || 'Release' }}
+      ARKNET_RUN_NATIVE: ${{ needs.format.outputs.full_cpp == 'true' && (needs.format.outputs.tier == 'full' || (needs.format.outputs.tier == 'modules' && matrix.os == 'ubuntu-latest' && matrix.boost == 'ON' && matrix.sanitize == 'OFF')) }}
       MATRIX_SANITIZE: ${{ matrix.sanitize }}
       ARKNET_VALIDATION_TIER: ${{ needs.format.outputs.tier }}
       ARKNET_SOURCE_TESTS: ${{ needs.format.outputs.source_tests }}
@@ -168,129 +170,129 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq
       - name: Record planned coverage - Boost - TLS
-        if: ${{ always() && !(env.ARKNET_RUN_NATIVE == 'true') }}
+        if: ${{ always() && !(env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'ON')) }}
         shell: pwsh
         run: '"Boost - TLS: scope-only or unavailable in this OS/check mode; no native tests executed." | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append'
       - name: Configure - Boost - TLS
         id: boost-tls-configure
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'ON') && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'ON'
           MATRIX_SSL: 'ON'
         run: node .github/scripts/native-profile.mjs configure
       - name: Select bounded compiler parallelism - Boost - TLS
         id: boost-tls-parallel
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && matrix.sanitize == 'ON' && steps.boost-tls-configure.outcome == 'success' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'ON') && matrix.sanitize == 'ON' && steps.boost-tls-configure.outcome == 'success' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'ON'
           MATRIX_SSL: 'ON'
         run: node .github/scripts/native-profile.mjs parallel
       - name: Build planned native targets - Boost - TLS
         id: boost-tls-build
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && steps.boost-tls-configure.outcome == 'success' && (matrix.sanitize != 'ON' || steps.boost-tls-parallel.outcome == 'success') && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'ON') && steps.boost-tls-configure.outcome == 'success' && (matrix.sanitize != 'ON' || steps.boost-tls-parallel.outcome == 'success') && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'ON'
           MATRIX_SSL: 'ON'
         run: node .github/scripts/native-profile.mjs build
       - name: Test - Boost - TLS
         id: boost-tls-test
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && steps.boost-tls-build.outcome == 'success' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'ON') && steps.boost-tls-build.outcome == 'success' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'ON'
           MATRIX_SSL: 'ON'
         run: node .github/scripts/native-profile.mjs test
       - name: Check benchmark batch runner and report calculations - Boost - TLS
         id: boost-tls-benchmark
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF' && (needs.format.outputs.tier == 'full' || needs.format.outputs.source_tests == '') && steps.boost-tls-build.outcome == 'success' && steps.boost-tls-test.outcome == 'success' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'ON') && matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF' && (needs.format.outputs.tier == 'full' || needs.format.outputs.source_tests == '') && steps.boost-tls-build.outcome == 'success' && steps.boost-tls-test.outcome == 'success' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'ON'
           MATRIX_SSL: 'ON'
         run: node .github/scripts/native-profile.mjs benchmark
       - name: Record planned coverage - Boost - NoTLS
-        if: ${{ always() && !(env.ARKNET_RUN_NATIVE == 'true' && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full') }}
+        if: ${{ always() && !(env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'ON') && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full') }}
         shell: pwsh
         run: '"Boost - NoTLS: scope-only or unavailable in this OS/check mode; no native tests executed." | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append'
       - name: Configure - Boost - NoTLS
         id: boost-notls-configure
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'ON') && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'ON'
           MATRIX_SSL: 'OFF'
         run: node .github/scripts/native-profile.mjs configure
       - name: Build planned native targets - Boost - NoTLS
         id: boost-notls-build
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.boost-notls-configure.outcome == 'success' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'ON') && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.boost-notls-configure.outcome == 'success' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'ON'
           MATRIX_SSL: 'OFF'
         run: node .github/scripts/native-profile.mjs build
       - name: Test - Boost - NoTLS
         id: boost-notls-test
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.boost-notls-build.outcome == 'success' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'ON') && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.boost-notls-build.outcome == 'success' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'ON'
           MATRIX_SSL: 'OFF'
         run: node .github/scripts/native-profile.mjs test
       - name: Record planned coverage - Standalone - TLS
-        if: ${{ always() && !(env.ARKNET_RUN_NATIVE == 'true' && needs.format.outputs.tier == 'full') }}
+        if: ${{ always() && !(env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'OFF') && needs.format.outputs.tier == 'full') }}
         shell: pwsh
         run: '"Standalone - TLS: scope-only or unavailable in this OS/check mode; no native tests executed." | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append'
       - name: Configure - Standalone - TLS
         id: standalone-tls-configure
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && needs.format.outputs.tier == 'full' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'OFF') && needs.format.outputs.tier == 'full' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'OFF'
           MATRIX_SSL: 'ON'
         run: node .github/scripts/native-profile.mjs configure
       - name: Select bounded compiler parallelism - Standalone - TLS
         id: standalone-tls-parallel
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && needs.format.outputs.tier == 'full' && matrix.sanitize == 'ON' && steps.standalone-tls-configure.outcome == 'success' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'OFF') && needs.format.outputs.tier == 'full' && matrix.sanitize == 'ON' && steps.standalone-tls-configure.outcome == 'success' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'OFF'
           MATRIX_SSL: 'ON'
         run: node .github/scripts/native-profile.mjs parallel
       - name: Build planned native targets - Standalone - TLS
         id: standalone-tls-build
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && needs.format.outputs.tier == 'full' && steps.standalone-tls-configure.outcome == 'success' && (matrix.sanitize != 'ON' || steps.standalone-tls-parallel.outcome == 'success') && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'OFF') && needs.format.outputs.tier == 'full' && steps.standalone-tls-configure.outcome == 'success' && (matrix.sanitize != 'ON' || steps.standalone-tls-parallel.outcome == 'success') && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'OFF'
           MATRIX_SSL: 'ON'
         run: node .github/scripts/native-profile.mjs build
       - name: Test - Standalone - TLS
         id: standalone-tls-test
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && needs.format.outputs.tier == 'full' && steps.standalone-tls-build.outcome == 'success' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'OFF') && needs.format.outputs.tier == 'full' && steps.standalone-tls-build.outcome == 'success' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'OFF'
           MATRIX_SSL: 'ON'
         run: node .github/scripts/native-profile.mjs test
       - name: Check benchmark batch runner and report calculations - Standalone - TLS
         id: standalone-tls-benchmark
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && needs.format.outputs.tier == 'full' && matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF' && (needs.format.outputs.tier == 'full' || needs.format.outputs.source_tests == '') && steps.standalone-tls-build.outcome == 'success' && steps.standalone-tls-test.outcome == 'success' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'OFF') && needs.format.outputs.tier == 'full' && matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF' && (needs.format.outputs.tier == 'full' || needs.format.outputs.source_tests == '') && steps.standalone-tls-build.outcome == 'success' && steps.standalone-tls-test.outcome == 'success' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'OFF'
           MATRIX_SSL: 'ON'
         run: node .github/scripts/native-profile.mjs benchmark
       - name: Record planned coverage - Standalone - NoTLS
-        if: ${{ always() && !(env.ARKNET_RUN_NATIVE == 'true' && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full') }}
+        if: ${{ always() && !(env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'OFF') && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full') }}
         shell: pwsh
         run: '"Standalone - NoTLS: scope-only or unavailable in this OS/check mode; no native tests executed." | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append'
       - name: Configure - Standalone - NoTLS
         id: standalone-notls-configure
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'OFF') && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'OFF'
           MATRIX_SSL: 'OFF'
         run: node .github/scripts/native-profile.mjs configure
       - name: Build planned native targets - Standalone - NoTLS
         id: standalone-notls-build
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.standalone-notls-configure.outcome == 'success' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'OFF') && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.standalone-notls-configure.outcome == 'success' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'OFF'
           MATRIX_SSL: 'OFF'
         run: node .github/scripts/native-profile.mjs build
       - name: Test - Standalone - NoTLS
         id: standalone-notls-test
-        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.standalone-notls-build.outcome == 'success' && steps.native-setup.outcome == 'success' }}
+        if: ${{ always() && env.ARKNET_RUN_NATIVE == 'true' && (matrix.boost == 'BOTH' || matrix.boost == 'OFF') && (matrix.os == 'ubuntu-latest' && matrix.sanitize == 'OFF') && needs.format.outputs.tier == 'full' && steps.standalone-notls-build.outcome == 'success' && steps.native-setup.outcome == 'success' }}
         env:
           MATRIX_BOOST: 'OFF'
           MATRIX_SSL: 'OFF'

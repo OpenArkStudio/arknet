@@ -23,7 +23,7 @@ Linux AddressSanitizer with UndefinedBehaviorSanitizer, and separate ThreadSanit
 checks. A green source PR is not full-matrix acceptance.
 
 Strictly classified README/documentation-only changes run documentation and
-formatting checks in both stages. Five grouped native jobs retain all twelve
+formatting checks in both stages. Seven grouped native jobs retain all twelve
 configuration profiles; cells outside the planned source coverage explicitly
 record scope-only validation. Missing or malformed change ranges select
 the complete matrix. Failed scope validation blocks every native gate. Rename
@@ -37,8 +37,8 @@ exemption: CI scope/workflow tests, native release/report checks, C++/CMake file
 unknown scripts and unmapped file types retain native coverage. A mixed change
 uses the native plan at both stages.
 
-The workflow defines five native group contexts, documentation, formatting and
-`CI - required`: eight contexts after the protection migration described below.
+The workflow defines seven native group contexts, documentation, formatting and
+`CI - required`: ten contexts after the protection migration described below.
 The existing fifteen-context protection is a separate deployment state; changing
 this source does not migrate it. The gate uses the built-in token with job-local
 `contents: read` and `actions: read` to read this run's actual job and step metadata.
@@ -65,11 +65,12 @@ Local fixtures establish these rules, not hosted acceptance or a measured speedu
 
 ### Grouped native jobs and protection migration
 
-Release jobs share setup once per operating system. Linux executes Boost and
-Standalone Asio with TLS and without TLS; macOS and Windows execute both dependency
-configurations with TLS. Linux AddressSanitizer with UndefinedBehaviorSanitizer
-and ThreadSanitizer remain separate jobs, each executing Boost and Standalone
-Asio with TLS. No new platforms or TLS/sanitizer combinations are added.
+Release jobs share setup within bounded groups. Linux has separate Boost and
+Standalone Asio jobs, each covering TLS and without TLS. Windows keeps each TLS
+dependency configuration in its own job. macOS combines both TLS dependencies.
+Linux AddressSanitizer with UndefinedBehaviorSanitizer and ThreadSanitizer remain
+separate jobs, each executing Boost and Standalone Asio with TLS. These seven
+jobs retain the same twelve profiles, without new platforms or TLS/sanitizer combinations.
 
 Each configuration has a separate `build/ci-<boost>-<ssl>-<sanitize>` tree,
 raw stage logs under its own `ci-logs/`, and named configure/build/test conclusions.
@@ -83,8 +84,9 @@ can prevent later configurations from running and therefore fails acceptance.
 
 Only setup and cache containers are shared. All configurations continue requesting
 the same `boost;ssl` dependency feature superset. Cache keys retain OS, architecture,
-runner image, compiler environment, dependency identity and Release/sanitizer group;
-`grouped-v1` separates the new namespace from old per-cell archives. Compiler
+runner image, compiler environment, dependency identity and Release/sanitizer group,
+including each group's Boost, Standalone or combined dependency selector.
+`grouped-v2` separates the seven-group namespace from earlier cache layouts. Compiler
 invocation hashes distinguish Boost/TLS flags inside the shared sccache container.
 Build trees and results are never cached. Dependency ABI validation remains in
 vcpkg. No concurrent native profiles share a runner: Release stays at three build
@@ -93,16 +95,17 @@ one or the existing resource-admitted two slots, re-evaluated for each dependenc
 Every group retains the 60-minute job deadline; it has not been extended to make
 serial execution pass.
 
-The following names map the twelve existing native required contexts to five
-new contexts. Each pair of dependency names denotes two exact old contexts.
+The following names map the twelve existing native required contexts to seven
+new contexts. Rows list the exact old names, including pairs of TLS modes or dependencies.
 Documentation checks, `Style - clang-format 18` and `CI - required` retain their names.
 
 | Existing native contexts (`Test - ` prefix) | New context |
 | --- | --- |
-| `ubuntu-latest - Boost - TLS - Release`; `ubuntu-latest - Standalone - TLS - Release` | `Native - ubuntu-latest - Release` |
-| `ubuntu-latest - Boost - NoTLS - Release`; `ubuntu-latest - Standalone - NoTLS - Release` | `Native - ubuntu-latest - Release` |
+| `ubuntu-latest - Boost - TLS - Release`; `ubuntu-latest - Boost - NoTLS - Release` | `Native - ubuntu-latest - Boost - Release` |
+| `ubuntu-latest - Standalone - TLS - Release`; `ubuntu-latest - Standalone - NoTLS - Release` | `Native - ubuntu-latest - Standalone - Release` |
 | `macos-latest - Boost - TLS - Release`; `macos-latest - Standalone - TLS - Release` | `Native - macos-latest - Release` |
-| `windows-latest - Boost - TLS - Release`; `windows-latest - Standalone - TLS - Release` | `Native - windows-latest - Release` |
+| `windows-latest - Boost - TLS - Release` | `Native - windows-latest - Boost - Release` |
+| `windows-latest - Standalone - TLS - Release` | `Native - windows-latest - Standalone - Release` |
 | `ubuntu-latest - Boost - TLS - ASan+UBSan`; `ubuntu-latest - Standalone - TLS - ASan+UBSan` | `Native - ubuntu-latest - ASan+UBSan` |
 | `ubuntu-latest - Boost - TLS - TSan`; `ubuntu-latest - Standalone - TLS - TSan` | `Native - ubuntu-latest - TSan` |
 
@@ -112,7 +115,7 @@ branch head. Verify full grouped coverage before changing protection: cold and
 populated-cache runs, all twelve configuration conclusions, source/module and
 documentation scopes, and failure propagation. Do not change the deployed matrix
 or protection during an older release candidate's active acceptance. After the
-new grouped evidence is accepted, save the five mapped native requirements in
+new grouped evidence is accepted, save the seven mapped native requirements in
 place of the twelve old ones, preserving documentation, formatting and the aggregate
 gate, then require a fresh full merge candidate containing the latest main. Do not
 remove old checks simply to obtain an initial green PR. Record exact revisions,
@@ -121,27 +124,39 @@ merge candidate. This branch defines the target workflow and gate, without fake
 native compatibility contexts. Old requirements remain until the maintainer
 executes the migration; implementation alone does not complete it.
 
-Grouping reduces repeated setup and runner allocations but serializes native work.
-The offline metadata for [run 39715538690](https://github.com/OpenArkStudio/arknet/actions/runs/39715538690)
-gives these minutes; sums are a scheduling model, not measured grouped jobs:
+The original-matrix measured baseline for [run 39770711811](https://github.com/OpenArkStudio/arknet/actions/runs/39770711811)
+uses candidate `a0dfe09cd543e75cfb5996e537ce2fa49f2a758f`. The local timing snapshot
+records independent original profiles; cache hits have not been audited profile
+by profile. These minutes regroup their recorded stages for planning, rather than
+measuring new grouped jobs. Setup and other job overhead are excluded:
 
-| Group | Old longest job | Sum of old jobs |
-| --- | ---: | ---: |
-| Linux Release | 18.08 | 46.30 |
-| macOS Release | 4.53 | 8.23 |
-| Windows Release | 44.98 | 51.22 |
-| Linux AddressSanitizer + UndefinedBehaviorSanitizer | 22.18 | 27.68 |
-| Linux ThreadSanitizer | 21.92 | 25.47 |
+| Planned group | Configure | Build | Test | Recorded stage sum |
+| --- | ---: | ---: | ---: | ---: |
+| Linux Boost Release, TLS + NoTLS | 6.28 | 37.03 | 6.85 | 50.16 |
+| Linux Standalone Release, TLS + NoTLS | 5.45 | 15.20 | 4.38 | 25.03 |
+| Windows Boost TLS Release | 9.33 | 33.22 | Not complete in snapshot | At least 42.55 |
+| Windows Standalone TLS Release | 11.25 | 20.45 | 4.03 | 35.73 |
+| macOS Release, both TLS dependencies | 7.55 | 14.67 | 5.57 | 27.79 |
+| Linux AddressSanitizer + UndefinedBehaviorSanitizer, both TLS dependencies | 6.40 | 40.35 | 6.00 | 52.75 |
+| Linux ThreadSanitizer, both TLS dependencies | 6.08 | 21.81 | 6.35 | 34.24 |
 
-Total runner minutes may decrease through shared setup/cache reuse while the
-longest job and end-to-end queue wait increase. The Windows sum leaves little
-room within 60 minutes, and an earlier documented sanitizer run took 58.35 minutes
-for Boost alone. The historical sums do not bound cold-cache grouped duration.
-Runner availability and cache state differ between jobs, so neither these sums
-nor source-PR scope-only successes demonstrate faster merging. Hosted cold-cache
-and populated-cache measurements must compare total runner minutes, longest group,
-queue-to-gate completion and per-configuration times at the same revision. A
-60-minute timeout is failed coverage, not evidence for raising the limit.
+The rejected five-group serial model combines all four Linux Release profiles:
+Build plus Test alone totals 63.46 minutes before Configure or Setup. Combining
+the two Windows profiles already totals at least 78.28 recorded stage minutes,
+while Boost Test was still in progress in this snapshot. That model exceeds the
+unchanged 60-minute deadline on this baseline, so Linux Release is split by
+dependency and Windows TLS dependencies keep separate jobs.
+
+Seven groups reduce repeated setup where the baseline permits evaluating shared
+execution, but these sums are not duration limits or acceptance. The combined
+AddressSanitizer/UndefinedBehaviorSanitizer stage sum is 52.75 minutes before
+setup; it still needs actual grouped validation. Shared cache/setup may reduce
+total runner minutes while serial work increases the longest job or queue-to-gate
+wait. Source scope-only successes do not measure full coverage. Hosted cold-cache
+and populated-cache runs must compare total runner minutes, longest group,
+queue-to-gate completion and per-configuration times at the same revision across
+all operating systems. Cache state in this baseline is not assumed. A 60-minute
+timeout is failed coverage, not evidence for raising the limit.
 
 For a focused local run, pass exact registered check names. Omit the option to
 run all checks; unknown or unavailable names fail during configuration:
@@ -386,7 +401,7 @@ and thread schedules exercised; it does not prove that all errors are absent.
 
 CI checks Linux/macOS/Windows with both dependency configurations; Linux also runs
 AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer. Group names include
-OS and check mode; named steps distinguish dependency and TLS profiles. Five
+OS and check mode; named steps distinguish dependency and TLS profiles. Seven
 groups, documentation and formatting accompany `CI - required`. Known source
 modules on PR branches run their selected native checks in Linux/Boost/TLS/Release;
 other cells record scope-only coverage. Code-bearing merge-queue candidates,

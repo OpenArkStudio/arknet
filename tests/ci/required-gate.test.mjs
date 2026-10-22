@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
-import { cellName, expectedCells, expectedGroups, groupName, optionalCacheSteps, validateRequired } from "../../.github/scripts/ci-required.mjs";
+import { cellName, expectedCells, expectedGroups, groupName, inGroup, optionalCacheSteps, validateRequired } from "../../.github/scripts/ci-required.mjs";
 import { planChecks } from "../../.github/scripts/ci-scope.mjs";
 
 const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
@@ -21,10 +21,10 @@ const nativeExpression = block("test").match(/ARKNET_RUN_NATIVE: \$\{\{ (.+) \}\
 const jobNameExpression = block("test").match(/^    name: (.+)$/m)[1];
 
 function actualGroups() {
-  return [...block("test").matchAll(/- \{os: ([^,]+), sanitize: "([^"]+)"\}/g)].map(([, os, sanitize]) => ({ os, sanitize }));
+  return [...block("test").matchAll(/- \{os: ([^,]+), boost: "([^"]+)", sanitize: "([^"]+)"\}/g)].map(([, os, boost, sanitize]) => ({ os, boost, sanitize }));
 }
 function actualCells() {
-  return actualGroups().flatMap(group => ["OFF", "ON"].flatMap(boost =>
+  return actualGroups().flatMap(group => (group.boost === "BOTH" ? ["OFF", "ON"] : [group.boost]).flatMap(boost =>
     (group.os === "ubuntu-latest" && group.sanitize === "OFF" ? ["ON", "OFF"] : ["ON"])
       .map(ssl => ({ ...group, boost, ssl }))));
 }
@@ -60,9 +60,17 @@ function fixture(eventName, files, extra = {}) {
 }
 const findStep = (job, name) => job.steps.find(step => step.name === name) ?? job.steps.find(step => step.name === `${name} - Boost - TLS`);
 
-test("the independently reviewed manifests match five groups and all twelve actual native profiles", () => {
+test("the independently reviewed manifests match seven groups and all twelve actual native profiles", () => {
   const cells = actualCells();
   assert.equal(cells.length, 12);
+  assert.deepEqual(expectedGroups.map(groupName), [
+    "Native - ubuntu-latest - Boost - Release", "Native - ubuntu-latest - Standalone - Release",
+    "Native - macos-latest - Release", "Native - windows-latest - Boost - Release",
+    "Native - windows-latest - Standalone - Release", "Native - ubuntu-latest - ASan+UBSan",
+    "Native - ubuntu-latest - TSan",
+  ]);
+  assert.deepEqual(expectedGroups.map(group => expectedCells.filter(cell => inGroup(cell, group)).length), [2, 2, 2, 1, 1, 2, 2]);
+  for (const cell of expectedCells) assert.equal(expectedGroups.filter(group => inGroup(cell, group)).length, 1);
   assert.deepEqual(new Set(cells.map(cellName)), new Set(expectedCells.map(cellName)));
   assert.equal(new Set(expectedCells.map(cellName)).size, 12);
   const full = fixture("merge_group", ["tests/rudp.cpp"]);
@@ -127,7 +135,7 @@ test("failed, skipped, cancelled, pending, duplicate and missing prerequisite jo
     input.needs[prerequisite].result = result;
     assert.throws(() => validateRequired(input));
   }
-  for (let index = 0; index < 7; index++) {
+  for (let index = 0; index < 9; index++) {
     for (const change of [job => { job.status = "in_progress"; }, job => { job.conclusion = "failure"; },
       job => { job.conclusion = "skipped"; }, job => { job.conclusion = undefined; }, job => { job.steps = []; }]) {
       const input = structuredClone(valid);
@@ -152,7 +160,7 @@ test("failed, skipped, cancelled, pending, duplicate and missing prerequisite jo
 test("successful jobs cannot hide skipped full checks, executed scope-only checks or wrong sanitizer test steps", () => {
   for (const [event, files] of [["merge_group", ["tests/rudp.cpp"]], ["pull_request", ["tests/rudp.cpp"]], ["merge_group", ["README.md"]]]) {
     const valid = fixture(event, files);
-    for (let index = 2; index < 7; index++) {
+    for (let index = 2; index < 9; index++) {
       const actual = valid.metadata.jobs[index];
       for (const step of actual.steps.filter(step => !optionalCacheSteps.includes(step.name))) {
         for (const conclusion of [step.conclusion === "success" ? "skipped" : "success", "failure", "cancelled", "neutral", "unknown", "", undefined]) {

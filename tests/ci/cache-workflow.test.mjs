@@ -9,7 +9,7 @@ function checkCacheContract(source) {
   for (const value of [
     'uses: Mozilla-Actions/sccache-action@v0.0.11', 'version: v0.16.0', 'disable_annotations: true',
     'VCPKG_CACHE_FEATURES: boost;ssl', 'VCPKG_CACHE_DEFAULT_FEATURES: \'true\'',
-    'VCPKG_CACHE_PROFILE: grouped-v1-${{ matrix.sanitize }}-',
+    'VCPKG_CACHE_PROFILE: grouped-v2-${{ matrix.boost }}-${{ matrix.sanitize }}-',
     'VCPKG_DEFAULT_TRIPLET: ${{ runner.arch', 'VCPKG_DEFAULT_HOST_TRIPLET: ${{ runner.arch',
     'vcpkgGitCommitId: ${{ env.VCPKG_CACHE_REVISION }}',
     'key: ${{ steps.compiler-cache.outputs.key }}-${{ github.run_id }}-${{ github.run_attempt }}',
@@ -39,7 +39,7 @@ test('workflow cache contract rejects unpinned tools, partial keys, broad depend
     ['version: v0.16.0', 'version: latest'],
     ['sccache-action@v0.0.11', 'sccache-action@main'],
     ['disable_annotations: true', 'disable_annotations: false'],
-    ['VCPKG_CACHE_PROFILE: grouped-v1-${{ matrix.sanitize }}-', 'VCPKG_CACHE_PROFILE: shared-'],
+    ['VCPKG_CACHE_PROFILE: grouped-v2-${{ matrix.boost }}-${{ matrix.sanitize }}-', 'VCPKG_CACHE_PROFILE: shared-'],
     ['VCPKG_DEFAULT_HOST_TRIPLET:', 'UNTRACKED_TRIPLET:'],
     ['key: ${{ steps.vcpkg-cache.outputs.key }}', 'restore-keys: arknet-vcpkg-'],
     ['      - name: Build planned native targets - Boost - TLS\n', '      - name: Build planned native targets - Boost - TLS\n        continue-on-error: true\n'],

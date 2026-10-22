@@ -20,7 +20,7 @@ Boost/Standalone Asio、TLS、Linux 无 TLS，以及 Linux AddressSanitizer（�
 UndefinedBehaviorSanitizer（未定义行为检测）组合、ThreadSanitizer（线程数据竞争检测）。
 源分支通过不代表已完成全矩阵验收。
 
-严格分类的 README／纯文档改动在两个阶段均运行文档和格式检查。五个原生分组任务保留全部十二种配置；
+严格分类的 README／纯文档改动在两个阶段均运行文档和格式检查。七个原生分组任务保留全部十二种配置；
 源分支中不属于计划范围的配置明确记录仅验证范围，不声称执行了原生测试。
 改动范围缺失或格式错误时运行完整矩阵；范围验证失败会阻止所有原生检查通过。
 重命名同时分类新旧路径，不为新提交取消正在执行的检查。
@@ -30,7 +30,7 @@ Astro/TypeScript 组件、页面与内容工具。规则不会整体豁免 `docs
 CI 范围和工作流测试、原生版本与报告检查、C++/CMake 文件、未知脚本及未映射文件类型
 仍保留原生检查。混合改动在两个阶段均采用原生检查计划。
 
-工作流定义五个原生分组、文档、格式和 `CI - required`，保护迁移后共八个检查上下文。
+工作流定义七个原生分组、文档、格式和 `CI - required`，保护迁移后共十个检查上下文。
 现有十五项保护规则属于独立的部署状态；修改工作流源码不会迁移保护。
 gate 使用内置 token，并仅为自己的 job 授予 `contents: read` 和 `actions: read`，
 读取本轮实际任务及步骤元数据，按事件中的精确提交范围重新计算计划。
@@ -49,10 +49,11 @@ gate 使用内置 token，并仅为自己的 job 授予 `contents: read` 和 `ac
 
 ### 原生任务分组与保护迁移
 
-Release 任务按操作系统共用一次准备步骤。Linux 依次验证 Boost 和 Standalone Asio 的 TLS／无 TLS 配置；
-macOS 与 Windows 分别验证两种依赖的 TLS 配置。Linux AddressSanitizer（内存错误检测）与
+Release 任务在有界分组内共用准备步骤。Linux 按 Boost 和 Standalone Asio 分成两个任务，
+每组验证 TLS／无 TLS；Windows 两种 TLS 依赖配置分别保留独立任务。
+macOS 将两种 TLS 依赖配置合并。Linux AddressSanitizer（内存错误检测）与
 UndefinedBehaviorSanitizer（未定义行为检测）组合、ThreadSanitizer（线程数据竞争检测）仍使用独立任务，
-各自依次验证 Boost 和 Standalone Asio 的 TLS 配置。不增加操作系统或 TLS／检测模式组合。
+各自依次验证 Boost 和 Standalone Asio 的 TLS 配置。七个任务保留原有十二种配置，不增添操作系统或 TLS／检测组合。
 
 每种配置使用独立的 `build/ci-<boost>-<ssl>-<sanitize>` 构建目录，原始阶段日志位于对应 `ci-logs/`，
 并保留具名的配置、构建和测试结论。阶段日志只保留在 runner，不上传为附件；
@@ -61,51 +62,60 @@ UndefinedBehaviorSanitizer（未定义行为检测）组合、ThreadSanitizer（
 任何必需配置缺失、失败或被跳过都会使分组和汇总 gate 失败。分组超时可能阻止后续配置运行，仍属于验收失败。
 
 只共用准备步骤与缓存容器。全部配置继续请求相同的 `boost;ssl` 依赖 feature 超集。
-缓存键保留操作系统、架构、runner 镜像、编译器环境、依赖身份及 Release／检测分组；
-`grouped-v1` 将新命名空间与原有逐配置缓存隔离。sccache 在共享容器内通过编译命令哈希区分 Boost／TLS 参数。
+缓存键保留操作系统、架构、runner 镜像、编译器环境、依赖身份及 Release／检测分组，
+并包含分组采用的 Boost、Standalone 或组合依赖标识。`grouped-v2` 将七组命名空间与此前缓存布局隔离。sccache 在共享容器内通过编译命令哈希区分 Boost／TLS 参数。
 不缓存构建目录或测试结果；vcpkg 仍校验依赖 ABI。同一 runner 不并发运行原生配置：
 Release 保留三个构建槽，ThreadSanitizer 保留两个，AddressSanitizer／UndefinedBehaviorSanitizer
 保留一个槽，或在原有资源准入条件满足时使用两个槽；每种依赖构建前重新观测资源。
 每个分组保留 60 分钟任务期限，没有通过延长期限让串行执行通过。
 
-下表将原有十二个原生必需检查映射到五个新上下文。每行两种依赖名称对应两个精确的旧上下文。
+下表将原有十二个原生必需检查映射到七个新上下文。各行列出精确的旧名称，包括 TLS 模式对或依赖配置对。
 `Documentation checks`、`Style - clang-format 18` 和 `CI - required` 保持名称。
 
 | 原有原生上下文（前缀为 `Test - `） | 新上下文 |
 | --- | --- |
-| `ubuntu-latest - Boost - TLS - Release`；`ubuntu-latest - Standalone - TLS - Release` | `Native - ubuntu-latest - Release` |
-| `ubuntu-latest - Boost - NoTLS - Release`；`ubuntu-latest - Standalone - NoTLS - Release` | `Native - ubuntu-latest - Release` |
+| `ubuntu-latest - Boost - TLS - Release`；`ubuntu-latest - Boost - NoTLS - Release` | `Native - ubuntu-latest - Boost - Release` |
+| `ubuntu-latest - Standalone - TLS - Release`；`ubuntu-latest - Standalone - NoTLS - Release` | `Native - ubuntu-latest - Standalone - Release` |
 | `macos-latest - Boost - TLS - Release`；`macos-latest - Standalone - TLS - Release` | `Native - macos-latest - Release` |
-| `windows-latest - Boost - TLS - Release`；`windows-latest - Standalone - TLS - Release` | `Native - windows-latest - Release` |
+| `windows-latest - Boost - TLS - Release` | `Native - windows-latest - Boost - Release` |
+| `windows-latest - Standalone - TLS - Release` | `Native - windows-latest - Standalone - Release` |
 | `ubuntu-latest - Boost - TLS - ASan+UBSan`；`ubuntu-latest - Standalone - TLS - ASan+UBSan` | `Native - ubuntu-latest - ASan+UBSan` |
 | `ubuntu-latest - Boost - TLS - TSan`；`ubuntu-latest - Standalone - TLS - TSan` | `Native - ubuntu-latest - TSan` |
 
 保护迁移由维护者分阶段验收。先保留原有十五项要求，对新分支的精确 head 执行 `workflow_dispatch`。
 修改保护前，验证新分组的完整覆盖：冷缓存与已有缓存运行、十二种配置结论、源分支模块和文档范围以及失败传播。
 更早的发版候选仍在验收时，不修改已部署矩阵或保护。新分组证据验收后，
-用五个映射后的原生检查替换十二个旧检查，全程保留文档、格式与汇总 gate，
+用七个映射后的原生检查替换十二个旧检查，全程保留文档、格式与汇总 gate，
 随后要求包含最新 main 的实际合并候选重新完成全量检查。不能为了获得首次绿色 PR 而先删除旧要求。
 记录精确版本、运行记录及保护规则前后状态；手动运行通过不能替代最终合并候选验收。
 本分支定义目标工作流与 gate，不创建伪装原生检查的兼容上下文。
 维护者执行迁移之前，旧要求继续生效；实现完成不代表保护已迁移。
 
-分组减少重复准备和 runner 分配，同时将原生工作串行化。
-[运行 39715538690](https://github.com/OpenArkStudio/arknet/actions/runs/39715538690) 的离线元数据给出以下分钟数；
-求和只用于调度建模，不是分组任务实测：
+[运行 39770711811](https://github.com/OpenArkStudio/arknet/actions/runs/39770711811) 的原矩阵实测基线
+对应候选 `a0dfe09cd543e75cfb5996e537ce2fa49f2a758f`。本地耗时快照记录原有独立配置，
+尚未逐项核对缓存命中。以下分钟数只是将已记录阶段重新分组用于规划，
+不是新分组任务实测，也不包含准备步骤及其他任务开销：
 
-| 分组 | 旧任务最大耗时 | 旧任务耗时之和 |
-| --- | ---: | ---: |
-| Linux Release | 18.08 | 46.30 |
-| macOS Release | 4.53 | 8.23 |
-| Windows Release | 44.98 | 51.22 |
-| Linux AddressSanitizer + UndefinedBehaviorSanitizer | 22.18 | 27.68 |
-| Linux ThreadSanitizer | 21.92 | 25.47 |
+| 计划分组 | Configure | Build | Test | 已记录阶段合计 |
+| --- | ---: | ---: | ---: | ---: |
+| Linux Boost Release，TLS + NoTLS | 6.28 | 37.03 | 6.85 | 50.16 |
+| Linux Standalone Release，TLS + NoTLS | 5.45 | 15.20 | 4.38 | 25.03 |
+| Windows Boost TLS Release | 9.33 | 33.22 | 快照中尚未完成 | 至少 42.55 |
+| Windows Standalone TLS Release | 11.25 | 20.45 | 4.03 | 35.73 |
+| macOS Release，两种 TLS 依赖 | 7.55 | 14.67 | 5.57 | 27.79 |
+| Linux AddressSanitizer + UndefinedBehaviorSanitizer，两种 TLS 依赖 | 6.40 | 40.35 | 6.00 | 52.75 |
+| Linux ThreadSanitizer，两种 TLS 依赖 | 6.08 | 21.81 | 6.35 | 34.24 |
 
-共用准备步骤和缓存可能减少总 runner 分钟数，同时增加最长任务耗时和从排队到 gate 完成的等待时间。
-Windows 求和接近 60 分钟；此前记录的检测任务中，Boost 单独就耗时 58.35 分钟。
-历史求和不能限定冷缓存分组任务耗时。各任务的 runner 可用性和缓存状态不同，
-这些求和或源分支只验证范围的成功都不能证明合入更快。
-托管冷缓存与已有缓存测量必须在同一版本比较总 runner 分钟数、最长分组、排队至 gate 完成耗时和逐配置耗时。
+原先五组串行模型合并 Linux Release 的全部四种配置，仅 Build + Test 就达到 63.46 分钟，
+尚未计入 Configure 和 Setup。Windows 两种配置的已记录阶段合计也已至少 78.28 分钟，
+此时 Boost Test 仍在执行。该模型在本基线上超过不变的 60 分钟期限，
+因此 Linux Release 改为按依赖分组，Windows 两种 TLS 依赖分别保留独立任务。
+
+七组方案减少部分重复准备步骤，但阶段求和不构成耗时上限或验收。
+AddressSanitizer／UndefinedBehaviorSanitizer 组仅已记录阶段就合计 52.75 分钟，尚未计入准备，仍须真实分组验证。
+共用缓存与准备步骤可能减少总 runner 分钟数，串行工作也可能增加最长任务或排队至 gate 完成的等待。
+源分支只验证范围的成功不能测量完整覆盖。托管冷缓存与已有缓存运行须在同一版本、全部操作系统上
+比较总 runner 分钟数、最长分组、排队至 gate 完成耗时及逐配置耗时，不推断本基线的缓存状态。
 60 分钟超时属于覆盖失败，不能作为延长期限的依据。
 
 本地可以选择已注册的检查名称；省略此选项时运行全部检查，未知或不可用的名称会使配置失败：
@@ -322,7 +332,7 @@ AddressSanitizer/UndefinedBehaviorSanitizer 与 ThreadSanitizer 使用独立构�
 
 CI 在 Linux／macOS／Windows 检查两种依赖方案，Linux 另运行
 AddressSanitizer/UndefinedBehaviorSanitizer 和 ThreadSanitizer。
-分组名称包含系统和检查模式；步骤名称区分依赖与 TLS 配置。五个原生分组、文档与格式检查
+分组名称包含系统和检查模式；步骤名称区分依赖与 TLS 配置。七个原生分组、文档与格式检查
 和 `CI - required` 一并保留。
 源分支 PR 修改已映射的模块时，在 Linux/Boost/TLS/Release 执行选中的原生检查；
 其他配置只记录检查范围。包含代码的合并队列候选和手动触发执行完整的 12 种原生配置。

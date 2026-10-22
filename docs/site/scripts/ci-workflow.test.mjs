@@ -34,12 +34,12 @@ function checkPolicy(source) {
     "  cancel-in-progress: false",
   ].join("\n"));
 
-  // Five grouped native jobs retain the twelve configurations. Intentional
+  // Seven grouped native jobs retain the twelve configurations. Intentional
   // workflow changes require review of setup, per-profile steps and the gate.
   const required = source.indexOf("  required:\n");
   const jobs = source.slice(source.indexOf("jobs:\n"), required === -1 ? undefined : required);
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
-    "e29c378624e6a2cf717631e2805b9b1dfc39088698aaf2eb69f31ecfaacf3c4f",
+    "bd32b16254c883e78852825924cdcce36fa43e07381e264f3d6e2d2134e551d5",
     "review the complete grouped workflow and scope contract before changing it");
 }
 
@@ -75,28 +75,30 @@ test("CI policy rejects changed events, cancellation, permissions and required j
   }
 });
 
-test("real workflow setup selector keeps all five queue groups and only the source regression group", () => {
+test("real workflow setup selector keeps all seven queue groups and only the source regression group", () => {
   const expression = workflow.match(/ARKNET_RUN_NATIVE: \$\{\{ (.+) \}\}/)?.[1];
   assert.ok(expression);
   const matrix = [
-    ...["ubuntu-latest", "macos-latest", "windows-latest"].map(os => ({ os, sanitize: "OFF" })),
-    ...["ON", "THREAD"].map(sanitize => ({ os: "ubuntu-latest", sanitize })),
+    ...["ON", "OFF"].map(boost => ({ os: "ubuntu-latest", boost, sanitize: "OFF" })),
+    { os: "macos-latest", boost: "BOTH", sanitize: "OFF" },
+    ...["ON", "OFF"].map(boost => ({ os: "windows-latest", boost, sanitize: "OFF" })),
+    ...["ON", "THREAD"].map(sanitize => ({ os: "ubuntu-latest", boost: "BOTH", sanitize })),
   ];
   const cells = plan => matrix.filter(cell => runInNewContext(expression,
     { needs: { format: { outputs: { ...plan, full_cpp: String(plan.full_cpp) } } }, matrix: cell }, { timeout: 100 }));
   const make = eventName => planChecks({ eventName, known: true, files: ["tests/rudp.cpp"] });
-  assert.equal(cells(make("merge_group")).length, 5);
-  assert.equal(cells(make("workflow_dispatch")).length, 5);
+  assert.equal(cells(make("merge_group")).length, 7);
+  assert.equal(cells(make("workflow_dispatch")).length, 7);
   // An explicit dispatch on main seeds its shared caches even when a future
   // change detector reports documentation-only files. It must keep every profile.
   const manualSeed = planChecks({ eventName: "workflow_dispatch", known: true, files: ["README.md"] });
   assert.equal(manualSeed.tier, "full");
   assert.equal(manualSeed.source_tests, "");
-  assert.equal(cells(manualSeed).length, 5);
+  assert.equal(cells(manualSeed).length, 7);
   assert.deepEqual(cells(make("pull_request")), [
-    { os: "ubuntu-latest", sanitize: "OFF" },
+    { os: "ubuntu-latest", boost: "ON", sanitize: "OFF" },
   ]);
-  assert.equal(cells(planChecks({ eventName: "pull_request", known: false })).length, 5);
+  assert.equal(cells(planChecks({ eventName: "pull_request", known: false })).length, 7);
   assert.equal(cells(planChecks({ eventName: "merge_group", known: true, files: ["README.md"] })).length, 0);
   assert.match(workflow, /\$env:GITHUB_EVENT_NAME -cne 'pull_request' -and \$env:ARKNET_VALIDATION_TIER -ceq 'modules'/);
 });
