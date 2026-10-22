@@ -78,10 +78,36 @@ test("real workflow step conditions produce accepted full, source-suite, module 
     ["pull_request", [".github/workflows/ci.yml"], {}, 1], ["pull_request", ["tests/redis_client.cpp"], {}, 1],
     ["pull_request", ["tests/mysql_auth.cpp", "tests/rudp.cpp"], {}, 1],
     ["pull_request", ["README.md"], {}, 0], ["merge_group", ["docs/project/testing.md"], {}, 0],
+    ...["pull_request", "merge_group"].flatMap(event => [
+      [event, ["AGENTS.md", "docs/site/package-lock.json", "docs/site/astro.config.ts",
+        "docs/site/src/components/Mermaid.astro", "docs/site/scripts/ui-controls.test.mjs"], {}, 0],
+      ...["tests/rudp.cpp", "docs/site/scripts/ci-scope.test.mjs", "docs/site/unknown.config.json"]
+        .map(file => [event, ["docs/site/package.json", file], {}, event === "merge_group" ? 12 : 1]),
+    ]),
   ];
   for (const [event, files, extra, native] of cases) {
     const input = fixture(event, files, extra);
     assert.deepEqual(validateRequired(input), { tier: input.plan.tier, native_cells: native, scope_only_cells: 12 - native });
+  }
+});
+
+test("the gate requires successful planning in both Linux sanitizer dependency profiles and nowhere else", () => {
+  const name = "Select bounded compiler parallelism";
+  for (const [event, files, expected] of [["merge_group", ["tests/rudp.cpp"], 2],
+    ["workflow_dispatch", ["README.md"], 2], ["pull_request", ["tests/rudp.cpp"], 0],
+    ["merge_group", ["docs/site/package.json"], 0]]) {
+    const input = fixture(event, files);
+    const selected = input.metadata.jobs.filter(job => findStep(job, name)?.conclusion === "success");
+    assert.equal(selected.length, expected);
+    if (expected) assert.deepEqual(new Set(selected.map(job => job.name)), new Set(["OFF", "ON"].map(boost =>
+      cellName({ os: "ubuntu-latest", boost, ssl: "ON", sanitize: "ON" }))));
+    validateRequired(input);
+    for (const job of input.metadata.jobs.filter(job => findStep(job, name))) {
+      const invalid = structuredClone(input);
+      const step = findStep(invalid.metadata.jobs.find(candidate => candidate.name === job.name), name);
+      step.conclusion = step.conclusion === "success" ? "skipped" : "success";
+      assert.throws(() => validateRequired(invalid), `${event}: ${job.name}`);
+    }
   }
 });
 
@@ -315,6 +341,49 @@ test("the CLI reclassifies actual event commits and rejects substituted or unava
   assert.notEqual(run(input.needs).status, 0);
   rmSync(jobsPath);
   assert.notEqual(run(input.needs).status, 0);
+});
+
+test("the CLI recomputes site maintenance coverage and fails closed for mixed or unknown ranges", t => {
+  const root = mkdtempSync(join(tmpdir(), "arknet-required-site-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const git = (...args) => execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  git("init", "-q");
+  git("config", "user.name", "Gate fixture");
+  git("config", "user.email", "fixture@example.invalid");
+  git("config", "commit.gpgsign", "false");
+  const commit = () => { git("add", "-A"); git("commit", "-qm", "test: site fixture"); return git("rev-parse", "HEAD"); };
+  writeFileSync(join(root, "README.md"), "# Base\n");
+  const base = commit();
+  mkdirSync(join(root, "docs/site"), { recursive: true });
+  writeFileSync(join(root, "docs/site/astro.config.ts"), "// documentation build\n");
+  writeFileSync(join(root, "AGENTS.md"), "# Instructions\n");
+  const head = commit();
+  const nativeHeads = ["docs/site/unknown.mjs", "docs/site/fixture.cpp", "docs/site/CMakeLists.txt",
+    "docs/site/scripts/ci-scope.test.mjs"].map(file => {
+    git("checkout", "-q", "--detach", head);
+    mkdirSync(join(root, file, ".."), { recursive: true });
+    writeFileSync(join(root, file), "// preserve native coverage\n");
+    return commit();
+  });
+  const eventPath = join(root, "event.json"), jobsPath = join(root, "jobs.json");
+  const script = fileURLToPath(new URL("../../.github/scripts/ci-required.mjs", import.meta.url));
+  for (const eventName of ["pull_request", "merge_group"]) {
+    const input = fixture(eventName, ["AGENTS.md", "docs/site/astro.config.ts"]);
+    writeFileSync(jobsPath, JSON.stringify(input.metadata));
+    const run = actualHead => {
+      const event = eventName === "pull_request" ? { pull_request: { base: { sha: base }, head: { sha: actualHead } } }
+        : { merge_group: { base_sha: base, head_sha: actualHead } };
+      writeFileSync(eventPath, JSON.stringify(event));
+      return spawnSync(process.execPath, [script], { cwd: root, encoding: "utf8", env: { ...process.env,
+        GITHUB_EVENT_NAME: eventName, GITHUB_EVENT_PATH: eventPath, CI_JOBS_PATH: jobsPath, CI_NEEDS_JSON: JSON.stringify(input.needs) } });
+    };
+    const docs = run(head);
+    assert.equal(docs.status, 0, docs.stderr);
+    assert.deepEqual(JSON.parse(docs.stdout), { tier: "documentation", native_cells: 0, scope_only_cells: 12 });
+    for (const actualHead of [...nativeHeads, "f".repeat(40), base]) {
+      assert.notEqual(run(actualHead).status, 0, `${eventName}: documentation metadata cannot stand in for ${actualHead}`);
+    }
+  }
 });
 
 test("the appended gate reads same-run metadata with only job-local read permissions", () => {

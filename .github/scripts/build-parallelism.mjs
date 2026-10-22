@@ -14,7 +14,7 @@ export function selectParallelism(resources) {
   let constraintStatus = resources.constrainedMemory === 0 ? "no-reported-constraint" :
     validConstraint ? "reported-constraint" : "invalid-constraint";
   const fallback = reason => ({ parallel: 1, reason, effectiveMemory: null, constraintStatus });
-  if (resources.platform !== "linux" || resources.boost !== "ON" || resources.sanitize !== "ON") {
+  if (resources.platform !== "linux" || !["OFF", "ON"].includes(resources.boost) || resources.sanitize !== "ON") {
     return fallback("outside-experimental-profile");
   }
   if (![resources.cpu, resources.totalMemory, resources.availableMemory].every(positiveInteger) ||
