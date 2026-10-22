@@ -51,10 +51,24 @@ The required job collects metadata through the GitHub CLI for the explicit
 `GITHUB_RUN_ID` and `GITHUB_RUN_ATTEMPT`, using `gh run view --attempt` rather than
 the default run snapshot. It verifies the returned run ID and attempt before
 using any jobs. A successful job can temporarily expose pending or in-progress
-step metadata. Only such unfinished metadata triggers refreshes, with 1, 2, 4,
-8 and then 15-second backoff, bounded by 120 seconds including CLI time. Each CLI
-read has at most a 20-second timeout within that budget. The required job retains
-its existing five-minute deadline.
+step metadata. Only a structurally valid unfinished snapshot triggers a second
+whole-snapshot read anchored to one of its concrete pending prerequisite jobs:
+`gh run view <run-id> --repo <repository> --attempt <attempt> --job <job-id> --json databaseId,attempt,jobs`.
+The anchor comes from that same snapshot, never the aggregate or another run.
+Across retry cycles, selection rotates among that snapshot's pending prerequisites
+in the verified name/ID set. Only selection history is retained; success states
+from different anchored snapshots cannot be combined.
+Both reads verify the run and attempt, all nine prerequisite job names/IDs must
+stay identical across reads, and each new snapshot is independently inspected.
+Completed jobs must already expose their required named steps; known required
+failures or malformed/partial snapshots cannot trigger a refresh into success.
+Explicitly optional native-cache failures retain their existing treatment.
+
+If both plain and anchored reads remain pending, repeat with 1, 2, 4, 8 and then
+15-second backoff. The 120-second total includes every CLI call; each call is
+capped at 20 seconds or the remaining budget. The reported snapshot count counts
+actual CLI reads, including anchored ones. The required job retains its existing
+five-minute deadline.
 
 The running `CI - required` job is excluded from prerequisite readiness; its
 identity must still be unique. The collector passes the actual finalized snapshot
@@ -63,8 +77,10 @@ step validates it again. It never converts pending steps to success. CLI errors,
 malformed or mismatched identities, missing/duplicate/unexpected jobs, unsuccessful
 prerequisites and incomplete final coverage remain failures. A partial rerun that
 omits prerequisites from the current attempt cannot borrow successful jobs from
-an earlier attempt; use a fresh complete run for acceptance. No snapshots are
-merged across reads or attempts, and no default-endpoint fallback is used.
+an earlier attempt; use a fresh complete run for acceptance. The job anchor does not narrow validation to one job: the entire returned snapshot
+still requires all nine prerequisites and twelve actual native profiles for a full
+run. No snapshots are merged across reads or attempts, and no default-attempt
+fallback is used.
 
 A fresh complete run at the changed head must validate this collector. The failed
 aggregate from an older manual run remains failed even if a later metadata read

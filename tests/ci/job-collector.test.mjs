@@ -32,20 +32,21 @@ test('attempt-qualified collection refreshes a successful job with stale test an
   findStep(windows(stale), 'Test').status = 'in_progress';
   findStep(windows(stale), 'Test').conclusion = '';
   windows(stale).steps.push({ name: 'Post Run actions/checkout@v4', number: 999, status: 'pending', conclusion: null });
-  const final = structuredClone(h.final);
+  stale.staleOnly = 'must never be copied into the fresh snapshot';
+  const final = { ...structuredClone(h.final), source: 'job-anchored-whole-snapshot' };
   windows(final).steps.push({ name: 'Post Run actions/checkout@v4', number: 999, status: 'completed', conclusion: 'success' });
   assert.throws(() => validateRequired({ ...h.input, metadata: stale }), /invalid, incomplete/);
   h.snapshots.push(stale, final);
   const result = await h.collect();
   assert.equal(result.reads, 2);
-  assert.deepEqual(h.waits, [1000]);
+  assert.deepEqual(h.waits, []);
   assert.deepEqual(result.metadata, final);
   assert.deepEqual(JSON.parse(readFileSync(h.env.CI_JOBS_PATH, 'utf8')), final);
   assert.deepEqual(result.coverage, { tier: 'full', native_cells: 12, scope_only_cells: 0 });
   assert.match(readFileSync(h.env.GITHUB_STEP_SUMMARY, 'utf8'), /run 12345, attempt 1, after 2 snapshot/);
-  for (const call of h.calls) {
+  for (const [index, call] of h.calls.entries()) {
     assert.equal(call.command, 'gh');
-    assert.deepEqual(call.args, ['run', 'view', '12345', '--repo', 'OpenArkStudio/arknet', '--attempt', '1', '--json', 'databaseId,attempt,jobs']);
+    assert.deepEqual(call.args, ['run', 'view', '12345', '--repo', 'OpenArkStudio/arknet', '--attempt', '1', ...(index ? ['--job', String(windows(stale).databaseId)] : []), '--json', 'databaseId,attempt,jobs']);
     assert.ok(call.options.timeout > 0 && call.options.timeout <= 20_000);
     assert.equal(call.args.includes('api'), false);
   }
@@ -59,7 +60,7 @@ test('queued jobs and missing final conclusions refresh, while the currently run
   findStep(windows(finishing), 'Test').conclusion = null;
   h.snapshots.push(queued, finishing, h.final);
   const result = await h.collect();
-  assert.deepEqual(h.waits, [1000, 2000]);
+  assert.deepEqual(h.waits, [1000]);
   assert.equal(result.metadata.jobs.find(job => job.name === 'CI - required').status, 'in_progress');
 });
 
@@ -71,7 +72,8 @@ test('repeated pending metadata exhausts the 120-second budget with bounded back
   await assert.rejects(h.collect(), /did not finalize within 120 seconds/);
   assert.deepEqual(h.waits.slice(0, 5), [1000, 2000, 4000, 8000, 15_000]);
   assert.equal(h.waits.reduce((sum, ms) => sum + ms, 0), collectionLimitMs);
-  assert.ok(h.calls.length <= 12);
+  assert.ok(h.calls.length <= 24);
+  for (const [index, call] of h.calls.entries()) assert.equal(call.args.includes('--job'), index % 2 === 1);
   assert.equal(existsSync(h.env.CI_JOBS_PATH), false);
 });
 
@@ -171,4 +173,141 @@ test('missing current-attempt identity cannot launch GH or reuse a previous meta
     await assert.rejects(h.collect({ env }), /required/);
     assert.equal(h.calls.length, 0);
   }
+});
+
+test('anchored reads reject partial, changed-provenance, wrong-attempt and unsuccessful whole snapshots without another fallback', async t => {
+  const changes = [
+    metadata => { metadata.databaseId++; }, metadata => { metadata.attempt++; },
+    metadata => { metadata.jobs = [windows(metadata)]; },
+    metadata => { windows(metadata).databaseId += 1000; },
+    metadata => { metadata.jobs[0].databaseId += 1000; },
+    metadata => { const [a, b] = metadata.jobs; [a.databaseId, b.databaseId] = [b.databaseId, a.databaseId]; },
+    metadata => { metadata.jobs.push(structuredClone(metadata.jobs[0])); },
+    metadata => { metadata.jobs[0].name = 'unexpected prerequisite'; },
+    metadata => { windows(metadata).steps = windows(metadata).steps.filter(step => step.name !== 'Test - Boost - TLS'); },
+    metadata => { findStep(windows(metadata), 'Test').conclusion = 'failure'; },
+    metadata => { findStep(windows(metadata), 'Configure').conclusion = 'skipped'; },
+  ];
+  for (const change of changes) {
+    const h = harness(t), stale = structuredClone(h.final), invalid = structuredClone(h.final);
+    findStep(windows(stale), 'Test').status = 'in_progress';
+    change(invalid); h.snapshots.push(stale, invalid, h.final);
+    await assert.rejects(h.collect());
+    assert.equal(h.calls.length, 2);
+    assert.equal(h.calls[1].args[h.calls[1].args.indexOf('--job') + 1], String(windows(stale).databaseId));
+    assert.deepEqual(h.waits, []);
+    assert.equal(existsSync(h.env.CI_JOBS_PATH), false);
+  }
+});
+
+test('a pending first snapshot cannot hide required failures, duplicate step names or a partial completed-job structure', async t => {
+  const changes = [
+    metadata => { metadata.jobs[0].conclusion = 'failure'; metadata.jobs[0].status = 'in_progress'; },
+    metadata => { metadata.jobs[0].steps[0].conclusion = 'failure'; },
+    metadata => { metadata.jobs[0].steps[0].conclusion = 'cancelled'; metadata.jobs[0].steps[0].status = 'in_progress'; },
+    metadata => { metadata.jobs[0].steps.pop(); },
+    metadata => { windows(metadata).steps = windows(metadata).steps.filter(step => step.name !== 'Configure - Boost - TLS'); },
+    metadata => { windows(metadata).steps.push({ ...windows(metadata).steps[0], number: 999 }); },
+  ];
+  for (const change of changes) {
+    const h = harness(t), stale = structuredClone(h.final);
+    findStep(windows(stale), 'Test').status = 'in_progress';
+    change(stale); h.snapshots.push(stale, h.final);
+    await assert.rejects(h.collect());
+    assert.equal(h.calls.length, 1);
+    assert.equal(h.calls[0].args.includes('--job'), false);
+    assert.equal(existsSync(h.env.CI_JOBS_PATH), false);
+  }
+});
+
+test('job provenance stays fixed across later plain reads as well as anchored reads', async t => {
+  const h = harness(t), stale = structuredClone(h.final), changed = structuredClone(h.final);
+  findStep(windows(stale), 'Test').status = 'in_progress';
+  changed.jobs[0].databaseId += 1000;
+  h.snapshots.push(stale, stale, changed);
+  await assert.rejects(h.collect(), /identity changed between snapshots/);
+  assert.equal(h.calls.length, 3);
+  assert.deepEqual(h.waits, [1000]);
+  assert.equal(existsSync(h.env.CI_JOBS_PATH), false);
+});
+
+test('anchored CLI failures, timeouts and malformed JSON remain failures without leaked stderr or another read', async t => {
+  for (const response of [{ status: 1, stderr: 'secret diagnostic fixture', stdout: '' },
+    { status: null, error: new Error('ETIMEDOUT'), stdout: '' }, { status: 0, stdout: '{bad JSON' }]) {
+    const h = harness(t), stale = structuredClone(h.final);
+    findStep(windows(stale), 'Test').status = 'in_progress';
+    h.snapshots.push(stale, () => response, h.final);
+    await assert.rejects(h.collect(), error => !error.message.includes('secret diagnostic fixture'));
+    assert.equal(h.calls.length, 2);
+    assert.deepEqual(h.waits, []);
+    assert.equal(existsSync(h.env.CI_JOBS_PATH), false);
+  }
+});
+
+test('the anchored command consumes the remaining deadline and cannot save a late complete snapshot', async t => {
+  const h = harness(t), stale = structuredClone(h.final), timeouts = [];
+  findStep(windows(stale), 'Test').status = 'in_progress';
+  let elapsed = 0;
+  await assert.rejects(h.collect({ now: () => elapsed, sleep: async () => assert.fail('no backoff after deadline'),
+    run: (_command, args, options) => {
+      timeouts.push(options.timeout);
+      elapsed += args.includes('--job') ? 500 : collectionLimitMs - 500;
+      return { status: 0, stdout: JSON.stringify(args.includes('--job') ? h.final : stale) };
+    } }), /did not finalize within 120 seconds/);
+  assert.deepEqual(timeouts, [20_000, 500]);
+  assert.equal(existsSync(h.env.CI_JOBS_PATH), false);
+});
+
+test('a valid optional native-cache failure remains optional while an anchored snapshot finalizes required steps', async t => {
+  const h = harness(t), stale = structuredClone(h.final), final = structuredClone(h.final);
+  findStep(windows(stale), 'Restore dependency archives').conclusion = 'failure';
+  findStep(windows(final), 'Restore dependency archives').conclusion = 'failure';
+  findStep(windows(stale), 'Test').status = 'in_progress';
+  h.snapshots.push(stale, final);
+  const result = await h.collect();
+  assert.equal(result.reads, 2);
+  assert.deepEqual(result.metadata, final);
+  assert.equal(result.coverage.native_cells, 12);
+});
+
+test('unchanged stale plain snapshots rotate pending prerequisite anchors until one whole snapshot finalizes', async t => {
+  const h = harness(t), stale = structuredClone(h.final);
+  const linux = metadata => metadata.jobs.find(job => job.name === 'Native - ubuntu-latest - Boost - Release');
+  for (const job of [linux(stale), windows(stale)]) {
+    findStep(job, 'Test').status = 'in_progress'; findStep(job, 'Test').conclusion = '';
+  }
+  const firstAnchor = structuredClone(stale);
+  findStep(linux(firstAnchor), 'Test').status = 'completed'; findStep(linux(firstAnchor), 'Test').conclusion = 'success';
+  h.snapshots.push(stale, firstAnchor, stale, h.final);
+  const result = await h.collect();
+  assert.equal(result.reads, 4);
+  assert.deepEqual(h.waits, [1000]);
+  assert.equal(h.calls[1].args[h.calls[1].args.indexOf('--job') + 1], String(linux(stale).databaseId));
+  assert.equal(h.calls[3].args[h.calls[3].args.indexOf('--job') + 1], String(windows(stale).databaseId));
+  assert.deepEqual(result.metadata, h.final);
+  assert.equal(result.coverage.native_cells, 12);
+  assert.equal(findStep(linux(stale), 'Test').status, 'in_progress');
+});
+
+test('complementary anchored successes never merge into full acceptance across unchanged stale plain reads', async t => {
+  const h = harness(t), stale = structuredClone(h.final), calls = [];
+  const linux = metadata => metadata.jobs.find(job => job.name === 'Native - ubuntu-latest - Boost - Release');
+  for (const job of [linux(stale), windows(stale)]) {
+    findStep(job, 'Test').status = 'in_progress'; findStep(job, 'Test').conclusion = '';
+  }
+  const byJob = new Map([linux(stale), windows(stale)].map(job => {
+    const snapshot = structuredClone(stale), selected = snapshot.jobs.find(item => item.databaseId === job.databaseId);
+    findStep(selected, 'Test').status = 'completed'; findStep(selected, 'Test').conclusion = 'success';
+    return [String(job.databaseId), snapshot];
+  }));
+  await assert.rejects(h.collect({ run: (_command, args) => {
+    calls.push(args);
+    const id = args[args.indexOf('--job') + 1];
+    const snapshot = args.includes('--job') ? byJob.get(id) : stale;
+    return { status: 0, stdout: JSON.stringify(snapshot) };
+  } }), /did not finalize within 120 seconds/);
+  const anchors = calls.filter(args => args.includes('--job')).map(args => args[args.indexOf('--job') + 1]);
+  assert.deepEqual(anchors.slice(0, 4), [String(linux(stale).databaseId), String(windows(stale).databaseId), String(linux(stale).databaseId), String(windows(stale).databaseId)]);
+  assert.equal(h.waits.reduce((sum, ms) => sum + ms, 0), collectionLimitMs);
+  assert.equal(existsSync(h.env.CI_JOBS_PATH), false);
 });
