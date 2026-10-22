@@ -22,6 +22,7 @@ export const expectedGroups = [
 ];
 export const groupName = ({ os, boost, sanitize }) =>
   `Native - ${os} - ${boost === "ON" ? "Boost - " : boost === "OFF" ? "Standalone - " : ""}${sanitize === "THREAD" ? "TSan" : sanitize === "ON" ? "ASan+UBSan" : "Release"}`;
+export const requiredJobNames = ["Documentation checks", "Style - clang-format 18", ...expectedGroups.map(groupName)];
 export const inGroup = (profile, group) => profile.os === group.os && profile.sanitize === group.sanitize &&
   (group.boost === "BOTH" || profile.boost === group.boost);
 export const slotName = ({ boost, ssl }) => `${boost === "ON" ? "Boost" : "Standalone"} - ${ssl === "ON" ? "TLS" : "NoTLS"}`;
@@ -101,7 +102,7 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
   if (!Array.isArray(metadata?.jobs)) throw new Error("Missing same-run job metadata");
   const jobs = new Map();
   const identities = new Set();
-  const expectedNames = new Set(["Documentation checks", "Style - clang-format 18", ...expectedGroups.map(groupName)]);
+  const expectedNames = new Set(requiredJobNames);
   for (const job of metadata.jobs) {
     if (!job || typeof job.name !== "string" || jobs.has(job.name) || !Number.isSafeInteger(job.databaseId) ||
         job.databaseId <= 0 || identities.has(job.databaseId)) throw new Error("Missing or duplicate job identity");
@@ -153,11 +154,15 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
   return { tier: plan.tier, native_cells: nativeCells, scope_only_cells: expectedCells.length - nativeCells };
 }
 
-export function main(env = process.env) {
+export function validationInput(env = process.env) {
   const event = JSON.parse(readFileSync(env.GITHUB_EVENT_PATH, "utf8"));
   const plan = planChecks({ eventName: env.GITHUB_EVENT_NAME, ...changedFiles(env.GITHUB_EVENT_NAME, event) });
-  const coverage = validateRequired({ needs: JSON.parse(env.CI_NEEDS_JSON),
-    metadata: JSON.parse(readFileSync(env.CI_JOBS_PATH, "utf8")), eventName: env.GITHUB_EVENT_NAME, plan });
+  return { needs: JSON.parse(env.CI_NEEDS_JSON), eventName: env.GITHUB_EVENT_NAME, plan };
+}
+
+export function main(env = process.env) {
+  const coverage = validateRequired({ ...validationInput(env),
+    metadata: JSON.parse(readFileSync(env.CI_JOBS_PATH, "utf8")) });
   console.log(JSON.stringify(coverage));
 }
 

@@ -84,6 +84,10 @@ branch or worktree when the existing checkout contains uncommitted changes.
   adjacent definitions with the prescribed blank lines.
 - Run `CLANG_FORMAT=/path/to/clang-format bash scripts/test_format.sh` and
   `CLANG_FORMAT=/path/to/clang-format bash scripts/format.sh --check`.
+- Before using a tracked-only formatter or formatting check, stage new C++ files
+  or format and check their explicit paths so untracked sources are not omitted.
+  After committing, rerun the full project formatting check against the committed
+  tree; a check of tracked files before adding new sources is not acceptance.
 - Build and run the affected native targets, then the required suite as needed:
   `cmake --build build --target arknet_check --config Release`.
 - Keep third-party licenses and notices intact; do not reformat vendored code.

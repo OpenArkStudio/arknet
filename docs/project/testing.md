@@ -47,6 +47,31 @@ outputs, successful documentation and formatting, exactly one successful job for
 each group, and configuration-specific step conclusions for all twelve profiles.
 Missing, duplicate, incomplete or unknown results fail.
 
+The required job collects metadata through the GitHub CLI for the explicit
+`GITHUB_RUN_ID` and `GITHUB_RUN_ATTEMPT`, using `gh run view --attempt` rather than
+the default run snapshot. It verifies the returned run ID and attempt before
+using any jobs. A successful job can temporarily expose pending or in-progress
+step metadata. Only such unfinished metadata triggers refreshes, with 1, 2, 4,
+8 and then 15-second backoff, bounded by 120 seconds including CLI time. Each CLI
+read has at most a 20-second timeout within that budget. The required job retains
+its existing five-minute deadline.
+
+The running `CI - required` job is excluded from prerequisite readiness; its
+identity must still be unique. The collector passes the actual finalized snapshot
+to the same strict coverage validator before saving it, and the following gate
+step validates it again. It never converts pending steps to success. CLI errors,
+malformed or mismatched identities, missing/duplicate/unexpected jobs, unsuccessful
+prerequisites and incomplete final coverage remain failures. A partial rerun that
+omits prerequisites from the current attempt cannot borrow successful jobs from
+an earlier attempt; use a fresh complete run for acceptance. No snapshots are
+merged across reads or attempts, and no default-endpoint fallback is used.
+
+A fresh complete run at the changed head must validate this collector. The failed
+aggregate from an older manual run remains failed even if a later metadata read
+shows successful native prerequisites; rerunning only that old gate does not
+establish a new all-green acceptance run. Local fake-CLI and clock fixtures prove
+collection and rejection rules, not hosted cache state or faster merging.
+
 Full coverage requires each configuration to finish its own configure, build and
 test steps. Source plans execute only Linux Boost/TLS Release; other profiles
 record scope-only coverage and skip native steps. Documentation-only plans skip

@@ -329,10 +329,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 26
-      - name: Read this run's actual prerequisite jobs
+      - name: Collect finalized prerequisite jobs for this attempt
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --json jobs > "$RUNNER_TEMP/arknet-ci-jobs.json"
+          CI_NEEDS_JSON: ${{ toJSON(needs) }}
+          CI_JOBS_PATH: ${{ runner.temp }}/arknet-ci-jobs.json
+        run: node .github/scripts/ci-jobs.mjs
       - name: Validate required coverage and actual step conclusions
         env:
           CI_NEEDS_JSON: ${{ toJSON(needs) }}

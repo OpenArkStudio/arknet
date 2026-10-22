@@ -1,64 +1,13 @@
 // Copyright (c) 2026 OpenArkStudio. SPDX-License-Identifier: BSL-1.0
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { runInNewContext } from "node:vm";
 import { cellName, expectedCells, expectedGroups, groupName, inGroup, optionalCacheSteps, validateRequired } from "../../.github/scripts/ci-required.mjs";
-import { planChecks } from "../../.github/scripts/ci-scope.mjs";
-
-const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
-const block = name => workflow.split(/(?=^  [a-z][a-z0-9_-]*:$)/m).find(text => text.startsWith(`  ${name}:\n`));
-const steps = name => block(name).split(/(?=^      - )/m).slice(1);
-const stepName = step => step.match(/^      - name: (.+)$/m)?.[1] ??
-  (step.match(/^      - uses: (.+)$/m)?.[1] ? `Run ${step.match(/^      - uses: (.+)$/m)[1]}` :
-    `Run ${step.match(/(?:^      - |^        )run: (.+)$/m)?.[1]}`);
-const outputs = plan => Object.fromEntries(["full_cpp", "tier", "source_tests"].map(key => [key, String(plan[key])]));
-const nativeExpression = block("test").match(/ARKNET_RUN_NATIVE: \$\{\{ (.+) \}\}/)[1];
-const jobNameExpression = block("test").match(/^    name: (.+)$/m)[1];
-
-function actualGroups() {
-  return [...block("test").matchAll(/- \{os: ([^,]+), boost: "([^"]+)", sanitize: "([^"]+)"\}/g)].map(([, os, boost, sanitize]) => ({ os, boost, sanitize }));
-}
-function actualCells() {
-  return actualGroups().flatMap(group => (group.boost === "BOTH" ? ["OFF", "ON"] : [group.boost]).flatMap(boost =>
-    (group.os === "ubuntu-latest" && group.sanitize === "OFF" ? ["ON", "OFF"] : ["ON"])
-      .map(ssl => ({ ...group, boost, ssl }))));
-}
-
-function fixture(eventName, files, extra = {}) {
-  const plan = planChecks({ eventName, known: true, files, ...extra });
-  const needs = { docs: { result: "success" }, format: { result: "success", outputs: outputs(plan) }, test: { result: "success" } };
-  const jobs = ["docs", "format"].map((name, index) => ({
-    databaseId: index + 1, name: block(name).match(/^    name: (.+)$/m)[1], status: "completed", conclusion: "success",
-    steps: steps(name).map((step, number) => ({ name: stepName(step), number: number + 1, status: "completed", conclusion: "success" })),
-  }));
-  for (const [index, matrix] of actualGroups().entries()) {
-    const context = { matrix, needs, runner: { os: { "ubuntu-latest": "Linux", "macos-latest": "macOS", "windows-latest": "Windows" }[matrix.os] },
-      always: () => true, steps: {
-        "vcpkg-cache": { outputs: { enabled: "true" } },
-        "compiler-cache": { outputs: { enabled: "true" } },
-        "native-setup": { outcome: "success" },
-        ...Object.fromEntries(["boost", "standalone"].flatMap(dep => ["tls", "notls"].flatMap(tls =>
-          ["configure", "parallel", "build", "test"].map(stage => [`${dep}-${tls}-${stage}`, { outcome: "success" }])))),
-      } };
-    context.env = { ARKNET_RUN_NATIVE: String(runInNewContext(nativeExpression, context)) };
-    jobs.push({ databaseId: index + 3,
-      name: jobNameExpression.replaceAll(/\$\{\{ (.*?) \}\}/g, (_, expression) => runInNewContext(expression, context)),
-      status: "completed", conclusion: "success", steps: steps("test").map((step, number) => {
-        const expression = step.match(/^        if: \$\{\{ (.+) \}\}$/m)?.[1];
-        return { name: stepName(step), number: number + 1, status: "completed",
-          conclusion: !expression || runInNewContext(expression.replace(/steps\.([a-z0-9-]+)/g, 'steps["$1"]'), context) ? "success" : "skipped" };
-      }) });
-  }
-  // gh run view includes the still-running aggregate itself; it is not a prerequisite.
-  jobs.push({ databaseId: 100, name: "CI - required", status: "in_progress", conclusion: "", steps: [] });
-  return { plan, needs, metadata: { jobs }, eventName };
-}
-const findStep = (job, name) => job.steps.find(step => step.name === name) ?? job.steps.find(step => step.name === `${name} - Boost - TLS`);
+import { block, steps, stepName, actualCells, fixture, findStep } from "./fixtures/required-run.mjs";
 
 test("the independently reviewed manifests match seven groups and all twelve actual native profiles", () => {
   const cells = actualCells();
@@ -393,7 +342,8 @@ test("the appended gate reads same-run metadata with only job-local read permiss
   assert.match(required, /    permissions:\n      contents: read\n      actions: read\n/);
   assert.match(required, /fetch-depth: 0/);
   assert.match(required, /GH_TOKEN: \$\{\{ github.token \}\}/);
-  assert.ok(required.includes('gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --json jobs > "$RUNNER_TEMP/arknet-ci-jobs.json"'));
+  assert.match(required, /timeout-minutes: 5/);
+  assert.match(required, /run: node .github\/scripts\/ci-jobs.mjs/);
   assert.match(required, /CI_NEEDS_JSON: \$\{\{ toJSON\(needs\) \}\}/);
   assert.match(required, /CI_JOBS_PATH: \$\{\{ runner.temp \}\}\/arknet-ci-jobs.json/);
   assert.match(required, /run: node .github\/scripts\/ci-required.mjs/);
