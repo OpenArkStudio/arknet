@@ -114,8 +114,9 @@ including each group's Boost, Standalone or combined dependency selector.
 `grouped-v2` separates the seven-group namespace from earlier cache layouts. Compiler
 invocation hashes distinguish Boost/TLS flags inside the shared sccache container.
 Build trees and results are never cached. Dependency ABI validation remains in
-vcpkg. No concurrent native profiles share a runner: Release stays at three build
-slots, ThreadSanitizer at two, and AddressSanitizer/UndefinedBehaviorSanitizer at
+vcpkg. No concurrent native profiles share a runner: Release uses three build
+slots, with resource-admitted four slots for Windows Boost as described below.
+ThreadSanitizer stays at two, and AddressSanitizer/UndefinedBehaviorSanitizer at
 one or the existing resource-admitted two slots, re-evaluated for each dependency.
 Every group retains the 60-minute job deadline; it has not been extended to make
 serial execution pass.
@@ -484,7 +485,8 @@ then be a safe integer. An external limit above that total is reported as
 `reported-above-host-memory`, without inferring unlimited memory. CPU, physical
 total and available-memory observations must remain positive safe integers;
 nonfinite, negative, fractional or string constraints are invalid. Missing,
-invalid, inconsistent or insufficient resource observations select one slot. Other profiles keep their existing parallelism,
+invalid, inconsistent or insufficient resource observations select one slot. Except
+for the Windows Boost Release admission below, other profiles keep their existing parallelism,
 and source-module targets, sccache launchers, all twelve matrix profiles, native
 tests and the 60-minute job limit remain unchanged. The required gate verifies
 that each configuration-specific planning step ran successfully only for the two
@@ -498,6 +500,26 @@ contains no compiler/linker peak memory, and application benchmark RSS cannot
 supply it. A successful complete hosted matrix is required before merging this
 change; speedup is not established locally. An out-of-memory failure must retain
 its logs for correction, without an automatic retry that hides the failure.
+
+Windows Boost TLS Release can experimentally select four compiler slots, using
+those same CPU, effective-memory and available-memory gates immediately inside
+its build step. Missing, invalid, inconsistent or insufficient observations retain
+its existing three slots. Windows Standalone Asio Release and other Release
+profiles retain three slots. The build log and step summary record actual resources,
+thresholds, selected bound and reason. This decision does not depend on a restored
+cache or a configured compiler launcher. All default build targets, examples,
+benchmarks, translation units, compiler flags and test commands remain intact;
+there is no retry at a lower bound after a build failure.
+
+The cold Windows Boost job in [run 39790248908](https://github.com/OpenArkStudio/arknet/actions/runs/39790248908)
+recorded 11.60 minutes configuring, 40.21 building and 7.89 testing before its
+cancelled conclusion, with no restored dependency/compiler archive and 165
+compiler misses, zero hits. It does not establish successful coverage. Four-slot
+admission is a candidate correction: local resource and CMake graph contracts do
+not prove compiler peak memory, speedup or completion within 60 minutes. A fresh
+complete hosted run must validate the unchanged twelve profiles and cold-build
+budget; populated-cache acceptance remains separate. Cache hits are not a
+prerequisite for correctness or budget acceptance.
 
 API semantics: [Node OS resource APIs](https://nodejs.org/api/os.html#osavailableparallelism),
 [constrained memory](https://nodejs.org/api/process.html#processconstrainedmemory),

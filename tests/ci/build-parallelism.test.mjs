@@ -126,3 +126,40 @@ test("the CLI records real observations, the selected bound and a summary withou
     assert.notEqual(missingChannel.status, 0);
   }
 });
+
+test("Windows Boost Release admits four slots at every threshold and otherwise keeps three", () => {
+  const enough = { ...baseline, platform: "win32", sanitize: "OFF" };
+  assert.equal(selectParallelism(enough).parallel, 4);
+  for (const changes of [{ totalMemory: admission.effectiveMemory }, { constrainedMemory: 0 },
+    { constrainedMemory: 2 ** 64 }, { cpu: 64, totalMemory: 128 * gib, constrainedMemory: 64 * gib, availableMemory: 48 * gib }]) {
+    assert.equal(selectParallelism({ ...enough, ...changes }).parallel, 4, JSON.stringify(changes));
+  }
+  for (const changes of [{ cpu: admission.cpu - 1 }, { totalMemory: admission.effectiveMemory - 1 },
+    { constrainedMemory: admission.effectiveMemory - 1 }, { availableMemory: admission.availableMemory - 1 },
+    { availableMemory: 16 * gib }]) {
+    assert.equal(selectParallelism({ ...enough, ...changes }).parallel, 3, JSON.stringify(changes));
+  }
+  for (const key of ["cpu", "totalMemory", "constrainedMemory", "availableMemory"]) {
+    for (const value of [undefined, null, -1, "16", NaN, Infinity, -Infinity, 1.5]) {
+      const decision = selectParallelism({ ...enough, [key]: value });
+      assert.equal(decision.parallel, 3, `${key}/${value}`);
+      assert.equal(decision.reason, "unknown-or-invalid-resource");
+    }
+    if (key !== "constrainedMemory") assert.equal(selectParallelism({ ...enough, [key]: 0 }).parallel, 3);
+  }
+  for (const changes of [{ boost: "OFF" }, { boost: "on" }, { sanitize: "ON" }, { sanitize: "THREAD" },
+    { platform: "darwin" }, { platform: "linux" }]) {
+    assert.notEqual(selectParallelism({ ...enough, ...changes }).parallel, 4);
+  }
+  const env = { MATRIX_BOOST: "ON", MATRIX_SANITIZE: "OFF" };
+  const system = { availableParallelism: () => 4, totalmem: () => 16 * gib };
+  const runtime = { platform: "win32", constrainedMemory: () => 15 * gib, availableMemory: () => 12 * gib };
+  for (const [owner, key] of [[system, "availableParallelism"], [system, "totalmem"], [runtime, "constrainedMemory"], [runtime, "availableMemory"]]) {
+    const original = owner[key];
+    for (const replacement of [undefined, () => { throw new Error("unavailable"); }]) {
+      owner[key] = replacement;
+      assert.equal(selectParallelism(observeResources(env, system, runtime)).parallel, 3);
+    }
+    owner[key] = original;
+  }
+});

@@ -51,9 +51,10 @@ test('all twelve profiles preserve configure flags, source targets, sanitizers a
       assert.ok(calls[0].args.includes('-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer'));
       await runStage('parallel', env, run);
     } else if (cell.sanitize === 'THREAD') assert.ok(calls[0].args.includes('-DCMAKE_CXX_FLAGS=-fsanitize=thread -fno-omit-frame-pointer'));
-    await runStage('build', env, run);
+    await runStage('build', env, run, () => ({ platform: 'win32', boost: 'ON', sanitize: 'OFF', cpu: 4,
+      totalMemory: 16 * 1024 ** 3, constrainedMemory: 0, availableMemory: 12 * 1024 ** 3 }));
     const parallel = Number(calls[1].args.at(-1));
-    assert.ok(cell.sanitize === 'ON' ? [1, 2].includes(parallel) : parallel === (cell.sanitize === 'THREAD' ? 2 : 3));
+    assert.ok(cell.sanitize === 'ON' ? [1, 2].includes(parallel) : parallel === (cell.sanitize === 'THREAD' ? 2 : cell.os === 'windows-latest' && cell.boost === 'ON' ? 4 : 3));
     await runStage('test', env, run);
     assert.deepEqual(calls[2].args, ['--build', plan.build, '--target', 'arknet_check']);
     assert.deepEqual(Object.fromEntries(Object.keys(plan.testEnv).map(key => [key, calls[2].env[key]])), plan.testEnv);
@@ -190,4 +191,56 @@ test('shared archives isolate OS and sanitizer groups while dependency flags sta
       assert.equal(cachePlan({ root, env: { ...groupEnv, MATRIX_BOOST: cell.boost, MATRIX_SSL: cell.ssl } }).key, keys[index]);
     }
   }
+});
+
+test('Windows Boost Release records the bounded decision independently of caches without changing any targets', async t => {
+  temporary(t);
+  const env = { ...environment({ os: 'windows-latest', boost: 'ON', ssl: 'ON', sanitize: 'OFF' }),
+    ARKNET_COMPILER_LAUNCHER: '', GITHUB_STEP_SUMMARY: join(process.cwd(), 'summary') };
+  const resources = { platform: 'win32', boost: 'ON', sanitize: 'OFF', cpu: 4,
+    totalMemory: 16 * 1024 ** 3, constrainedMemory: 0, availableMemory: 12 * 1024 ** 3 };
+  for (const [changes, parallel] of [[{}, 4], [{ cpu: 3 }, 3], [{ availableMemory: undefined }, 3], [{ platform: 'darwin' }, 3]]) {
+    const calls = [];
+    const plan = await runStage('build', env, async (command, args) => calls.push({ command, args }), () => ({ ...resources, ...changes }));
+    assert.deepEqual(calls, [{ command: 'cmake', args: ['--build', plan.build, '--parallel', String(parallel)] }]);
+    const evidence = JSON.parse(readFileSync(`${plan.build}/ci-logs/ci-build.log`, 'utf8').trim().split('\n').at(-1));
+    assert.equal(evidence.parallel, parallel);
+    assert.deepEqual(evidence.resources, JSON.parse(JSON.stringify({ ...resources, ...changes })));
+    assert.equal(typeof evidence.reason, 'string');
+    assert.deepEqual(evidence.admission, { cpu: 4, effectiveMemory: 15 * 1024 ** 3, availableMemory: 12 * 1024 ** 3 });
+    assert.match(readFileSync(env.GITHUB_STEP_SUMMARY, 'utf8'), /cold-build duration and compiler memory peaks require hosted validation/);
+  }
+});
+
+test('bounded Windows build runs the complete CMake default graph and fails once on a required target', async t => {
+  temporary(t);
+  const env = { ...process.env, ...environment({ os: 'windows-latest', boost: 'ON', ssl: 'ON', sanitize: 'OFF' }),
+    ARKNET_COMPILER_LAUNCHER: '', GITHUB_STEP_SUMMARY: '' };
+  const resources = { platform: 'win32', boost: 'ON', sanitize: 'OFF', cpu: 4,
+    totalMemory: 16 * 1024 ** 3, constrainedMemory: 0, availableMemory: 12 * 1024 ** 3 };
+  writeFileSync('CMakeLists.txt', `cmake_minimum_required(VERSION 3.21)
+project(windows_build_contract LANGUAGES NONE)
+foreach(name correctness examples benchmarks)
+  add_custom_target(\${name} ALL COMMAND "\${CMAKE_COMMAND}" -E touch "\${CMAKE_BINARY_DIR}/\${name}.built")
+endforeach()
+add_custom_target(arknet_check COMMAND "\${CMAKE_COMMAND}" -E touch "\${CMAKE_BINARY_DIR}/checks.ran")
+if(FAIL_REQUIRED_TARGET)
+  add_custom_target(required_failure ALL COMMAND "\${CMAKE_COMMAND}" -E false)
+endif()
+`);
+  const build = profilePlan(env).build;
+  const configure = fail => {
+    const result = spawnSync('cmake', ['-S', '.', '-B', build, `-DFAIL_REQUIRED_TARGET=${fail ? 'ON' : 'OFF'}`], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+  };
+  configure(false);
+  // Use the actual CMake build runner: this fixture has no native compiler or dependencies.
+  await runStage('build', env, undefined, () => resources);
+  for (const name of ['correctness', 'examples', 'benchmarks']) assert.equal(readFileSync(`${build}/${name}.built`, 'utf8'), '');
+  await runStage('test', env);
+  assert.equal(readFileSync(`${build}/checks.ran`, 'utf8'), '');
+  configure(true);
+  await assert.rejects(runStage('build', env, undefined, () => resources), /cmake failed/);
+  const log = readFileSync(`${build}/ci-logs/ci-build.log`, 'utf8');
+  assert.equal((log.match(/cmake failed/g) ?? []).length, 1, 'a failed target must propagate without a retry');
 });

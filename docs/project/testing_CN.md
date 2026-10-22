@@ -83,7 +83,8 @@ UndefinedBehaviorSanitizer（未定义行为检测）组合、ThreadSanitizer（
 缓存键保留操作系统、架构、runner 镜像、编译器环境、依赖身份及 Release／检测分组，
 并包含分组采用的 Boost、Standalone 或组合依赖标识。`grouped-v2` 将七组命名空间与此前缓存布局隔离。sccache 在共享容器内通过编译命令哈希区分 Boost／TLS 参数。
 不缓存构建目录或测试结果；vcpkg 仍校验依赖 ABI。同一 runner 不并发运行原生配置：
-Release 保留三个构建槽，ThreadSanitizer 保留两个，AddressSanitizer／UndefinedBehaviorSanitizer
+Release 使用三个构建槽，Windows Boost 可按下文的资源准入条件使用四个槽。
+ThreadSanitizer 保留两个，AddressSanitizer／UndefinedBehaviorSanitizer
 保留一个槽，或在原有资源准入条件满足时使用两个槽；每种依赖构建前重新观测资源。
 每个分组保留 60 分钟任务期限，没有通过延长期限让串行执行通过。
 
@@ -397,13 +398,26 @@ Linux Boost 和 Standalone Asio 的 AddressSanitizer（内存错误检测）与 
 再验证有效上限是安全整数。超过物理总量的外部限额记录为 `reported-above-host-memory`，不推断内存无限。
 CPU、物理总量和可用内存仍须为正的安全整数；非有限、负数、小数或字符串形式的约束无效。
 观测缺失、非法、矛盾或不足时选择一个槽。
-其他配置保留现有并行度；源模块目标、sccache launcher、全部十二格矩阵、原生测试和 60 分钟期限保持不变。
+除下文的 Windows Boost Release 准入外，其他配置保留现有并行度；源模块目标、sccache launcher、全部十二格矩阵、原生测试和 60 分钟期限保持不变。
 required gate 核对分组内的逐配置规划步骤仅在两个目标原生配置中实际成功执行。
 
 helper 在任务日志和摘要中输出真实观测、阈值、所选并行度与原因。这是保守的调度启发式：
 12 GiB 可用内存是两个编译槽及其开销的准入预算，不是实测编译峰值或强制单槽上限。
 耗时元数据没有编译器／链接器内存峰值，应用基准 RSS 不能补足这项证据。
 合入前必须通过完整托管矩阵；本地检查不证明提速。发生内存耗尽时应保留日志并修正，不能自动重试以掩盖失败。
+
+Windows Boost TLS Release 可试验性选择四个编译槽，在构建步骤内部开始编译前，
+使用相同的 CPU、有效内存和可用内存准入条件。观测缺失、非法、矛盾或不足时，保留原有三个槽。
+Windows Standalone Asio Release 和其他 Release 配置仍使用三个槽。
+构建日志与步骤摘要记录实际资源、阈值、所选并行度和原因。该决策不依赖缓存恢复或 compiler launcher 配置。
+全部默认构建目标、示例、基准、翻译单元、编译参数和测试命令均保留；构建失败后不会降低并行度自动重试。
+
+[运行 39790248908](https://github.com/OpenArkStudio/arknet/actions/runs/39790248908) 的冷缓存 Windows Boost 任务
+记录了配置 11.60 分钟、构建 40.21 分钟和测试 7.89 分钟，最终结论为取消。
+该任务没有恢复依赖或编译器归档，编译器缓存记录 165 次未命中、零次命中；这不是成功的覆盖证据。
+四槽准入属于候选修正，本地资源与 CMake 构建图契约检查不能证明编译器内存峰值、提速或 60 分钟内完成。
+必须通过新一轮完整托管运行验证原有十二种配置和冷构建预算；已有缓存的验收独立进行。
+正确性和预算验收均不能以缓存命中为前提。
 
 API 语义参考：[Node 操作系统资源接口](https://nodejs.org/api/os.html#osavailableparallelism)、
 [受限内存](https://nodejs.org/api/process.html#processconstrainedmemory)、

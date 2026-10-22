@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { appendFileSync, createWriteStream, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { observeResources, selectParallelism } from './build-parallelism.mjs';
+import { admission, observeResources, selectParallelism } from './build-parallelism.mjs';
 
 export function profilePlan(env) {
   const boost = env.MATRIX_BOOST, ssl = env.MATRIX_SSL, sanitize = env.MATRIX_SANITIZE;
@@ -49,7 +49,7 @@ async function runCommand(command, args, { env, log }) {
   });
 }
 
-export async function runStage(stage, env = process.env, run = runCommand) {
+export async function runStage(stage, env = process.env, run = runCommand, observe = observeResources) {
   const plan = profilePlan(env);
   const { build, sanitize } = plan;
   mkdirSync(`${build}/ci-logs`, { recursive: true });
@@ -59,7 +59,7 @@ export async function runStage(stage, env = process.env, run = runCommand) {
     if (stage === 'configure') await command('cmake', plan.configure);
     else if (stage === 'parallel') {
       if (sanitize !== 'ON') throw new Error('Parallelism planning is only valid for AddressSanitizer/UndefinedBehaviorSanitizer');
-      const resources = observeResources(env);
+      const resources = observe(env);
       const decision = selectParallelism(resources);
       writeFileSync(`${build}/ci-parallel.json`, JSON.stringify(decision));
       const evidence = JSON.stringify({ profile: build, resources, ...decision });
@@ -71,6 +71,17 @@ export async function runStage(stage, env = process.env, run = runCommand) {
       if (sanitize === 'ON') {
         parallel = JSON.parse(readFileSync(`${build}/ci-parallel.json`, 'utf8')).parallel;
         if (![1, 2].includes(parallel)) throw new Error('Missing or invalid bounded compiler parallelism');
+      }
+      if (env.RUNNER_OS === 'Windows' && plan.boost === 'ON' && sanitize === 'OFF') {
+        const resources = observe(env);
+        const decision = selectParallelism(resources);
+        // A missing/mismatched platform observation must retain the existing bound.
+        parallel = resources.platform === 'win32' && decision.parallel === 4 ? 4 : 3;
+        const evidence = JSON.stringify({ profile: build, resources, admission, ...decision, parallel });
+        console.log(evidence);
+        appendFileSync(log, evidence + '\n');
+        if (env.GITHUB_STEP_SUMMARY) appendFileSync(env.GITHUB_STEP_SUMMARY,
+          `${evidence}\n\nExperimental Windows Boost Release scheduling heuristic; cold-build duration and compiler memory peaks require hosted validation.\n`);
       }
       await command('cmake', ['--build', build,
         ...(env.ARKNET_VALIDATION_TIER === 'modules' && env.ARKNET_SOURCE_TESTS ? ['--target', 'arknet_check_build'] : []),
