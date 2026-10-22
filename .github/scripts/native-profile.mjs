@@ -52,8 +52,8 @@ async function runCommand(command, args, { env, log }) {
 export async function runStage(stage, env = process.env, run = runCommand) {
   const plan = profilePlan(env);
   const { build, sanitize } = plan;
-  mkdirSync(`${build}/tests/logs`, { recursive: true });
-  const log = `${build}/tests/logs/ci-${stage}.log`;
+  mkdirSync(`${build}/ci-logs`, { recursive: true });
+  const log = `${build}/ci-logs/ci-${stage}.log`;
   const command = (name, args, extra = {}) => run(name, args, { env: { ...env, ...extra }, log });
   try {
     if (stage === 'configure') await command('cmake', plan.configure);

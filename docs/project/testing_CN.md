@@ -54,8 +54,10 @@ macOS 与 Windows 分别验证两种依赖的 TLS 配置。Linux AddressSanitize
 UndefinedBehaviorSanitizer（未定义行为检测）组合、ThreadSanitizer（线程数据竞争检测）仍使用独立任务，
 各自依次验证 Boost 和 Standalone Asio 的 TLS 配置。不增加操作系统或 TLS／检测模式组合。
 
-每种配置使用独立的 `build/ci-<boost>-<ssl>-<sanitize>` 构建目录，阶段日志位于对应 `tests/logs/`，
-并保留具名的配置、构建和测试结论。前一种配置失败后，后续配置仍执行；失败配置内部跳过不满足前置条件的步骤。
+每种配置使用独立的 `build/ci-<boost>-<ssl>-<sanitize>` 构建目录，原始阶段日志位于对应 `ci-logs/`，
+并保留具名的配置、构建和测试结论。阶段日志只保留在 runner，不上传为附件；
+现有测试输出附件仍覆盖 `tests/logs/**/*.log`。Actions 控制台输出与步骤摘要继续用于诊断阶段失败。
+前一种配置失败后，后续配置仍执行；失败配置内部跳过不满足前置条件的步骤。
 任何必需配置缺失、失败或被跳过都会使分组和汇总 gate 失败。分组超时可能阻止后续配置运行，仍属于验收失败。
 
 只共用准备步骤与缓存容器。全部配置继续请求相同的 `boost;ssl` 依赖 feature 超集。

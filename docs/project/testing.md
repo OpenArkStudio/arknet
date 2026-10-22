@@ -71,8 +71,11 @@ configurations with TLS. Linux AddressSanitizer with UndefinedBehaviorSanitizer
 and ThreadSanitizer remain separate jobs, each executing Boost and Standalone
 Asio with TLS. No new platforms or TLS/sanitizer combinations are added.
 
-Each configuration has a separate `build/ci-<boost>-<ssl>-<sanitize>` tree, stage
-logs under its own `tests/logs/`, and named configure/build/test conclusions.
+Each configuration has a separate `build/ci-<boost>-<ssl>-<sanitize>` tree,
+raw stage logs under its own `ci-logs/`, and named configure/build/test conclusions.
+Stage logs stay on the runner and are not uploaded. Existing test-output attachments
+retain their `tests/logs/**/*.log` coverage; Actions console output and step summaries
+remain available for diagnosing stage failures.
 Configuration steps explicitly run after earlier configurations fail; dependencies
 within the failed configuration still skip invalid work. Any missing, failed or
 skipped required configuration fails the group and aggregate gate. A group timeout

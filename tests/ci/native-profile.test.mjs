@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, matchesGlob } from 'node:path';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { expectedCells, expectedGroups, groupName, slotName } from '../../.github/scripts/ci-required.mjs';
@@ -91,7 +91,7 @@ test('each native command failure propagates once and produces a profile-specifi
     let attempts = 0;
     await assert.rejects(runStage(stage, env, async () => { attempts++; throw new Error('fixture compiler or test failure'); }), /fixture/);
     assert.equal(attempts, 1);
-    assert.match(readFileSync(`${profilePlan(env).build}/tests/logs/ci-${stage}.log`, 'utf8'), /fixture/);
+    assert.match(readFileSync(`${profilePlan(env).build}/ci-logs/ci-${stage}.log`, 'utf8'), /fixture/);
   }
   const sanitized = { ...env, MATRIX_SANITIZE: 'ON' };
   await assert.rejects(runStage('build', sanitized, async () => assert.fail('must not build without resource decision')));
@@ -108,6 +108,32 @@ test('invalid profiles and narrower source scope cannot execute unplanned covera
   }
 });
 
+test('raw stage logs stay outside every uploaded artifact path while original test logs remain covered', async t => {
+  temporary(t);
+  const upload = steps.find(step => step.includes('name: Upload test results'));
+  const patterns = upload.split('          path: |\n')[1].trim().split('\n').map(line => line.trim());
+  assert.deepEqual(patterns, ['build/ci-*/tests/logs/**/*.log']);
+  for (const cell of expectedCells) {
+    const env = environment(cell), plan = profilePlan(env), logs = [];
+    const run = async (_, __, options) => logs.push(options.log);
+    await runStage('configure', env, run);
+    if (cell.sanitize === 'ON') {
+      await runStage('parallel', env, run);
+      assert.match(readFileSync(`${plan.build}/ci-logs/ci-parallel.log`, 'utf8'), /parallel/);
+    }
+    await runStage('build', env, run);
+    await runStage('test', env, run);
+    if (plan.benchmark) await runStage('benchmark', env, run);
+    for (const log of [...logs, `${plan.build}/ci-logs/ci-parallel.log`]) {
+      assert.match(log, /\/ci-logs\/ci-[a-z]+\.log$/);
+      assert.equal(patterns.some(pattern => matchesGlob(log, pattern)), false, log);
+    }
+    for (const testLog of [`${plan.build}/tests/logs/tcp.log`, `${plan.build}/tests/logs/install/consumer.log`]) {
+      assert.equal(patterns.some(pattern => matchesGlob(testLog, pattern)), true, testLog);
+    }
+  }
+});
+
 test('the CLI streams per-profile logs and exits nonzero for a failing fake tool without retry', { skip: process.platform === 'win32' }, t => {
   temporary(t);
   const tool = join(process.cwd(), 'cmake');
@@ -119,7 +145,7 @@ test('the CLI streams per-profile logs and exits nonzero for a failing fake tool
   assert.equal(result.status, 1);
   assert.match(result.stderr, /fixture tool failure/);
   assert.match(result.stderr, /cmake failed: 23/);
-  assert.match(readFileSync(`${profilePlan(env).build}/tests/logs/ci-test.log`, 'utf8'), /fixture tool failure/);
+  assert.match(readFileSync(`${profilePlan(env).build}/ci-logs/ci-test.log`, 'utf8'), /fixture tool failure/);
 });
 
 test('later configurations still run after any previous profile fails; native errors are never optional', () => {
