@@ -1,4 +1,4 @@
-# arknet
+<p align="right">English · <a href="README_CN.md">简体中文</a></p>
 
 <p align="center">
   <picture>
@@ -7,51 +7,45 @@
   </picture>
 </p>
 
+<h3 align="center">A C++20 header-only networking library.</h3>
+
+<p align="center">Connect applications. Exchange messages. Access databases.</p>
+
 <p align="center">
   <a href="https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml?query=event%3Amerge_group"><img src="https://github.com/OpenArkStudio/arknet/actions/workflows/ci.yml/badge.svg?event=merge_group" alt="Merge queue checks"></a>
+  <a href="CMakeLists.txt"><img src="https://img.shields.io/badge/C%2B%2B-20-5267df" alt="C++20"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL--1.0-5267df" alt="BSL-1.0"></a>
 </p>
 
-[中文](README_CN.md)
+<p align="center"><a href="docs/get-started/installation.md"><strong>Get started →</strong></a> &nbsp; · &nbsp; <a href="https://openarkstudio.github.io/arknet/">Documentation</a> &nbsp; · &nbsp; <a href="examples/">Examples</a> &nbsp; · &nbsp; <a href="docs/project/roadmap.md">Roadmap</a></p>
 
-arknet is a general-purpose C++20, header-only networking library maintained by OpenArkStudio.
+---
 
 ## Features
 
-- **Transports:** TCP, UDP, WebSocket/WSS, HTTP/1 with routing, and optional TLS/mTLS; IPv4 and IPv6.
-- **Reliable UDP:** RUDP with a C++20 ARQ core, KCP message compatibility, and optional fixed or adaptive Reed–Solomon FEC.
-- **MySQL:** native single-node queries, prepared parameters, transactions and exclusive connection-pool leases.
-- **Redis:** native single-node RESP2/RESP3 commands, pipelines, authentication and exclusive connection-pool leases.
-- **Runtime:** reconnect for transport endpoints, timers, post, bounded sends, and owned or external IO contexts.
-- **Extension:** CRTP inheritance, component composition and custom sessions.
+- **Networking:** TCP, UDP, HTTP/1 routing and WebSocket, with IPv4/IPv6 and optional TLS/mTLS.
+- **Reliable UDP:** RUDP with KCP-compatible messages and optional fixed or adaptive Reed–Solomon FEC.
+- **Database clients:** native single-node MySQL and Redis with connection pools.
+- **Composition:** CRTP, reusable components and custom sessions, with transport reconnect, timers, bounded sends and external IO contexts.
 
-## Requirements
+## Get started
 
-- **C++20** compiler and standard library.
-- **CMake 3.21+** for the provided builds, examples and tests.
-- **Boost 1.90+** by default, providing Boost.Asio and Boost.Beast.
-- **Standalone Asio 1.38+** as an alternative for TCP, UDP, RUDP, TLS and database clients. HTTP and WebSocket require Boost.
-- **OpenSSL 1.1.1+** for MySQL authentication and for TLS, HTTPS and WSS.
+Requires a **C++20** toolchain and **CMake 3.21+**, with **Boost 1.90+** (Asio and Beast) by default. MySQL authentication and secure transports require **OpenSSL 1.1.1+** and `ARKNET_ENABLE_SSL=ON`.
 
-There is no arknet binary library. The `arknet::arknet` CMake interface target supplies headers, compile settings and dependency requirements. See [installation](docs/get-started/installation.md).
-
-## Build and test
+With dependencies installed, build and test from the repository root:
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARKNET_ENABLE_SSL=ON
-cmake --build build --parallel 3
+cmake --build build --config Release --parallel 3
 cmake --build build --target arknet_check --config Release
 ```
 
-Boost is the default. Set `ARKNET_USE_BOOST_ASIO=OFF` to select Standalone Asio. Enable `ARKNET_ENABLE_SSL` for MySQL and secure transports; plain Redis does not require it.
+Standalone Asio **1.38+** is available with `ARKNET_USE_BOOST_ASIO=OFF`; HTTP and WebSocket require Boost. Plain Redis does not require OpenSSL.
 
-## Documentation
+To use arknet in your application, link to the header-only CMake interface target `arknet::arknet`. See [installation](docs/get-started/installation.md) and the [first client and server](docs/get-started/first-application.md).
 
-- [Get started and protocol guides](docs/README.md)
-- [MySQL and Redis clients](docs/features/database-clients.md)
-- [Local performance reports](docs/performance/index.md)
-- [Release notes](docs/project/releases.md) and [roadmap](docs/project/roadmap.md)
-- [Online documentation](https://openarkstudio.github.io/arknet/)
+[Protocol guides](docs/features/index.md) · [Performance reports](docs/performance/index.md) · [Release notes](docs/project/releases.md)
 
-## License
+---
 
-[BSL-1.0](LICENSE). See [third-party notices](docs/project/third-party-notices.md).
+[BSL-1.0](LICENSE) · [Third-party notices](docs/project/third-party-notices.md) · [OpenArkStudio](https://github.com/OpenArkStudio)
