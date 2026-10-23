@@ -51,6 +51,14 @@ test('attempt-qualified collection refreshes a successful job with stale test an
     assert.equal(call.args.includes('api'), false);
   }
   assert.equal(findStep(windows(stale), 'Test').status, 'in_progress');
+  const diagnostics = h.messages.filter(message => message.startsWith('Prerequisite snapshot: '))
+    .map(message => JSON.parse(message.slice('Prerequisite snapshot: '.length)));
+  assert.equal(diagnostics.length, result.reads);
+  assert.deepEqual(diagnostics.map(item => [item.read, item.mode, item.anchor]),
+    [[1, 'plain', null], [2, 'anchored', windows(stale).databaseId]]);
+  assert.notEqual(diagnostics[0].digest, diagnostics[1].digest);
+  assert.equal(diagnostics[0].pending[0].id, windows(stale).databaseId);
+  assert.deepEqual(diagnostics[1].pending, []);
 });
 
 test('queued jobs and missing final conclusions refresh, while the currently running aggregate is excluded', async t => {
@@ -86,6 +94,17 @@ test('GH command duration consumes the same budget and cannot obtain acceptance 
       elapsed += collectionLimitMs;
       return { status: 0, stdout: JSON.stringify(h.final) };
     } }), /did not finalize/);
+  assert.equal(existsSync(h.env.CI_JOBS_PATH), false);
+});
+
+test('snapshot diagnostics consume the existing deadline without extra reads or late acceptance', async t => {
+  const h = harness(t);
+  let elapsed = 0;
+  await assert.rejects(h.collect({ now: () => elapsed,
+    log: message => { if (message.startsWith('Prerequisite snapshot: ')) elapsed += collectionLimitMs; },
+  }), /did not finalize within 120 seconds/);
+  assert.equal(h.calls.length, 1);
+  assert.deepEqual(h.waits, []);
   assert.equal(existsSync(h.env.CI_JOBS_PATH), false);
 });
 

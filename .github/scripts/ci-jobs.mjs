@@ -4,6 +4,7 @@ import { appendFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { optionalCacheSteps, requiredJobNames, slotName, validateRequired, validationInput } from './ci-required.mjs';
+import { snapshotDiagnostic } from './ci-job-diagnostics.mjs';
 
 export const collectionLimitMs = 120_000;
 const delays = [1000, 2000, 4000, 8000, 15_000];
@@ -89,7 +90,7 @@ export async function collectJobs({ env = process.env, input, run = spawnSync, n
   const expected = identity(env);
   const context = input ?? validationInput(env);
   rmSync(env.CI_JOBS_PATH, { force: true });
-  const deadline = now() + collectionLimitMs;
+  const startedAt = now(), deadline = startedAt + collectionLimitMs;
   let reads = 0, rounds = 0, provenance;
   const read = jobId => {
     const remaining = deadline - now();
@@ -109,6 +110,7 @@ export async function collectJobs({ env = process.env, input, run = spawnSync, n
         throw new Error(`${name}: current-attempt prerequisite job identity changed between snapshots`);
       }
     } else provenance = identities;
+    log(snapshotDiagnostic(metadata, { read: reads, anchor: jobId ?? null, elapsedMs: now() - startedAt }));
     return { metadata, pending };
   };
   const save = metadata => {
