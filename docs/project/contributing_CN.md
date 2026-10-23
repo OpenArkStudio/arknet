@@ -76,6 +76,11 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 开关及内置和外部 IO。生命周期和并发修改使用 sanitizer 检查；性能测试使用独立
 的 Release 构建。当前检查配置和未覆盖范围见[测试](testing_CN.md)。
 
+`CI - required` 采集终结状态超时时，保留失败运行，并按
+[CI 覆盖范围](testing_CN.md#ci-覆盖范围)对比有界的 `Prerequisite snapshot:` 诊断。
+记录运行 ID、attempt 及待终结任务／步骤身份。稍后读取成功不能替代原运行的失败验收；
+状态摘要仅用于诊断，不保证数据已刷新。
+
 ## 基准测试和报告
 
 基准源码放在 `benchmarks/`，让库的使用者能够自行运行，并保持与 doctest 独立。

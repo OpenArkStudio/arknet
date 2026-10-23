@@ -75,6 +75,25 @@ capped at 20 seconds or the remaining budget. The reported snapshot count counts
 actual CLI reads, including anchored ones. The required job retains its existing
 five-minute deadline.
 
+Each structurally valid, identity-checked read emits one `Prerequisite snapshot:`
+JSON diagnostic with its run/attempt, read number, `plain` or `anchored` mode,
+anchor ID, elapsed milliseconds and SHA-256 `digest`. The digest covers only the
+nine prerequisites' IDs, names, statuses, conclusions and numbered step states,
+in stable job/step order. It excludes the running aggregate and unrelated payload
+fields. Identical digests mean identical selected state, not proof of fresh data;
+different digests identify a state change, not its cause or successful acceptance.
+
+For a finalization timeout, compare those diagnostics to locate pending jobs and
+steps before changing collection behavior. The `pending` list includes job names,
+IDs, statuses and conclusions, plus at most four pending steps per job and sixteen
+steps per read. Each job reports `pending_steps` and `omitted_steps`; the digest
+still covers omitted steps. Names are limited to 96 ASCII characters, with control
+and non-ASCII characters replaced; statuses/conclusions are limited to 24. Output
+is one bounded JSON line, without raw payloads, environment, command output or URLs.
+The diagnostics reuse already-read data and add no queries. They do not change the
+120-second budget, provenance checks, native coverage or single-snapshot acceptance,
+and do not establish a metadata-staleness root cause or a fix for it.
+
 The running `CI - required` job is excluded from prerequisite readiness; its
 identity must still be unique. The collector passes the actual finalized snapshot
 to the same strict coverage validator before saving it, and the following gate

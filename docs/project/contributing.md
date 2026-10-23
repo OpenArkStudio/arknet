@@ -87,6 +87,12 @@ sanitizers for lifetime and concurrency changes; run benchmark programs in
 separate Release builds. The current checked configurations and remaining
 coverage are recorded in [Testing](testing.md).
 
+For a `CI - required` metadata-finalization timeout, retain the failed run and
+compare its bounded `Prerequisite snapshot:` diagnostics as described in
+[CI coverage](testing.md#ci-coverage). Record the run/attempt and pending job/step
+identities. A later successful metadata read does not replace that run's failed
+acceptance; the state digest is diagnostic evidence, not a freshness guarantee.
+
 ## Benchmark and Report Changes
 
 Benchmark sources belong in `benchmarks/` and remain runnable by library users.
