@@ -11,6 +11,11 @@ smoke execution; its shared-runner timing is not the published baseline.
 
 ## CI coverage
 
+Pull requests targeting `main` trigger CI on `opened`, `synchronize`, `reopened`
+and `ready_for_review`. Releasing a draft starts a fresh run at the current head;
+checks created before that release do not establish ready-for-review admission.
+Verify the fresh source checks before requesting merge-queue admission.
+
 Source PRs run formatting, documentation and related native modules in a Linux
 Boost/TLS Release job. RUDP/ARQ/FEC, UDP, HTTP/WebSocket, MySQL and Redis paths
 have explicit module mappings; combined changes run their union. Shared TCP,
