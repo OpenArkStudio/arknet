@@ -103,20 +103,31 @@ Windows 的 Ninja 构建通过单独的链接任务池，串行执行可执行�
 C++ 编译保留原有并行度，vcpkg 部署与全部测试继续启用，避免这些构建任务同时复制共用的运行库文件。
 外部进程仍可能锁定文件；命令失败时直接报告，不自动重试。
 
-下表将原有十二个原生必需检查映射到七个新上下文。各行列出精确的旧名称，包括 TLS 模式对或依赖配置对。
+下表记录从原有十二个原生必需检查到七个分组上下文的映射。左列保留历史检查的精确旧名称，包括 TLS 模式对或依赖配置对；右列使用当前的完整名称。
 `Documentation checks`、`Style - clang-format 18` 和 `CI - required` 保持名称。
 
-| 原有原生上下文（前缀为 `Test - `） | 新上下文 |
+| 历史原生上下文（前缀为 `Test - `） | 当前分组上下文 |
 | --- | --- |
 | `ubuntu-latest - Boost - TLS - Release`；`ubuntu-latest - Boost - NoTLS - Release` | `Native - ubuntu-latest - Boost - Release` |
 | `ubuntu-latest - Standalone - TLS - Release`；`ubuntu-latest - Standalone - NoTLS - Release` | `Native - ubuntu-latest - Standalone - Release` |
 | `macos-latest - Boost - TLS - Release`；`macos-latest - Standalone - TLS - Release` | `Native - macos-latest - Release` |
 | `windows-latest - Boost - TLS - Release` | `Native - windows-latest - Boost - Release` |
 | `windows-latest - Standalone - TLS - Release` | `Native - windows-latest - Standalone - Release` |
-| `ubuntu-latest - Boost - TLS - ASan+UBSan`；`ubuntu-latest - Standalone - TLS - ASan+UBSan` | `Native - ubuntu-latest - ASan+UBSan` |
-| `ubuntu-latest - Boost - TLS - TSan`；`ubuntu-latest - Standalone - TLS - TSan` | `Native - ubuntu-latest - TSan` |
+| `ubuntu-latest - Boost - TLS - ASan+UBSan`；`ubuntu-latest - Standalone - TLS - ASan+UBSan` | `Native - ubuntu-latest - AddressSanitizer + UndefinedBehaviorSanitizer` |
+| `ubuntu-latest - Boost - TLS - TSan`；`ubuntu-latest - Standalone - TLS - TSan` | `Native - ubuntu-latest - ThreadSanitizer` |
 
-保护迁移由维护者分阶段验收。先保留原有十五项要求，对新分支的精确 head 执行 `workflow_dispatch`。
+分组任务的 sanitizer 名称使用全称。已有分组上下文的名称迁移如下；旧名称仅用于识别迁移前的检查：
+
+| 迁移前的分组上下文 | 当前分组上下文 |
+| --- | --- |
+| `Native - ubuntu-latest - ASan+UBSan` | `Native - ubuntu-latest - AddressSanitizer + UndefinedBehaviorSanitizer` |
+| `Native - ubuntu-latest - TSan` | `Native - ubuntu-latest - ThreadSanitizer` |
+
+先通过源分支检查注册新名称。修改保护规则前，完成更早候选的验收，并确认新的源分支检查通过；随后一次性替换这两项名称，保留其余要求。
+同时更新按精确上下文名称匹配的观察器。新的实际合并候选仍须按全部要求验收。
+此名称调整不改变十二种原生配置、检测参数、测试命令、资源边界或任务期限。
+
+原有十二项原生检查迁移到七个分组时，保护迁移由维护者分阶段验收。先保留原有十五项要求，对新分支的精确 head 执行 `workflow_dispatch`。
 修改保护前，验证新分组的完整覆盖：冷缓存与已有缓存运行、十二种配置结论、源分支模块和文档范围以及失败传播。
 更早的发版候选仍在验收时，不修改已部署矩阵或保护。新分组证据验收后，
 用七个映射后的原生检查替换十二个旧检查，全程保留文档、格式与汇总 gate，
