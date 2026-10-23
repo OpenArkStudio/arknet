@@ -104,7 +104,7 @@ Windows 下由 CMake 提供系统网络与进程内存库。构建或使用 arkn
 
 ## 输出与指标
 
-Stdout 使用 JSON Lines：服务端的 `ready`、定期 `sample` 和最终 `result`。Stderr 用于参数或启动错误。清理超时中止可能留下不完整输出，因此还需记录进程退出码。分别保存各进程输出，原始结果放在 Git 仓库外。
+Stdout 使用 JSON Lines：每个进程的 `resource_startup`、服务端的 `ready`、定期 `sample` 和最终 `result`。原生 Asio 对照程序也输出 `resource_startup`。启动标识沿用各工具已有的格式：arknet 程序使用十进制字符串，原生对照程序使用整数。启动记录复用建连准入前已有的首次资源采样，不新增采样，也不改变采样周期。消费方应按 `event` 选择事件，并忽略新增字段。Stderr 用于参数或启动错误。清理超时中止可能留下不完整输出，因此还需记录进程退出码。分别保存各进程输出，原始结果放在 Git 仓库外。
 
 | 字段 | 口径 |
 | --- | --- |
@@ -118,8 +118,9 @@ Stdout 使用 JSON Lines：服务端的 `ready`、定期 `sample` 和最终 `res
 | `rtt_buckets`、`latency_observations` | 用 513 个固定计数器保留全部 RTT 的分布，存储量不随请求数增长。 |
 | `cpu_percent`、`peak_rss_bytes` | 本进程全部线程的用户态与系统态 CPU，以及进程生命周期 RSS 高水位。CPU 100% 表示一个逻辑核，可以超过 100%；sample CPU 对应上个采样区间，最终 CPU 对应包含建连和清理的整次运行，不包含另一进程。系统指标不可用时为 null。 |
 | `current_rss_bytes`、`fd_count`、`handle_count`、`thread_count` | 本进程当前驻留内存（Windows 工作集）、POSIX 文件描述符、Windows 句柄和原生线程数。文件描述符与句柄是不同指标，不支持的指标为 null。 |
+| `nofile_soft`、`nofile_hard` | POSIX 上通过 `getrlimit(RLIMIT_NOFILE)` 读取的当前进程实际限制：有限值输出 JSON 整数，`RLIM_INFINITY` 输出 `"unlimited"`。不支持或读取失败时为 null，并在 `resource_unavailable` 中说明原因。Windows 标记为不适用，句柄计数的含义保持不变。 |
 | `resource_sample_elapsed_s`、`resource_cpu_interval_s` | CPU 查询中点相对本次运行开始的秒数，以及 CPU 占用率实际使用的区间长度。CPU 占用率不可用时，区间为 null；这些值不能作为跨机器时间戳。 |
-| `resource_phase` | 周期记录为 `running`，可能处于建连、保持或协议排空阶段；最终记录为 `after_cleanup`，在端点和 IO 工作线程停止后读取。最终内存和数量指标不是负载阶段的值。 |
+| `resource_phase` | 启动和周期记录为 `running`，周期记录可能处于建连、保持或协议排空阶段；最终记录为 `after_cleanup`，在端点和 IO 工作线程停止后读取。最终内存和数量指标不是负载阶段的值。 |
 | `resource_unavailable` | 以缺失资源字段名为键、诊断原因为值的对象。真实零值仍是数字；原因文本用于诊断，不是稳定错误码。 |
 | `sample_interval_ms` | 最终结果中的计划采样间隔。实际 CPU 采样区间单独报告。 |
 | `content_errors`、`sequence_errors`、`send_errors`、`timeouts`、`resource_rejections` | 内容、序号、发送、期限或预算失败；停止过程中取消的发送单独记为 `shutdown_cancelled_sends`。 |
@@ -130,6 +131,8 @@ Stdout 使用 JSON Lines：服务端的 `ready`、定期 `sample` 和最终 `res
 正常退出码：0 表示完成目标或观测且清理成功；1 表示运行、校验或期限失败；2 表示参数不合法或启动异常。清理监控终止在 Windows 下为退出码 124，在 POSIX 下为信号 9；原生进程管理器应检查信号状态，shell 通常显示为 137。失败记录用于诊断，不能静默丢弃，或反复运行覆盖后仅保留吞吐较好的结果。
 
 资源指标由独立的周期与全程采样器收集，均在主线程串行调用。CPU 使用实际单调时钟查询时间计算，不用计划间隔或采样百分比的算术平均值代替。默认间隔仍为一秒；文件描述符枚举和系统线程查询有开销，计入被测进程。系统查询与连接计数不是原子快照。短于采样间隔的运行可以没有周期记录，同时仍有有效的全程 CPU 占用率。最终 RSS、文件描述符、句柄和线程数明确属于清理后阶段，负载期间的值应查看周期记录。不支持的系统指标仍为 null，包括编译目标不支持相关 API 时的 Windows 线程数。采样不会修改系统限制，也不会设置 RSS 上限。
+
+`RLIMIT_NOFILE` 限制进程的文件描述符，包括 socket、文件、管道和事件循环描述符，不构成每进程 TCP 连接容量保证。进程继承启动方的限制，因此本次调用的证据应来自测试进程自身的启动记录。某个 shell 的 `ulimit`、启动服务的默认值或当前 macOS `kern.maxfiles*` 设置，不能确定历史测试进程的限制，也不是跨平台默认值。限制较高或建连成功本身，不能解释或解决后续流量停滞。工具不会调用 `setrlimit` 或修改系统设置。
 
 每条周期记录包含累计的 `ready`、`started` 和 `finished` 协议计数。
 只有在 **连续两个采样端点** 均满足 `active == ready == started == N`、
@@ -218,19 +221,45 @@ macOS 的 `tcp_info` 还包含 TCP 状态、窗口、发送缓冲字节数、收
 失败清理开始时，IO 工作线程在取消 socket 前冻结历史，为最多 16 个未完成或仍有待写
 数据的会话输出 `operation_trace`，随后输出 `operation_trace_summary`。成功运行不输出
 轨迹。启用后的最终结果增加 `operation_trace_enabled` 和 `operation_trace_emitted`；
-缺失最终结果仍属于未完成运行。记录器存储、256 KiB 序列化输出预留和固定临时存储预留
-合计不超过每进程 16 MiB，不含分配器开销及原有会话／socket 内存。声明容量较大时，
+缺失最终结果仍属于未完成运行。记录器存储、可选 socket 适配器／完成状态预留、
+256 KiB 序列化输出预留和固定临时存储预留合计不超过每进程 16 MiB，不含分配器开销及原有会话／socket 内存。声明容量较大时，
 后续会话不再分配历史槽位，但负载接纳条件不变。汇总明确报告未记录／省略会话、被覆盖
 历史、待执行／跳过／被覆盖进度标记和输出截断。`history_complete` 仅描述所输出会话的
 组合操作历史，不代表整份轨迹覆盖完整；`worker_history_complete` 还要求没有待执行或
 跳过的标记。清理回调不能覆盖冻结快照；输出溢出不会产生半条 JSON。轨迹及原始证据保留本地。
 
-实现没有 socket 转发适配器，原有处理器及其关联保持原位。
-`operation_scope: "composed_only"` 和 `low_level_operations: false` 明确表示没有
-`async_read_some`／`async_write_some` 可见性。进度标记可区分整条工作线程长期不执行和
-仍在执行，但不能排除单会话 readiness／调度问题，也不能解释 TCP 恢复行为。已知
-5,000 条活动连接超时仍未解决。启用诊断会改变观察开销；一次成功不代表修复或容量验收。
-不要延长期限或自动重试以取得期望结果。
+仅记录组合操作时，仍直接使用原 socket 和原有处理器关联，输出
+`operation_scope: "composed_only"`、`low_level_operations: false`。
+需要同时观察底层流 API 时，在原生对端加入两个选项：
+
+```sh
+--operation-trace on --socket-operation-trace on
+```
+
+`--socket-operation-trace` 默认为 `off`，要求同时启用 `--operation-trace on`。
+启用后，已分配记录槽位的会话通过仅用于原生对照的流适配器访问同一个 socket；
+未记录的会话仍直接使用 socket。不改变 arknet 传输 API、拆包、缓冲序列、队列、
+工作线程、期限或采样周期。适配器保留原有 executor、allocator、cancellation-slot
+和 immediate-executor 关联，不额外投递任务，并调用原完成处理器一次。
+其状态与两个同时存在的完成包装器的保守预留，与两套事件环共享 16 MiB 接纳上限；
+`socket_state_reserved_bytes` 报告该预留。默认关闭时，不分配 socket 事件环或适配器。
+
+每个已记录会话增加独立的 16 事件 `socket_trace`，记录 `async_read_some`／
+`async_write_some` 的发起和完成，与原有组合操作 `trace` 并列。
+范围变为 `composed_and_socket`，`low_level_operations: true`；最终结果增加
+`socket_operation_trace_enabled: true`。两套事件环在取消 socket 前同时冻结。
+`incomplete_socket_histories` 表示已输出会话中不完整的 socket 历史数。
+事件覆盖、未分配槽位与输出截断仍明确报告；成功运行仍不输出失败轨迹。
+
+`socket_trace` 中，`read_start`／`write_start` 的字节数是所请求缓冲区的总容量，
+完成字节数是底层流 API 返回的值。协议序号在发起时保存，仅表示应用上下文，不是 TCP 序号。
+一次读取可能包含多个帧；从已有缓冲中完成一帧时，也可能发起请求和完成字节数均为零的空缓冲操作。
+这些 API 事件不等于系统调用、报文、ACK 或 reactor 就绪事件。写操作成功仍不能证明对端收到数据。
+记录不包含包体或报文内容。
+
+工作线程持续执行，不能排除单会话的就绪／调度问题，也不能解释 TCP 恢复行为。
+已知 5,000 条活动连接超时仍未解决；新增选项尚未用于该负载。
+启用诊断会改变观察开销，成功不代表修复或容量验收。不要延长期限或自动重试以取得期望结果。
 
 建连准入、阶段切换和超时扫描运行在独立的主线程／owner 线程上；唯一 IO 工作线程
 执行 socket 回调和每会话 strand 命令。跨线程计数和 pending 时间戳使用原子量，
@@ -267,4 +296,6 @@ Echo，完成 FIN 确认并正常退出。这项检查在不反复执行高连�
 进程对检查没有失败轨迹。`connection_operation_trace` 无需 socket 即检查环形覆盖与顺序、
 未完成操作 ID、冻结、完整性元数据、内存槽位限制及完整 JSON 输出边界。原生 self-test
 还以显式 executor、allocator 和 cancellation-slot 关联分发一个被取消的定时器，
-在原有完成回调体内记录事件。这些检查不验证底层转发适配器；实现明确没有该适配器。
+在原有完成回调体内记录事件。`connection_socket_operation_trace` 使用无需 socket 的确定性模拟流，
+检查部分写入、已有缓冲读取、零字节操作、仅移动完成处理器、关联转发、取消与历史冻结。
+这些检查验证观察器本身，不代表重现停顿，也不构成性能或容量验收。

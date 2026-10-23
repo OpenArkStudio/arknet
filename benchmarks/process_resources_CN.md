@@ -40,11 +40,14 @@ cmake --build build/resources --target arknet_process_resources_probe --config R
 | `current_rss_bytes` | 操作系统报告的当前驻留内存，单位为字节；Windows 对应 working set。它独立于历史峰值。 |
 | `peak_rss_bytes` | 进程生命周期内的驻留内存峰值，Windows 对应 peak working set，单位为字节。它不是采样区间内的峰值。 |
 | `fd_count` | POSIX 已打开的文件描述符数量。Linux 排除采样器自身打开的临时目录 FD；Windows 不提供该指标。 |
+| `nofile_soft`、`nofile_hard` | POSIX 上通过 `getrlimit` 读取的当前进程实际 `RLIMIT_NOFILE` 软限制和硬限制。可选值为包含 `descriptors` 与 `unlimited` 的 `file_descriptor_limit`；JSON 将有限值输出为整数，将 `RLIM_INFINITY` 输出为 `"unlimited"`。不支持或读取失败时为 null，并说明原因。该限制不适用于 Windows 句柄。 |
 | `handle_count` | Windows 进程句柄数量，包含文件和 socket 之外的对象类型。它不等同于 FD 数量，POSIX 不提供该指标。 |
 | `thread_count` | 当前进程的原生线程数量，包含运行库线程。 |
 | `monotonic_time` | 累计 CPU 查询前后单调时间的中点，类型为 `steady_clock::time_point`。它不是 UTC，不能跨机器比较；探测程序输出相对于首次采样的 `elapsed_seconds`。 |
 
 每个指标包含可选的 `value` 与 `unavailable_reason`。缺失值输出 JSON `null`，不会用零代替；真实的零仍保留为数值。不支持、系统 API 失败、CPU 区间无效或缺少 CPU 基线时，原因明确说明。原因属于诊断文本，不是稳定的机器可读错误标识。
+
+文件描述符包括 socket、文件、管道和事件循环描述符，因此描述符限制不等于 TCP 连接数限制，也不构成容量保证。子进程继承启动方的限制，应记录基准测试进程自身的启动值。另一个 shell 的 `ulimit`、启动服务的默认值及当前 macOS `kern.maxfiles*` 设置，不能确定历史进程的限制，也不是跨平台默认值。采样器不会调用 `setrlimit` 或修改主机设置。新增诊断不能补全历史缺失证据，也不能解释尚未确定原因的流量停滞。
 
 ```cpp
 #include <chrono>
@@ -76,6 +79,6 @@ int main() {
 | macOS | `getrusage(RUSAGE_SELF)` 提供 CPU／峰值 RSS，`proc_pidinfo()` 提供当前驻留字节数、线程数及 FD 数量。FD 枚举最多尝试三次；并发增长的描述符可能使一次采样不可用。 |
 | Windows | 使用 `GetProcessTimes`、`GetProcessMemoryInfo` 与 `GetProcessHandleCount`。仅在 `_WIN32_WINNT >= 0x0603` 时对 `GetCurrentProcess()` 获取 `PSS_CAPTURE_THREADS` 快照；更低编译目标的线程数明确标为不可用。头文件不修改 `_WIN32_WINNT`，也不抬高库的 Windows 版本要求。启用该分支需要 Windows 8.1+ SDK API 和运行环境，并依赖 `psapi.lib` 与 `kernel32.lib`；不会枚举全系统进程或线程。 |
 
-有限自检覆盖 CPU 比例与无效区间、缺失值表达、连续采样不多计临时 FD、自身临时文件与工作线程数量，以及释放 32 MiB 映射后的当前 RSS；随后执行约 150 ms 的 CPU 工作。不支持或受限制的指标仍明确显示不可用。这是工具自检，不是连接容量或生产验收报告。JSON Lines 和其他运行输出应存放在源码仓库之外。
+有限自检覆盖 CPU 比例与无效区间、描述符限制等指标的缺失值表达、连续采样不多计临时 FD、自身临时文件与工作线程数量，以及释放 32 MiB 映射后的当前 RSS。连接资源单元测试还覆盖有限与无限限制、限制查询失败、启动 JSON，以及采样前后进程限制保持不变。自检随后执行约 150 ms 的 CPU 工作。不支持或受限制的指标仍明确显示不可用。这是工具自检，不是连接容量或生产验收报告。JSON Lines 和其他运行输出应存放在源码仓库之外。
 
 API 参考：[Linux getrusage](https://man7.org/linux/man-pages/man2/getrusage.2.html)、[Linux 驻留计数限制](https://man7.org/linux/man-pages/man5/proc_pid_statm.5.html)、[Apple 进程信息定义](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/proc_info.h)、[Windows 线程快照](https://learn.microsoft.com/en-us/windows/win32/api/processsnapshot/nf-processsnapshot-psscapturesnapshot)。

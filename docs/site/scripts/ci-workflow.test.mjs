@@ -23,6 +23,7 @@ function checkPolicy(source) {
     "on:",
     "  pull_request:",
     "    branches: [main]",
+    "    types: [opened, synchronize, reopened, ready_for_review]",
     "  merge_group:",
     "    types: [checks_requested]",
     "  workflow_dispatch:",
@@ -57,7 +58,7 @@ test("CI validates PRs and merge candidates without cancelling active runs or re
 test("CI policy rejects changed events, cancellation, permissions and required job coverage", () => {
   const mutations = [
     ["on:\n", "on:\n  push:\n    branches: [main]\n"],
-    ["  pull_request:\n    branches: [main]\n", ""],
+    ["  pull_request:\n    branches: [main]\n    types: [opened, synchronize, reopened, ready_for_review]\n", ""],
     ["  merge_group:\n    types: [checks_requested]\n", ""],
     ["  workflow_dispatch:\n", ""],
     ["  cancel-in-progress: false", "  cancel-in-progress: true"],

@@ -43,6 +43,10 @@ doctest 和历史测量快照。CI 执行相同检查。格式工具仅用于开
 
 ## 构建和测试
 
+以 `main` 为目标分支的草稿 PR 转为可审查状态后，等待当前 head 的新一轮
+`ready_for_review` CI。申请进入合并队列前，核对这轮源分支检查；此前的检查不能替代它。
+详见 [CI 覆盖范围](testing_CN.md#ci-覆盖范围)。
+
 依赖配置见[安装和配置](../get-started/installation_CN.md)。在仓库根目录构建开发配置，并运行检查目标：
 
 ```sh
@@ -71,6 +75,11 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 同步机制和有时限的等待。修改共享组件或依赖接入层时，应覆盖受影响的两种依赖方案、TLS
 开关及内置和外部 IO。生命周期和并发修改使用 sanitizer 检查；性能测试使用独立
 的 Release 构建。当前检查配置和未覆盖范围见[测试](testing_CN.md)。
+
+`CI - required` 采集终结状态超时时，保留失败运行，并按
+[CI 覆盖范围](testing_CN.md#ci-覆盖范围)对比有界的 `Prerequisite snapshot:` 诊断。
+记录运行 ID、attempt 及待终结任务／步骤身份。稍后读取成功不能替代原运行的失败验收；
+状态摘要仅用于诊断，不保证数据已刷新。
 
 ## 基准测试和报告
 

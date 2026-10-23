@@ -201,17 +201,26 @@ public:
     static constexpr std::size_t scratch_reservation = 32 * 1024;
     static constexpr std::size_t marker_capacity = 16;
 
-    static constexpr std::size_t maximum_slots() noexcept {
+    static constexpr std::size_t maximum_slots(
+        bool socket_operations = false, std::size_t socket_state_bytes = 0) noexcept {
         return (memory_limit - sizeof(operation_recorder) - trace_output::limit - scratch_reservation) /
-               sizeof(operation_ring);
+               (sizeof(operation_ring) * (socket_operations ? 2 : 1) + socket_state_bytes);
     }
 
-    operation_recorder(bool enabled, std::size_t sessions)
+    operation_recorder(
+        bool enabled, std::size_t sessions, bool socket_operations = false, std::size_t socket_state_bytes = 0)
         : enabled_(enabled)
-        , capacity_(enabled ? (std::min)(sessions, maximum_slots()) : 0)
-        , rings_(capacity_ ? std::make_unique<operation_ring[]>(capacity_) : nullptr) {}
+        , socket_operations_(enabled && socket_operations)
+        , socket_state_bytes_(socket_operations_ ? socket_state_bytes : 0)
+        , capacity_(enabled ? (std::min)(sessions, maximum_slots(socket_operations_, socket_state_bytes_)) : 0)
+        , rings_(capacity_ ? std::make_unique<operation_ring[]>(capacity_) : nullptr)
+        , socket_rings_(socket_operations_ && capacity_ ? std::make_unique<operation_ring[]>(capacity_) : nullptr) {}
 
-    operation_ring* acquire() noexcept {
+    operation_ring* acquire(operation_ring** socket_ring = nullptr) noexcept {
+        if (socket_ring)
+        {
+            *socket_ring = nullptr;
+        }
         if (!enabled_ || frozen_)
         {
             return nullptr;
@@ -220,6 +229,10 @@ public:
         {
             ++unrecorded_;
             return nullptr;
+        }
+        if (socket_ring && socket_operations_)
+        {
+            *socket_ring = &socket_rings_[used_];
         }
         return &rings_[used_++];
     }
@@ -237,7 +250,11 @@ public:
     }
 
     std::size_t storage_bytes() const noexcept {
-        return sizeof(*this) + capacity_ * sizeof(operation_ring);
+        return sizeof(*this) + capacity_ * sizeof(operation_ring) * (socket_operations_ ? 2 : 1);
+    }
+
+    std::size_t socket_state_reserved_bytes() const noexcept {
+        return capacity_ * socket_state_bytes_;
     }
 
     std::size_t unrecorded_sessions() const noexcept {
@@ -276,14 +293,20 @@ public:
         for (std::size_t index = 0; index < used_; ++index)
         {
             rings_[index].freeze();
+            if (socket_operations_)
+            {
+                socket_rings_[index].freeze();
+            }
         }
     }
 
     void write_json(std::ostream& out) const {
-        out << "\"operation_scope\":\"composed_only\",\"low_level_operations\":false,\"frozen\":"
-            << (frozen_ ? "true" : "false") << ",\"ring_capacity\":" << operation_ring::capacity
+        out << "\"operation_scope\":" << (socket_operations_ ? "\"composed_and_socket\"" : "\"composed_only\"")
+            << ",\"low_level_operations\":" << (socket_operations_ ? "true" : "false")
+            << ",\"frozen\":" << (frozen_ ? "true" : "false") << ",\"ring_capacity\":" << operation_ring::capacity
             << ",\"session_slots\":" << capacity_ << ",\"recorded_sessions\":" << used_
             << ",\"unrecorded_sessions\":" << unrecorded_ << ",\"storage_bytes\":" << storage_bytes()
+            << ",\"socket_state_reserved_bytes\":" << socket_state_reserved_bytes()
             << ",\"memory_limit_bytes\":" << memory_limit << ",\"output_limit_bytes\":" << trace_output::limit
             << ",\"worker_markers_submitted\":" << marker_submitted_.load()
             << ",\"worker_markers_skipped\":" << marker_skipped_.load()
@@ -307,9 +330,11 @@ public:
     }
 
 private:
-    bool enabled_, frozen_{};
+    bool enabled_, socket_operations_, frozen_{};
+    std::size_t socket_state_bytes_{};
     std::size_t capacity_, used_{}, unrecorded_{};
     std::unique_ptr<operation_ring[]> rings_;
+    std::unique_ptr<operation_ring[]> socket_rings_;
     std::array<std::pair<std::int64_t, std::int64_t>, marker_capacity> markers_{};
     std::atomic<bool> marker_pending_{};
     std::atomic<std::uint64_t> marker_submitted_{}, marker_skipped_{};

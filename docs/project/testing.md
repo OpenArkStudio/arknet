@@ -11,6 +11,11 @@ smoke execution; its shared-runner timing is not the published baseline.
 
 ## CI coverage
 
+Pull requests targeting `main` trigger CI on `opened`, `synchronize`, `reopened`
+and `ready_for_review`. Releasing a draft starts a fresh run at the current head;
+checks created before that release do not establish ready-for-review admission.
+Verify the fresh source checks before requesting merge-queue admission.
+
 Source PRs run formatting, documentation and related native modules in a Linux
 Boost/TLS Release job. RUDP/ARQ/FEC, UDP, HTTP/WebSocket, MySQL and Redis paths
 have explicit module mappings; combined changes run their union. Shared TCP,
@@ -69,6 +74,25 @@ If both plain and anchored reads remain pending, repeat with 1, 2, 4, 8 and then
 capped at 20 seconds or the remaining budget. The reported snapshot count counts
 actual CLI reads, including anchored ones. The required job retains its existing
 five-minute deadline.
+
+Each structurally valid, identity-checked read emits one `Prerequisite snapshot:`
+JSON diagnostic with its run/attempt, read number, `plain` or `anchored` mode,
+anchor ID, elapsed milliseconds and SHA-256 `digest`. The digest covers only the
+nine prerequisites' IDs, names, statuses, conclusions and numbered step states,
+in stable job/step order. It excludes the running aggregate and unrelated payload
+fields. Identical digests mean identical selected state, not proof of fresh data;
+different digests identify a state change, not its cause or successful acceptance.
+
+For a finalization timeout, compare those diagnostics to locate pending jobs and
+steps before changing collection behavior. The `pending` list includes job names,
+IDs, statuses and conclusions, plus at most four pending steps per job and sixteen
+steps per read. Each job reports `pending_steps` and `omitted_steps`; the digest
+still covers omitted steps. Names are limited to 96 ASCII characters, with control
+and non-ASCII characters replaced; statuses/conclusions are limited to 24. Output
+is one bounded JSON line, without raw payloads, environment, command output or URLs.
+The diagnostics reuse already-read data and add no queries. They do not change the
+120-second budget, provenance checks, native coverage or single-snapshot acceptance,
+and do not establish a metadata-staleness root cause or a fix for it.
 
 The running `CI - required` job is excluded from prerequisite readiness; its
 identity must still be unique. The collector passes the actual finalized snapshot
@@ -264,6 +288,16 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 The functional suites and benchmarks are independent C++ programs with their
 own `main`; compile and run them directly. Python, Ruby, `jq`, GNU `timeout`
 and `shasum` are not prerequisites for these C++ tests or single benchmarks.
+
+The native connection control optionally records underlying stream API operations
+with `--operation-trace on --socket-operation-trace on`; both options default off.
+`connection_socket_operation_trace` checks the observer using a deterministic
+fake stream, without sockets or a load process pair: partial writes, buffered and
+zero-byte reads, original handler associations, cancellation and freeze. Together
+with `connection_operation_trace`, it verifies bounded paired rings and explicit
+missing history. These checks do not establish packet delivery, reactor readiness,
+the unresolved 5,000-connection root cause or capacity. See the
+[connection tool diagnostics](../../benchmarks/CONNECTIONS.md).
 
 ## Correctness Coverage
 

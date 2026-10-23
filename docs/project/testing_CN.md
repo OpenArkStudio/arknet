@@ -10,6 +10,10 @@ CI 用于回归和冒烟执行，共享 runner 的时间不作为发布的性能
 
 ## CI 覆盖范围
 
+以 `main` 为目标分支的 PR 在 `opened`、`synchronize`、`reopened` 和
+`ready_for_review` 事件触发 CI。草稿转为可审查状态时，在当前 head 启动新运行；
+转换前创建的检查不能作为本次准入依据。申请进入合并队列前，核对这轮新的源分支检查。
+
 源分支 PR 运行格式、文档检查，以及 Linux Boost/TLS Release 下的相关模块回归。
 RUDP/ARQ/FEC、UDP、HTTP/WebSocket、MySQL 和 Redis 路径有明确映射；跨模块改动取并集。
 公共 TCP、共享头文件、构建、依赖、CI 及未分类路径运行完整的 Linux Boost/TLS Release
@@ -53,6 +57,22 @@ gate 使用内置 token，并仅为自己的 job 授予 `contents: read` 和 `ac
 普通读取和任务锚定读取均待终结时，才按 1、2、4、8 秒，之后 15 秒的间隔退避重试。
 120 秒总预算包含每次 CLI 耗时；每次调用最多 20 秒，并受剩余总预算限制。
 摘要中的快照数量按真实 CLI 读取次数计数，包括锚定读取。必需任务保留现有五分钟期限。
+
+每次读取通过结构与身份检查后，输出一行以 `Prerequisite snapshot:` 开头的 JSON 诊断。
+字段包括运行 ID、attempt、读取序号、`plain` 或 `anchored` 模式、锚点 ID、已用毫秒数及
+SHA-256 `digest`。摘要仅覆盖九个前置任务的 ID、名称、状态、结论及具名编号步骤状态，
+按固定任务与步骤顺序计算；不包含正在执行的汇总任务或其他响应字段。
+摘要相同只表示选取的状态相同，不能证明数据已刷新；摘要变化只表示状态发生变化，
+不能据此判断原因或验收通过。
+
+采集终结状态超时时，先对比诊断中的待终结任务与步骤，再决定是否修改采集行为。
+`pending` 列表记录任务名称、ID、状态和结论；每个任务最多显示四个待终结步骤，
+每次读取总计最多显示十六个步骤。每个任务通过 `pending_steps` 和 `omitted_steps`
+说明待终结与省略数量；摘要仍覆盖被省略的步骤。名称最多保留 96 个 ASCII 字符，
+控制字符和非 ASCII 字符替换显示；状态与结论最多保留 24 个字符。
+诊断输出为有界单行 JSON，不包含原始响应、环境变量、命令输出或 URL。
+诊断复用已读取的数据，不增加查询，不改变 120 秒预算、身份校验、原生覆盖或单份快照验收规则。
+这些信息不能证明元数据滞后的根因，也不代表根因已经修复。
 
 当前正在执行的 `CI - required` 不参与前置任务就绪判断，但其身份仍须唯一。
 采集器将真实终结快照交给同一个严格覆盖验证器，通过后才保存；后续 gate 步骤再次验证。
@@ -203,6 +223,13 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 
 功能测试和性能基准都是包含独立 `main` 的 C++ 程序，编译后直接运行。
 这些 C++ 功能测试和单项基准不需要 Python、Ruby、`jq`、GNU `timeout` 或 `shasum`。
+
+原生连接对照程序可通过 `--operation-trace on --socket-operation-trace on` 记录底层流 API 操作，
+两个选项均默认关闭。`connection_socket_operation_trace` 使用确定性模拟流验证观察器，
+不使用 socket 或负载进程对，覆盖部分写入、已有缓冲与零字节读取、原处理器关联、取消和冻结。
+它与 `connection_operation_trace` 共同验证两套事件环的存储上限及缺失历史的明确报告。
+这些检查不能证明报文交付、reactor 就绪事件、尚未确定的 5,000 条连接停顿根因或容量。
+用法见[连接工具诊断](../../benchmarks/CONNECTIONS_CN.md)。
 
 ## 正确性覆盖
 

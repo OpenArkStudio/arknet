@@ -47,6 +47,10 @@ CI runs the same check. Formatting tools are development dependencies only.
 
 ## Build and Run Tests
 
+When releasing a draft PR targeting `main`, wait for the new `ready_for_review`
+CI run at the current head. Verify that run's source checks before requesting
+merge-queue admission; earlier checks do not replace it. See [CI coverage](testing.md#ci-coverage).
+
 See [Install and Configure](../get-started/installation.md) for dependency setup. From the repository
 root, build a development configuration and run the repository check target:
 
@@ -82,6 +86,12 @@ across both providers, TLS on/off and owned/external IO where affected. Run
 sanitizers for lifetime and concurrency changes; run benchmark programs in
 separate Release builds. The current checked configurations and remaining
 coverage are recorded in [Testing](testing.md).
+
+For a `CI - required` metadata-finalization timeout, retain the failed run and
+compare its bounded `Prerequisite snapshot:` diagnostics as described in
+[CI coverage](testing.md#ci-coverage). Record the run/attempt and pending job/step
+identities. A later successful metadata read does not replace that run's failed
+acceptance; the state digest is diagnostic evidence, not a freshness guarantee.
 
 ## Benchmark and Report Changes
 

@@ -50,6 +50,7 @@ constexpr auto dependency_version = ASIO_VERSION;
 
 #include "connections_protocol.hpp"
 #include "connections_resources.hpp"
+#include "connections_socket_trace.hpp"
 #include "connections_trace.hpp"
 
 namespace {
@@ -69,7 +70,7 @@ struct options
     std::size_t connect_ms = 5000, request_ms = 5000, inflight = 20000;
     std::size_t inflight_bytes = 64 * 1024 * 1024, budget = 512 * 1024 * 1024;
     double hold = 1, deadline = 30, cleanup = 5;
-    bool operation_trace{};
+    bool operation_trace{}, socket_operation_trace{};
 };
 
 std::uint64_t integer(std::string_view text) {
@@ -93,6 +94,10 @@ double seconds(const std::string& text) {
 }
 
 void validate(const options& o) {
+    if (o.socket_operation_trace && !o.operation_trace)
+    {
+        throw std::invalid_argument("socket-operation-trace requires operation-trace on");
+    }
     if ((o.role != "server" && o.role != "client") || (o.scenario != "idle" && o.scenario != "traffic") || !o.run ||
         !o.client || o.host.empty() || o.port > 65535 || (o.role == "client" && !o.port))
     {
@@ -139,6 +144,7 @@ void help() {
                  "  --max-connections COUNT --max-buffer-bytes 4096 --max-inflight COUNT\n"
                  "  --max-inflight-bytes BYTES --buffer-budget-bytes BYTES\n"
                  "  --operation-trace off|on (default off; bounded composed-operation diagnostics)\n"
+                 "  --socket-operation-trace off|on (default off; requires operation-trace on)\n"
                  "  --self-test (unit checks only; no sockets)\n"
                  "One native Asio context/worker, session strands, TCP_NODELAY, 4096B read_until cap.\n"
                  "Defaults permit 5000 active connections, 32 connecting and 20000 data inflight.\n"
@@ -248,6 +254,10 @@ options arguments(int argc, char** argv) {
         else if (key == "--operation-trace" && (value == "on" || value == "off"))
         {
             o.operation_trace = value == "on";
+        }
+        else if (key == "--socket-operation-trace" && (value == "on" || value == "off"))
+        {
+            o.socket_operation_trace = value == "on";
         }
         else if (key == "--io-threads" && integer(value) == 1)
         {
@@ -392,6 +402,7 @@ struct session : std::enable_shared_from_this<session>
     void finish();
     void receive(std::string_view bytes);
     void diagnose();
+    void enable_trace();
     void trace(connection_load::operation_phase phase, std::uint64_t bytes, std::uint64_t sequence, int error = 0);
 
     application& app;
@@ -407,6 +418,7 @@ struct session : std::enable_shared_from_this<session>
     bool active{}, closed{}, peer_eof{};
     bool read_pending{};
     connection_load::operation_ring* operations{};
+    std::unique_ptr<connection_load::socket_trace_stream<tcp::socket>> socket_trace;
     std::uint64_t read_completions{}, write_completions{}, last_write_kind{}, last_write_sequence{};
     clock_type::time_point last_read_at{}, last_write_at{};
 };
@@ -415,7 +427,9 @@ struct application
 {
     explicit application(options value)
         : o(std::move(value))
-        , operations(o.operation_trace, o.role == "client" ? o.connections : o.expected)
+        , operations(o.operation_trace, o.role == "client" ? o.connections : o.expected, o.socket_operation_trace,
+              sizeof(connection_load::socket_trace_stream<tcp::socket>) +
+                  2 * connection_load::socket_handler_reservation)
         , acceptor(io)
         , cleanup(io)
         , signals(io, SIGINT, SIGTERM) {}
@@ -613,7 +627,7 @@ void session::write() {
         trace(connection_load::operation_phase::write_start, value->prefix_size + value->body.size(),
             connection_load::read_integer(value->body, 40));
     }
-    asio::async_write(socket, buffers,
+    auto completion =
         asio::bind_executor(strand, [self = shared_from_this(), value](error_code error, std::size_t size) {
             auto& a = self->app;
             if (self->operations)
@@ -663,7 +677,16 @@ void session::write() {
                 }
             }
             a.drained();
-        }));
+        });
+    if (socket_trace)
+    {
+        socket_trace->write_sequence(connection_load::read_integer(value->body, 40));
+        asio::async_write(*socket_trace, buffers, std::move(completion));
+    }
+    else
+    {
+        asio::async_write(socket, buffers, std::move(completion));
+    }
 }
 
 void session::read() {
@@ -674,53 +697,71 @@ void session::read() {
     ++app.callbacks;
     read_pending = true;
     trace(connection_load::operation_phase::read_start, 0, state.next_receive);
-    asio::async_read_until(socket, input, dgram_match{},
-        asio::bind_executor(strand, [self = shared_from_this()](error_code error, std::size_t size) {
-            auto& a = self->app;
-            self->trace(connection_load::operation_phase::read_complete, size, self->state.next_receive, error.value());
-            --a.callbacks;
-            self->read_pending = false;
-            ++self->read_completions;
-            self->last_read_at = clock_type::now();
-            if (error)
+    auto completion = asio::bind_executor(strand, [self = shared_from_this()](error_code error, std::size_t size) {
+        auto& a = self->app;
+        self->trace(connection_load::operation_phase::read_complete, size, self->state.next_receive, error.value());
+        --a.callbacks;
+        self->read_pending = false;
+        ++self->read_completions;
+        self->last_read_at = clock_type::now();
+        if (error)
+        {
+            if (!a.stopping && error == asio::error::eof && self->state.finished)
             {
-                if (!a.stopping && error == asio::error::eof && self->state.finished)
+                self->peer_eof = true;
+                if (!self->writing && self->queued.empty())
                 {
-                    self->peer_eof = true;
-                    if (!self->writing && self->queued.empty())
-                    {
-                        self->close();
-                    }
-                }
-                else if (!a.stopping)
-                {
-                    ++a.state_errors;
-                    a.fail("read callback", error.message());
+                    self->close();
                 }
             }
             else if (!a.stopping)
             {
-                if (!size)
-                {
-                    ++a.state_errors;
-                    a.fail("read frame", "invalid or oversized dgram prefix");
-                }
-                else
-                {
-                    // basic_streambuf supplies one contiguous input sequence.
-                    // Borrow it only during receive; queued writes own their copies.
-                    const auto buffers = self->input.data();
-                    const auto buffer = *asio::buffer_sequence_begin(buffers);
-                    const auto* bytes = static_cast<const char*>(buffer.data());
-                    const auto marker = static_cast<unsigned char>(*bytes);
-                    const std::size_t prefix = marker < 254 ? 1 : marker == 254 ? 3 : 9;
-                    self->receive(std::string_view(bytes + prefix, size - prefix));
-                    self->input.consume(size);
-                    self->read();
-                }
+                ++a.state_errors;
+                a.fail("read callback", error.message());
             }
-            a.drained();
-        }));
+        }
+        else if (!a.stopping)
+        {
+            if (!size)
+            {
+                ++a.state_errors;
+                a.fail("read frame", "invalid or oversized dgram prefix");
+            }
+            else
+            {
+                // basic_streambuf supplies one contiguous input sequence.
+                // Borrow it only during receive; queued writes own their copies.
+                const auto buffers = self->input.data();
+                const auto buffer = *asio::buffer_sequence_begin(buffers);
+                const auto* bytes = static_cast<const char*>(buffer.data());
+                const auto marker = static_cast<unsigned char>(*bytes);
+                const std::size_t prefix = marker < 254 ? 1 : marker == 254 ? 3 : 9;
+                self->receive(std::string_view(bytes + prefix, size - prefix));
+                self->input.consume(size);
+                self->read();
+            }
+        }
+        a.drained();
+    });
+    if (socket_trace)
+    {
+        socket_trace->read_sequence(state.next_receive);
+        asio::async_read_until(*socket_trace, input, dgram_match{}, std::move(completion));
+    }
+    else
+    {
+        asio::async_read_until(socket, input, dgram_match{}, std::move(completion));
+    }
+}
+
+void session::enable_trace() {
+    connection_load::operation_ring* socket_operations{};
+    operations = app.operations.acquire(&socket_operations);
+    if (socket_operations)
+    {
+        socket_trace =
+            std::make_unique<connection_load::socket_trace_stream<tcp::socket>>(socket, *socket_operations, app.began);
+    }
 }
 
 void session::trace(connection_load::operation_phase phase, std::uint64_t bytes, std::uint64_t sequence, int error) {
@@ -735,7 +776,7 @@ void application::trace_failure() {
     // callbacks from replacing the final pre-cancel operation history.
     operations.freeze();
     connection_load::trace_output output;
-    std::size_t incomplete{}, emitted{}, histories_incomplete{};
+    std::size_t incomplete{}, emitted{}, histories_incomplete{}, socket_histories_incomplete{};
     for (const auto& value : sessions)
     {
         if (!value->state.finished || value->writing || !value->queued.empty())
@@ -748,8 +789,9 @@ void application::trace_failure() {
                     out << "{\"event\":\"operation_trace\",\"schema\":1,\"role\":" << std::quoted(o.role)
                         << ",\"run_id\":" << o.run << ",\"client_id\":" << value->state.owner.client
                         << ",\"connection_id\":" << value->state.owner.connection
-                        << ",\"snapshot_phase\":\"before_socket_cancel\",\"operation_scope\":\"composed_only\","
-                           "\"trace\":";
+                        << ",\"snapshot_phase\":\"before_socket_cancel\",\"operation_scope\":"
+                        << (o.socket_operation_trace ? "\"composed_and_socket\"" : "\"composed_only\"")
+                        << ",\"trace\":";
                     if (value->operations)
                     {
                         out << '{';
@@ -760,12 +802,29 @@ void application::trace_failure() {
                     {
                         out << "null";
                     }
+                    if (o.socket_operation_trace)
+                    {
+                        out << ",\"socket_trace\":";
+                        if (value->socket_trace)
+                        {
+                            out << '{';
+                            value->socket_trace->ring().write_json(out);
+                            out << '}';
+                        }
+                        else
+                        {
+                            out << "null";
+                        }
+                    }
                     out << '}';
                 });
                 if (written)
                 {
                     ++emitted;
                     histories_incomplete += !retained;
+                    socket_histories_incomplete +=
+                        o.socket_operation_trace &&
+                        (!value->socket_trace || !value->socket_trace->ring().history_complete());
                 }
             }
         }
@@ -777,6 +836,7 @@ void application::trace_failure() {
                 << ",\"snapshot_phase\":\"before_socket_cancel\",\"incomplete_sessions\":" << incomplete
                 << ",\"emitted_sessions\":" << emitted << ",\"omitted_incomplete_sessions\":" << incomplete - emitted
                 << ",\"incomplete_emitted_histories\":" << histories_incomplete
+                << ",\"incomplete_socket_histories\":" << socket_histories_incomplete
                 << ",\"output_truncated\":" << (output.truncated() ? "true" : "false") << ',';
             operations.write_json(out);
             out << '}';
@@ -978,7 +1038,7 @@ void application::accept() {
             else
             {
                 sessions.push_back(value);
-                value->operations = operations.acquire();
+                value->enable_trace();
                 value->active = true;
                 ++active;
                 peak_active = (std::max)(peak_active.load(), active.load());
@@ -1024,7 +1084,7 @@ void application::launch() {
             return;
         }
         sessions.push_back(value);
-        value->operations = operations.acquire();
+        value->enable_trace();
         ++callbacks;
         value->socket.async_connect(tcp::endpoint(asio::ip::make_address(o.host), static_cast<unsigned short>(o.port)),
             asio::bind_executor(value->strand, [this, value](error_code error) {
@@ -1164,6 +1224,7 @@ void application::sample() {
 }
 
 void application::run() {
+    connection_load::write_resource_startup(std::cout, resources.initial_snapshot(), o.role, o.run, o.client);
     if (o.role == "server")
     {
         const tcp::endpoint endpoint(asio::ip::make_address(o.host), static_cast<unsigned short>(o.port));
@@ -1247,6 +1308,10 @@ void application::result() const {
     {
         std::cout << ",\"operation_trace_enabled\":true,\"operation_trace_emitted\":"
                   << (trace_emitted ? "true" : "false");
+        if (o.socket_operation_trace)
+        {
+            std::cout << ",\"socket_operation_trace_enabled\":true";
+        }
     }
     std::cout << "}\n";
     if (!failure.empty() || !clean || !complete)
@@ -1262,9 +1327,13 @@ void self_test() {
             throw std::runtime_error("native control self-test failed");
         }
     };
-    auto parse = [](const std::string& mode) {
+    auto parse = [](const std::string& mode, bool socket_trace = false) {
         std::vector<std::string> values{"control", "--role", "client", "--target", "127.0.0.1", "--port", "1",
             "--run-id", "1", "--operation-trace", mode};
+        if (socket_trace)
+        {
+            values.insert(values.end(), {"--socket-operation-trace", "on"});
+        }
         std::vector<char*> argv;
         for (auto& value : values)
         {
@@ -1273,7 +1342,19 @@ void self_test() {
         return arguments(static_cast<int>(argv.size()), argv.data());
     };
     const auto disabled = parse("off"), enabled = parse("on");
+    const auto socket_enabled = parse("on", true);
     require(!disabled.operation_trace && enabled.operation_trace);
+    require(
+        !disabled.socket_operation_trace && !enabled.socket_operation_trace && socket_enabled.socket_operation_trace);
+    require(socket_enabled.deadline == enabled.deadline && socket_enabled.request_ms == enabled.request_ms &&
+            socket_enabled.connections == enabled.connections && socket_enabled.window == enabled.window &&
+            socket_enabled.payload == enabled.payload);
+    bool socket_rejected{};
+    try
+    { parse("off", true); }
+    catch (const std::invalid_argument&)
+    { socket_rejected = true; }
+    require(socket_rejected);
     require(disabled.deadline == enabled.deadline && disabled.request_ms == enabled.request_ms &&
             disabled.connections == enabled.connections && disabled.window == enabled.window &&
             disabled.payload == enabled.payload);
@@ -1358,8 +1439,8 @@ void self_test() {
     client.finish_sent = true;
     require(feed(client, false, frame_kind::finish_ack, owner, 1));
     require(!feed(server, true, frame_kind::data, owner, 2));
-    // Diagnostics live inside the original completion body, with no forwarding
-    // adaptor. Exercise explicit associations and actual cancellation dispatch.
+    // Composed-only diagnostics stay in the original completion body. The
+    // optional socket adaptor has separate focused association tests.
     asio::io_context context;
     auto strand = asio::make_strand(context);
     asio::cancellation_signal cancellation;
