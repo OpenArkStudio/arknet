@@ -93,9 +93,9 @@ with matching server-local address; that derived association is a coverage limit
 
 The root cause remains unresolved. Frozen operation counters have no verified
 absolute capture-clock mapping, and packet headers do not establish socket
-readiness or callback dispatch. Host-wide TCP statistics returned zeros despite
-observed traffic, so they cannot establish an absence of retransmissions or
-resource drops. This failed diagnostic is not performance or capacity acceptance.
+readiness or callback dispatch. The macOS netstat manual documents that non-root
+TCP statistics return zeros. The retained unprivileged counters therefore cannot
+establish an absence of retransmissions or resource drops. This failed diagnostic is not performance or capacity acceptance.
 Raw logs and captures stay local. See [connection benchmarks](../../benchmarks/CONNECTIONS.md)
 for parameters.
 

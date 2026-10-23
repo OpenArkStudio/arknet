@@ -81,8 +81,8 @@ main 上的 [PR #26](https://github.com/OpenArkStudio/arknet/pull/26) 改善了�
 属于覆盖范围限制。
 
 根因仍未确定。冻结操作计数器与抓包时钟之间没有经过验证的绝对时间映射；报文头部也不能
-证明 socket 就绪或回调已经派发。主机 TCP 统计在实际流量存在时仍返回零值，不能用于证明
-没有重传或资源丢弃。这是失败诊断，不构成性能结果或容量验收。原始日志、抓包仅留本地，参数见
+证明 socket 就绪或回调已经派发。macOS 的 netstat 手册说明，非 root 读取 TCP 统计时
+返回零值，因此保留的非特权计数不能用于证明没有重传或资源丢弃。这是失败诊断，不构成性能结果或容量验收。原始日志、抓包仅留本地，参数见
 [连接基准测试](../../benchmarks/CONNECTIONS_CN.md)。
 
 原生对照还提供默认关闭的 `--tcp-kernel-samples on`，要求同时启用 `--operation-trace on`，
