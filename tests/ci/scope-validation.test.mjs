@@ -12,8 +12,11 @@ const shell = spawnSync("pwsh", ["-NoProfile", "-NonInteractive", "-Command", "$
 
 test("actual PowerShell scope guard rejects invalid and filtered queue plans", { skip: shell.error?.code === "ENOENT" && !process.env.GITHUB_ACTIONS }, () => {
   assert.equal(shell.status, 0, shell.stderr || shell.error?.message);
-  const base = { ARKNET_SCOPE_RESULT: "success", ARKNET_FULL_CPP: "true", ARKNET_VALIDATION_TIER: "full", GITHUB_EVENT_NAME: "merge_group", ARKNET_SOURCE_TESTS: "" };
+  const base = { ARKNET_CACHE_MODE: "auto", ARKNET_SCOPE_RESULT: "success", ARKNET_FULL_CPP: "true", ARKNET_VALIDATION_TIER: "full", GITHUB_EVENT_NAME: "merge_group", ARKNET_SOURCE_TESTS: "" };
   const cases = [
+    [true, { GITHUB_EVENT_NAME: "workflow_dispatch", ARKNET_CACHE_MODE: "cold" }],
+    [false, { ARKNET_CACHE_MODE: "cold" }], [false, { ARKNET_CACHE_MODE: "invalid" }],
+    [false, { ARKNET_CACHE_MODE: undefined }], [false, { ARKNET_CACHE_MODE: "AUTO" }],
     [true, {}], [true, { ARKNET_SOURCE_TESTS: undefined }],
     [true, { ARKNET_VALIDATION_TIER: "modules", GITHUB_EVENT_NAME: "pull_request", ARKNET_SOURCE_TESTS: "rudp;fec" }],
     [true, { ARKNET_VALIDATION_TIER: "documentation", ARKNET_FULL_CPP: "false" }],

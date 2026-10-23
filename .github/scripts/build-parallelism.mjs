@@ -9,12 +9,13 @@ export const admission = { cpu: 4, effectiveMemory: 15 * gib, availableMemory: 1
 const positiveInteger = value => Number.isSafeInteger(value) && value > 0;
 
 export function selectParallelism(resources) {
+  const windowsBoostRelease = resources.platform === "win32" && resources.boost === "ON" && resources.sanitize === "OFF";
   const validConstraint = Number.isFinite(resources.constrainedMemory) &&
     Number.isInteger(resources.constrainedMemory) && resources.constrainedMemory >= 0;
   let constraintStatus = resources.constrainedMemory === 0 ? "no-reported-constraint" :
     validConstraint ? "reported-constraint" : "invalid-constraint";
-  const fallback = reason => ({ parallel: 1, reason, effectiveMemory: null, constraintStatus });
-  if (resources.platform !== "linux" || !["OFF", "ON"].includes(resources.boost) || resources.sanitize !== "ON") {
+  const fallback = reason => ({ parallel: windowsBoostRelease ? 3 : 1, reason, effectiveMemory: null, constraintStatus });
+  if (!windowsBoostRelease && (resources.platform !== "linux" || !["OFF", "ON"].includes(resources.boost) || resources.sanitize !== "ON")) {
     return fallback("outside-experimental-profile");
   }
   if (![resources.cpu, resources.totalMemory, resources.availableMemory].every(positiveInteger) ||
@@ -28,7 +29,8 @@ export function selectParallelism(resources) {
   if (resources.availableMemory > effectiveMemory) return fallback("inconsistent-memory-observation");
   const eligible = resources.cpu >= admission.cpu && effectiveMemory >= admission.effectiveMemory &&
     resources.availableMemory >= admission.availableMemory;
-  return { parallel: eligible ? 2 : 1, reason: eligible ? "experimental-resource-threshold-met" : "below-resource-threshold", effectiveMemory, constraintStatus };
+  return { parallel: eligible ? (windowsBoostRelease ? 4 : 2) : (windowsBoostRelease ? 3 : 1),
+    reason: eligible ? "experimental-resource-threshold-met" : "below-resource-threshold", effectiveMemory, constraintStatus };
 }
 
 export function observeResources(env, system = os, runtime = process) {

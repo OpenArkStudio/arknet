@@ -26,6 +26,13 @@ function checkPolicy(source) {
     "  merge_group:",
     "    types: [checks_requested]",
     "  workflow_dispatch:",
+    "    inputs:",
+    "      cache_mode:",
+    "        description: Native dependency/compiler archives (cold bypasses prior archives)",
+    "        type: choice",
+    "        options: [auto, cold]",
+    "        default: auto",
+    "        required: false",
   ].join("\n"));
   assert.equal(block(source, "permissions"), "permissions:\n  contents: read");
   assert.equal(block(source, "concurrency"), [
@@ -34,16 +41,13 @@ function checkPolicy(source) {
     "  cancel-in-progress: false",
   ].join("\n"));
 
-  // Preserve the 14 required checks. The required style job validates the scope;
-  // all 12 native rows retain their commands, sanitizers and uploads for full
-  // merge-group checks. Source PRs run related modules in Linux/Boost/TLS/Release;
-  // other cells explicitly record scope-only coverage, not native-test success.
-  // An intentional job change needs a new review before updating this fingerprint.
+  // Seven grouped native jobs retain the twelve configurations. Intentional
+  // workflow changes require review of setup, per-profile steps and the gate.
   const required = source.indexOf("  required:\n");
   const jobs = source.slice(source.indexOf("jobs:\n"), required === -1 ? undefined : required);
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
-    "a3cc5bc8303b01148c9697e04a04618c668904ea81ea7ac4e4bfd19cd25cb200",
-    "review the complete 14-check and scope contract before changing it");
+    "b7d4c94d76e3ccf2fe8a9691b37378668fc257e9a34cfe4fc5b00150010c4a1a",
+    "review the complete grouped workflow and scope contract before changing it");
 }
 
 test("CI validates PRs and merge candidates without cancelling active runs or repeating main pushes", () => {
@@ -61,18 +65,15 @@ test("CI policy rejects changed events, cancellation, permissions and required j
     ["  contents: read", "  contents: write"],
     ["    name: Documentation checks", "    name: Renamed documentation check"],
     ["    timeout-minutes: 60", "    timeout-minutes: 90"],
-    ["sanitize: [\"OFF\"]", "sanitize: [\"ON\"]"],
-    ["-fsanitize=address,undefined", "-fsanitize=address"],
-    ["build/tests/logs/**/*.log", "build/tests/other/**/*.log"],
+    ['sanitize: "OFF"', 'sanitize: "ON"'],
+    ["build/ci-*/tests/logs/**/*.log", "build/ci-*/tests/other/**/*.log"],
     ["    needs: format", "    needs: []"],
     ["needs.format.outputs.full_cpp == 'true'", "needs.format.outputs.full_cpp != 'false'"],
     ["throw 'Missing or failed CI scope validation'", "Write-Output 'Missing scope'"],
     ["fetch-depth: 0", "fetch-depth: 1"],
     ["needs.format.outputs.tier == 'full'", "needs.format.outputs.tier != 'documentation'"],
     ["Invalid validation tier for this event", "Ignore invalid tier"],
-    ["--target arknet_check_build", "--target nonexistent"],
     ["Select bounded compiler parallelism", "Bypass bounded compiler parallelism"],
-    ["steps.build-parallel.outputs.parallel || '1'", "steps.build-parallel.outputs.parallel || '2'"],
     ["$env:ARKNET_FULL_CPP -cne", "$env:ARKNET_FULL_CPP -ne"],
   ];
   for (const [from, to] of mutations) {
@@ -81,32 +82,30 @@ test("CI policy rejects changed events, cancellation, permissions and required j
   }
 });
 
-test("real workflow selector keeps all twelve queue cells and only the source regression cell", () => {
+test("real workflow setup selector keeps all seven queue groups and only the source regression group", () => {
   const expression = workflow.match(/ARKNET_RUN_NATIVE: \$\{\{ (.+) \}\}/)?.[1];
   assert.ok(expression);
-  const matrix = [];
-  for (const os of ["ubuntu-latest", "macos-latest", "windows-latest"]) {
-    for (const boost of ["OFF", "ON"]) matrix.push({ os, boost, ssl: "ON", sanitize: "OFF" });
-  }
-  for (const boost of ["OFF", "ON"]) {
-    matrix.push({ os: "ubuntu-latest", boost, ssl: "OFF", sanitize: "OFF" });
-    for (const sanitize of ["ON", "THREAD"]) matrix.push({ os: "ubuntu-latest", boost, ssl: "ON", sanitize });
-  }
+  const matrix = [
+    ...["ON", "OFF"].map(boost => ({ os: "ubuntu-latest", boost, sanitize: "OFF" })),
+    { os: "macos-latest", boost: "BOTH", sanitize: "OFF" },
+    ...["ON", "OFF"].map(boost => ({ os: "windows-latest", boost, sanitize: "OFF" })),
+    ...["ON", "THREAD"].map(sanitize => ({ os: "ubuntu-latest", boost: "BOTH", sanitize })),
+  ];
   const cells = plan => matrix.filter(cell => runInNewContext(expression,
     { needs: { format: { outputs: { ...plan, full_cpp: String(plan.full_cpp) } } }, matrix: cell }, { timeout: 100 }));
   const make = eventName => planChecks({ eventName, known: true, files: ["tests/rudp.cpp"] });
-  assert.equal(cells(make("merge_group")).length, 12);
-  assert.equal(cells(make("workflow_dispatch")).length, 12);
+  assert.equal(cells(make("merge_group")).length, 7);
+  assert.equal(cells(make("workflow_dispatch")).length, 7);
   // An explicit dispatch on main seeds its shared caches even when a future
   // change detector reports documentation-only files. It must keep every profile.
   const manualSeed = planChecks({ eventName: "workflow_dispatch", known: true, files: ["README.md"] });
   assert.equal(manualSeed.tier, "full");
   assert.equal(manualSeed.source_tests, "");
-  assert.equal(cells(manualSeed).length, 12);
+  assert.equal(cells(manualSeed).length, 7);
   assert.deepEqual(cells(make("pull_request")), [
-    { os: "ubuntu-latest", boost: "ON", ssl: "ON", sanitize: "OFF" },
+    { os: "ubuntu-latest", boost: "ON", sanitize: "OFF" },
   ]);
-  assert.equal(cells(planChecks({ eventName: "pull_request", known: false })).length, 12);
+  assert.equal(cells(planChecks({ eventName: "pull_request", known: false })).length, 7);
   assert.equal(cells(planChecks({ eventName: "merge_group", known: true, files: ["README.md"] })).length, 0);
   assert.match(workflow, /\$env:GITHUB_EVENT_NAME -cne 'pull_request' -and \$env:ARKNET_VALIDATION_TIER -ceq 'modules'/);
 });

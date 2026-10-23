@@ -23,9 +23,9 @@ Linux AddressSanitizer with UndefinedBehaviorSanitizer, and separate ThreadSanit
 checks. A green source PR is not full-matrix acceptance.
 
 Strictly classified README/documentation-only changes run documentation and
-formatting checks in both stages. The twelve matrix jobs retain their required
-names; cells outside the planned source coverage explicitly record scope-only
-validation, not executed native tests. Missing or malformed change ranges select
+formatting checks in both stages. Seven grouped native jobs retain all twelve
+configuration profiles; cells outside the planned source coverage explicitly
+record scope-only validation. Missing or malformed change ranges select
 the complete matrix. Failed scope validation blocks every native gate. Rename
 classification includes both old and new paths. Active runs are not cancelled to
 schedule a newer commit.
@@ -37,36 +37,167 @@ exemption: CI scope/workflow tests, native release/report checks, C++/CMake file
 unknown scripts and unmapped file types retain native coverage. A mixed change
 uses the native plan at both stages.
 
-`CI - required` accompanies twelve static native matrix checks, documentation
-and formatting: fifteen required check contexts in total. Scope-only runner jobs
-retain their existing contexts and native commands. The gate uses the built-in
-token with job-local `contents: read` and
-`actions: read` to read this run's actual job and step metadata. It recomputes the
-scope from the event's exact commit range and requires matching scope outputs,
-successful documentation and formatting, and exactly one successful job for each
-reviewed matrix profile. Missing, duplicate, incomplete or unknown results fail.
+The workflow defines seven native group contexts, documentation, formatting and
+`CI - required`: ten contexts after the protection migration described below.
+The existing fifteen-context protection is a separate deployment state; changing
+this source does not migrate it. The gate uses the built-in token with job-local
+`contents: read` and `actions: read` to read this run's actual job and step metadata.
+It recomputes scope from the event's exact commit range and requires matching scope
+outputs, successful documentation and formatting, exactly one successful job for
+each group, and configuration-specific step conclusions for all twelve profiles.
+Missing, duplicate, incomplete or unknown results fail.
 
-For full coverage, every cell must actually complete configuration, build and its
-matching test steps. A source-module plan runs native checks only in Linux Boost/TLS
-Release; other cells must successfully record scope-only coverage and skip native
-steps. Documentation-only plans require all twelve cells to record scope-only
-coverage. A successful job conclusion cannot substitute for a skipped required
-step, a different test profile or a source result on a merge candidate. The gate
-also checks the benchmark/report steps wherever the existing plan requires them.
+The required job collects metadata through the GitHub CLI for the explicit
+`GITHUB_RUN_ID` and `GITHUB_RUN_ATTEMPT`, using `gh run view --attempt` rather than
+the default run snapshot. It verifies the returned run ID and attempt before
+using any jobs. A successful job can temporarily expose pending or in-progress
+step metadata. Only a structurally valid unfinished snapshot triggers a second
+whole-snapshot read anchored to one of its concrete pending prerequisite jobs:
+`gh run view <run-id> --repo <repository> --attempt <attempt> --job <job-id> --json databaseId,attempt,jobs`.
+The anchor comes from that same snapshot, never the aggregate or another run.
+Across retry cycles, selection rotates among that snapshot's pending prerequisites
+in the verified name/ID set. Only selection history is retained; success states
+from different anchored snapshots cannot be combined.
+Both reads verify the run and attempt, all nine prerequisite job names/IDs must
+stay identical across reads, and each new snapshot is independently inspected.
+Completed jobs must already expose their required named steps; known required
+failures or malformed/partial snapshots cannot trigger a refresh into success.
+Explicitly optional native-cache failures retain their existing treatment.
 
-The gate tolerates `failure` only for the explicitly optional cache installation,
-archive restore and statistics steps, plus the corresponding action post steps,
-when that cell runs native checks. The job itself and all required preparation,
-configuration, build and test steps must still succeed. Disabled restores may be
-skipped; a failed compiler-cache installation must skip its restore and startup
-and use the direct compiler. Scope-only cells must skip every cache step and any
-recorded cache post step. Missing steps, unknown outcomes and failures from other
-steps remain errors. Fixture coverage establishes these fallback rules, not cache
-hits, hosted acceptance or a measured speedup.
+If both plain and anchored reads remain pending, repeat with 1, 2, 4, 8 and then
+15-second backoff. The 120-second total includes every CLI call; each call is
+capped at 20 seconds or the remaining budget. The reported snapshot count counts
+actual CLI reads, including anchored ones. The required job retains its existing
+five-minute deadline.
 
-The matrix retains its static job contexts even for scope-only plans. Local
-fixture tests establish the gate's validation rules; they do not establish hosted
-native acceptance or a reduction in runner use.
+The running `CI - required` job is excluded from prerequisite readiness; its
+identity must still be unique. The collector passes the actual finalized snapshot
+to the same strict coverage validator before saving it, and the following gate
+step validates it again. It never converts pending steps to success. CLI errors,
+malformed or mismatched identities, missing/duplicate/unexpected jobs, unsuccessful
+prerequisites and incomplete final coverage remain failures. A partial rerun that
+omits prerequisites from the current attempt cannot borrow successful jobs from
+an earlier attempt; use a fresh complete run for acceptance. The job anchor does not narrow validation to one job: the entire returned snapshot
+still requires all nine prerequisites and twelve actual native profiles for a full
+run. No snapshots are merged across reads or attempts, and no default-attempt
+fallback is used.
+
+A fresh complete run at the changed head must validate this collector. The failed
+aggregate from an older manual run remains failed even if a later metadata read
+shows successful native prerequisites; rerunning only that old gate does not
+establish a new all-green acceptance run. Local fake-CLI and clock fixtures prove
+collection and rejection rules, not hosted cache state or faster merging.
+
+Full coverage requires each configuration to finish its own configure, build and
+test steps. Source plans execute only Linux Boost/TLS Release; other profiles
+record scope-only coverage and skip native steps. Documentation-only plans skip
+all native steps. A successful job conclusion cannot replace a skipped required
+step, a different sanitizer profile or a source result on a merge candidate.
+Benchmark/report checks retain their existing Linux TLS Release coverage for both
+dependency configurations when the plan selects the complete suite.
+
+Only explicit optional cache installation, archive restore and statistics steps,
+and the corresponding cache action post steps, may report `failure` in active
+native groups. The group and required preparation/configure/build/test steps must
+succeed. Failed compiler-cache installation disables its restore and startup and
+selects direct compilation. Scope-only groups skip all cache steps and any recorded
+cache post steps. Missing steps, unknown outcomes and other failures remain errors.
+Local fixtures establish these rules, not hosted acceptance or a measured speedup.
+
+### Grouped native jobs and protection migration
+
+Release jobs share setup within bounded groups. Linux has separate Boost and
+Standalone Asio jobs, each covering TLS and without TLS. Windows keeps each TLS
+dependency configuration in its own job. macOS combines both TLS dependencies.
+Linux AddressSanitizer with UndefinedBehaviorSanitizer and ThreadSanitizer remain
+separate jobs, each executing Boost and Standalone Asio with TLS. These seven
+jobs retain the same twelve profiles, without new platforms or TLS/sanitizer combinations.
+
+Each configuration has a separate `build/ci-<boost>-<ssl>-<sanitize>` tree,
+raw stage logs under its own `ci-logs/`, and named configure/build/test conclusions.
+Stage logs stay on the runner and are not uploaded. Existing test-output attachments
+retain their `tests/logs/**/*.log` coverage; Actions console output and step summaries
+remain available for diagnosing stage failures.
+Configuration steps explicitly run after earlier configurations fail; dependencies
+within the failed configuration still skip invalid work. Any missing, failed or
+skipped required configuration fails the group and aggregate gate. A group timeout
+can prevent later configurations from running and therefore fails acceptance.
+
+Only setup and cache containers are shared. All configurations continue requesting
+the same `boost;ssl` dependency feature superset. Cache keys retain OS, architecture,
+runner image, compiler environment, dependency identity and Release/sanitizer group,
+including each group's Boost, Standalone or combined dependency selector.
+`grouped-v2` separates the seven-group namespace from earlier cache layouts. Compiler
+invocation hashes distinguish Boost/TLS flags inside the shared sccache container.
+Build trees and results are never cached. Dependency ABI validation remains in
+vcpkg. No concurrent native profiles share a runner: Release uses three build
+slots, with resource-admitted four slots for Windows Boost as described below.
+ThreadSanitizer stays at two, and AddressSanitizer/UndefinedBehaviorSanitizer at
+one or the existing resource-admitted two slots, re-evaluated for each dependency.
+Every group retains the 60-minute job deadline; it has not been extended to make
+serial execution pass.
+
+The following names map the twelve existing native required contexts to seven
+new contexts. Rows list the exact old names, including pairs of TLS modes or dependencies.
+Documentation checks, `Style - clang-format 18` and `CI - required` retain their names.
+
+| Existing native contexts (`Test - ` prefix) | New context |
+| --- | --- |
+| `ubuntu-latest - Boost - TLS - Release`; `ubuntu-latest - Boost - NoTLS - Release` | `Native - ubuntu-latest - Boost - Release` |
+| `ubuntu-latest - Standalone - TLS - Release`; `ubuntu-latest - Standalone - NoTLS - Release` | `Native - ubuntu-latest - Standalone - Release` |
+| `macos-latest - Boost - TLS - Release`; `macos-latest - Standalone - TLS - Release` | `Native - macos-latest - Release` |
+| `windows-latest - Boost - TLS - Release` | `Native - windows-latest - Boost - Release` |
+| `windows-latest - Standalone - TLS - Release` | `Native - windows-latest - Standalone - Release` |
+| `ubuntu-latest - Boost - TLS - ASan+UBSan`; `ubuntu-latest - Standalone - TLS - ASan+UBSan` | `Native - ubuntu-latest - ASan+UBSan` |
+| `ubuntu-latest - Boost - TLS - TSan`; `ubuntu-latest - Standalone - TLS - TSan` | `Native - ubuntu-latest - TSan` |
+
+Protection migration requires maintainer-controlled staged acceptance. Keep all
+fifteen old requirements while running `workflow_dispatch` against the exact new
+branch head. Verify full grouped coverage before changing protection: cold and
+populated-cache runs, all twelve configuration conclusions, source/module and
+documentation scopes, and failure propagation. Do not change the deployed matrix
+or protection during an older release candidate's active acceptance. After the
+new grouped evidence is accepted, save the seven mapped native requirements in
+place of the twelve old ones, preserving documentation, formatting and the aggregate
+gate, then require a fresh full merge candidate containing the latest main. Do not
+remove old checks simply to obtain an initial green PR. Record exact revisions,
+runs and protection before/after; a green dispatch does not validate the final
+merge candidate. Use the actual grouped contexts rather than fake native
+compatibility contexts. Changing workflow source alone does not migrate the
+repository's protection requirements.
+
+The original-matrix measured baseline for [run 39770711811](https://github.com/OpenArkStudio/arknet/actions/runs/39770711811)
+uses candidate `a0dfe09cd543e75cfb5996e537ce2fa49f2a758f`. The local timing snapshot
+records independent original profiles; cache hits have not been audited profile
+by profile. These minutes regroup their recorded stages for planning, rather than
+measuring new grouped jobs. Setup and other job overhead are excluded:
+
+| Planned group | Configure | Build | Test | Recorded stage sum |
+| --- | ---: | ---: | ---: | ---: |
+| Linux Boost Release, TLS + NoTLS | 6.28 | 37.03 | 6.85 | 50.16 |
+| Linux Standalone Release, TLS + NoTLS | 5.45 | 15.20 | 4.38 | 25.03 |
+| Windows Boost TLS Release | 9.33 | 33.22 | 6.45 | 49.00 |
+| Windows Standalone TLS Release | 11.25 | 20.45 | 4.03 | 35.73 |
+| macOS Release, both TLS dependencies | 7.55 | 14.67 | 5.57 | 27.79 |
+| Linux AddressSanitizer + UndefinedBehaviorSanitizer, both TLS dependencies | 6.40 | 40.35 | 6.00 | 52.75 |
+| Linux ThreadSanitizer, both TLS dependencies | 6.08 | 21.81 | 6.35 | 34.24 |
+
+The rejected five-group serial model combines all four Linux Release profiles:
+Build plus Test alone totals 63.46 minutes before Configure or Setup. Combining
+the two Windows profiles totals 84.73 recorded stage minutes. That model exceeds the
+unchanged 60-minute deadline on this baseline, so Linux Release is split by
+dependency and Windows TLS dependencies keep separate jobs.
+
+Seven groups reduce repeated setup where the baseline permits evaluating shared
+execution, but these sums are not duration limits or acceptance. The combined
+AddressSanitizer/UndefinedBehaviorSanitizer stage sum is 52.75 minutes before
+setup; it still needs actual grouped validation. Shared cache/setup may reduce
+total runner minutes while serial work increases the longest job or queue-to-gate
+wait. Source scope-only successes do not measure full coverage. Hosted cold-cache
+and populated-cache runs must compare total runner minutes, longest group,
+queue-to-gate completion and per-configuration times at the same revision across
+all operating systems. Cache state in this baseline is not assumed. A 60-minute
+timeout is failed coverage, not evidence for raising the limit.
 
 For a focused local run, pass exact registered check names. Omit the option to
 run all checks; unknown or unavailable names fail during configuration:
@@ -310,13 +441,13 @@ and thread schedules exercised; it does not prove that all errors are absent.
 ## CI and Remaining Coverage
 
 CI checks Linux/macOS/Windows with both dependency configurations; Linux also runs
-AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer. Job names include
-OS, dependency, TLS and check mode. The twelve native checks, documentation and
-formatting accompany `CI - required`. Known source
+AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer. Group names include
+OS and check mode; named steps distinguish dependency and TLS profiles. Seven
+groups, documentation and formatting accompany `CI - required`. Known source
 modules on PR branches run their selected native checks in Linux/Boost/TLS/Release;
 other cells record scope-only coverage. Code-bearing merge-queue candidates,
-manual dispatches and changes outside the reviewed module map run all twelve native
-cells. Documentation-only candidates run documentation and formatting. A successful
+manual dispatches run all twelve native configurations. Source PR changes outside
+the reviewed module map run the complete Linux Boost/TLS Release suite. Documentation-only candidates run documentation and formatting. A successful
 PR head does not validate the queue candidate containing
 the latest main and preceding queued changes. CI does not repeat the same matrix
 after the candidate is merged into main. The README badge shows merge-queue runs.
@@ -370,10 +501,12 @@ then be a safe integer. An external limit above that total is reported as
 `reported-above-host-memory`, without inferring unlimited memory. CPU, physical
 total and available-memory observations must remain positive safe integers;
 nonfinite, negative, fractional or string constraints are invalid. Missing,
-invalid, inconsistent or insufficient resource observations select one slot. Other profiles keep their existing parallelism,
+invalid, inconsistent or insufficient resource observations select one slot. Except
+for the Windows Boost Release admission below, other profiles keep their existing parallelism,
 and source-module targets, sccache launchers, all twelve matrix profiles, native
 tests and the 60-minute job limit remain unchanged. The required gate verifies
-that the planning step ran successfully only in the two intended native cells.
+that each configuration-specific planning step ran successfully only for the two
+intended native profiles inside the sanitizer group.
 
 The helper prints the actual observations, thresholds, selected bound and reason
 to the job log and summary. This is a conservative scheduling heuristic: 12 GiB
@@ -384,13 +517,30 @@ supply it. A successful complete hosted matrix is required before merging this
 change; speedup is not established locally. An out-of-memory failure must retain
 its logs for correction, without an automatic retry that hides the failure.
 
+Windows Boost TLS Release can experimentally select four compiler slots, using
+those same CPU, effective-memory and available-memory gates immediately inside
+its build step. Missing, invalid, inconsistent or insufficient observations retain
+its existing three slots. Windows Standalone Asio Release and other Release
+profiles retain three slots. The build log and step summary record actual resources,
+thresholds, selected bound and reason. This decision does not depend on a restored
+cache or a configured compiler launcher. All default build targets, examples,
+benchmarks, translation units, compiler flags and test commands remain intact;
+there is no retry at a lower bound after a build failure.
+
+Validate the selected bound in the actual build log and require all twelve
+profiles to complete within the unchanged job budgets. Test archive-cold and
+populated-cache behavior separately; a cancelled run is not successful coverage.
+Local resource and CMake graph contracts do not measure compiler peak memory,
+speedup or hosted duration. Cache hits are not a prerequisite for correctness or
+budget acceptance.
+
 API semantics: [Node OS resource APIs](https://nodejs.org/api/os.html#osavailableparallelism),
 [constrained memory](https://nodejs.org/api/process.html#processconstrainedmemory),
 and [available memory](https://nodejs.org/api/process.html#processavailablememory).
 
 ### Native build caches
 
-Every active native matrix cell uses the official Mozilla sccache action `v0.0.11`
+Every active native group uses the official Mozilla sccache action `v0.0.11`
 with sccache `v0.16.0`. CMake passes the cache through both compiler launcher options;
 the compiler, build type, flags, selected targets and test commands stay the same.
 Compiler setup or server startup failure selects direct compilation. Server IO failure
@@ -407,11 +557,13 @@ establish a cache hit or compilation-time saving.
 GitHub Actions persists the local compiler cache and vcpkg `files` binary archives
 separately. Each compiler cache is bounded to 512 MiB. Cache keys cover OS,
 architecture, runner image/version, target and host triplets, pinned vcpkg revision, manifest/configuration/overlay contents, requested
-features, default features and the matrix build profile. Release,
+features, default features and the grouped build profile. Boost/TLS combinations
+within one group share cache containers and retain separate compiler command hashes. Release,
 AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer profiles remain
-separate. vcpkg also validates each package ABI before reuse. Dependency archives
-require an exact key; compiler caches use a profile-specific prefix plus a unique
-run suffix so later runs can add objects. No build directory or test result is cached.
+separate. vcpkg also validates each package ABI before reuse. In `auto` mode,
+dependency archives keep their exact primary key and may fall back only to that
+identity's `-cold-` prefix. Compiler caches keep their existing identity-specific
+prefix plus a unique run suffix so later runs can add objects. No build directory or test result is cached.
 
 Actions cache visibility also depends on the workflow ref. Runs can restore matching
 caches from their current ref and the default branch. A PR merge-ref cache is limited
@@ -427,6 +579,55 @@ or when refreshing compiled objects after source changes. Until the next explici
 seed, new PRs and queue candidates may recompile objects absent from the main cache.
 No push-triggered or scheduled matrix is added, and PR/queue artifacts are not
 promoted into main caches. See [GitHub cache scope restrictions](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache).
+
+#### Repeatable cold and populated-cache validation
+
+Manual `workflow_dispatch` offers `cache_mode=auto` (default) or `cold`.
+PR and merge-group runs always use `auto`. Invalid modes and nonmanual cold
+requests fail validation. Scope-only groups still skip cache setup and native work.
+Both manual modes execute all seven groups and twelve profiles with the same
+targets, tests, resource admission, scheduling and 60-minute deadline.
+
+`cold` uses fresh archive keys for each run ID, attempt and group identity:
+`<identity>-cold-<run-id>-<attempt>-archive`, with no restore-prefix lookup.
+The terminating suffix prevents another attempt's key from being a partial match.
+The dependency/compiler ABI identity and `SCCACHE_C_CUSTOM_CACHE_BUSTER` stay
+unchanged. Both archive families start without restoring prior archives; in-job
+reuse across translation units and later profiles remains enabled. This is
+archive-cold validation, not an uncached OS, toolchain or source-download test.
+No existing cache is deleted. Successful native jobs can save their cold-produced
+archives for later `auto` runs, subject to cache availability and ref visibility.
+
+Run the cold matrix first, wait for completion, then run `auto` at the same
+unchanged ref and source SHA. For shared default-branch validation:
+
+```sh
+gh workflow run ci.yml --repo OpenArkStudio/arknet --ref main -f cache_mode=cold
+# After the cold run completes successfully at the recorded SHA:
+gh workflow run ci.yml --repo OpenArkStudio/arknet --ref main -f cache_mode=auto
+```
+
+Use the intended branch or tag in place of `main` when validating a candidate;
+record each run ID and verify both `headSha` values. Respect the existing admission
+order and preserve active runs. A successful old run or another head cannot
+replace either current-head acceptance run.
+
+In `auto`, existing primary keys remain compatible. Dependency lookup first tries
+its unchanged exact key, then the same full identity's `-cold-` prefix; compiler
+lookup retains its existing identity prefix, which also includes cold-produced
+entries. A prefix restore can succeed while Actions reports `cache-hit=false`:
+that flag identifies an exact primary-key match. Inspect each restore action's
+matched-key log and vcpkg restore/build counts plus sccache counters; a false flag
+alone does not prove a miss, and an archive restore does not prove useful object
+hits. Auto may choose an older exact dependency entry before a cold-produced one.
+Runner-image/compiler or dependency identity changes can legitimately miss again.
+
+Cold acceptance requires actual archive misses and successful full native/gate
+coverage at that head. Populated-cache acceptance requires demonstrated archive
+restores and observed package/compiler reuse in the subsequent full run. Do not
+label an `auto` run warm without those logs. Cache failures retain normal compiler
+fallback, but do not establish populated-cache acceptance. Local key/CLI contracts
+do not establish either hosted result, native memory viability or speedup.
 
 Missing cache identity or unavailable archive storage disables persistence. Cache
 restore/save failures do not replace compilation or testing. The job summary records

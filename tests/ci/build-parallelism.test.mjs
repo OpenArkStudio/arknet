@@ -6,9 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { runInNewContext } from "node:vm";
 import { admission, observeResources, selectParallelism } from "../../.github/scripts/build-parallelism.mjs";
-import { expectedCells } from "../../.github/scripts/ci-required.mjs";
 
 const gib = 1024 ** 3;
 const baseline = { platform: "linux", boost: "ON", sanitize: "ON", cpu: 4,
@@ -98,36 +96,15 @@ for (const boost of ["OFF", "ON"]) {
 
 }
 
-test("the real workflow preserves every other matrix profile and the existing target and failure contracts", () => {
-  const planner = native.split(/(?=^      - )/m).find(step => step.includes("name: Select bounded compiler parallelism"));
-  const condition = planner.match(/if: \$\{\{ (.+) \}\}/)[1];
-  const parallel = native.match(/cmake --build build --parallel \$\{\{ (.+) \}\}/)[1]
-    .replace("steps.build-parallel", 'steps["build-parallel"]');
-  for (const matrix of expectedCells) for (const runNative of ["true", "false"]) {
-    const context = { matrix, env: { ARKNET_RUN_NATIVE: runNative },
-      runner: { os: { "ubuntu-latest": "Linux", "macos-latest": "macOS", "windows-latest": "Windows" }[matrix.os] },
-      steps: { "build-parallel": { outputs: {} } } };
-    const selected = runInNewContext(condition, context);
-    const intended = runNative === "true" && matrix.os === "ubuntu-latest" && matrix.sanitize === "ON";
-    assert.equal(selected, intended);
-    assert.equal(runInNewContext(parallel, context), matrix.sanitize === "ON" ? "1" : matrix.sanitize === "THREAD" ? "2" : "3");
-    if (selected) {
-      for (const resources of [baseline, { ...baseline, availableMemory: 11 * gib }, { ...baseline, cpu: undefined }]) {
-        const decision = selectParallelism({ ...resources, boost: matrix.boost });
-        context.steps["build-parallel"].outputs.parallel = String(decision.parallel);
-        assert.equal(runInNewContext(parallel, context), String(decision.parallel));
-      }
-    }
+test("grouped workflow retains per-profile bounded planning and the existing job deadline", () => {
+  const planners = native.split(/(?=^      - )/m).filter(step => step.includes("name: Select bounded compiler parallelism"));
+  assert.equal(planners.length, 2);
+  for (const planner of planners) {
+    assert.match(planner, /matrix.sanitize == 'ON'/);
+    assert.match(planner, /run: node .github\/scripts\/native-profile.mjs parallel/);
+    assert.doesNotMatch(planner, /continue-on-error:/);
   }
-  assert.match(planner, /MATRIX_BOOST: \$\{\{ matrix.boost \}\}/);
-  assert.match(planner, /MATRIX_SANITIZE: \$\{\{ matrix.sanitize \}\}/);
-  assert.match(planner, /run: node .github\/scripts\/build-parallelism.mjs/);
-  assert.doesNotMatch(planner, /continue-on-error:/);
   assert.match(native, /timeout-minutes: 60/);
-  assert.match(native, /cmake --build build --target arknet_check_build --parallel 3/);
-  assert.match(native, /if \(\$LASTEXITCODE -ne 0\) \{ exit \$LASTEXITCODE \}/);
-  assert.ok(native.includes('"-DCMAKE_CXX_COMPILER_LAUNCHER=$env:ARKNET_COMPILER_LAUNCHER"'));
-  assert.ok(native.includes('"-DCMAKE_C_COMPILER_LAUNCHER=$env:ARKNET_COMPILER_LAUNCHER"'));
 });
 
 test("the CLI records real observations, the selected bound and a summary without retrying a build", t => {
@@ -147,5 +124,42 @@ test("the CLI records real observations, the selected bound and a summary withou
     assert.match(readFileSync(summary, "utf8"), /Experimental scheduling heuristic/);
     const missingChannel = spawnSync(process.execPath, [script], { env: { ...env, GITHUB_OUTPUT: "" }, encoding: "utf8" });
     assert.notEqual(missingChannel.status, 0);
+  }
+});
+
+test("Windows Boost Release admits four slots at every threshold and otherwise keeps three", () => {
+  const enough = { ...baseline, platform: "win32", sanitize: "OFF" };
+  assert.equal(selectParallelism(enough).parallel, 4);
+  for (const changes of [{ totalMemory: admission.effectiveMemory }, { constrainedMemory: 0 },
+    { constrainedMemory: 2 ** 64 }, { cpu: 64, totalMemory: 128 * gib, constrainedMemory: 64 * gib, availableMemory: 48 * gib }]) {
+    assert.equal(selectParallelism({ ...enough, ...changes }).parallel, 4, JSON.stringify(changes));
+  }
+  for (const changes of [{ cpu: admission.cpu - 1 }, { totalMemory: admission.effectiveMemory - 1 },
+    { constrainedMemory: admission.effectiveMemory - 1 }, { availableMemory: admission.availableMemory - 1 },
+    { availableMemory: 16 * gib }]) {
+    assert.equal(selectParallelism({ ...enough, ...changes }).parallel, 3, JSON.stringify(changes));
+  }
+  for (const key of ["cpu", "totalMemory", "constrainedMemory", "availableMemory"]) {
+    for (const value of [undefined, null, -1, "16", NaN, Infinity, -Infinity, 1.5]) {
+      const decision = selectParallelism({ ...enough, [key]: value });
+      assert.equal(decision.parallel, 3, `${key}/${value}`);
+      assert.equal(decision.reason, "unknown-or-invalid-resource");
+    }
+    if (key !== "constrainedMemory") assert.equal(selectParallelism({ ...enough, [key]: 0 }).parallel, 3);
+  }
+  for (const changes of [{ boost: "OFF" }, { boost: "on" }, { sanitize: "ON" }, { sanitize: "THREAD" },
+    { platform: "darwin" }, { platform: "linux" }]) {
+    assert.notEqual(selectParallelism({ ...enough, ...changes }).parallel, 4);
+  }
+  const env = { MATRIX_BOOST: "ON", MATRIX_SANITIZE: "OFF" };
+  const system = { availableParallelism: () => 4, totalmem: () => 16 * gib };
+  const runtime = { platform: "win32", constrainedMemory: () => 15 * gib, availableMemory: () => 12 * gib };
+  for (const [owner, key] of [[system, "availableParallelism"], [system, "totalmem"], [runtime, "constrainedMemory"], [runtime, "availableMemory"]]) {
+    const original = owner[key];
+    for (const replacement of [undefined, () => { throw new Error("unavailable"); }]) {
+      owner[key] = replacement;
+      assert.equal(selectParallelism(observeResources(env, system, runtime)).parallel, 3);
+    }
+    owner[key] = original;
   }
 });

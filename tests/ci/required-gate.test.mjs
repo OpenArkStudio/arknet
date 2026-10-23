@@ -1,74 +1,29 @@
 // Copyright (c) 2026 OpenArkStudio. SPDX-License-Identifier: BSL-1.0
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { runInNewContext } from "node:vm";
-import { cellName, expectedCells, optionalCacheSteps, validateRequired } from "../../.github/scripts/ci-required.mjs";
-import { planChecks } from "../../.github/scripts/ci-scope.mjs";
+import { cellName, expectedCells, expectedGroups, groupName, inGroup, optionalCacheSteps, validateRequired } from "../../.github/scripts/ci-required.mjs";
+import { block, steps, stepName, actualCells, fixture, findStep } from "./fixtures/required-run.mjs";
 
-const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
-const block = name => workflow.split(/(?=^  [a-z][a-z0-9_-]*:$)/m).find(text => text.startsWith(`  ${name}:\n`));
-const steps = name => block(name).split(/(?=^      - )/m).slice(1);
-const stepName = step => step.match(/^      - name: (.+)$/m)?.[1] ??
-  (step.match(/^      - uses: (.+)$/m)?.[1] ? `Run ${step.match(/^      - uses: (.+)$/m)[1]}` :
-    `Run ${step.match(/(?:^      - |^        )run: (.+)$/m)?.[1]}`);
-const outputs = plan => Object.fromEntries(["full_cpp", "tier", "source_tests"].map(key => [key, String(plan[key])]));
-const nativeExpression = block("test").match(/ARKNET_RUN_NATIVE: \$\{\{ (.+) \}\}/)[1];
-const jobNameExpression = block("test").match(/^    name: (.+)$/m)[1];
-
-function actualCells() {
-  const matrix = block("test").split("      matrix:\n")[1].split("    runs-on:")[0];
-  const values = key => JSON.parse("[" + matrix.match(new RegExp(`^        ${key}: \\[([^\\]]+)\\]$`, "m"))[1]
-    .split(",").map(value => JSON.stringify(value.trim().replaceAll('"', ""))).join(",") + "]");
-  const cells = [];
-  for (const os of values("os")) for (const boost of values("boost")) {
-    for (const ssl of values("ssl")) for (const sanitize of values("sanitize")) cells.push({ os, boost, ssl, sanitize });
-  }
-  for (const [, os, boost, ssl, sanitize] of matrix.matchAll(/- \{os: ([^,]+), boost: "([^"]+)", ssl: "([^"]+)", sanitize: "([^"]+)"\}/g)) {
-    cells.push({ os, boost, ssl, sanitize });
-  }
-  return cells;
-}
-
-function fixture(eventName, files, extra = {}) {
-  const plan = planChecks({ eventName, known: true, files, ...extra });
-  const needs = { docs: { result: "success" }, format: { result: "success", outputs: outputs(plan) }, test: { result: "success" } };
-  const jobs = ["docs", "format"].map((name, index) => ({
-    databaseId: index + 1, name: block(name).match(/^    name: (.+)$/m)[1], status: "completed", conclusion: "success",
-    steps: steps(name).map((step, number) => ({ name: stepName(step), number: number + 1, status: "completed", conclusion: "success" })),
-  }));
-  for (const [index, matrix] of actualCells().entries()) {
-    const context = { matrix, needs, runner: { os: { "ubuntu-latest": "Linux", "macos-latest": "macOS", "windows-latest": "Windows" }[matrix.os] },
-      always: () => true, steps: {
-        "vcpkg-cache": { outputs: { enabled: "true" } },
-        "compiler-cache": { outputs: { enabled: "true" } },
-      } };
-    context.env = { ARKNET_RUN_NATIVE: String(runInNewContext(nativeExpression, context)) };
-    jobs.push({ databaseId: index + 3,
-      name: jobNameExpression.replaceAll(/\$\{\{ (.*?) \}\}/g, (_, expression) => runInNewContext(expression, context)),
-      status: "completed", conclusion: "success", steps: steps("test").map((step, number) => {
-        const expression = step.match(/^        if: \$\{\{ (.+) \}\}$/m)?.[1];
-        return { name: stepName(step), number: number + 1, status: "completed",
-          conclusion: !expression || runInNewContext(expression.replace(/steps\.([a-z0-9-]+)/g, 'steps["$1"]'), context) ? "success" : "skipped" };
-      }) });
-  }
-  // gh run view includes the still-running aggregate itself; it is not a prerequisite.
-  jobs.push({ databaseId: 100, name: "CI - required", status: "in_progress", conclusion: "", steps: [] });
-  return { plan, needs, metadata: { jobs }, eventName };
-}
-const findStep = (job, name) => job.steps.find(step => step.name === name);
-
-test("the independently reviewed manifest matches all twelve actual matrix profiles and names", () => {
+test("the independently reviewed manifests match seven groups and all twelve actual native profiles", () => {
   const cells = actualCells();
   assert.equal(cells.length, 12);
+  assert.deepEqual(expectedGroups.map(groupName), [
+    "Native - ubuntu-latest - Boost - Release", "Native - ubuntu-latest - Standalone - Release",
+    "Native - macos-latest - Release", "Native - windows-latest - Boost - Release",
+    "Native - windows-latest - Standalone - Release", "Native - ubuntu-latest - ASan+UBSan",
+    "Native - ubuntu-latest - TSan",
+  ]);
+  assert.deepEqual(expectedGroups.map(group => expectedCells.filter(cell => inGroup(cell, group)).length), [2, 2, 2, 1, 1, 2, 2]);
+  for (const cell of expectedCells) assert.equal(expectedGroups.filter(group => inGroup(cell, group)).length, 1);
   assert.deepEqual(new Set(cells.map(cellName)), new Set(expectedCells.map(cellName)));
   assert.equal(new Set(expectedCells.map(cellName)).size, 12);
   const full = fixture("merge_group", ["tests/rudp.cpp"]);
-  assert.deepEqual(new Set(full.metadata.jobs.slice(2, -1).map(job => job.name)), new Set(expectedCells.map(cellName)));
+  assert.deepEqual(new Set(full.metadata.jobs.slice(2, -1).map(job => job.name)), new Set(expectedGroups.map(groupName)));
 });
 
 test("real workflow step conditions produce accepted full, source-suite, module and documentation coverage", () => {
@@ -91,23 +46,16 @@ test("real workflow step conditions produce accepted full, source-suite, module 
   }
 });
 
-test("the gate requires successful planning in both Linux sanitizer dependency profiles and nowhere else", () => {
-  const name = "Select bounded compiler parallelism";
-  for (const [event, files, expected] of [["merge_group", ["tests/rudp.cpp"], 2],
-    ["workflow_dispatch", ["README.md"], 2], ["pull_request", ["tests/rudp.cpp"], 0],
-    ["merge_group", ["docs/site/package.json"], 0]]) {
-    const input = fixture(event, files);
-    const selected = input.metadata.jobs.filter(job => findStep(job, name)?.conclusion === "success");
-    assert.equal(selected.length, expected);
-    if (expected) assert.deepEqual(new Set(selected.map(job => job.name)), new Set(["OFF", "ON"].map(boost =>
-      cellName({ os: "ubuntu-latest", boost, ssl: "ON", sanitize: "ON" }))));
-    validateRequired(input);
-    for (const job of input.metadata.jobs.filter(job => findStep(job, name))) {
-      const invalid = structuredClone(input);
-      const step = findStep(invalid.metadata.jobs.find(candidate => candidate.name === job.name), name);
-      step.conclusion = step.conclusion === "success" ? "skipped" : "success";
-      assert.throws(() => validateRequired(invalid), `${event}: ${job.name}`);
-    }
+test("the gate requires separate bounded planning for both sanitizer dependency profiles", () => {
+  const input = fixture("merge_group", ["tests/rudp.cpp"]);
+  const planned = input.metadata.jobs.flatMap(job => job.steps.filter(step =>
+    step.name.startsWith("Select bounded compiler parallelism") && step.conclusion === "success").map(step => [job, step]));
+  assert.equal(planned.length, 2);
+  assert.deepEqual(planned.map(([job]) => job.name), Array(2).fill(groupName({ os: "ubuntu-latest", sanitize: "ON" })));
+  for (const [job, step] of planned) {
+    const invalid = structuredClone(input);
+    findStep(invalid.metadata.jobs.find(candidate => candidate.name === job.name), step.name).conclusion = "skipped";
+    assert.throws(() => validateRequired(invalid));
   }
 });
 
@@ -136,7 +84,7 @@ test("failed, skipped, cancelled, pending, duplicate and missing prerequisite jo
     input.needs[prerequisite].result = result;
     assert.throws(() => validateRequired(input));
   }
-  for (let index = 0; index < 14; index++) {
+  for (let index = 0; index < 9; index++) {
     for (const change of [job => { job.status = "in_progress"; }, job => { job.conclusion = "failure"; },
       job => { job.conclusion = "skipped"; }, job => { job.conclusion = undefined; }, job => { job.steps = []; }]) {
       const input = structuredClone(valid);
@@ -161,7 +109,7 @@ test("failed, skipped, cancelled, pending, duplicate and missing prerequisite jo
 test("successful jobs cannot hide skipped full checks, executed scope-only checks or wrong sanitizer test steps", () => {
   for (const [event, files] of [["merge_group", ["tests/rudp.cpp"]], ["pull_request", ["tests/rudp.cpp"]], ["merge_group", ["README.md"]]]) {
     const valid = fixture(event, files);
-    for (let index = 2; index < 14; index++) {
+    for (let index = 2; index < 9; index++) {
       const actual = valid.metadata.jobs[index];
       for (const step of actual.steps.filter(step => !optionalCacheSteps.includes(step.name))) {
         for (const conclusion of [step.conclusion === "success" ? "skipped" : "success", "failure", "cancelled", "neutral", "unknown", "", undefined]) {
@@ -247,7 +195,7 @@ test("unavailable optional caches and their posts permit cold builds only when a
       assert.equal(validateRequired(input).native_cells, event === "merge_group" ? 12 : 1);
       for (const name of ["Configure", "Build planned native targets", "Test"]) {
         const invalid = structuredClone(input);
-        const job = invalid.metadata.jobs.find(job => job.steps.some(step => step.name === name && step.conclusion === "success"));
+        const job = invalid.metadata.jobs.find(job => job.steps.some(step => (step.name === name || step.name === name + " - Boost - TLS") && step.conclusion === "success"));
         findStep(job, name).conclusion = "failure";
         assert.throws(() => validateRequired(invalid), `${mode}/${name}`);
       }
@@ -291,7 +239,7 @@ test("cache fallback rejects unknown outcomes, missing steps, contradictory acti
 test("scope-only cells cannot execute cache steps or their posts", () => {
   for (const [event, files] of [["pull_request", ["tests/rudp.cpp"]], ["merge_group", ["README.md"]]]) {
     const valid = fixture(event, files);
-    const index = valid.metadata.jobs.findIndex(job => job.steps.some(step => step.name === "Configure" && step.conclusion === "skipped"));
+    const index = valid.metadata.jobs.findIndex(job => job.steps.some(step => step.name === "Configure - Boost - TLS" && step.conclusion === "skipped"));
     for (const name of optionalCacheSteps) for (const conclusion of ["success", "failure"]) {
       const input = structuredClone(valid);
       findStep(input.metadata.jobs[index], name).conclusion = conclusion;
@@ -394,7 +342,8 @@ test("the appended gate reads same-run metadata with only job-local read permiss
   assert.match(required, /    permissions:\n      contents: read\n      actions: read\n/);
   assert.match(required, /fetch-depth: 0/);
   assert.match(required, /GH_TOKEN: \$\{\{ github.token \}\}/);
-  assert.ok(required.includes('gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --json jobs > "$RUNNER_TEMP/arknet-ci-jobs.json"'));
+  assert.match(required, /timeout-minutes: 5/);
+  assert.match(required, /run: node .github\/scripts\/ci-jobs.mjs/);
   assert.match(required, /CI_NEEDS_JSON: \$\{\{ toJSON\(needs\) \}\}/);
   assert.match(required, /CI_JOBS_PATH: \$\{\{ runner.temp \}\}\/arknet-ci-jobs.json/);
   assert.match(required, /run: node .github\/scripts\/ci-required.mjs/);
