@@ -67,25 +67,37 @@ it is not a released revision.
 | Run identity | 2026-10-23; integration source `cd7205b34152a26cca061b947cd33aaa785248d8`; binary SHA-256 `dabd26dd9a2c8dd197fdaac23939ace8e94d5a7b59ea170c9e9aeb32d2d5ae04` |
 | Host / build | Mac16,11, 14 CPU cores, 48 GiB, macOS 27.0.1; AppleClang 21 Release, Boost 1.90, TLS off |
 | Workload | 5,000 loopback connections; 1 KiB body; up to four in-flight requests per connection; one IO context and one IO worker per process; 3 s traffic hold; 5 s request deadline; 40 s server deadline; composed and underlying socket tracing enabled |
-| Completion / cleanup | Both peers reached 5,000 ready/started and 4,994 finished. Six connections retained requests 64–67: 24 unanswered requests. Both processes failed at their configured deadlines and completed cleanup |
+| Completion / cleanup | Both peers reached 5,000 ready/started and 4,999 finished. Connection 759 retained requests 65–68. The client failed at its request deadline; the server then observed a peer reset. Both completed cleanup |
 | Actual process limits | Both startup records: `RLIMIT_NOFILE` soft 1,048,575 / hard `"unlimited"`. Sampled FD peaks: client 5,008, server 5,009; zero connect errors |
-| Every stalled client | Completed socket/composed read bytes 68,863; write bytes 73,227. An underlying read with 4,096-byte capacity remains pending; no active write or queued application send |
-| Every stalled server | Completed socket/composed read and write bytes both 68,863. An underlying read with 4,096-byte capacity remains pending; application input and kernel-readable bytes are zero |
-| TCP observation | Each client send buffer retains 4,364 bytes, possibly including in-flight data; send windows are positive. A completed write does not establish peer delivery |
-| Recorder / worker progress | All 5,000 sessions recorded, all six stalled sessions emitted per peer, no omitted/truncated output or invalid transitions. Client probes 14/14 and server probes 39/39 completed; this does not prove per-socket readiness |
+| Host descriptor settings | Read-only snapshots: `kern.maxfilesperproc` 184,320, `kern.maxfiles` 368,640. These are distinct from the process's reported resource limits and do not establish connection capacity |
+| Stalled client | Completed socket/composed read bytes 69,954; write bytes 74,318. An underlying read with 4,096-byte capacity remains pending; no active write, queued application send or kernel-readable bytes |
+| Server for that connection | Completed socket/composed read and write bytes both 74,318; response 68 completed its write. The following read completed with a peer reset after the client's timeout |
+| TCP observation | Client send-buffer bytes 0; server send-buffer bytes 4,364, including possible in-flight data. Both send windows are positive. A completed write does not establish peer delivery |
+| Header capture | Three retained files; 1,967,917 packets captured; tcpdump reported zero packets dropped by the kernel. Interface-drop and capture-exit status were not retained; packet absence alone is not loss proof |
+| Captured TCP progress | Both directions have header-declared payload coverage `[0,74318)`. The largest observed cumulative ACK is 74,318 client→server and 69,954 server→client. Client SACKs report later ranges `[71045,72136)` and `[73227,74318)` without advancing that cumulative boundary |
+| Recorder / worker progress | All 5,000 sessions recorded; the incomplete session emitted per peer without omitted/truncated output or invalid transitions. Both peers completed 13/13 worker probes; this does not prove per-socket readiness |
 
-The byte difference is four 1,091-byte frames per stalled connection. A valid
-2,182-byte underlying read can supply two frames, followed by a zero-byte read
-completion for buffered data. Socket and composed lifetime byte totals agree;
-truncated event tails must not be compared as complete histories. No sequence-64,
-framing, handler-association or application-queue defect is proved.
+The unresolved response gap is four 1,091-byte frames between server write
+completion and client read completion. Socket and composed lifetime byte totals
+agree. A 2,182-byte underlying read followed by a zero-byte buffered completion
+is valid; bounded event tails are not complete histories. No framing,
+handler-association or application-queue defect is proved.
 
-The root cause remains unresolved between client write completion and server
-read completion. No complete packet/readiness correlation was recorded, and the
-peers' final snapshots occur at different deadlines. This is a failed diagnostic
-workload, not performance or capacity acceptance. Intermittent passing controls
-do not establish a fix or performance equivalence. Raw logs and captures stay
-local. See [connection benchmarks](../../benchmarks/CONNECTIONS.md) for parameters.
+The first unacknowledged range `[69954,71045)` appears in three server payload
+headers. The client cumulative ACK remains 69,954 through its reset, about
+4.96 capture-clock seconds after the final server payload header. Captured
+headers do not prove that the receiving TCP stack accepted those bytes; payload
+and checksums were not verified. The reset server's missing remote endpoint is
+associated using the unique session identity and the client's observed tuple,
+with matching server-local address; that derived association is a coverage limit.
+
+The root cause remains unresolved. Frozen operation counters have no verified
+absolute capture-clock mapping, and packet headers do not establish socket
+readiness or callback dispatch. Host-wide TCP statistics returned zeros despite
+observed traffic, so they cannot establish an absence of retransmissions or
+resource drops. This failed diagnostic is not performance or capacity acceptance.
+Raw logs and captures stay local. See [connection benchmarks](../../benchmarks/CONNECTIONS.md)
+for parameters.
 
 The `resource_startup` descriptor diagnostics read each running process's
 `nofile_soft` and `nofile_hard` through `getrlimit(RLIMIT_NOFILE)`. Finite limits are integers,
