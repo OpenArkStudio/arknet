@@ -61,7 +61,7 @@ jobs:
           bash scripts/test_format.sh
           bash scripts/format.sh --check
   test:
-    name: Native - ${{ matrix.os }} - ${{ matrix.boost == 'ON' && 'Boost - ' || matrix.boost == 'OFF' && 'Standalone - ' || '' }}${{ matrix.sanitize == 'THREAD' && 'TSan' || matrix.sanitize == 'ON' && 'ASan+UBSan' || 'Release' }}
+    name: Native - ${{ matrix.os }} - ${{ matrix.boost == 'ON' && 'Boost - ' || matrix.boost == 'OFF' && 'Standalone - ' || '' }}${{ matrix.sanitize == 'THREAD' && 'ThreadSanitizer' || matrix.sanitize == 'ON' && 'AddressSanitizer + UndefinedBehaviorSanitizer' || 'Release' }}
     timeout-minutes: 60
     needs: format
     if: ${{ !cancelled() }}
@@ -174,7 +174,7 @@ jobs:
         with:
           vcpkgGitCommitId: ${{ env.VCPKG_CACHE_REVISION }}
           vcpkgJsonGlob: vcpkg.json
-      - name: Configure TSan address space
+      - name: Configure ThreadSanitizer address space
         if: ${{ env.ARKNET_RUN_NATIVE == 'true' && (matrix.sanitize == 'THREAD') }}
         run: sudo sysctl -w vm.mmap_rnd_bits=28
       - name: Prepare benchmark tools

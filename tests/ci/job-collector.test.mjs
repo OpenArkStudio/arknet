@@ -27,6 +27,22 @@ function harness(t, event = 'merge_group', files = ['tests/rudp.cpp'], attempt =
 }
 const windows = metadata => metadata.jobs.find(job => job.name === 'Native - windows-latest - Boost - Release');
 
+test('abbreviated sanitizer job names cannot substitute the full-name contexts', async t => {
+  for (const [current, previous] of [
+    ['Native - ubuntu-latest - AddressSanitizer + UndefinedBehaviorSanitizer', 'Native - ubuntu-latest - ASan+UBSan'],
+    ['Native - ubuntu-latest - ThreadSanitizer', 'Native - ubuntu-latest - TSan'],
+  ]) {
+    const h = harness(t), invalid = structuredClone(h.final);
+    invalid.jobs.find(job => job.name === current).name = previous;
+    assert.throws(() => validateRequired({ ...h.input, metadata: invalid }), /Unexpected job profile/);
+    h.snapshots.push(invalid, h.final);
+    await assert.rejects(h.collect(), /Unexpected job profile/);
+    assert.equal(h.calls.length, 1);
+    assert.deepEqual(h.waits, []);
+    assert.equal(existsSync(h.env.CI_JOBS_PATH), false);
+  }
+});
+
 test('attempt-qualified collection refreshes a successful job with stale test and post steps without modifying evidence', async t => {
   const h = harness(t), stale = structuredClone(h.final);
   findStep(windows(stale), 'Test').status = 'in_progress';
