@@ -1164,6 +1164,7 @@ void application::sample() {
 }
 
 void application::run() {
+    connection_load::write_resource_startup(std::cout, resources.initial_snapshot(), o.role, o.run, o.client);
     if (o.role == "server")
     {
         const tcp::endpoint endpoint(asio::ip::make_address(o.host), static_cast<unsigned short>(o.port));

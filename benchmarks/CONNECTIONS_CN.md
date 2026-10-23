@@ -104,7 +104,7 @@ Windows 下由 CMake 提供系统网络与进程内存库。构建或使用 arkn
 
 ## 输出与指标
 
-Stdout 使用 JSON Lines：服务端的 `ready`、定期 `sample` 和最终 `result`。Stderr 用于参数或启动错误。清理超时中止可能留下不完整输出，因此还需记录进程退出码。分别保存各进程输出，原始结果放在 Git 仓库外。
+Stdout 使用 JSON Lines：每个进程的 `resource_startup`、服务端的 `ready`、定期 `sample` 和最终 `result`。原生 Asio 对照程序也输出 `resource_startup`。启动标识沿用各工具已有的格式：arknet 程序使用十进制字符串，原生对照程序使用整数。启动记录复用建连准入前已有的首次资源采样，不新增采样，也不改变采样周期。消费方应按 `event` 选择事件，并忽略新增字段。Stderr 用于参数或启动错误。清理超时中止可能留下不完整输出，因此还需记录进程退出码。分别保存各进程输出，原始结果放在 Git 仓库外。
 
 | 字段 | 口径 |
 | --- | --- |
@@ -118,8 +118,9 @@ Stdout 使用 JSON Lines：服务端的 `ready`、定期 `sample` 和最终 `res
 | `rtt_buckets`、`latency_observations` | 用 513 个固定计数器保留全部 RTT 的分布，存储量不随请求数增长。 |
 | `cpu_percent`、`peak_rss_bytes` | 本进程全部线程的用户态与系统态 CPU，以及进程生命周期 RSS 高水位。CPU 100% 表示一个逻辑核，可以超过 100%；sample CPU 对应上个采样区间，最终 CPU 对应包含建连和清理的整次运行，不包含另一进程。系统指标不可用时为 null。 |
 | `current_rss_bytes`、`fd_count`、`handle_count`、`thread_count` | 本进程当前驻留内存（Windows 工作集）、POSIX 文件描述符、Windows 句柄和原生线程数。文件描述符与句柄是不同指标，不支持的指标为 null。 |
+| `nofile_soft`、`nofile_hard` | POSIX 上通过 `getrlimit(RLIMIT_NOFILE)` 读取的当前进程实际限制：有限值输出 JSON 整数，`RLIM_INFINITY` 输出 `"unlimited"`。不支持或读取失败时为 null，并在 `resource_unavailable` 中说明原因。Windows 标记为不适用，句柄计数的含义保持不变。 |
 | `resource_sample_elapsed_s`、`resource_cpu_interval_s` | CPU 查询中点相对本次运行开始的秒数，以及 CPU 占用率实际使用的区间长度。CPU 占用率不可用时，区间为 null；这些值不能作为跨机器时间戳。 |
-| `resource_phase` | 周期记录为 `running`，可能处于建连、保持或协议排空阶段；最终记录为 `after_cleanup`，在端点和 IO 工作线程停止后读取。最终内存和数量指标不是负载阶段的值。 |
+| `resource_phase` | 启动和周期记录为 `running`，周期记录可能处于建连、保持或协议排空阶段；最终记录为 `after_cleanup`，在端点和 IO 工作线程停止后读取。最终内存和数量指标不是负载阶段的值。 |
 | `resource_unavailable` | 以缺失资源字段名为键、诊断原因为值的对象。真实零值仍是数字；原因文本用于诊断，不是稳定错误码。 |
 | `sample_interval_ms` | 最终结果中的计划采样间隔。实际 CPU 采样区间单独报告。 |
 | `content_errors`、`sequence_errors`、`send_errors`、`timeouts`、`resource_rejections` | 内容、序号、发送、期限或预算失败；停止过程中取消的发送单独记为 `shutdown_cancelled_sends`。 |
@@ -130,6 +131,8 @@ Stdout 使用 JSON Lines：服务端的 `ready`、定期 `sample` 和最终 `res
 正常退出码：0 表示完成目标或观测且清理成功；1 表示运行、校验或期限失败；2 表示参数不合法或启动异常。清理监控终止在 Windows 下为退出码 124，在 POSIX 下为信号 9；原生进程管理器应检查信号状态，shell 通常显示为 137。失败记录用于诊断，不能静默丢弃，或反复运行覆盖后仅保留吞吐较好的结果。
 
 资源指标由独立的周期与全程采样器收集，均在主线程串行调用。CPU 使用实际单调时钟查询时间计算，不用计划间隔或采样百分比的算术平均值代替。默认间隔仍为一秒；文件描述符枚举和系统线程查询有开销，计入被测进程。系统查询与连接计数不是原子快照。短于采样间隔的运行可以没有周期记录，同时仍有有效的全程 CPU 占用率。最终 RSS、文件描述符、句柄和线程数明确属于清理后阶段，负载期间的值应查看周期记录。不支持的系统指标仍为 null，包括编译目标不支持相关 API 时的 Windows 线程数。采样不会修改系统限制，也不会设置 RSS 上限。
+
+`RLIMIT_NOFILE` 限制进程的文件描述符，包括 socket、文件、管道和事件循环描述符，不构成每进程 TCP 连接容量保证。进程继承启动方的限制，因此本次调用的证据应来自测试进程自身的启动记录。某个 shell 的 `ulimit`、启动服务的默认值或当前 macOS `kern.maxfiles*` 设置，不能确定历史测试进程的限制，也不是跨平台默认值。限制较高或建连成功本身，不能解释或解决后续流量停滞。工具不会调用 `setrlimit` 或修改系统设置。
 
 每条周期记录包含累计的 `ready`、`started` 和 `finished` 协议计数。
 只有在 **连续两个采样端点** 均满足 `active == ready == started == N`、
