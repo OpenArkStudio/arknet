@@ -99,6 +99,18 @@ resource drops. This failed diagnostic is not performance or capacity acceptance
 Raw logs and captures stay local. See [connection benchmarks](../../benchmarks/CONNECTIONS.md)
 for parameters.
 
+The native control also offers default-off `--tcp-kernel-samples on` with
+`--operation-trace on` to retain periodic public Apple `TCP_CONNECTION_INFO`
+queries before failure cleanup. The existing one-second worker marker checks
+unfinished traffic sessions with DATA received and at least one second without a
+composed read/write completion. It keeps eight samples for at most 16 identities
+in less than 32 KiB of extra fixed storage; recovered/completed/closed sessions
+release slots, while persistent stalls keep theirs. Omission and overwrite are
+explicit. Other platforms return null with an unsupported reason. Sample time is
+separate from the operation-ring freeze; delayed sampling can miss transient
+states. This diagnostic has not been accepted in the stalled workload and does
+not resolve its root cause. See [usage and limits](../../benchmarks/CONNECTIONS.md#opt-in-tcp-kernel-samples).
+
 The `resource_startup` descriptor diagnostics read each running process's
 `nofile_soft` and `nofile_hard` through `getrlimit(RLIMIT_NOFILE)`. Finite limits are integers,
 infinity is `"unlimited"`, and unavailable values are null with a reason;

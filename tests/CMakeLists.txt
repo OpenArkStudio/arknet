@@ -42,7 +42,7 @@ function(arknet_configure_check_target)
         USES_TERMINAL)
 endfunction()
 
-set(arknet_test_names tcp udp lifecycle queued_connect_cancellation external_stop detail concurrency io_pool manual_runtime socket_metadata keepalive coroutine_shutdown connection_load_cleanup ipv6 arq_core rudp rudp_stability fec rudp_fec mysql_wire mysql_handshake mysql_command redis_resp redis_client redis_pool redis_shutdown redis_pool_shutdown)
+set(arknet_test_names connection_kernel_samples tcp udp lifecycle queued_connect_cancellation external_stop detail concurrency io_pool manual_runtime socket_metadata keepalive coroutine_shutdown connection_load_cleanup ipv6 arq_core rudp rudp_stability fec rudp_fec mysql_wire mysql_handshake mysql_command redis_resp redis_client redis_pool redis_shutdown redis_pool_shutdown)
 add_executable(arknet_process_resources_test ../benchmarks/process_resources_probe.cpp)
 target_compile_features(arknet_process_resources_test PRIVATE cxx_std_20)
 target_link_libraries(arknet_process_resources_test PRIVATE Threads::Threads)

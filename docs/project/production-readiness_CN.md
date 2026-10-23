@@ -85,6 +85,14 @@ main 上的 [PR #26](https://github.com/OpenArkStudio/arknet/pull/26) 改善了�
 没有重传或资源丢弃。这是失败诊断，不构成性能结果或容量验收。原始日志、抓包仅留本地，参数见
 [连接基准测试](../../benchmarks/CONNECTIONS_CN.md)。
 
+原生对照还提供默认关闭的 `--tcp-kernel-samples on`，要求同时启用 `--operation-trace on`，
+用于在失败清理前保留公开 Apple `TCP_CONNECTION_INFO` 周期查询。现有一秒工作线程标记
+检查已收到 DATA、尚未完成且至少一秒没有组合读写完成的 traffic 会话。额外固定存储
+小于 32 KiB，最多保留 16 个身份、每个身份 8 个样本；已有进展、完成或关闭的会话释放
+槽位，持续停滞的身份保留槽位。遗漏和覆盖有明确计数，其他平台返回 null 并说明不支持。
+采样时间区别于操作历史冻结时间，延迟采样可能错过瞬时状态。该诊断尚未在停滞负载中
+完成验收，也未解决根因。参见[用法与限制](../../benchmarks/CONNECTIONS_CN.md#可选-tcp-内核采样)。
+
 `resource_startup` 描述符诊断通过 `getrlimit(RLIMIT_NOFILE)` 读取运行进程自身的 `nofile_soft` 和
 `nofile_hard`。有限值为整数，无限值为 `"unlimited"`，不可用时为 null 并说明原因；
 Windows 保留句柄计数，并将该 POSIX 限制标记为不适用。描述符还包括文件、管道和事件循环

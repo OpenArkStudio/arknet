@@ -369,6 +369,184 @@ void silent_peer(const std::string& executable, bool trace = false) {
     }
 }
 
+void progress_then_stall(const std::string& executable) {
+    struct raw_peer
+    {
+        int listener = socket(AF_INET, SOCK_STREAM, 0), connection = -1;
+
+        ~raw_peer() {
+            if (connection != -1)
+            {
+                close(connection);
+            }
+            if (listener != -1)
+            {
+                close(listener);
+            }
+        }
+    } peer;
+
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    if (peer.listener == -1 || fcntl(peer.listener, F_SETFD, FD_CLOEXEC) == -1 ||
+        fcntl(peer.listener, F_SETFL, O_NONBLOCK) == -1 ||
+        bind(peer.listener, reinterpret_cast<sockaddr*>(&address), sizeof(address)) || listen(peer.listener, 1))
+    {
+        throw std::runtime_error("kernel sample peer listener setup failed");
+    }
+    socklen_t length = sizeof(address);
+    if (getsockname(peer.listener, reinterpret_cast<sockaddr*>(&address), &length))
+    {
+        throw std::runtime_error("kernel sample peer port query failed");
+    }
+    child client(executable,
+        {"--role", "client", "--target", "127.0.0.1", "--port", std::to_string(ntohs(address.sin_port)), "--run-id",
+            "97", "--client-id", "3", "--connections", "1", "--scenario", "traffic", "--payload", "1", "--window", "1",
+            "--hold-seconds", "4", "--deadline-seconds", "6", "--request-timeout-ms", "3200", "--cleanup-seconds", "1",
+            "--operation-trace", "on", "--tcp-kernel-samples", "on"});
+    const auto deadline = clock_type::now() + std::chrono::seconds(6);
+    auto wait_ready = [&](int fd, short events) {
+        while (clock_type::now() < deadline)
+        {
+            pollfd descriptor{fd, events, 0};
+            const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - clock_type::now());
+            const auto wait_ms = remaining.count() > 0 ? remaining.count() : 0;
+            const auto result = ::poll(&descriptor, 1, static_cast<int>(wait_ms) + 1);
+            if (result > 0)
+            {
+                return;
+            }
+            if (result < 0 && errno != EINTR)
+            {
+                throw std::runtime_error("kernel sample peer poll failed");
+            }
+        }
+        throw std::runtime_error("kernel sample peer IO deadline exceeded: " + client.log);
+    };
+    while (peer.connection == -1)
+    {
+        wait_ready(peer.listener, POLLIN);
+        peer.connection = accept(peer.listener, nullptr, nullptr);
+        if (peer.connection == -1 && errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
+        {
+            throw std::runtime_error("kernel sample peer accept failed");
+        }
+    }
+    if (fcntl(peer.connection, F_SETFD, FD_CLOEXEC) == -1 || fcntl(peer.connection, F_SETFL, O_NONBLOCK) == -1)
+    {
+        throw std::runtime_error("kernel sample peer socket setup failed");
+    }
+#if defined(SO_NOSIGPIPE)
+    const int no_sigpipe = 1;
+    if (setsockopt(peer.connection, SOL_SOCKET, SO_NOSIGPIPE, &no_sigpipe, sizeof(no_sigpipe)))
+    {
+        throw std::runtime_error("kernel sample peer SIGPIPE setup failed");
+    }
+#endif
+    auto send_bytes = [&](std::string_view bytes) {
+        while (!bytes.empty())
+        {
+            wait_ready(peer.connection, POLLOUT);
+#if defined(MSG_NOSIGNAL)
+            constexpr int flags = MSG_NOSIGNAL;
+#else
+            constexpr int flags = 0;
+#endif
+            const auto size = send(peer.connection, bytes.data(), bytes.size(), flags);
+            if (size > 0)
+            {
+                bytes.remove_prefix(static_cast<std::size_t>(size));
+            }
+            else if (size != -1 || (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
+            {
+                throw std::runtime_error("kernel sample peer send failed: " + client.log);
+            }
+        }
+    };
+    auto receive_exact = [&](const std::string& expected) {
+        std::string received(expected.size(), '\0');
+        std::size_t offset{};
+        while (offset < received.size())
+        {
+            wait_ready(peer.connection, POLLIN);
+            const auto size = recv(peer.connection, received.data() + offset, received.size() - offset, 0);
+            if (size > 0)
+            {
+                offset += static_cast<std::size_t>(size);
+            }
+            else if (size != -1 || (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
+            {
+                throw std::runtime_error("kernel sample peer receive failed: " + client.log);
+            }
+        }
+        if (received != expected)
+        {
+            throw std::runtime_error("kernel sample peer frame mismatch: " + client.log);
+        }
+    };
+    using connection_load::frame_kind;
+    const connection_load::identity owner{97, 3, 1};
+    auto wire = [&](frame_kind kind, std::uint64_t sequence = 0) {
+        const auto body = connection_load::make_frame(kind, owner, sequence, kind == frame_kind::data ? 1 : 0);
+        return std::string(1, static_cast<char>(body.size())) + body;
+    };
+    receive_exact(wire(frame_kind::hello, 1));
+    send_bytes(wire(frame_kind::hello_ack));
+    receive_exact(wire(frame_kind::start));
+    send_bytes(wire(frame_kind::start_ack));
+    receive_exact(wire(frame_kind::data, 1));
+    send_bytes(wire(frame_kind::data, 1));
+    receive_exact(wire(frame_kind::data, 2));
+    // Deliberately withhold the second Echo, but keep the accepted socket open
+    // through the child's real request timeout and cancellation/drain.
+    const auto status = client.wait();
+    const auto output = read_file(client.log);
+    const auto history_position = output.find("\"event\":\"tcp_kernel_sample_history\"");
+    const auto summary_position = output.find("\"event\":\"operation_trace_summary\"");
+    const auto snapshot_position = output.find("\"event\":\"connection_diagnostic\"");
+    const auto result_position = output.find("\"event\":\"result\"");
+    if (status != 1 || history_position == std::string::npos || summary_position == std::string::npos ||
+        snapshot_position == std::string::npos || result_position == std::string::npos ||
+        !(history_position < summary_position && summary_position < snapshot_position &&
+            snapshot_position < result_position))
+    {
+        throw std::runtime_error("periodic kernel sample output missing: " + client.log);
+    }
+    const auto history = output.substr(history_position, output.find('\n', history_position) - history_position);
+    const auto summary = output.substr(summary_position, output.find('\n', summary_position) - summary_position);
+    const auto result = output.substr(result_position);
+    if (history.find("\"sample_phase\":\"periodic_io_worker\"") == std::string::npos ||
+        history.find("\"run_id\":97,\"client_id\":3,\"connection_id\":1") == std::string::npos ||
+        counter(history, "sample_time_us") < 1000000 || counter(history, "no_completion_age_us") < 1000000 ||
+        counter(history, "next_receive") != 2 || counter(history, "next_send") != 3 ||
+        counter(summary, "worker_markers_completed") < 1 || counter(summary, "tcp_kernel_histories_emitted") != 1 ||
+        counter(summary, "tcp_kernel_histories_omitted") != 0 || counter(summary, "sampler_calls") < 1 ||
+        summary.find("\"output_truncated\":false") == std::string::npos ||
+        summary.find("\"operation_scope\":\"composed_only\",\"low_level_operations\":false") == std::string::npos ||
+        result.find("\"cleanup_complete\":true") == std::string::npos ||
+        result.find("\"success\":false") == std::string::npos || result.find("request timeout:") == std::string::npos ||
+        result.find("\"operation_trace_enabled\":true,\"operation_trace_emitted\":true") == std::string::npos ||
+        result.find("\"tcp_kernel_samples_enabled\":true") == std::string::npos ||
+        output.find("socket_operation_trace_enabled") != std::string::npos || counter(result, "data_received") != 1 ||
+        counter(result, "finished") != 0)
+    {
+        throw std::runtime_error("periodic kernel sample scope/drain evidence missing: " + client.log);
+    }
+#if defined(__APPLE__)
+    if (history.find("\"tcp_info\":{\"state\":4,") == std::string::npos)
+    {
+        throw std::runtime_error("periodic established Apple TCP info missing: " + client.log);
+    }
+#else
+    if (history.find("\"tcp_info\":null,\"unavailable_reason\":\"unsupported_platform\"") == std::string::npos)
+    {
+        throw std::runtime_error("unsupported periodic TCP info reason missing: " + client.log);
+    }
+#endif
+    std::cout << "controlled post-DATA stall retained periodic samples before timeout cleanup: " << client.log << '\n';
+}
+
 void fragmented_window(const std::string& executable) {
     using connection_load::frame_kind;
     const connection_load::identity owner{83, 1, 1};
@@ -564,6 +742,7 @@ int main(int argc, char** argv) {
         invalid_arguments(argv[1]);
         silent_peer(argv[1]);
         silent_peer(argv[1], true);
+        progress_then_stall(argv[1]);
         pair(argv[1], argv[1], 1, "idle", 1024, false, true);
         fragmented_window(argv[1]);
         fragmented_window(argv[2]);
