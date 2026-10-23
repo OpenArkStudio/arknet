@@ -298,6 +298,46 @@ unresolved; the new option has not yet been exercised in that workload. Enabling
 diagnostics changes observation cost; success is neither a fix nor capacity
 acceptance. Do not extend deadlines or automatically retry for a preferred result.
 
+### Opt-in TCP kernel samples
+
+For the native control, add `--operation-trace on --tcp-kernel-samples on` to
+an otherwise unchanged diagnostic command on either peer. `--tcp-kernel-samples`
+defaults to `off`; it requires operation tracing and is independent of socket
+operation tracing. Off mode allocates no kernel-sample storage and performs no
+additional socket queries. It does not change transport, workload, recovery,
+deadlines or the existing one-second sampling cadence.
+
+The existing worker marker samples active, unfinished traffic sessions that have
+received DATA and have had no composed read or write completion for at least one
+second. This is an inactivity trigger, not evidence of a network failure. The
+single IO worker queries at most 16 identities per tick, keeping eight samples
+per identity in fixed storage below 32 KiB per process, in addition to the existing
+16 MiB operation-trace budget (allocator overhead excluded). At each tick, observed
+progress, completion or close releases the retained slot before admitting new
+identities; persistent stalls retain their slots. Finite capacity can omit a
+connection. Overwritten samples, released histories, slot reuse and omitted eligible
+observations are counted. No new timer, thread or worker post is added.
+
+On Apple platforms, samples query public `TCP_CONNECTION_INFO`: TCP state, flags,
+RTO in milliseconds, queued send bytes (including in-flight data), send/receive
+windows, congestion window, slow-start threshold and byte/retransmission counters.
+Other platforms emit `tcp_info: null` with `unsupported_platform`; closed sockets,
+failed queries and short responses also emit null with an explicit reason.
+Unavailable metrics are never synthesized as zero.
+
+On failure, `tcp_kernel_sample_history` records accompany retained incomplete
+sessions independently of operation-history admission or operation-record emission,
+inside the existing bounded trace output. `operation_trace_summary` contains
+`tcp_kernel_samples` bounds/counters, `tcp_kernel_histories_emitted` and
+`tcp_kernel_histories_omitted`; output truncation remains explicit.
+The final result adds `tcp_kernel_samples_enabled: true` only when enabled.
+Successful runs emit no sample history. `sample_time_us` is the periodic query
+start time in process-relative microseconds; it is distinct from operation-ring
+freeze time. Sampling can miss transient states or be delayed by the IO worker.
+A retained state after reset cannot describe earlier recovery; use actual sampled
+state and time. Samples neither prove a root cause nor provide performance or
+capacity acceptance. Keep the raw diagnostic output local.
+
 Admission, phase changes and timeout scans execute on a separate main/owner
 thread; one IO worker executes socket callbacks and per-session strand commands.
 Counters and pending timestamps cross that boundary through atomics, without a

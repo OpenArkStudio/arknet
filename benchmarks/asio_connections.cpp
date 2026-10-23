@@ -48,6 +48,7 @@ constexpr auto dependency = "Standalone Asio";
 constexpr auto dependency_version = ASIO_VERSION;
 #endif
 
+#include "connections_kernel_samples.hpp"
 #include "connections_protocol.hpp"
 #include "connections_resources.hpp"
 #include "connections_socket_trace.hpp"
@@ -70,7 +71,7 @@ struct options
     std::size_t connect_ms = 5000, request_ms = 5000, inflight = 20000;
     std::size_t inflight_bytes = 64 * 1024 * 1024, budget = 512 * 1024 * 1024;
     double hold = 1, deadline = 30, cleanup = 5;
-    bool operation_trace{}, socket_operation_trace{};
+    bool operation_trace{}, socket_operation_trace{}, tcp_kernel_samples{};
 };
 
 std::uint64_t integer(std::string_view text) {
@@ -94,6 +95,10 @@ double seconds(const std::string& text) {
 }
 
 void validate(const options& o) {
+    if (o.tcp_kernel_samples && !o.operation_trace)
+    {
+        throw std::invalid_argument("tcp-kernel-samples requires operation-trace on");
+    }
     if (o.socket_operation_trace && !o.operation_trace)
     {
         throw std::invalid_argument("socket-operation-trace requires operation-trace on");
@@ -145,6 +150,7 @@ void help() {
                  "  --max-inflight-bytes BYTES --buffer-budget-bytes BYTES\n"
                  "  --operation-trace off|on (default off; bounded composed-operation diagnostics)\n"
                  "  --socket-operation-trace off|on (default off; requires operation-trace on)\n"
+                 "  --tcp-kernel-samples off|on (default off; requires operation-trace on; Apple TCP info)\n"
                  "  --self-test (unit checks only; no sockets)\n"
                  "One native Asio context/worker, session strands, TCP_NODELAY, 4096B read_until cap.\n"
                  "Defaults permit 5000 active connections, 32 connecting and 20000 data inflight.\n"
@@ -258,6 +264,10 @@ options arguments(int argc, char** argv) {
         else if (key == "--socket-operation-trace" && (value == "on" || value == "off"))
         {
             o.socket_operation_trace = value == "on";
+        }
+        else if (key == "--tcp-kernel-samples" && (value == "on" || value == "off"))
+        {
+            o.tcp_kernel_samples = value == "on";
         }
         else if (key == "--io-threads" && integer(value) == 1)
         {
@@ -430,6 +440,7 @@ struct application
         , operations(o.operation_trace, o.role == "client" ? o.connections : o.expected, o.socket_operation_trace,
               sizeof(connection_load::socket_trace_stream<tcp::socket>) +
                   2 * connection_load::socket_handler_reservation)
+        , kernel_samples(o.tcp_kernel_samples)
         , acceptor(io)
         , cleanup(io)
         , signals(io, SIGINT, SIGTERM) {}
@@ -439,6 +450,7 @@ struct application
     void launch();
     void poll();
     void sample();
+    void sample_kernel();
     void fail(const std::string& scope, const std::string& reason);
     void stop();
     void drained();
@@ -451,6 +463,7 @@ struct application
 
     options o;
     connection_load::operation_recorder operations;
+    connection_load::tcp_kernel_samples kernel_samples;
     bool trace_emitted{};
     asio::io_context io{1};
     tcp::acceptor acceptor;
@@ -775,8 +788,10 @@ void application::trace_failure() {
     // Single IO worker, before any socket cancellation. Freeze prevents cleanup
     // callbacks from replacing the final pre-cancel operation history.
     operations.freeze();
+    kernel_samples.freeze();
     connection_load::trace_output output;
-    std::size_t incomplete{}, emitted{}, histories_incomplete{}, socket_histories_incomplete{};
+    std::size_t incomplete{}, emitted{}, histories_incomplete{}, socket_histories_incomplete{},
+        kernel_histories_available{}, kernel_histories_emitted{};
     for (const auto& value : sessions)
     {
         if (!value->state.finished || value->writing || !value->queued.empty())
@@ -827,6 +842,17 @@ void application::trace_failure() {
                         (!value->socket_trace || !value->socket_trace->ring().history_complete());
                 }
             }
+            if (o.tcp_kernel_samples && kernel_samples.contains(value->state.owner))
+            {
+                ++kernel_histories_available;
+                kernel_histories_emitted += output.append([&](std::ostream& out) {
+                    out << "{\"event\":\"tcp_kernel_sample_history\",\"schema\":1,\"role\":" << std::quoted(o.role)
+                        << ",\"run_id\":" << o.run << ",\"client_id\":" << value->state.owner.client
+                        << ",\"connection_id\":" << value->state.owner.connection << ',';
+                    kernel_samples.write_history(out, value->state.owner);
+                    out << '}';
+                });
+            }
         }
     }
     const auto summary = output.append(
@@ -839,6 +865,13 @@ void application::trace_failure() {
                 << ",\"incomplete_socket_histories\":" << socket_histories_incomplete
                 << ",\"output_truncated\":" << (output.truncated() ? "true" : "false") << ',';
             operations.write_json(out);
+            if (o.tcp_kernel_samples)
+            {
+                out << ",\"tcp_kernel_histories_emitted\":" << kernel_histories_emitted
+                    << ",\"tcp_kernel_histories_omitted\":" << kernel_histories_available - kernel_histories_emitted
+                    << ",\"tcp_kernel_samples\":";
+                kernel_samples.write_summary(out);
+            }
             out << '}';
         },
         true);
@@ -1197,6 +1230,45 @@ void application::poll() {
     }
 }
 
+void application::sample_kernel() {
+    // Reuse the existing marker on the single IO worker. Release recovered slots
+    // before admission so persistent stalls are never evicted by transient ones.
+    if (stopping || failed || o.scenario != "traffic")
+    {
+        return;
+    }
+    const auto now = clock_type::now();
+    const auto idle = [now](const session& value) {
+        return std::chrono::duration_cast<std::chrono::microseconds>(
+            now - (std::max)(value.last_read_at, value.last_write_at))
+            .count();
+    };
+    const auto stalled = [&](const session& value) {
+        return connection_load::tcp_kernel_samples::stalled(
+            value.active, value.state.finished, value.closed, value.state.next_receive > 1, idle(value));
+    };
+    for (const auto& value : sessions)
+    {
+        kernel_samples.prune(value->state.owner, stalled(*value), value->read_completions + value->write_completions);
+    }
+    for (const auto& value : sessions)
+    {
+        if (stalled(*value))
+        {
+            kernel_samples.sample(value->state.owner, elapsed_us(), idle(*value),
+                value->read_completions + value->write_completions, value->state.next_receive, value->state.next_send,
+                [&] {
+#if defined(__APPLE__)
+                    return connection_load::query_tcp_kernel_info(
+                        value->socket.is_open() ? value->socket.native_handle() : -1);
+#else
+                    return connection_load::query_tcp_kernel_info(-1);
+#endif
+                });
+        }
+    }
+}
+
 void application::sample() {
     const auto now = clock_type::now();
     if (now - sampled < std::chrono::seconds(1))
@@ -1206,7 +1278,13 @@ void application::sample() {
     if (operations.request_marker())
     {
         const auto submitted = elapsed_us();
-        asio::post(io, [this, submitted] { operations.complete_marker(submitted, elapsed_us()); });
+        asio::post(io, [this, submitted] {
+            operations.complete_marker(submitted, elapsed_us());
+            if (o.tcp_kernel_samples)
+            {
+                sample_kernel();
+            }
+        });
     }
     // Bracket the CPU query with monotonic phase counts so consecutive sample
     // endpoints exclude overlapping START and FIN processing from idle intervals.
@@ -1312,6 +1390,10 @@ void application::result() const {
         {
             std::cout << ",\"socket_operation_trace_enabled\":true";
         }
+        if (o.tcp_kernel_samples)
+        {
+            std::cout << ",\"tcp_kernel_samples_enabled\":true";
+        }
     }
     std::cout << "}\n";
     if (!failure.empty() || !clean || !complete)
@@ -1327,12 +1409,16 @@ void self_test() {
             throw std::runtime_error("native control self-test failed");
         }
     };
-    auto parse = [](const std::string& mode, bool socket_trace = false) {
+    auto parse = [](const std::string& mode, bool socket_trace = false, bool kernel_samples = false) {
         std::vector<std::string> values{"control", "--role", "client", "--target", "127.0.0.1", "--port", "1",
             "--run-id", "1", "--operation-trace", mode};
         if (socket_trace)
         {
             values.insert(values.end(), {"--socket-operation-trace", "on"});
+        }
+        if (kernel_samples)
+        {
+            values.insert(values.end(), {"--tcp-kernel-samples", "on"});
         }
         std::vector<char*> argv;
         for (auto& value : values)
@@ -1343,6 +1429,17 @@ void self_test() {
     };
     const auto disabled = parse("off"), enabled = parse("on");
     const auto socket_enabled = parse("on", true);
+    const auto kernel_enabled = parse("on", false, true);
+    require(!disabled.tcp_kernel_samples && !enabled.tcp_kernel_samples && kernel_enabled.tcp_kernel_samples);
+    require(kernel_enabled.deadline == enabled.deadline && kernel_enabled.request_ms == enabled.request_ms &&
+            kernel_enabled.connections == enabled.connections && kernel_enabled.window == enabled.window &&
+            kernel_enabled.payload == enabled.payload);
+    bool kernel_rejected{};
+    try
+    { parse("off", false, true); }
+    catch (const std::invalid_argument&)
+    { kernel_rejected = true; }
+    require(kernel_rejected);
     require(!disabled.operation_trace && enabled.operation_trace);
     require(
         !disabled.socket_operation_trace && !enabled.socket_operation_trace && socket_enabled.socket_operation_trace);
