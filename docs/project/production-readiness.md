@@ -109,11 +109,51 @@ release slots, while persistent stalls keep theirs. Omission and overwrite are
 explicit. Other platforms return null with an unsupported reason. Sample time is
 separate from the operation-ring freeze; delayed sampling can miss transient
 states. Selected Boost and Standalone Asio regressions include a controlled
-post-DATA stall that retains an ESTABLISHED sample before timeout cleanup. One
-5,000-connection run with the original parameters and sampling enabled completed
-on both peers (560,887 DATA messages each, no timeouts); it produced no stalled
-histories. That successful control does not explain the captured failure or
-validate sampling during its recurrence. See [usage and limits](../../benchmarks/CONNECTIONS.md#opt-in-tcp-kernel-samples).
+post-DATA stall that retains an ESTABLISHED sample before timeout cleanup. See
+[usage and limits](../../benchmarks/CONNECTIONS.md#opt-in-tcp-kernel-samples).
+
+### Kernel samples during stalled connections
+
+A fixed five-run diagnostic series used the same host and workload above with
+sampling enabled: Boost 1.90 Release, TLS off, native source
+`605625dfea0efff90468771cc0839d03866a134c` (series revision `9200bfb` only adds
+documentation). All 5,000 connections reached ready/started in each run. These
+consecutive outcomes are not an estimated failure probability.
+
+| Run | Finished connections per peer | Unfinished connections per peer |
+| --- | ---: | ---: |
+| 1 | 4,992 | 8 |
+| 2 | 4,996 | 4 |
+| 3 | 5,000 | 0 |
+| 4 | 4,999 | 1 |
+| 5 | 4,995 | 5 |
+
+All ten processes completed cleanup with zero connect errors. The 18 unfinished
+identities match across peers; 36 histories retain 211 kernel samples. Every
+retained client sample reports:
+
+| Public TCP observation | Value |
+| --- | --- |
+| Connection state / recovery flag | ESTABLISHED / loss recovery |
+| Congestion window | 0 bytes |
+| Occupied send socket buffer, including in-flight data | 4,364 bytes |
+| Peer receive window | 293,184–521,024 bytes |
+| Exported retransmission timeout | 0 ms |
+
+The client's completed writes exceed the server's completed reads by four
+1,091-byte frames on every matched identity. IO worker probes continue completing;
+no final unfinished identity or output was omitted. Transient eligible
+observations were omitted and older server samples overwritten. Server sample
+tails occur after client cleanup, so the peer sample windows are not simultaneous.
+Client histories begin at least one second after completion progress stops and
+do not show the onset of recovery. Successful connections emit no comparable
+history, and this series does not isolate instrumentation timing effects.
+
+The installed SDK defines these flags and units. Its exported zero timeout does
+not establish the installed kernel's armed timers or deadlines. The observations
+focus the investigation on TCP recovery state; they do not establish an Asio or
+kernel defect, explain the captured failure, or pass capacity acceptance. Raw
+samples remain local.
 
 The `resource_startup` descriptor diagnostics read each running process's
 `nofile_soft` and `nofile_hard` through `getrlimit(RLIMIT_NOFILE)`. Finite limits are integers,
