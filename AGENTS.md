@@ -39,11 +39,11 @@ branch or worktree when the existing checkout contains uncommitted changes.
 
 ## Verification and delivery
 
-- When runner capacity is shared by several PRs, prioritize the oldest unblocked
-  PRs and their required queue candidates. Prepare newer work locally and defer
-  its hosted runs until older ready PRs can finish; do not repeatedly push newer
-  branches ahead of the backlog. Preserve active acceptance runs. A cancelled
-  scheduling run still needs fresh successful checks before acceptance.
+- Apply the per-repository FIFO and shared-runner start gates defined below.
+  Prepare newer work locally, preserve active older runs, and do not push newer
+  branches ahead of their own repository backlog. Independent repositories may
+  advance in parallel once the native-start gate is satisfied. Cancelled runs
+  still require fresh successful checks before acceptance.
 - Run the checks relevant to the change before publishing. Report the exact
   tested revision, commands, results and material limitations.
 - Investigate failed CI logs before changing code or retrying. Do not repeatedly
@@ -131,14 +131,19 @@ branch or worktree when the existing checkout contains uncommitted changes.
 - Use `gh` CLI for GitHub operations; do not replace it with direct REST/GraphQL
   requests or `gh api`. Normal Git fetch/push commands remain appropriate.
 - The root agent alone observes CI and controls PR readiness and queue admission.
-  Order admission by PR creation time: finish the oldest unfinished PR before
-  admitting newer ones. A newer PR becoming green first is not permission to
-  overtake an older PR. Account for shared runner capacity across ark and arknet.
-- Continue independent implementation and local validation in parallel. Publish
-  focused modules without starting newer native matrices ahead of the backlog.
-  Use drafts only when the deployed workflow actually defers draft native jobs;
-  otherwise retain a reviewable local branch until admission is available.
-- Do not enable automatic merge for held PRs. Release them in creation order;
+  Order queue admission by PR creation time within each repository, retaining
+  explicit user-approved priority exceptions. A newer PR becoming green first
+  does not permit it to overtake an older unfinished PR in the same repository.
+  Independent repositories may advance in parallel.
+- Before admitting new source/native work or requesting a new merge candidate,
+  verify that every older active candidate has started all of its native jobs.
+  A waiting or missing native job is not a start; completion is not required.
+  Unadmitted work in another repository does not block an eligible repository.
+- Continue independent implementation and local validation in parallel. Use drafts
+  only when the deployed workflow actually defers draft native jobs; otherwise
+  retain a reviewable local branch until admission is available.
+- Do not enable automatic merge for held PRs. Release them in creation order
+  within each repository, retaining explicit user-approved priority exceptions;
   after required checks pass, squash through the protected merge queue promptly.
   Do not repeatedly ask for already-authorized merges or bypass any check.
 - When a draft-preview workflow is deployed, verify fresh ready-for-review checks
@@ -147,10 +152,9 @@ branch or worktree when the existing checkout contains uncommitted changes.
   establish fresh admission. Verify the hosted behavior before claiming it works.
 - Give jobs unique, descriptive names. Consolidate compatible jobs/steps to reduce
   setup time without dropping required platforms, protocols or verification.
-- Preserve active acceptance runs. If correcting scheduling requires cancellation,
-  record its reason and arrange fresh acceptance; cancellation never counts as
-  a successful test. GitHub Actions concurrency groups do not by themselves
-  enforce PR-creation order.
+- Preserve active acceptance runs. Do not cancel older runs to admit newer work.
+  Cancellation never counts as a successful test. GitHub Actions concurrency
+  groups do not by themselves enforce PR-creation order.
 - Keep one observer per PR batch. Batch status reads, back off unchanged polling,
   and let scripts collect logs and exit codes. Read summaries and relevant failure
   excerpts, not entire repeated logs. Communicate completion, failures, interface
