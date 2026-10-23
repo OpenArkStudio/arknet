@@ -43,6 +43,10 @@ doctest 和历史测量快照。CI 执行相同检查。格式工具仅用于开
 
 ## 构建和测试
 
+以 `main` 为目标分支的草稿 PR 转为可审查状态后，等待当前 head 的新一轮
+`ready_for_review` CI。申请进入合并队列前，核对这轮源分支检查；此前的检查不能替代它。
+详见 [CI 覆盖范围](testing_CN.md#ci-覆盖范围)。
+
 依赖配置见[安装和配置](../get-started/installation_CN.md)。在仓库根目录构建开发配置，并运行检查目标：
 
 ```sh
