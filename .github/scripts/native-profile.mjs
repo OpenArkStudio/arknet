@@ -21,6 +21,10 @@ export function profilePlan(env) {
   const debug = sanitize !== 'OFF';
   const flags = sanitize === 'ON' ? 'address,undefined' : 'thread';
   const configure = ['-S', '.', '-B', build, '-G', 'Ninja',
+    // The link edge includes vcpkg's post-build DLL deployment. Serialize those
+    // edges on Windows without reducing concurrent C++ compilation.
+    ...(env.RUNNER_OS === 'Windows' ? ['-DCMAKE_JOB_POOLS=arknet_windows_link=1',
+      '-DCMAKE_JOB_POOL_LINK=arknet_windows_link'] : []),
     `-DCMAKE_TOOLCHAIN_FILE=${env.VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake`,
     `-DVCPKG_MANIFEST_FEATURES=${env.VCPKG_CACHE_FEATURES}`,
     `-DCMAKE_C_COMPILER_LAUNCHER=${env.ARKNET_COMPILER_LAUNCHER ?? ''}`,

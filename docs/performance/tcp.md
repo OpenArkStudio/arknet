@@ -61,6 +61,15 @@ Idle residency establishes no throughput, RTT or production PCU claim and does
 not resolve the known 5,000-active-connection Echo deadline issue; see
 [production acceptance](../project/production-readiness.md).
 
+The separate native diagnostic control offers `--operation-trace on` (default
+`off`) for a bounded history of composed read/write operations and one-second
+worker progress markers. Failure cleanup freezes history and reports at most 16
+sessions; output declares missing/overwritten history and `low_level_operations: false`.
+It does not observe individual socket reads/writes or identify the timeout's root
+cause. These opt-in diagnostics are not part of the measurements above and do not
+resolve the 5,000-active-connection issue. Keep raw traces local and preserve the
+original workload/deadlines; see [operation history](../../benchmarks/CONNECTIONS.md#opt-in-operation-history).
+
 ## No added computation
 
 ![Throughput](assets/tcp-work0-throughput.svg)

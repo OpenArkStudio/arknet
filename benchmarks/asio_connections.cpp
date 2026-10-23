@@ -15,6 +15,7 @@
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <memory_resource>
 #include <mutex>
 #include <set>
 #include <stdexcept>
@@ -49,6 +50,7 @@ constexpr auto dependency_version = ASIO_VERSION;
 
 #include "connections_protocol.hpp"
 #include "connections_resources.hpp"
+#include "connections_trace.hpp"
 
 namespace {
 
@@ -67,6 +69,7 @@ struct options
     std::size_t connect_ms = 5000, request_ms = 5000, inflight = 20000;
     std::size_t inflight_bytes = 64 * 1024 * 1024, budget = 512 * 1024 * 1024;
     double hold = 1, deadline = 30, cleanup = 5;
+    bool operation_trace{};
 };
 
 std::uint64_t integer(std::string_view text) {
@@ -135,6 +138,7 @@ void help() {
                  "  --request-timeout-ms MS --io-threads 1 --payload BYTES --window COUNT\n"
                  "  --max-connections COUNT --max-buffer-bytes 4096 --max-inflight COUNT\n"
                  "  --max-inflight-bytes BYTES --buffer-budget-bytes BYTES\n"
+                 "  --operation-trace off|on (default off; bounded composed-operation diagnostics)\n"
                  "  --self-test (unit checks only; no sockets)\n"
                  "One native Asio context/worker, session strands, TCP_NODELAY, 4096B read_until cap.\n"
                  "Defaults permit 5000 active connections, 32 connecting and 20000 data inflight.\n"
@@ -240,6 +244,10 @@ options arguments(int argc, char** argv) {
         else if (key == "--cleanup-seconds")
         {
             o.cleanup = seconds(value);
+        }
+        else if (key == "--operation-trace" && (value == "on" || value == "off"))
+        {
+            o.operation_trace = value == "on";
         }
         else if (key == "--io-threads" && integer(value) == 1)
         {
@@ -384,6 +392,7 @@ struct session : std::enable_shared_from_this<session>
     void finish();
     void receive(std::string_view bytes);
     void diagnose();
+    void trace(connection_load::operation_phase phase, std::uint64_t bytes, std::uint64_t sequence, int error = 0);
 
     application& app;
     asio::strand<asio::io_context::executor_type> strand;
@@ -397,6 +406,7 @@ struct session : std::enable_shared_from_this<session>
     std::atomic<bool> connecting{};
     bool active{}, closed{}, peer_eof{};
     bool read_pending{};
+    connection_load::operation_ring* operations{};
     std::uint64_t read_completions{}, write_completions{}, last_write_kind{}, last_write_sequence{};
     clock_type::time_point last_read_at{}, last_write_at{};
 };
@@ -405,6 +415,7 @@ struct application
 {
     explicit application(options value)
         : o(std::move(value))
+        , operations(o.operation_trace, o.role == "client" ? o.connections : o.expected)
         , acceptor(io)
         , cleanup(io)
         , signals(io, SIGINT, SIGTERM) {}
@@ -418,8 +429,15 @@ struct application
     void stop();
     void drained();
     void result() const;
+    void trace_failure();
+
+    std::int64_t elapsed_us() const {
+        return std::chrono::duration_cast<std::chrono::microseconds>(clock_type::now() - began).count();
+    }
 
     options o;
+    connection_load::operation_recorder operations;
+    bool trace_emitted{};
     asio::io_context io{1};
     tcp::acceptor acceptor;
     asio::steady_timer cleanup;
@@ -509,6 +527,10 @@ void application::stop() {
         cleanup_started = true;
         if (failed)
         {
+            if (operations.enabled())
+            {
+                trace_failure();
+            }
             std::size_t incomplete{}, emitted{};
             for (const auto& value : sessions)
             {
@@ -586,9 +608,19 @@ void session::write() {
     const std::array<asio::const_buffer, 2> buffers{
         asio::buffer(value->prefix.data(), value->prefix_size), asio::buffer(value->body)};
     ++app.callbacks;
+    if (operations)
+    {
+        trace(connection_load::operation_phase::write_start, value->prefix_size + value->body.size(),
+            connection_load::read_integer(value->body, 40));
+    }
     asio::async_write(socket, buffers,
         asio::bind_executor(strand, [self = shared_from_this(), value](error_code error, std::size_t size) {
             auto& a = self->app;
+            if (self->operations)
+            {
+                self->trace(connection_load::operation_phase::write_complete, size,
+                    connection_load::read_integer(value->body, 40), error.value());
+            }
             --a.callbacks;
             --a.pending_writes;
             a.pending_bytes -= value->body.size();
@@ -641,9 +673,11 @@ void session::read() {
     }
     ++app.callbacks;
     read_pending = true;
+    trace(connection_load::operation_phase::read_start, 0, state.next_receive);
     asio::async_read_until(socket, input, dgram_match{},
         asio::bind_executor(strand, [self = shared_from_this()](error_code error, std::size_t size) {
             auto& a = self->app;
+            self->trace(connection_load::operation_phase::read_complete, size, self->state.next_receive, error.value());
             --a.callbacks;
             self->read_pending = false;
             ++self->read_completions;
@@ -687,6 +721,69 @@ void session::read() {
             }
             a.drained();
         }));
+}
+
+void session::trace(connection_load::operation_phase phase, std::uint64_t bytes, std::uint64_t sequence, int error) {
+    if (operations)
+    {
+        operations->record(phase, app.elapsed_us(), bytes, sequence, error);
+    }
+}
+
+void application::trace_failure() {
+    // Single IO worker, before any socket cancellation. Freeze prevents cleanup
+    // callbacks from replacing the final pre-cancel operation history.
+    operations.freeze();
+    connection_load::trace_output output;
+    std::size_t incomplete{}, emitted{}, histories_incomplete{};
+    for (const auto& value : sessions)
+    {
+        if (!value->state.finished || value->writing || !value->queued.empty())
+        {
+            ++incomplete;
+            if (emitted < 16)
+            {
+                const bool retained = value->operations && value->operations->history_complete();
+                const bool written = output.append([&](std::ostream& out) {
+                    out << "{\"event\":\"operation_trace\",\"schema\":1,\"role\":" << std::quoted(o.role)
+                        << ",\"run_id\":" << o.run << ",\"client_id\":" << value->state.owner.client
+                        << ",\"connection_id\":" << value->state.owner.connection
+                        << ",\"snapshot_phase\":\"before_socket_cancel\",\"operation_scope\":\"composed_only\","
+                           "\"trace\":";
+                    if (value->operations)
+                    {
+                        out << '{';
+                        value->operations->write_json(out);
+                        out << '}';
+                    }
+                    else
+                    {
+                        out << "null";
+                    }
+                    out << '}';
+                });
+                if (written)
+                {
+                    ++emitted;
+                    histories_incomplete += !retained;
+                }
+            }
+        }
+    }
+    const auto summary = output.append(
+        [&](std::ostream& out) {
+            out << "{\"event\":\"operation_trace_summary\",\"schema\":1,\"role\":" << std::quoted(o.role)
+                << ",\"run_id\":" << o.run
+                << ",\"snapshot_phase\":\"before_socket_cancel\",\"incomplete_sessions\":" << incomplete
+                << ",\"emitted_sessions\":" << emitted << ",\"omitted_incomplete_sessions\":" << incomplete - emitted
+                << ",\"incomplete_emitted_histories\":" << histories_incomplete
+                << ",\"output_truncated\":" << (output.truncated() ? "true" : "false") << ',';
+            operations.write_json(out);
+            out << '}';
+        },
+        true);
+    std::cout << output.text();
+    trace_emitted = summary;
 }
 
 void session::diagnose() {
@@ -881,6 +978,7 @@ void application::accept() {
             else
             {
                 sessions.push_back(value);
+                value->operations = operations.acquire();
                 value->active = true;
                 ++active;
                 peak_active = (std::max)(peak_active.load(), active.load());
@@ -926,6 +1024,7 @@ void application::launch() {
             return;
         }
         sessions.push_back(value);
+        value->operations = operations.acquire();
         ++callbacks;
         value->socket.async_connect(tcp::endpoint(asio::ip::make_address(o.host), static_cast<unsigned short>(o.port)),
             asio::bind_executor(value->strand, [this, value](error_code error) {
@@ -1044,6 +1143,11 @@ void application::sample() {
     {
         return;
     }
+    if (operations.request_marker())
+    {
+        const auto submitted = elapsed_us();
+        asio::post(io, [this, submitted] { operations.complete_marker(submitted, elapsed_us()); });
+    }
     // Bracket the CPU query with monotonic phase counts so consecutive sample
     // endpoints exclude overlapping START and FIN processing from idle intervals.
     const auto started_before_resources = started.load();
@@ -1138,8 +1242,13 @@ void application::result() const {
               << ",\"cleanup_seconds\":"
               << (drained_at == clock_type::time_point{}
                          ? -1
-                         : std::chrono::duration<double>(drained_at - stopped_at).count())
-              << "}\n";
+                         : std::chrono::duration<double>(drained_at - stopped_at).count());
+    if (operations.enabled())
+    {
+        std::cout << ",\"operation_trace_enabled\":true,\"operation_trace_emitted\":"
+                  << (trace_emitted ? "true" : "false");
+    }
+    std::cout << "}\n";
     if (!failure.empty() || !clean || !complete)
     {
         throw std::runtime_error(failure.empty() ? "terminal state incomplete" : failure);
@@ -1153,6 +1262,21 @@ void self_test() {
             throw std::runtime_error("native control self-test failed");
         }
     };
+    auto parse = [](const std::string& mode) {
+        std::vector<std::string> values{"control", "--role", "client", "--target", "127.0.0.1", "--port", "1",
+            "--run-id", "1", "--operation-trace", mode};
+        std::vector<char*> argv;
+        for (auto& value : values)
+        {
+            argv.push_back(value.data());
+        }
+        return arguments(static_cast<int>(argv.size()), argv.data());
+    };
+    const auto disabled = parse("off"), enabled = parse("on");
+    require(!disabled.operation_trace && enabled.operation_trace);
+    require(disabled.deadline == enabled.deadline && disabled.request_ms == enabled.request_ms &&
+            disabled.connections == enabled.connections && disabled.window == enabled.window &&
+            disabled.payload == enabled.payload);
     options o;
     o.role = "client";
     o.host = "127.0.0.1";
@@ -1234,6 +1358,34 @@ void self_test() {
     client.finish_sent = true;
     require(feed(client, false, frame_kind::finish_ack, owner, 1));
     require(!feed(server, true, frame_kind::data, owner, 2));
+    // Diagnostics live inside the original completion body, with no forwarding
+    // adaptor. Exercise explicit associations and actual cancellation dispatch.
+    asio::io_context context;
+    auto strand = asio::make_strand(context);
+    asio::cancellation_signal cancellation;
+    std::pmr::unsynchronized_pool_resource memory;
+    std::pmr::polymorphic_allocator<std::byte> allocator(&memory);
+    connection_load::operation_ring recorded;
+    bool called = false;
+    auto handler = asio::bind_executor(strand,
+        asio::bind_allocator(allocator, asio::bind_cancellation_slot(cancellation.slot(), [&](error_code error) {
+            require(strand.running_in_this_thread());
+            require(error == asio::error::operation_aborted);
+            require(!called);
+            called = true;
+            recorded.record(connection_load::operation_phase::read_complete, 2, 0, 1, error.value());
+        })));
+    require(asio::get_associated_executor(handler) == strand);
+    require(asio::get_associated_allocator(handler).resource() == &memory);
+    require(asio::get_associated_cancellation_slot(handler) == cancellation.slot());
+    asio::steady_timer timer(context, std::chrono::hours(1));
+    recorded.record(connection_load::operation_phase::read_start, 1, 0, 1);
+    timer.async_wait(std::move(handler));
+    cancellation.emit(asio::cancellation_type::all);
+    context.run_for(std::chrono::seconds(1));
+    require(called && recorded.size() == 2 && recorded.at(1).error != 0);
+    require(recorded.at(0).operation_id == recorded.at(1).operation_id);
+    std::cout << "native control bound executor, allocator and cancellation checks passed\n";
     std::cout << "native control configuration, dgram, identity and sequence checks passed\n";
 }
 } // namespace

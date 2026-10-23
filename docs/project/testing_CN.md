@@ -99,6 +99,10 @@ ThreadSanitizer 保留两个，AddressSanitizer／UndefinedBehaviorSanitizer
 保留一个槽，或在原有资源准入条件满足时使用两个槽；每种依赖构建前重新观测资源。
 每个分组保留 60 分钟任务期限，没有通过延长期限让串行执行通过。
 
+Windows 的 Ninja 构建通过单独的链接任务池，串行执行可执行文件链接及其后的 DLL 部署。
+C++ 编译保留原有并行度，vcpkg 部署与全部测试继续启用，避免这些构建任务同时复制共用的运行库文件。
+外部进程仍可能锁定文件；命令失败时直接报告，不自动重试。
+
 下表将原有十二个原生必需检查映射到七个新上下文。各行列出精确的旧名称，包括 TLS 模式对或依赖配置对。
 `Documentation checks`、`Style - clang-format 18` 和 `CI - required` 保持名称。
 

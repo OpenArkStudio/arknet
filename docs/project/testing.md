@@ -137,6 +137,12 @@ one or the existing resource-admitted two slots, re-evaluated for each dependenc
 Every group retains the 60-minute job deadline; it has not been extended to make
 serial execution pass.
 
+Windows Ninja builds serialize executable linking and its post-build DLL
+deployment in one link pool. C++ compilation keeps the existing parallelism;
+vcpkg deployment and all tests remain enabled. This prevents those build edges
+from copying shared runtime files concurrently. External file locks can still
+fail a build, and a failed command is reported without automatic retries.
+
 The following names map the twelve existing native required contexts to seven
 new contexts. Rows list the exact old names, including pairs of TLS modes or dependencies.
 Documentation checks, `Style - clang-format 18` and `CI - required` retain their names.
