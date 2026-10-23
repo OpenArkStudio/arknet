@@ -104,7 +104,7 @@ Windows 下由 CMake 提供系统网络与进程内存库。构建或使用 arkn
 
 ## 输出与指标
 
-Stdout 使用 JSON Lines：每个进程的 `resource_startup`、服务端的 `ready`、定期 `sample` 和最终 `result`。原生 Asio 对照程序也输出 `resource_startup`。启动记录复用建连准入前已有的首次资源采样，不新增采样，也不改变采样周期。消费方应按 `event` 选择事件，并忽略新增字段。Stderr 用于参数或启动错误。清理超时中止可能留下不完整输出，因此还需记录进程退出码。分别保存各进程输出，原始结果放在 Git 仓库外。
+Stdout 使用 JSON Lines：每个进程的 `resource_startup`、服务端的 `ready`、定期 `sample` 和最终 `result`。原生 Asio 对照程序也输出 `resource_startup`。启动标识沿用各工具已有的格式：arknet 程序使用十进制字符串，原生对照程序使用整数。启动记录复用建连准入前已有的首次资源采样，不新增采样，也不改变采样周期。消费方应按 `event` 选择事件，并忽略新增字段。Stderr 用于参数或启动错误。清理超时中止可能留下不完整输出，因此还需记录进程退出码。分别保存各进程输出，原始结果放在 Git 仓库外。
 
 | 字段 | 口径 |
 | --- | --- |

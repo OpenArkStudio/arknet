@@ -115,6 +115,13 @@ DOCTEST_TEST_CASE("Connection resource limits preserve finite maximum values and
     DOCTEST_CHECK(text.find("\"nofile_soft\":18446744073709551615") != std::string::npos);
     DOCTEST_CHECK(text.find("\"nofile_hard\":\"unlimited\"") != std::string::npos);
     DOCTEST_CHECK(text.ends_with("}\n"));
+
+    std::ostringstream string_ids;
+    connection_load::write_resource_startup(string_ids, sample, "client", (std::numeric_limits<std::uint64_t>::max)(),
+        (std::numeric_limits<std::uint64_t>::max)(), true);
+    DOCTEST_CHECK(string_ids.str().starts_with("{\"event\":\"resource_startup\",\"role\":\"client\","
+                                               "\"run_id\":\"18446744073709551615\","
+                                               "\"client_id\":\"18446744073709551615\","));
 }
 
 DOCTEST_TEST_CASE("Process resource limits report the calling process without modifying its limits") {

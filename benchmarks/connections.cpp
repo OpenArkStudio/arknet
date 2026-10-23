@@ -1023,7 +1023,7 @@ int run(const options& settings) {
     counters values;
     observation samples(settings, values, began);
     connection_load::write_resource_startup(
-        std::cout, overall_resources.initial_snapshot(), settings.role, settings.run, settings.client);
+        std::cout, overall_resources.initial_snapshot(), settings.role, settings.run, settings.client, true);
     arknet::io_pool runtime(settings.threads);
     if (!runtime.start())
     {

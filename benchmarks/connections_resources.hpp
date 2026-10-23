@@ -131,10 +131,11 @@ inline void write_resource_fields(std::ostream& output, const resource_snapshot&
 }
 
 inline void write_resource_startup(std::ostream& output, const resource_snapshot& sample, std::string_view role,
-    std::uint64_t run, std::uint64_t client) {
+    std::uint64_t run, std::uint64_t client, bool string_ids = false) {
     output << "{\"event\":\"resource_startup\",\"role\":";
     write_resource_string(output, role);
-    output << ",\"run_id\":" << run << ",\"client_id\":" << client;
+    const auto quote = string_ids ? "\"" : "";
+    output << ",\"run_id\":" << quote << run << quote << ",\"client_id\":" << quote << client << quote;
     write_resource_fields(output, sample, false);
     output << "}\n" << std::flush;
 }

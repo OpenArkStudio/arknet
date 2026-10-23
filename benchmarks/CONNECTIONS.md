@@ -104,7 +104,7 @@ There is one main scheduling thread and one cleanup-watchdog thread in addition 
 
 ## Output and interpretation
 
-Stdout is JSON Lines: a `resource_startup` event for each process, a server `ready` event, periodic `sample` events and one final `result` event. The native Asio control also emits `resource_startup`. This uses the existing initial resource sample, before connection admission; it does not add a sampling pass or change the cadence. Consumers should select events by `event` and ignore additional fields. Stderr contains argument/startup errors. Watchdog termination may leave output incomplete, so also record each process's exit code. Save each process's streams separately outside the Git repository.
+Stdout is JSON Lines: a `resource_startup` event for each process, a server `ready` event, periodic `sample` events and one final `result` event. The native Asio control also emits `resource_startup`. Startup identifiers retain each tool's existing convention: decimal strings in the arknet tool and integers in the native control. This uses the existing initial resource sample, before connection admission; it does not add a sampling pass or change the cadence. Consumers should select events by `event` and ignore additional fields. Stderr contains argument/startup errors. Watchdog termination may leave output incomplete, so also record each process's exit code. Save each process's streams separately outside the Git repository.
 
 | Result fields | Interpretation |
 | --- | --- |
