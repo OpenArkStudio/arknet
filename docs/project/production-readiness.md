@@ -57,40 +57,45 @@ cleanup scheduling on main; it is outside v0.2.2 and does not resolve this TCP
 response timeout.
 
 An independent control uses official Asio directly, without arknet endpoints or
-runtime code. Its retained failed run provides the following diagnostic evidence:
+runtime code. The retained local diagnostic uses a combination of the
+[descriptor-limit](https://github.com/OpenArkStudio/arknet/pull/54) and
+[socket-operation](https://github.com/OpenArkStudio/arknet/pull/56) changes;
+it is not a released revision.
 
-| Configuration / observation | Retained result |
+| Configuration / observation | Result |
 | --- | --- |
-| Run identity | 2026-10-23; source `aa24661840e531701391bdfb44c3ea8834690a75`; binary SHA-256 `4e0e3b124eba4b6e9974584ec0db530d4167c5185bee41b2ddda5165a28b3712` |
+| Run identity | 2026-10-23; integration source `cd7205b34152a26cca061b947cd33aaa785248d8`; binary SHA-256 `dabd26dd9a2c8dd197fdaac23939ace8e94d5a7b59ea170c9e9aeb32d2d5ae04` |
 | Host / build | Mac16,11, 14 CPU cores, 48 GiB, macOS 27.0.1; AppleClang 21 Release, Boost 1.90, TLS off |
-| Workload / observation | 5,000 loopback connections; 1 KiB body; four requests per connection; one IO context and one IO worker per process; 3 s traffic hold; 5 s request deadline; 40 s server deadline; composed-operation trace enabled on both peers |
-| Completion / cleanup | Both peers reached 5,000 ready and started, but only 4,997 finished. Client connections 3595, 3596 and 3712 each retained four unanswered requests, 12 total. Both processes failed their genuine deadlines and completed cleanup |
-| Final socket observations | All six peer snapshots had one composed read pending, no composed write pending, no queued application writes, no application-buffered input and zero kernel-readable bytes. Each client socket retained 4,364 send-buffer bytes, including possible in-flight data, with a positive send window |
-| Worker progress | All 15 client probes completed, maximum scheduling delay 1,825 µs; retained server probes continued through its deadline. These probes do not prove per-socket readiness progress |
-| Process descriptors | Sampled FD peaks: client 5,008; server 5,009; connect errors zero. Actual process `RLIMIT_NOFILE` values were not captured |
-| Trace limits | Composed operations only; bounded session rings overwrote earlier events. This run has no complete packet/readiness correlation |
+| Workload | 5,000 loopback connections; 1 KiB body; up to four in-flight requests per connection; one IO context and one IO worker per process; 3 s traffic hold; 5 s request deadline; 40 s server deadline; composed and underlying socket tracing enabled |
+| Completion / cleanup | Both peers reached 5,000 ready/started and 4,994 finished. Six connections retained requests 64–67: 24 unanswered requests. Both processes failed at their configured deadlines and completed cleanup |
+| Actual process limits | Both startup records: `RLIMIT_NOFILE` soft 1,048,575 / hard `"unlimited"`. Sampled FD peaks: client 5,008, server 5,009; zero connect errors |
+| Every stalled client | Completed socket/composed read bytes 68,863; write bytes 73,227. An underlying read with 4,096-byte capacity remains pending; no active write or queued application send |
+| Every stalled server | Completed socket/composed read and write bytes both 68,863. An underlying read with 4,096-byte capacity remains pending; application input and kernel-readable bytes are zero |
+| TCP observation | Each client send buffer retains 4,364 bytes, possibly including in-flight data; send windows are positive. A completed write does not establish peer delivery |
+| Recorder / worker progress | All 5,000 sessions recorded, all six stalled sessions emitted per peer, no omitted/truncated output or invalid transitions. Client probes 14/14 and server probes 39/39 completed; this does not prove per-socket readiness |
 
-The root cause remains unresolved. Worker progress does not exclude individual
-socket-readiness or composed-operation scheduling problems, and a positive send
-window does not establish successful delivery. This diagnostic run is not a
-performance result or capacity acceptance. Intermittent local controls can pass;
-successful controls do not establish a fix, a common cause for arknet/native
-failures, or performance equivalence between the two drivers. Production capacity
-and cross-host acceptance remain pending. Raw logs and historical control/capture
-evidence stay local, outside Git. Reproduction parameters are described in
-[connection benchmarks](../../benchmarks/CONNECTIONS.md).
+The byte difference is four 1,091-byte frames per stalled connection. A valid
+2,182-byte underlying read can supply two frames, followed by a zero-byte read
+completion for buffered data. Socket and composed lifetime byte totals agree;
+truncated event tails must not be compared as complete histories. No sequence-64,
+framing, handler-association or application-queue defect is proved.
 
-Current connection tools emit `resource_startup` with the actual process's
-`nofile_soft` and `nofile_hard`, queried through `getrlimit(RLIMIT_NOFILE)` on
-POSIX. Finite limits are JSON integers, infinity is `"unlimited"`, and unavailable
-values are null with a reason; Windows reports this POSIX limit as not applicable
-and retains handle counts. Limits cover files, pipes and event-loop descriptors
-as well as sockets, so they do not guarantee a TCP connection capacity. They are
-inherited from the launching process. Current shell, launch-service or macOS
-`kern.maxfiles*` settings do not establish historical benchmark limits and are
-not portable defaults. Historical failed runs without these process-level
-readings retain that evidence gap; new metadata does not identify or fix the
-5,000-connection stall. The tools do not change limits, deadlines or workloads.
+The root cause remains unresolved between client write completion and server
+read completion. No complete packet/readiness correlation was recorded, and the
+peers' final snapshots occur at different deadlines. This is a failed diagnostic
+workload, not performance or capacity acceptance. Intermittent passing controls
+do not establish a fix or performance equivalence. Raw logs and captures stay
+local. See [connection benchmarks](../../benchmarks/CONNECTIONS.md) for parameters.
+
+The `resource_startup` descriptor diagnostics read each running process's
+`nofile_soft` and `nofile_hard` through `getrlimit(RLIMIT_NOFILE)`. Finite limits are integers,
+infinity is `"unlimited"`, and unavailable values are null with a reason;
+Windows retains handle counts and reports this POSIX limit as not applicable.
+Limits include files, pipes and event-loop descriptors as well as sockets.
+Current shell, launch-service and macOS `kern.maxfiles*` settings are not evidence
+of historical process limits or portable capacity defaults. Earlier records
+without startup limits retain that evidence gap. The tools change no limits,
+workloads or deadlines; cross-host and production capacity remain pending.
 
 [Testing and validation](testing.md) records configurations, source snapshots and
 sanitizer limitations. Concurrent complete owner stops are serialized for TCP
