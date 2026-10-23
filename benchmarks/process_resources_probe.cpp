@@ -75,6 +75,8 @@ void write_sample(const process_resources& sample, clock_type::time_point first,
     write_metric("current_rss_bytes", sample.current_rss_bytes);
     write_metric("peak_rss_bytes", sample.peak_rss_bytes);
     write_metric("fd_count", sample.fd_count);
+    write_metric("nofile_soft", sample.nofile_soft);
+    write_metric("nofile_hard", sample.nofile_hard);
     write_metric("handle_count", sample.handle_count);
     write_metric("thread_count", sample.thread_count);
     std::cout << "}\n";
@@ -99,6 +101,8 @@ void check_shape(const process_resources& sample, unsigned& checks) {
     check_metric(sample.current_rss_bytes, checks);
     check_metric(sample.peak_rss_bytes, checks);
     check_metric(sample.fd_count, checks);
+    check_metric(sample.nofile_soft, checks);
+    check_metric(sample.nofile_hard, checks);
     check_metric(sample.handle_count, checks);
     check_metric(sample.thread_count, checks);
     if (sample.cpu_percent.value)

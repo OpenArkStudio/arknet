@@ -23,7 +23,12 @@ class resource_observer
 public:
     explicit resource_observer(std::chrono::steady_clock::time_point began)
         : began_(began)
-        , previous_(sampler_.sample().monotonic_time) {}
+        , initial_(sampler_.sample())
+        , previous_(initial_.monotonic_time) {}
+
+    resource_snapshot initial_snapshot() const {
+        return {initial_, std::chrono::duration<double>(initial_.monotonic_time - began_).count(), std::nullopt};
+    }
 
     resource_snapshot sample() {
         auto metrics = sampler_.sample();
@@ -40,6 +45,7 @@ public:
 private:
     std::chrono::steady_clock::time_point began_;
     arknet::benchmark::process_resource_sampler sampler_;
+    arknet::benchmark::process_resources initial_;
     std::chrono::steady_clock::time_point previous_;
 };
 
@@ -82,6 +88,8 @@ inline void write_resource_fields(std::ostream& output, const resource_snapshot&
     metric("peak_rss_bytes", sample.metrics.peak_rss_bytes.value);
     metric("current_rss_bytes", sample.metrics.current_rss_bytes.value);
     metric("fd_count", sample.metrics.fd_count.value);
+    metric("nofile_soft", sample.metrics.nofile_soft.value);
+    metric("nofile_hard", sample.metrics.nofile_hard.value);
     metric("handle_count", sample.metrics.handle_count.value);
     metric("thread_count", sample.metrics.thread_count.value);
     metric("resource_cpu_interval_s", sample.cpu_interval_seconds);
@@ -107,6 +115,8 @@ inline void write_resource_fields(std::ostream& output, const resource_snapshot&
     reason("peak_rss_bytes", sample.metrics.peak_rss_bytes);
     reason("current_rss_bytes", sample.metrics.current_rss_bytes);
     reason("fd_count", sample.metrics.fd_count);
+    reason("nofile_soft", sample.metrics.nofile_soft);
+    reason("nofile_hard", sample.metrics.nofile_hard);
     reason("handle_count", sample.metrics.handle_count);
     reason("thread_count", sample.metrics.thread_count);
     if (!sample.cpu_interval_seconds)
@@ -118,6 +128,15 @@ inline void write_resource_fields(std::ostream& output, const resource_snapshot&
         output << "\"resource_cpu_interval_s\":\"A valid interval CPU percentage is unavailable\"";
     }
     output << '}';
+}
+
+inline void write_resource_startup(std::ostream& output, const resource_snapshot& sample, std::string_view role,
+    std::uint64_t run, std::uint64_t client) {
+    output << "{\"event\":\"resource_startup\",\"role\":";
+    write_resource_string(output, role);
+    output << ",\"run_id\":" << run << ",\"client_id\":" << client;
+    write_resource_fields(output, sample, false);
+    output << "}\n" << std::flush;
 }
 
 } // namespace connection_load

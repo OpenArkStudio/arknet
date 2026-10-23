@@ -56,50 +56,41 @@ not passed capacity acceptance. See the [release notes](releases.md).
 cleanup scheduling on main; it is outside v0.2.2 and does not resolve this TCP
 response timeout.
 
-An independent control using official Asio directly also exhibited an incomplete
-target, without arknet endpoints or runtime code:
+An independent control uses official Asio directly, without arknet endpoints or
+runtime code. Its retained failed run provides the following diagnostic evidence:
 
-| Control configuration | Observed result |
+| Configuration / observation | Retained result |
 | --- | --- |
-| Diagnostic source `c945ce9`, Boost 1.90, AppleClang 21 Release, TLS off; Mac16,11, 14 CPU cores, 48 GiB, macOS 27.0.1; measured 2026-10-20 | 5,000 connections established, 4,999 finished, four unanswered requests on one connection; both processes completed cleanup |
-| One IO worker, 1 KiB payload, four outstanding requests per connection; response deadline 5 s, server deadline 40 s | Client write queue empty; 4,364 bytes remained in its kernel send buffer; application buffers and kernel-readable bytes were zero on both peers |
-| Same failed connection, before socket cancellation | Client send window 366,912 bytes; 19,032 retransmitted bytes and 4,364 out-of-order bytes; `rto_ms` was zero |
-| Correlated packet headers | Receiver ACK remained at 602375564 with a SACK block above the missing 1,091-byte range; the capture includes a retransmission of that range |
+| Run identity | 2026-10-23; source `aa24661840e531701391bdfb44c3ea8834690a75`; binary SHA-256 `4e0e3b124eba4b6e9974584ec0db530d4167c5185bee41b2ddda5165a28b3712` |
+| Host / build | Mac16,11, 14 CPU cores, 48 GiB, macOS 27.0.1; AppleClang 21 Release, Boost 1.90, TLS off |
+| Workload / observation | 5,000 loopback connections; 1 KiB body; four requests per connection; one IO context and one IO worker per process; 3 s traffic hold; 5 s request deadline; 40 s server deadline; composed-operation trace enabled on both peers |
+| Completion / cleanup | Both peers reached 5,000 ready and started, but only 4,997 finished. Client connections 3595, 3596 and 3712 each retained four unanswered requests, 12 total. Both processes failed their genuine deadlines and completed cleanup |
+| Final socket observations | All six peer snapshots had one composed read pending, no composed write pending, no queued application writes, no application-buffered input and zero kernel-readable bytes. Each client socket retained 4,364 send-buffer bytes, including possible in-flight data, with a positive send window |
+| Worker progress | All 15 client probes completed, maximum scheduling delay 1,825 µs; retained server probes continued through its deadline. These probes do not prove per-socket readiness progress |
+| Process descriptors | Sampled FD peaks: client 5,008; server 5,009; connect errors zero. Actual process `RLIMIT_NOFILE` values were not captured |
+| Trace limits | Composed operations only; bounded session rings overwrote earlier events. This run has no complete packet/readiness correlation |
 
-This symptom can therefore occur outside arknet's endpoint/runtime implementation.
-The failure shows a TCP sequence gap with available window space, rather than
-buffered application frames waiting for dispatch. It does not establish a common
-cause for the arknet and native-control failures or identify why TCP recovery
-stalled. The capture recorded 1,675,186 packets and dropped 364,705; absent packets
-cannot be treated as proof that no transmission occurred. All packet headers and
-raw logs remain local. Capacity acceptance and cross-host validation are pending.
-
-The failure is not deterministic under the available local controls. Each case
-below ran once on the same Mac, with 5,000 native Asio connections, 1 KiB payloads,
-one IO worker, a 5 s request deadline and a 40 s overall deadline:
-
-| Source / binary | Outstanding requests per connection | Server port | Result |
-| --- | ---: | --- | --- |
-| `36e4e184`, Boost 1.90 Release, TLS off | 1 and 4, one case each | Dynamically allocated | Both cases finished all 5,000 connections; no protocol errors or timeouts; cleanup completed |
-| `c945ce9`, exact binary from the captured failure | 4 | Dynamically allocated and fixed `56379`, one case each | Both cases finished all 5,000 connections; no protocol errors or timeouts; cleanup completed |
-
-These controls used no external packet capture or live socket observer. The newer
-binary includes periodic resource sampling; the historical binary does not.
-Neither binary, window size nor server port has been isolated as the cause.
-Successful controls do not establish a fix or capacity acceptance; OS/background
-effects and the captured failure's conditions remain unresolved.
-
-A separate `36e4e184` arknet client/server case with the same connection count,
-payload, four-request window and deadlines also completed all 5,000 connections
-without errors and cleaned up. The two drivers differ in global admission checks
-and DATA counter timing, so these cases do not establish performance equivalence.
-
-One historical-binary case with buffered packet capture also completed. That
-capture reported zero capture drops, but reached its 2,000,000-record limit before
-any FIN packet was recorded. It cannot establish complete trace coverage or why
-the historical TCP recovery stalled.
-The reusable control and reproduction parameters are described in
+The root cause remains unresolved. Worker progress does not exclude individual
+socket-readiness or composed-operation scheduling problems, and a positive send
+window does not establish successful delivery. This diagnostic run is not a
+performance result or capacity acceptance. Intermittent local controls can pass;
+successful controls do not establish a fix, a common cause for arknet/native
+failures, or performance equivalence between the two drivers. Production capacity
+and cross-host acceptance remain pending. Raw logs and historical control/capture
+evidence stay local, outside Git. Reproduction parameters are described in
 [connection benchmarks](../../benchmarks/CONNECTIONS.md).
+
+Current connection tools emit `resource_startup` with the actual process's
+`nofile_soft` and `nofile_hard`, queried through `getrlimit(RLIMIT_NOFILE)` on
+POSIX. Finite limits are JSON integers, infinity is `"unlimited"`, and unavailable
+values are null with a reason; Windows reports this POSIX limit as not applicable
+and retains handle counts. Limits cover files, pipes and event-loop descriptors
+as well as sockets, so they do not guarantee a TCP connection capacity. They are
+inherited from the launching process. Current shell, launch-service or macOS
+`kern.maxfiles*` settings do not establish historical benchmark limits and are
+not portable defaults. Historical failed runs without these process-level
+readings retain that evidence gap; new metadata does not identify or fix the
+5,000-connection stall. The tools do not change limits, deadlines or workloads.
 
 [Testing and validation](testing.md) records configurations, source snapshots and
 sanitizer limitations. Concurrent complete owner stops are serialized for TCP
