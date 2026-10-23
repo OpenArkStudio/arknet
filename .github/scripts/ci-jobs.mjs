@@ -19,7 +19,7 @@ const requiredSteps = name => name === 'Documentation checks' ? ['Run npm ci --p
     : ['Validate scope result', 'Record planned coverage', 'Run actions/checkout@v4', 'Run actions/setup-node@v4',
       'Run ilammy/msvc-dev-cmd@v1', 'Run lukka/get-cmake@latest', 'Run lukka/run-vcpkg@v11', 'Upload test results',
       'Prepare dependency archive cache', 'Prepare compiler launcher', 'Start compiler cache after archive restore',
-      'Configure TSan address space', 'Prepare benchmark tools', ...optionalCacheSteps,
+      'Configure ThreadSanitizer address space', 'Prepare benchmark tools', ...optionalCacheSteps,
       ...['ON', 'OFF'].flatMap(boost => ['ON', 'OFF'].flatMap(ssl => {
         const suffix = ` - ${slotName({ boost, ssl })}`;
         return ['Record planned coverage', 'Configure', 'Build planned native targets', 'Test',

@@ -15,8 +15,8 @@ test("the independently reviewed manifests match seven groups and all twelve act
   assert.deepEqual(expectedGroups.map(groupName), [
     "Native - ubuntu-latest - Boost - Release", "Native - ubuntu-latest - Standalone - Release",
     "Native - macos-latest - Release", "Native - windows-latest - Boost - Release",
-    "Native - windows-latest - Standalone - Release", "Native - ubuntu-latest - ASan+UBSan",
-    "Native - ubuntu-latest - TSan",
+    "Native - windows-latest - Standalone - Release", "Native - ubuntu-latest - AddressSanitizer + UndefinedBehaviorSanitizer",
+    "Native - ubuntu-latest - ThreadSanitizer",
   ]);
   assert.deepEqual(expectedGroups.map(group => expectedCells.filter(cell => inGroup(cell, group)).length), [2, 2, 2, 1, 1, 2, 2]);
   for (const cell of expectedCells) assert.equal(expectedGroups.filter(group => inGroup(cell, group)).length, 1);

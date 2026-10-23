@@ -182,8 +182,10 @@ branch or worktree when the existing checkout contains uncommitted changes.
   succeeded for the intended source revision and inspect affected published pages.
   A local preview, merged PR and deployed site are distinct evidence states.
 - Use the full names AddressSanitizer, UndefinedBehaviorSanitizer and
-  ThreadSanitizer in explanatory prose. Preserve command flags, paths, workflow
-  identifiers and machine-readable fields. Call Asio/Beast dependencies rather
+  ThreadSanitizer in explanatory prose and Actions job/step display names.
+  Display-name changes must update exact-name collectors and required contexts
+  together. Preserve internal job IDs, command flags, paths, workflow identifiers
+  and machine-readable fields. Call Asio/Beast dependencies rather
   than backends; capitalize Standalone Asio in prose.
 - Prefer SVG or Mermaid for editable diagrams and charts. Show labeled units and
   readable legends, retain useful error bars, and avoid repeating chart contents

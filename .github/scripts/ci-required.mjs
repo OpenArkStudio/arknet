@@ -12,7 +12,7 @@ export const expectedCells = [
   ...["OFF", "ON"].flatMap(boost => ["ON", "THREAD"].map(sanitize => cell("ubuntu-latest", boost, "ON", sanitize))),
 ];
 export const cellName = ({ os, boost, ssl, sanitize }) =>
-  `Test - ${os} - ${boost === "ON" ? "Boost" : "Standalone"} - ${ssl === "ON" ? "TLS" : "NoTLS"} - ${sanitize === "THREAD" ? "TSan" : sanitize === "ON" ? "ASan+UBSan" : "Release"}`;
+  `Test - ${os} - ${boost === "ON" ? "Boost" : "Standalone"} - ${ssl === "ON" ? "TLS" : "NoTLS"} - ${sanitize === "THREAD" ? "ThreadSanitizer" : sanitize === "ON" ? "AddressSanitizer + UndefinedBehaviorSanitizer" : "Release"}`;
 
 export const expectedGroups = [
   ...["ON", "OFF"].map(boost => ({ os: "ubuntu-latest", boost, sanitize: "OFF" })),
@@ -21,7 +21,7 @@ export const expectedGroups = [
   ...["ON", "THREAD"].map(sanitize => ({ os: "ubuntu-latest", boost: "BOTH", sanitize })),
 ];
 export const groupName = ({ os, boost, sanitize }) =>
-  `Native - ${os} - ${boost === "ON" ? "Boost - " : boost === "OFF" ? "Standalone - " : ""}${sanitize === "THREAD" ? "TSan" : sanitize === "ON" ? "ASan+UBSan" : "Release"}`;
+  `Native - ${os} - ${boost === "ON" ? "Boost - " : boost === "OFF" ? "Standalone - " : ""}${sanitize === "THREAD" ? "ThreadSanitizer" : sanitize === "ON" ? "AddressSanitizer + UndefinedBehaviorSanitizer" : "Release"}`;
 export const requiredJobNames = ["Documentation checks", "Style - clang-format 18", ...expectedGroups.map(groupName)];
 export const inGroup = (profile, group) => profile.os === group.os && profile.sanitize === group.sanitize &&
   (group.boost === "BOTH" || profile.boost === group.boost);
@@ -134,7 +134,7 @@ export function validateRequired({ needs, metadata, eventName, plan }) {
       outcome(job, name, native ? "success" : "skipped");
     }
     outcome(job, "Run ilammy/msvc-dev-cmd@v1", native && group.os === "windows-latest" ? "success" : "skipped");
-    outcome(job, "Configure TSan address space", native && group.sanitize === "THREAD" ? "success" : "skipped");
+    outcome(job, "Configure ThreadSanitizer address space", native && group.sanitize === "THREAD" ? "success" : "skipped");
     outcome(job, "Prepare benchmark tools", native && group.os === "ubuntu-latest" && group.sanitize === "OFF" &&
       (plan.tier === "full" || plan.source_tests === "") ? "success" : "skipped");
     for (const slot of slots) {

@@ -162,22 +162,39 @@ vcpkg deployment and all tests remain enabled. This prevents those build edges
 from copying shared runtime files concurrently. External file locks can still
 fail a build, and a failed command is reported without automatic retries.
 
-The following names map the twelve existing native required contexts to seven
-new contexts. Rows list the exact old names, including pairs of TLS modes or dependencies.
+The following table records the transition from twelve native required contexts
+to seven grouped contexts. The left column preserves exact historical names,
+including pairs of TLS modes or dependencies; the right column uses the current full names.
 Documentation checks, `Style - clang-format 18` and `CI - required` retain their names.
 
-| Existing native contexts (`Test - ` prefix) | New context |
+| Historical native contexts (`Test - ` prefix) | Current grouped context |
 | --- | --- |
 | `ubuntu-latest - Boost - TLS - Release`; `ubuntu-latest - Boost - NoTLS - Release` | `Native - ubuntu-latest - Boost - Release` |
 | `ubuntu-latest - Standalone - TLS - Release`; `ubuntu-latest - Standalone - NoTLS - Release` | `Native - ubuntu-latest - Standalone - Release` |
 | `macos-latest - Boost - TLS - Release`; `macos-latest - Standalone - TLS - Release` | `Native - macos-latest - Release` |
 | `windows-latest - Boost - TLS - Release` | `Native - windows-latest - Boost - Release` |
 | `windows-latest - Standalone - TLS - Release` | `Native - windows-latest - Standalone - Release` |
-| `ubuntu-latest - Boost - TLS - ASan+UBSan`; `ubuntu-latest - Standalone - TLS - ASan+UBSan` | `Native - ubuntu-latest - ASan+UBSan` |
-| `ubuntu-latest - Boost - TLS - TSan`; `ubuntu-latest - Standalone - TLS - TSan` | `Native - ubuntu-latest - TSan` |
+| `ubuntu-latest - Boost - TLS - ASan+UBSan`; `ubuntu-latest - Standalone - TLS - ASan+UBSan` | `Native - ubuntu-latest - AddressSanitizer + UndefinedBehaviorSanitizer` |
+| `ubuntu-latest - Boost - TLS - TSan`; `ubuntu-latest - Standalone - TLS - TSan` | `Native - ubuntu-latest - ThreadSanitizer` |
 
-Protection migration requires maintainer-controlled staged acceptance. Keep all
-fifteen old requirements while running `workflow_dispatch` against the exact new
+Sanitizer job labels use full names. Existing grouped contexts migrate as follows;
+the old names identify checks from before this label change only:
+
+| Previous grouped context | Current grouped context |
+| --- | --- |
+| `Native - ubuntu-latest - ASan+UBSan` | `Native - ubuntu-latest - AddressSanitizer + UndefinedBehaviorSanitizer` |
+| `Native - ubuntu-latest - TSan` | `Native - ubuntu-latest - ThreadSanitizer` |
+
+Register the new names in source checks. Before changing protection, finish
+acceptance of earlier candidates and verify the new source checks. Replace these
+two requirements together, preserving all other requirements, and update observers
+that match exact context names.
+The new actual merge candidate still requires complete acceptance. This label
+change preserves the twelve native configurations, sanitizer flags, test commands,
+resource bounds and job deadlines.
+
+For the historical twelve-to-seven migration, protection changes require
+maintainer-controlled staged acceptance. Keep all fifteen old requirements while running `workflow_dispatch` against the exact new
 branch head. Verify full grouped coverage before changing protection: cold and
 populated-cache runs, all twelve configuration conclusions, source/module and
 documentation scopes, and failure propagation. Do not change the deployed matrix
