@@ -108,8 +108,12 @@ in less than 32 KiB of extra fixed storage; recovered/completed/closed sessions
 release slots, while persistent stalls keep theirs. Omission and overwrite are
 explicit. Other platforms return null with an unsupported reason. Sample time is
 separate from the operation-ring freeze; delayed sampling can miss transient
-states. This diagnostic has not been accepted in the stalled workload and does
-not resolve its root cause. See [usage and limits](../../benchmarks/CONNECTIONS.md#opt-in-tcp-kernel-samples).
+states. Selected Boost and Standalone Asio regressions include a controlled
+post-DATA stall that retains an ESTABLISHED sample before timeout cleanup. One
+5,000-connection run with the original parameters and sampling enabled completed
+on both peers (560,887 DATA messages each, no timeouts); it produced no stalled
+histories. That successful control does not explain the captured failure or
+validate sampling during its recurrence. See [usage and limits](../../benchmarks/CONNECTIONS.md#opt-in-tcp-kernel-samples).
 
 The `resource_startup` descriptor diagnostics read each running process's
 `nofile_soft` and `nofile_hard` through `getrlimit(RLIMIT_NOFILE)`. Finite limits are integers,
