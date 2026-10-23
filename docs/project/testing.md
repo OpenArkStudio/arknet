@@ -248,6 +248,16 @@ The functional suites and benchmarks are independent C++ programs with their
 own `main`; compile and run them directly. Python, Ruby, `jq`, GNU `timeout`
 and `shasum` are not prerequisites for these C++ tests or single benchmarks.
 
+The native connection control optionally records underlying stream API operations
+with `--operation-trace on --socket-operation-trace on`; both options default off.
+`connection_socket_operation_trace` checks the observer using a deterministic
+fake stream, without sockets or a load process pair: partial writes, buffered and
+zero-byte reads, original handler associations, cancellation and freeze. Together
+with `connection_operation_trace`, it verifies bounded paired rings and explicit
+missing history. These checks do not establish packet delivery, reactor readiness,
+the unresolved 5,000-connection root cause or capacity. See the
+[connection tool diagnostics](../../benchmarks/CONNECTIONS.md).
+
 ## Correctness Coverage
 
 | Suite | Coverage |
