@@ -243,8 +243,9 @@ sockets and emits `operation_trace` for at most 16 incomplete/write-pending
 sessions, followed by `operation_trace_summary`. A successful run emits no trace.
 The opt-in final result adds `operation_trace_enabled` and
 `operation_trace_emitted`; a missing final result still means incomplete execution.
-Recorder storage, the 256 KiB serialized-output reservation and fixed scratch
-reservation together stay within 16 MiB per process, excluding allocator overhead
+Recorder storage, optional socket-adaptor/completion-state reservations, the
+256 KiB serialized-output reservation and fixed scratch reservation together stay
+within 16 MiB per process, excluding allocator overhead
 and existing session/socket memory. Larger declared capacities leave later
 sessions unrecorded, without changing workload admission. Summary counts expose
 unrecorded/omitted sessions, overwritten history, pending/skipped/overwritten
@@ -254,15 +255,48 @@ coverage. `worker_history_complete` also requires no pending/skipped marker.
 Cleanup callbacks cannot overwrite the frozen snapshot; overflow never emits a
 partial JSON record. Trace output and raw evidence must remain local.
 
-There is no socket forwarding adaptor: original handlers and their associations
-remain in place. `operation_scope: "composed_only"` and
-`low_level_operations: false` explicitly exclude `async_read_some`/
-`async_write_some` visibility. Worker progress can distinguish global callback
-starvation from continued worker execution, but cannot exclude per-session
-readiness/scheduling effects or identify TCP recovery behavior. The known
-5,000-active-connection timeout remains unresolved. Enabling diagnostics changes
-observation cost; success is neither a fix nor capacity acceptance. Do not extend
-deadlines or automatically retry to obtain a preferred outcome.
+Composed-only mode keeps the direct socket path and original handler associations:
+`operation_scope: "composed_only"`, `low_level_operations: false`. To observe the
+underlying stream API as well, add both options on the native peers:
+
+```sh
+--operation-trace on --socket-operation-trace on
+```
+
+`--socket-operation-trace` defaults to `off` and requires `--operation-trace on`.
+Enabled, recorded sessions use a native-control-only stream adaptor around the
+same socket; unrecorded sessions continue directly. No arknet transport API,
+framing, buffer sequence, queue, worker, deadline or sampling cadence changes.
+The adaptor forwards the original executor, allocator, cancellation slot and
+immediate-executor associations and invokes the original completion once, without
+an extra post. Its state and a conservative reservation for two simultaneous
+completion wrappers share the 16 MiB admission ceiling with both ring pools;
+`socket_state_reserved_bytes` reports that reservation. Default-off mode allocates
+no socket rings or adaptors.
+
+Each recorded session gets a separate 16-event `socket_trace` for
+`async_read_some`/`async_write_some` initiation and completion, alongside the
+existing composed `trace`. Scope becomes `composed_and_socket` and
+`low_level_operations: true`; the final result adds
+`socket_operation_trace_enabled: true`. Both rings freeze together before socket
+cancellation. `incomplete_socket_histories` counts incomplete socket histories
+among emitted sessions. Ring overwrite, absent slots and output truncation remain
+explicit; a successful run still emits no failure trace.
+
+Within `socket_trace`, `read_start`/`write_start` bytes are the total requested
+buffer capacity; completion bytes are the values reported by the underlying
+stream API. The sequence is captured at initiation as application context, not a
+TCP sequence. One read can contain several frames; buffered frame completion may
+also trigger an empty-buffer operation with zero requested/completed bytes.
+These API events are not system-call, packet, ACK or reactor-readiness records.
+A successful write completion still does not prove peer delivery. No payload or
+packet contents are recorded.
+
+Worker progress cannot exclude per-session readiness/scheduling effects or
+identify TCP recovery behavior. The known 5,000-active-connection timeout remains
+unresolved; the new option has not yet been exercised in that workload. Enabling
+diagnostics changes observation cost; success is neither a fix nor capacity
+acceptance. Do not extend deadlines or automatically retry for a preferred result.
 
 Admission, phase changes and timeout scans execute on a separate main/owner
 thread; one IO worker executes socket callbacks and per-session strand commands.
@@ -309,5 +343,8 @@ worker marker; an enabled successful pair checks that no failure trace is emitte
 freeze, completeness metadata, memory admission and bounded complete JSON output
 without sockets. The native self-test also dispatches a cancelled timer with
 explicit executor, allocator and cancellation-slot associations while recording
-inside its original completion body. These checks do not validate a low-level
-forwarding adaptor, which is deliberately absent.
+inside its original completion body. `connection_socket_operation_trace` uses a
+deterministic fake stream without sockets to check partial writes, buffered reads,
+zero-byte operations, move-only completions, forwarded associations, cancellation
+and frozen history. These are observer correctness checks, not a reproduced stall
+or performance/capacity acceptance.

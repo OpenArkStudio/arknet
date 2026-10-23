@@ -224,6 +224,13 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 功能测试和性能基准都是包含独立 `main` 的 C++ 程序，编译后直接运行。
 这些 C++ 功能测试和单项基准不需要 Python、Ruby、`jq`、GNU `timeout` 或 `shasum`。
 
+原生连接对照程序可通过 `--operation-trace on --socket-operation-trace on` 记录底层流 API 操作，
+两个选项均默认关闭。`connection_socket_operation_trace` 使用确定性模拟流验证观察器，
+不使用 socket 或负载进程对，覆盖部分写入、已有缓冲与零字节读取、原处理器关联、取消和冻结。
+它与 `connection_operation_trace` 共同验证两套事件环的存储上限及缺失历史的明确报告。
+这些检查不能证明报文交付、reactor 就绪事件、尚未确定的 5,000 条连接停顿根因或容量。
+用法见[连接工具诊断](../../benchmarks/CONNECTIONS_CN.md)。
+
 ## 正确性覆盖
 
 | 测试组 | 内容 |
