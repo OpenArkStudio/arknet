@@ -66,7 +66,7 @@ it is not a released revision.
 | --- | --- |
 | Run identity | 2026-10-23; integration source `cd7205b34152a26cca061b947cd33aaa785248d8`; binary SHA-256 `dabd26dd9a2c8dd197fdaac23939ace8e94d5a7b59ea170c9e9aeb32d2d5ae04` |
 | Host / build | Mac16,11, 14 CPU cores, 48 GiB, macOS 27.0.1; AppleClang 21 Release, Boost 1.90, TLS off |
-| Workload | 5,000 loopback connections; 1 KiB body; four requests per connection; one IO context and one IO worker per process; 3 s traffic hold; 5 s request deadline; 40 s server deadline; composed and underlying socket tracing enabled |
+| Workload | 5,000 loopback connections; 1 KiB body; up to four in-flight requests per connection; one IO context and one IO worker per process; 3 s traffic hold; 5 s request deadline; 40 s server deadline; composed and underlying socket tracing enabled |
 | Completion / cleanup | Both peers reached 5,000 ready/started and 4,994 finished. Six connections retained requests 64–67: 24 unanswered requests. Both processes failed at their configured deadlines and completed cleanup |
 | Actual process limits | Both startup records: `RLIMIT_NOFILE` soft 1,048,575 / hard `"unlimited"`. Sampled FD peaks: client 5,008, server 5,009; zero connect errors |
 | Every stalled client | Completed socket/composed read bytes 68,863; write bytes 73,227. An underlying read with 4,096-byte capacity remains pending; no active write or queued application send |
@@ -87,8 +87,8 @@ workload, not performance or capacity acceptance. Intermittent passing controls
 do not establish a fix or performance equivalence. Raw logs and captures stay
 local. See [connection benchmarks](../../benchmarks/CONNECTIONS.md) for parameters.
 
-The descriptor diagnostics read each running process's `nofile_soft` and
-`nofile_hard` through `getrlimit(RLIMIT_NOFILE)`. Finite limits are integers,
+The `resource_startup` descriptor diagnostics read each running process's
+`nofile_soft` and `nofile_hard` through `getrlimit(RLIMIT_NOFILE)`. Finite limits are integers,
 infinity is `"unlimited"`, and unavailable values are null with a reason;
 Windows retains handle counts and reports this POSIX limit as not applicable.
 Limits include files, pipes and event-loop descriptors as well as sockets.

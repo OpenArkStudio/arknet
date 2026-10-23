@@ -10,6 +10,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -34,6 +35,9 @@
 
 #include <dirent.h>
 
+#elif defined(__unix__)
+#include <sys/resource.h>
+
 #endif
 
 namespace arknet::benchmark {
@@ -45,6 +49,20 @@ struct resource_metric
     std::string unavailable_reason;
 };
 
+struct file_descriptor_limit
+{
+    std::uint64_t descriptors{};
+    bool unlimited{};
+};
+
+inline std::ostream& operator<<(std::ostream& output, const file_descriptor_limit& value) {
+    if (value.unlimited)
+    {
+        return output << "\"unlimited\"";
+    }
+    return output << value.descriptors;
+}
+
 struct process_resources
 {
     std::chrono::steady_clock::time_point monotonic_time;
@@ -52,6 +70,8 @@ struct process_resources
     resource_metric<std::uint64_t> current_rss_bytes;
     resource_metric<std::uint64_t> peak_rss_bytes;
     resource_metric<std::uint64_t> fd_count;
+    resource_metric<file_descriptor_limit> nofile_soft;
+    resource_metric<file_descriptor_limit> nofile_hard;
     resource_metric<std::uint64_t> handle_count;
     resource_metric<std::uint64_t> thread_count;
 };
@@ -66,6 +86,42 @@ resource_metric<value_type> unavailable(std::string reason) {
 inline std::string system_failure(const char* operation, int error) {
     // Keep diagnostics ASCII so JSON output does not depend on the Windows code page.
     return std::string(operation) + " failed (OS error " + std::to_string(error) + ")";
+}
+
+#if !defined(_WIN32) && defined(RLIMIT_NOFILE)
+template<class Query>
+void read_file_descriptor_limits(process_resources& result, Query query) {
+    rlimit limits{};
+    if (query(&limits) != 0)
+    {
+        const auto reason = system_failure("getrlimit(RLIMIT_NOFILE)", errno);
+        result.nofile_soft = unavailable<file_descriptor_limit>(reason);
+        result.nofile_hard = unavailable<file_descriptor_limit>(reason);
+        return;
+    }
+    const auto metric = [](rlim_t value) {
+        return resource_metric<file_descriptor_limit>{
+            file_descriptor_limit{
+                value == RLIM_INFINITY ? 0 : static_cast<std::uint64_t>(value), value == RLIM_INFINITY},
+            {}};
+    };
+    result.nofile_soft = metric(limits.rlim_cur);
+    result.nofile_hard = metric(limits.rlim_max);
+}
+#endif
+
+inline void read_file_descriptor_limits(process_resources& result) {
+#if !defined(_WIN32) && defined(RLIMIT_NOFILE)
+    read_file_descriptor_limits(result, [](rlimit* limits) { return getrlimit(RLIMIT_NOFILE, limits); });
+#elif defined(_WIN32)
+    const auto reason = "RLIMIT_NOFILE is not applicable to Windows process handles";
+    result.nofile_soft = unavailable<file_descriptor_limit>(reason);
+    result.nofile_hard = unavailable<file_descriptor_limit>(reason);
+#else
+    const auto reason = "RLIMIT_NOFILE is unsupported on this platform";
+    result.nofile_soft = unavailable<file_descriptor_limit>(reason);
+    result.nofile_hard = unavailable<file_descriptor_limit>(reason);
+#endif
 }
 
 inline resource_metric<double> interval_cpu_percent(double previous, double current, double seconds) {
@@ -362,6 +418,7 @@ public:
             previous_ = std::pair{result.monotonic_time, *cpu.value};
         }
         process_resource_detail::read_memory_and_counts(result);
+        process_resource_detail::read_file_descriptor_limits(result);
         return result;
     }
 
