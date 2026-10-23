@@ -43,6 +43,9 @@ test('all twelve profiles preserve configure flags, source targets, sanitizers a
     assert.ok(calls[0].args.includes(`-DCMAKE_BUILD_TYPE=${cell.sanitize === 'OFF' ? 'Release' : 'Debug'}`));
     assert.ok(calls[0].args.includes(`-DARKNET_BUILD_BENCHMARKS=${cell.sanitize === 'OFF' ? 'ON' : 'OFF'}`));
     assert.ok(calls[0].args.includes('-DARKNET_CHECK_TESTS='));
+    const linkPool = calls[0].args.filter(arg => arg.startsWith('-DCMAKE_JOB_POOL'));
+    assert.deepEqual(linkPool, cell.os === 'windows-latest' ?
+      ['-DCMAKE_JOB_POOLS=arknet_windows_link=1', '-DCMAKE_JOB_POOL_LINK=arknet_windows_link'] : []);
     if (cell.sanitize !== 'OFF') {
       assert.ok(calls[0].args.includes('-DCMAKE_CXX_FLAGS_DEBUG=-O0 -g1'));
       assert.ok(calls[0].args.includes(`-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=${cell.sanitize === 'ON' ? 'address,undefined' : 'thread'}`));
@@ -243,4 +246,54 @@ endif()
   await assert.rejects(runStage('build', env, undefined, () => resources), /cmake failed/);
   const log = readFileSync(`${build}/ci-logs/ci-build.log`, 'utf8');
   assert.equal((log.match(/cmake failed/g) ?? []).length, 1, 'a failed target must propagate without a retry');
+});
+
+test('Windows Ninja link pool serializes complete link and post-build deployment edges', t => {
+  temporary(t);
+  const env = environment({ os: 'windows-latest', boost: 'OFF', ssl: 'ON', sanitize: 'OFF' });
+  const flags = profilePlan(env).configure.filter(arg => arg.startsWith('-DCMAKE_JOB_POOL'));
+  writeFileSync('main.cpp', 'int main() { return 0; }\n');
+  writeFileSync('deployment.mjs', [
+    "import {openSync, closeSync, unlinkSync, appendFileSync, existsSync, writeFileSync} from 'node:fs';",
+    "import {join, basename} from 'node:path';",
+    "const [directory, target] = process.argv.slice(2);",
+    "const lock = join(directory, 'deployment.lock');",
+    "let fd; try { fd = openSync(lock, 'wx'); } catch (error) {",
+    "  if (error.code === 'EEXIST') { writeFileSync(join(directory, 'overlap'), ''); console.error('deployment overlap'); process.exit(23); } throw error;",
+    "}",
+    "if (basename(directory) === 'concurrent') {",
+    '  const deadline = Date.now() + 5000;',
+    "  while (!existsSync(join(directory, 'overlap')) && Date.now() < deadline)",
+    '    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);',
+    "  if (!existsSync(join(directory, 'overlap'))) throw new Error('No concurrent command arrived');",
+    '}',
+    "closeSync(fd); unlinkSync(lock); appendFileSync(join(directory, 'completed'), target + '\\n');",
+  ].join('\n'));
+  writeFileSync('CMakeLists.txt', [
+    'cmake_minimum_required(VERSION 3.21)',
+    'project(link_deployment_contract LANGUAGES CXX)',
+    'foreach(name first second)',
+    '  add_executable(${name} main.cpp)',
+    '  add_custom_command(TARGET ${name} POST_BUILD',
+    `    COMMAND "${process.execPath.replaceAll('\\', '/')}" "\${CMAKE_SOURCE_DIR}/deployment.mjs" "\${CMAKE_BINARY_DIR}" "\${name}"`,
+    '    VERBATIM)',
+    'endforeach()',
+  ].join('\n'));
+  const cmake = args => spawnSync('cmake', args, { encoding: 'utf8', timeout: 60000 });
+  for (const pooled of [false, true]) {
+    const build = pooled ? 'serialized' : 'concurrent';
+    const configured = cmake(['-S', '.', '-B', build, '-G', 'Ninja', ...(pooled ? flags : [])]);
+    assert.equal(configured.status, 0, configured.stdout + configured.stderr);
+    const built = cmake(['--build', build, '--parallel', '2']);
+    const output = built.stdout + built.stderr;
+    if (pooled) {
+      assert.equal(built.status, 0, output);
+      assert.deepEqual(readFileSync(`${build}/completed`, 'utf8').trim().split('\n').sort(), ['first', 'second']);
+      const ninja = readFileSync(`${build}/build.ninja`, 'utf8');
+      assert.equal((ninja.match(/pool = arknet_windows_link/g) ?? []).length, 2);
+    } else {
+      assert.notEqual(built.status, 0, 'The unpooled deployment control must expose overlap');
+      assert.match(output, /deployment overlap/);
+    }
+  }
 });
