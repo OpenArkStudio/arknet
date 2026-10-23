@@ -10,6 +10,10 @@ CI 用于回归和冒烟执行，共享 runner 的时间不作为发布的性能
 
 ## CI 覆盖范围
 
+以 `main` 为目标分支的 PR 在 `opened`、`synchronize`、`reopened` 和
+`ready_for_review` 事件触发 CI。草稿转为可审查状态时，在当前 head 启动新运行；
+转换前创建的检查不能作为本次准入依据。申请进入合并队列前，核对这轮新的源分支检查。
+
 源分支 PR 运行格式、文档检查，以及 Linux Boost/TLS Release 下的相关模块回归。
 RUDP/ARQ/FEC、UDP、HTTP/WebSocket、MySQL 和 Redis 路径有明确映射；跨模块改动取并集。
 公共 TCP、共享头文件、构建、依赖、CI 及未分类路径运行完整的 Linux Boost/TLS Release
