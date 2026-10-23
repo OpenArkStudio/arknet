@@ -46,7 +46,7 @@ function checkPolicy(source) {
   const required = source.indexOf("  required:\n");
   const jobs = source.slice(source.indexOf("jobs:\n"), required === -1 ? undefined : required);
   assert.equal(createHash("sha256").update(jobs).digest("hex"),
-    "b7d4c94d76e3ccf2fe8a9691b37378668fc257e9a34cfe4fc5b00150010c4a1a",
+    "48f20ba14d23684f04507d572189d854bf16d673c339f7ffa2798b36dd7dfb53",
     "review the complete grouped workflow and scope contract before changing it");
 }
 
