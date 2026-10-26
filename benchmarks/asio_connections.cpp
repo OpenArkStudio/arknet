@@ -17,7 +17,9 @@
 #include <memory>
 #include <memory_resource>
 #include <mutex>
+#include <optional>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -331,6 +333,88 @@ struct dgram_match
         return {cursor, true};
     }
 };
+
+// Diagnostic-only interpretation of the existing matcher; never consumes bytes.
+struct frame_boundary
+{
+    const char* status = "empty";
+    std::array<unsigned char, 9> prefix{};
+    std::size_t prefix_bytes{}, buffered_bytes{};
+    std::optional<std::uint64_t> declared_body_bytes;
+    std::optional<std::size_t> required_wire_bytes, missing_frame_bytes;
+
+    bool complete() const {
+        return std::string_view(status) == "complete_frame";
+    }
+
+    void write_json(std::ostream& out) const {
+        out << "{\"status\":\"" << status << "\",\"prefix\":[";
+        for (std::size_t index = 0; index < prefix_bytes; ++index)
+        {
+            if (index)
+            {
+                out << ',';
+            }
+            out << unsigned(prefix[index]);
+        }
+        out << "],\"buffered_bytes\":" << buffered_bytes;
+        const auto field = [&](const char* name, const auto& value) {
+            out << ",\"" << name << "\":";
+            if (value)
+            {
+                out << *value;
+            }
+            else
+            {
+                out << "null";
+            }
+        };
+        field("declared_body_bytes", declared_body_bytes);
+        field("required_wire_bytes", required_wire_bytes);
+        field("missing_frame_bytes", missing_frame_bytes);
+        out << '}';
+    }
+};
+
+frame_boundary inspect_frame_boundary(std::string_view bytes) {
+    frame_boundary result;
+    result.buffered_bytes = bytes.size();
+    if (bytes.empty())
+    {
+        return result;
+    }
+    const auto marker = static_cast<unsigned char>(bytes[0]);
+    const std::size_t width = marker == 255 ? 8 : marker == 254 ? 2 : 0;
+    result.prefix_bytes = (std::min)(bytes.size(), width + 1);
+    for (std::size_t index = 0; index < result.prefix_bytes; ++index)
+    {
+        result.prefix[index] = static_cast<unsigned char>(bytes[index]);
+    }
+    if (result.prefix_bytes < width + 1)
+    {
+        result.status = "incomplete_prefix";
+        return result;
+    }
+    std::uint64_t size = width ? 0 : marker;
+    for (std::size_t index = 0; index < width; ++index)
+    {
+        size |= std::uint64_t(result.prefix[index + 1]) << (index * 8);
+    }
+    result.declared_body_bytes = size;
+    const auto match = dgram_match{}(bytes.begin(), bytes.end());
+    if (match.second && match.first == bytes.begin())
+    {
+        result.status = "invalid_prefix";
+        return result;
+    }
+    // The unchanged matcher has validated canonical encoding and its 4096-byte
+    // wire cap before this addition/cast, including all eight-byte length inputs.
+    const auto required = result.prefix_bytes + static_cast<std::size_t>(size);
+    result.required_wire_bytes = required;
+    result.missing_frame_bytes = required > bytes.size() ? required - bytes.size() : 0;
+    result.status = match.second ? "complete_frame" : "incomplete_frame";
+    return result;
+}
 
 struct wire_frame
 {
@@ -899,8 +983,13 @@ void session::diagnose() {
     socket.get_option(receive_buffer, receive_error);
     socket.get_option(send_buffer, send_error);
     const auto buffers = input.data();
-    const auto begin = asio::buffers_begin(buffers), end = asio::buffers_end(buffers);
-    const auto match = dgram_match{}(begin, end);
+    std::string_view input_bytes;
+    if (input.size())
+    {
+        const auto buffer = *asio::buffer_sequence_begin(buffers);
+        input_bytes = {static_cast<const char*>(buffer.data()), buffer.size()};
+    }
+    const auto boundary = inspect_frame_boundary(input_bytes);
     std::cout << "{\"event\":\"connection_diagnostic\",\"snapshot_phase\":\"before_socket_cancel\",\"role\":"
               << std::quoted(app.o.role) << ",\"run_id\":" << app.o.run << ",\"client_id\":" << state.owner.client
               << ",\"connection_id\":" << state.owner.connection
@@ -912,11 +1001,11 @@ void session::diagnose() {
               << ",\"finished\":" << (state.finished ? "true" : "false")
               << ",\"closed\":" << (closed ? "true" : "false")
               << ",\"read_pending\":" << (read_pending ? "true" : "false") << ",\"input_bytes\":" << input.size()
-              << ",\"input_frame_ready\":" << (match.second ? "true" : "false") << ",\"next_send\":" << state.next_send
-              << ",\"next_receive\":" << state.next_receive << ",\"queued_writes\":" << queued.size()
-              << ",\"writing\":" << (writing ? "true" : "false") << ",\"read_completions\":" << read_completions
-              << ",\"write_completions\":" << write_completions << ",\"last_write_kind\":" << last_write_kind
-              << ",\"last_write_sequence\":" << last_write_sequence
+              << ",\"input_frame_ready\":" << (boundary.complete() ? "true" : "false")
+              << ",\"next_send\":" << state.next_send << ",\"next_receive\":" << state.next_receive
+              << ",\"queued_writes\":" << queued.size() << ",\"writing\":" << (writing ? "true" : "false")
+              << ",\"read_completions\":" << read_completions << ",\"write_completions\":" << write_completions
+              << ",\"last_write_kind\":" << last_write_kind << ",\"last_write_sequence\":" << last_write_sequence
               << ",\"pending_age_ms\":" << age(pending_since.load()) << ",\"last_read_age_ms\":" << age(last_read_at)
               << ",\"last_write_age_ms\":" << age(last_write_at) << ",\"kernel_readable_bytes\":" << available
               << ",\"available_error\":" << available_error.value()
@@ -941,6 +1030,8 @@ void session::diagnose() {
 #else
     std::cout << ",\"tcp_info\":null";
 #endif
+    std::cout << ",\"frame_boundary\":";
+    boundary.write_json(std::cout);
     std::cout << "}\n";
 }
 
@@ -1508,6 +1599,77 @@ void self_test() {
         const auto match = dgram_match{}(bad.begin(), bad.end());
         require(match.second && match.first == bad.begin());
     }
+    // Boundary diagnostics classify the matcher's error sentinel separately.
+    const auto boundary = [&](const std::string& bytes, std::string_view expected) {
+        const auto result = inspect_frame_boundary(bytes);
+        require(result.status == expected);
+        require(result.complete() == (expected == "complete_frame"));
+        require(result.buffered_bytes == bytes.size() && result.prefix_bytes <= 9);
+        return result;
+    };
+    const auto empty = boundary("", "empty");
+    require(!empty.declared_body_bytes && !empty.required_wire_bytes && !empty.missing_frame_bytes);
+    for (const auto bytes : {std::string("\xfe", 1), std::string("\xfe\x40", 2)})
+    {
+        const auto value = boundary(bytes, "incomplete_prefix");
+        require(value.prefix_bytes == bytes.size() && !value.declared_body_bytes && !value.required_wire_bytes &&
+                !value.missing_frame_bytes);
+    }
+    const std::string invalid_prefix("\xfe\x01\x00", 3);
+    const auto invalid_match = dgram_match{}(invalid_prefix.begin(), invalid_prefix.end());
+    require(invalid_match.second && invalid_match.first == invalid_prefix.begin());
+    const auto invalid_boundary = boundary(invalid_prefix, "invalid_prefix");
+    require(invalid_boundary.declared_body_bytes == 1 && !invalid_boundary.required_wire_bytes &&
+            !invalid_boundary.missing_frame_bytes);
+    const std::string prefix("\xfe\x40\x04", 3);
+    const auto incomplete = boundary(prefix + std::string(100, 'x'), "incomplete_frame");
+    require(incomplete.declared_body_bytes == 1088 && incomplete.required_wire_bytes == 1091 &&
+            incomplete.missing_frame_bytes == 988);
+    const auto complete = boundary(prefix + std::string(1088, 'x'), "complete_frame");
+    require(complete.declared_body_bytes == 1088 && complete.required_wire_bytes == 1091 &&
+            complete.missing_frame_bytes == 0);
+    const auto trailing = boundary(prefix + std::string(1088, 'x') + "\x01x", "complete_frame");
+    require(
+        trailing.required_wire_bytes == 1091 && trailing.missing_frame_bytes == 0 && trailing.buffered_bytes == 1093);
+    for (const auto size : {std::size_t{0}, std::size_t{253}, std::size_t{254}, std::size_t{4093}})
+    {
+        const wire_frame frame(std::string(size, 'x'));
+        const auto value = boundary(std::string(frame.prefix.data(), frame.prefix_size) + frame.body, "complete_frame");
+        require(value.prefix_bytes == frame.prefix_size && value.declared_body_bytes == size &&
+                value.required_wire_bytes == size + frame.prefix_size && value.missing_frame_bytes == 0);
+    }
+    const auto oversized = boundary(std::string("\xfe\xfe\x0f", 3), "invalid_prefix");
+    require(oversized.declared_body_bytes == 4094 && !oversized.required_wire_bytes);
+    // Canonical nine-byte prefixes start at 65536 bytes, beyond the unchanged
+    // 4096-byte wire cap. Decode them safely, but never report an allowed frame.
+    for (const auto size :
+        {std::uint64_t{0}, std::uint64_t{65535}, std::uint64_t{65536}, (std::numeric_limits<std::uint64_t>::max)()})
+    {
+        std::string extended(9, '\0');
+        extended[0] = static_cast<char>(255);
+        for (std::size_t index = 0; index < 8; ++index)
+        {
+            extended[index + 1] = static_cast<char>(size >> (index * 8));
+        }
+        for (std::size_t length = 1; length < extended.size(); ++length)
+        {
+            const auto value = boundary(extended.substr(0, length), "incomplete_prefix");
+            require(value.prefix_bytes == length && !value.declared_body_bytes && !value.required_wire_bytes);
+        }
+        const auto value = boundary(extended, "invalid_prefix");
+        require(value.declared_body_bytes == size && value.prefix_bytes == 9 && !value.required_wire_bytes &&
+                !value.missing_frame_bytes);
+    }
+    std::ostringstream encoded;
+    incomplete.write_json(encoded);
+    require(encoded.str() == "{\"status\":\"incomplete_frame\",\"prefix\":[254,64,4],\"buffered_bytes\":103,"
+                             "\"declared_body_bytes\":1088,\"required_wire_bytes\":1091,\"missing_frame_bytes\":988}");
+    std::ostringstream unknown;
+    empty.write_json(unknown);
+    require(unknown.str() == "{\"status\":\"empty\",\"prefix\":[],\"buffered_bytes\":0,\"declared_body_bytes\":null,"
+                             "\"required_wire_bytes\":null,\"missing_frame_bytes\":null}");
+    std::cout << "native control frame-boundary diagnostics checks passed\n";
+
     auto feed = [&](protocol_state& state, bool server, frame_kind kind, identity owner, std::uint64_t sequence = 0) {
         connection_load::frame_header h;
         require(connection_load::decode(

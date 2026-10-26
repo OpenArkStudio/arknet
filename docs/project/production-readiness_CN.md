@@ -94,6 +94,25 @@ main 上的 [PR #26](https://github.com/OpenArkStudio/arknet/pull/26) 改善了�
 相关回归均通过，包括收到 DATA 后主动停止响应的受控测试：超时清理前保留了 ESTABLISHED
 状态样本。参见[用法与限制](../../benchmarks/CONNECTIONS_CN.md#可选-tcp-内核采样)。
 
+### 帧边界诊断
+
+原生对照的取消前 `connection_diagnostic` 包含有界 `frame_boundary` 对象。
+`status` 区分 `empty`、`incomplete_prefix`、`invalid_prefix`、`incomplete_frame`
+和 `complete_frame`。`input_frame_ready` 仅在长度前缀规范、未超限且帧完整时为 true，
+非法前缀不再显示为就绪。这只验证帧边界，不表示应用头或包体已经校验通过。
+
+`prefix` 最多包含 9 个无符号字节值，不输出包体字节。`buffered_bytes` 统计当前接收
+缓冲中的全部字节，包括后续帧。完整前缀可用前，`declared_body_bytes` 为 null；
+解码完成后，即使长度非法或超限，也保留该声明值。`required_wire_bytes` 包含首帧
+前缀，`missing_frame_bytes` 表示其尚缺字节数；已缓冲后续字节时，缺额下限为零。
+空输入、前缀不完整或前缀非法时，这两个字段为 null，不对未验证长度执行加法。
+
+matcher 和原有 4,096 字节帧上限保持不变。规范的 9 字节前缀至少声明 65,536 字节
+包体，因此超过该上限并报告 `invalid_prefix`；不完整的 9 字节前缀仍报告
+`incomplete_prefix`。原生 `--self-test` 使用固定字节串验证这些状态、帧边界限制、
+64 位极值长度和 JSON 输出，不运行连接负载。此诊断改善没有解释或修复 5,000 连接
+停滞，不改变协议、IO 操作、期限或负载，也不增加容量或性能验收证据。
+
 ### 停滞连接的内核采样
 
 固定五次诊断使用上表同一主机和负载，启用采样；Boost 1.90 Release，关闭 TLS。
