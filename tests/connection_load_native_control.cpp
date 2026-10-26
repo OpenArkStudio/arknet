@@ -516,7 +516,14 @@ void progress_then_stall(const std::string& executable) {
     const auto history = output.substr(history_position, output.find('\n', history_position) - history_position);
     const auto summary = output.substr(summary_position, output.find('\n', summary_position) - summary_position);
     const auto result = output.substr(result_position);
-    if (history.find("\"sample_phase\":\"periodic_io_worker\"") == std::string::npos ||
+    if (history.find("\"schema\":2,") == std::string::npos ||
+        history.find("\"clock_domain\":\"local_steady_clock\"") == std::string::npos ||
+        history.find("\"clock_origin_us\":") == std::string::npos ||
+        history.find("\"clock_origin_unit\":\"microseconds_since_steady_clock_epoch\"") == std::string::npos ||
+        history.find("\"retention_policy\":\"first_4_latest_4\"") == std::string::npos ||
+        counter(history, "head_sample_capacity") != 4 || counter(history, "tail_sample_capacity") != 4 ||
+        counter(history, "sample_ordinal") != 1 ||
+        history.find("\"sample_phase\":\"periodic_io_worker\"") == std::string::npos ||
         history.find("\"run_id\":97,\"client_id\":3,\"connection_id\":1") == std::string::npos ||
         counter(history, "sample_time_us") < 1000000 || counter(history, "no_completion_age_us") < 1000000 ||
         counter(history, "next_receive") != 2 || counter(history, "next_send") != 3 ||

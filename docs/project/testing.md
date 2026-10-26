@@ -326,6 +326,37 @@ then across the requested restart rounds. Seven protocols with
 `--seconds 60` therefore request seven minutes of traffic in total, plus setup
 and teardown. Slow receivers test backpressure rather than throughput.
 
+### Native TCP diagnostic retention
+
+The default-off kernel sampler keeps the first four qualifying observations and
+latest four within its existing eight-sample, 16-identity, 32 KiB limit. This
+preserves early qualifying evidence when a longer server tail would otherwise
+replace it. Schema 2 kernel histories and their nested sampler summaries declare
+`retention_policy: "first_4_latest_4"`; historical schema 1 tail-only records keep
+their original interpretation. See [production limits](production-readiness.md)
+and [diagnostic fields](../../benchmarks/CONNECTIONS.md#opt-in-tcp-kernel-samples).
+
+Select the existing native runner without connection load:
+
+```sh
+cmake -S . -B build/diagnostic-retention -DARKNET_BUILD_TESTS=ON \
+  -DARKNET_BUILD_EXAMPLES=OFF -DARKNET_BUILD_BENCHMARKS=ON \
+  '-DARKNET_CHECK_TESTS=connection_kernel_samples;benchmark_asio_connections_self_test'
+cmake --build build/diagnostic-retention --target arknet_check --parallel 1
+```
+
+`connection_kernel_samples` covers zero through eight observations, repeated
+overflow with fixed head/rolling tail, chronological ordinals, exact JSON
+metadata, supplied steady-clock origin/units (including signed synthetic epochs),
+omission/overwrite counters, progress pruning, slot reuse and inert
+disabled/frozen modes. The native control `--self-test` uses synthetic queries
+to check retention/JSON and unchanged opt-in argument validation. No kernel query
+or real connection load is needed for these checks. They do not establish the
+onset of TCP recovery, simultaneous peer state, a root cause or capacity. The
+history-only origin is derived from existing `began`, without a clock query;
+origin-plus-relative-time correlation requires the same host and clock domain,
+not cross-host wall-clock comparison.
+
 ## Local Verification
 
 The complete-suite source snapshot is `6c8418e`; its networking changes are

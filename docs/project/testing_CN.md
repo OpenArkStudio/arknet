@@ -255,6 +255,32 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 单 context 四线程、四个 context 各一线程，再分给指定重启轮次。因此七种协议使用 `--seconds 60`
 时，请求的流量阶段共七分钟，另加启动和收尾。慢接收者用例测试背压，不用于比较吞吐量。
 
+### 原生 TCP 诊断保留方式
+
+默认关闭的内核采样器在原有每身份 8 个样本、16 个身份、32 KiB 限制内，保留最早 4 个
+合格观测与最新 4 个样本，避免更长的服务端尾部覆盖较早的合格证据。
+schema 2 内核历史及其嵌套采样摘要声明 `retention_policy: "first_4_latest_4"`；
+历史 schema 1 仅保留尾部的记录保持原有解释。
+参见[生产限制](production-readiness_CN.md)与[诊断字段](../../benchmarks/CONNECTIONS_CN.md#可选-tcp-内核采样)。
+
+通过既有原生运行器选择不需要连接负载的检查：
+
+```sh
+cmake -S . -B build/diagnostic-retention -DARKNET_BUILD_TESTS=ON \
+  -DARKNET_BUILD_EXAMPLES=OFF -DARKNET_BUILD_BENCHMARKS=ON \
+  '-DARKNET_CHECK_TESTS=connection_kernel_samples;benchmark_asio_connections_self_test'
+cmake --build build/diagnostic-retention --target arknet_check --parallel 1
+```
+
+`connection_kernel_samples` 覆盖 0 至 8 次观测、固定起始与轮换尾部的多次溢出、
+按时间排列的序号、精确 JSON 元数据、传入 steady-clock 起点及单位（含正负合成 epoch）、
+遗漏及覆盖计数、进展清理、槽位复用，
+以及关闭和冻结时不执行查询。原生对照 `--self-test` 使用合成查询验证保留方式、JSON
+及未改变的可选参数校验；这些检查不查询内核，也不运行真实连接负载。
+它们不能确定 TCP 恢复的起点、两端同时状态、根因或容量。仅历史记录的时钟起点由现有
+`began` 派生，不增加时钟查询；起点加相对时间的关联要求同一主机、同一时钟域，
+不能用于跨主机墙上时间比较。
+
 ## 本机验证
 
 完整测试的源码快照为 `6c8418e`，其中的网络库改动已纳入性能测量版本

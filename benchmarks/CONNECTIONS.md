@@ -310,13 +310,38 @@ deadlines or the existing one-second sampling cadence.
 The existing worker marker samples active, unfinished traffic sessions that have
 received DATA and have had no composed read or write completion for at least one
 second. This is an inactivity trigger, not evidence of a network failure. The
-single IO worker queries at most 16 identities per tick, keeping eight samples
-per identity in fixed storage below 32 KiB per process, in addition to the existing
+single IO worker queries at most 16 identities per tick, keeping the first four
+qualifying samples and latest four samples per retained identity in fixed storage below 32 KiB per process, in addition to the existing
 16 MiB operation-trace budget (allocator overhead excluded). At each tick, observed
 progress, completion or close releases the retained slot before admitting new
 identities; persistent stalls retain their slots. Finite capacity can omit a
 connection. Overwritten samples, released histories, slot reuse and omitted eligible
 observations are counted. No new timer, thread or worker post is added.
+
+Histories with up to eight observations keep every sample. On overflow, the
+first four remain fixed and only the four-sample tail rotates; output stays in
+observation order. `sample_ordinal` is one-based within that retained history,
+`total_samples` counts its queries, and `overwritten_samples` counts the omitted
+middle observations (`total_samples - 8` after overflow). Progress pruning or
+slot reuse starts a new history and ordinal sequence; summary overwrite/query
+counters remain cumulative, including histories later released.
+
+`tcp_kernel_sample_history` now uses `schema: 2`, with
+`retention_policy: "first_4_latest_4"` and `head_sample_capacity: 4` /
+`tail_sample_capacity: 4`. The nested `tcp_kernel_samples` summary independently
+declares schema 2 and the same retention metadata; its enclosing
+`operation_trace_summary` stays schema 1. Older schema 1 kernel histories used a
+tail-only ring and remain that historical format; never relabel or interpret
+those raw files as onset-preserving evidence.
+
+Kernel histories alone also carry `clock_domain: "local_steady_clock"`,
+`clock_origin_us` and `clock_origin_unit: "microseconds_since_steady_clock_epoch"`.
+The origin is the existing application `began` value converted to microseconds;
+serialization performs no new clock or socket query. Add `sample_time_us` to
+that origin to compare peer windows only when provenance establishes the same
+host and steady-clock domain. These quantized values are not wall-clock time,
+a cross-host clock mapping, or proof that peer observations were simultaneous.
+Older records without an origin do not gain one retroactively.
 
 On Apple platforms, samples query public `TCP_CONNECTION_INFO`: TCP state, flags,
 RTO in milliseconds, queued send bytes (including in-flight data), send/receive
@@ -333,7 +358,10 @@ inside the existing bounded trace output. `operation_trace_summary` contains
 The final result adds `tcp_kernel_samples_enabled: true` only when enabled.
 Successful runs emit no sample history. `sample_time_us` is the periodic query
 start time in process-relative microseconds; it is distinct from operation-ring
-freeze time. Sampling can miss transient states or be delayed by the IO worker.
+freeze time. Sampling can miss transient states or be delayed by the IO worker. The retained
+head begins with the earliest admitted qualifying query, after the one-second
+inactivity threshold; it is not the onset of TCP recovery. Finite identity
+admission and omitted middle samples can still leave gaps between peer windows.
 A retained state after reset cannot describe earlier recovery; use actual sampled
 state and time. Samples neither prove a root cause nor provide performance or
 capacity acceptance. Keep the raw diagnostic output local.

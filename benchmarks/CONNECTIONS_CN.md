@@ -270,10 +270,28 @@ macOS 的 `tcp_info` 还包含 TCP 状态、窗口、发送缓冲字节数、收
 
 现有工作线程标记检查活动且未完成的 traffic 会话：会话已经收到 DATA，且至少一秒没有
 组合读写完成。此条件只表示应用操作无进展，不能证明网络故障。单个 IO 工作线程每次最多
-查询 16 个身份，每个身份保留 8 个样本；固定存储小于每进程 32 KiB，独立于原有 16 MiB
+查询 16 个身份，每个身份保留最早 4 个合格样本与最新 4 个样本；固定存储小于每进程 32 KiB，独立于原有 16 MiB
 操作历史预算，不含分配器额外开销。每次先释放已观察到进展、完成或关闭的会话槽位，
 再接纳新身份；持续停滞的身份保留槽位。容量有限，不能保证每个连接都被采样。覆盖样本、
 释放历史、槽位复用和未保留的合格观测次数均有计数，不增加计时器、线程或工作线程投递。
+
+历史不超过 8 次观测时保留全部样本；超出后固定保留最早 4 次，只轮换尾部 4 次，
+输出仍按观测顺序排列。`sample_ordinal` 从该历史的 1 开始，`total_samples` 统计其查询次数，
+`overwritten_samples` 统计省略的中段样本（超过容量后为 `total_samples - 8`）。
+进展清理或槽位复用会开始新的历史和序号；摘要的覆盖与查询计数仍累计包含已释放的历史。
+
+`tcp_kernel_sample_history` 使用 `schema: 2`，并输出
+`retention_policy: "first_4_latest_4"`、`head_sample_capacity: 4`、`tail_sample_capacity: 4`。
+嵌套的 `tcp_kernel_samples` 摘要单独声明 schema 2 及相同保留元数据，
+外层 `operation_trace_summary` 仍为 schema 1。旧 schema 1 内核历史使用仅保留尾部的环，
+原始文件须保留原格式，不能重新标记或当作保留起始样本的证据。
+
+仅内核历史还包含 `clock_domain: "local_steady_clock"`、`clock_origin_us`，以及
+`clock_origin_unit: "microseconds_since_steady_clock_epoch"`。起点由现有应用 `began`
+转换为微秒，输出时不新增时钟或 socket 查询。只有运行凭据确认两端位于同一主机、
+使用同一 steady-clock 域时，才能用起点加 `sample_time_us` 比较两端窗口。
+这些量化值不是墙上时间，不建立跨主机时钟映射，也不能证明两端观测同时发生；
+没有起点的旧记录不能补上这一字段后重新解释。
 
 Apple 平台通过公开 `TCP_CONNECTION_INFO` 查询 TCP 状态、flags、毫秒单位 RTO、发送队列
 字节数（含在途数据）、收发窗口、拥塞窗口、慢启动阈值及字节／重传计数。其他平台输出
@@ -284,7 +302,9 @@ Apple 平台通过公开 `TCP_CONNECTION_INFO` 查询 TCP 状态、flags、毫�
 槽位及操作记录是否成功输出。`operation_trace_summary` 包含 `tcp_kernel_samples` 预算／计数、
 `tcp_kernel_histories_emitted` 和 `tcp_kernel_histories_omitted`，输出截断仍有明确标记。仅启用时，最终结果增加 `tcp_kernel_samples_enabled: true`。
 成功运行不输出采样历史。`sample_time_us` 是周期查询开始时的进程相对微秒数，区别于操作
-历史冻结时间。采样可能错过瞬时状态，也可能因 IO 工作线程阻塞而延迟。reset 后的状态
+历史冻结时间。采样可能错过瞬时状态，也可能因 IO 工作线程阻塞而延迟。
+起始部分从超过一秒无进展阈值后、最早获准查询的合格观测开始，不是 TCP 进入恢复状态的时刻；
+身份准入容量与被省略的中段样本仍可能造成两端窗口之间的缺口。reset 后的状态
 不能描述此前的恢复过程，须按实际样本时间和状态解读。采样不能证明根因、性能或容量，
 原始诊断输出仅留本地。
 
