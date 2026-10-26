@@ -112,6 +112,33 @@ states. Selected Boost and Standalone Asio regressions include a controlled
 post-DATA stall that retains an ESTABLISHED sample before timeout cleanup. See
 [usage and limits](../../benchmarks/CONNECTIONS.md#opt-in-tcp-kernel-samples).
 
+### Frame-boundary diagnostics
+
+The native control's pre-cancel `connection_diagnostic` includes a bounded
+`frame_boundary` object. Its `status` distinguishes `empty`, `incomplete_prefix`,
+`invalid_prefix`, `incomplete_frame` and `complete_frame`. `input_frame_ready` is
+true only for a complete frame with a canonical, allowed length prefix; an invalid
+prefix no longer appears ready. This is framing validation, not verification of
+the application header or payload.
+
+`prefix` contains at most nine unsigned byte values and excludes payload bytes.
+`buffered_bytes` counts all bytes in the current receive buffer, including any
+following frames. `declared_body_bytes` is null until the complete prefix is
+available; it retains decoded lengths even when they are invalid or oversized.
+`required_wire_bytes` includes the first frame's prefix, and `missing_frame_bytes`
+is its remaining byte count, clamped at zero when following bytes are buffered.
+Both fields are null for empty, incomplete-prefix or invalid-prefix states; no
+addition is performed on an unvalidated length.
+
+The matcher and its 4,096-byte wire cap are unchanged. A canonical nine-byte
+prefix declares at least 65,536 body bytes, so it exceeds this cap and reports
+`invalid_prefix`; partial nine-byte prefixes remain `incomplete_prefix`.
+The native `--self-test` checks these states, framing limits, extreme 64-bit
+lengths and JSON output using fixed byte strings, without connection load.
+This diagnostic improvement neither explains nor fixes the 5,000-connection
+stall. It changes no protocol, IO operation, deadline or workload, and adds no
+capacity or performance acceptance evidence.
+
 ### Kernel samples during stalled connections
 
 A fixed five-run diagnostic series used the same host and workload above with
