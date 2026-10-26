@@ -23,6 +23,16 @@ for throughput and p99 charts, model comparisons and machine specifications.
 | WebSocket compression | TODO | Negotiate permessage-deflate; enforce decompressed limits and test adversarial frames. |
 | DTLS | TODO | Select a supported engine; define peer identity, retransmission and datagram limits. |
 
+## Deferred TCP diagnostic TODO
+
+[TCP many-connection response timeout (#61)](https://github.com/OpenArkStudio/arknet/issues/61)
+is the canonical tracker. Investigation is paused while framework delivery takes
+priority. The completed three-run schema 2 campaign and earlier schema 1 evidence
+keep their recorded source/format boundaries; raw logs remain local.
+The root cause remains unresolved. These observations establish neither
+performance/capacity acceptance nor a failure-rate estimate. Resume only after
+explicit reprioritization and a bounded plan; see the [recorded limits](production-readiness.md).
+
 ## HTTP Engine Boundaries
 
 [Boost.Beast](https://github.com/boostorg/beast#introduction) implements

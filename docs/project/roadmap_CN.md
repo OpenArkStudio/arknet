@@ -22,6 +22,14 @@ RUDP 与 ARQ／可选 FEC、原生单节点 MySQL 和 Redis 客户端、定时�
 | WebSocket 压缩 | TODO | permessage-deflate 协商、解压后上限和恶意帧测试。 |
 | DTLS | TODO | 选择可用引擎，定义对端身份、重传和数据报上限。 |
 
+## 暂缓的 TCP 诊断 TODO
+
+[TCP 多连接响应超时（#61）](https://github.com/OpenArkStudio/arknet/issues/61)
+是唯一跟踪入口。当前暂停调查，优先推进框架交付。已完成的三次 schema 2 诊断与早期
+schema 1 证据保留各自记录的源码及格式边界，原始日志仅留本地。
+根因仍未确定，这些观测不构成性能或容量验收，也不能用于估算故障率。
+仅在明确调整优先级并制定有界计划后恢复；参见[已记录的限制](production-readiness_CN.md)。
+
 ## HTTP 引擎边界
 
 [Boost.Beast](https://github.com/boostorg/beast#introduction) 提供
