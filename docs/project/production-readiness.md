@@ -103,14 +103,30 @@ The native control also offers default-off `--tcp-kernel-samples on` with
 `--operation-trace on` to retain periodic public Apple `TCP_CONNECTION_INFO`
 queries before failure cleanup. The existing one-second worker marker checks
 unfinished traffic sessions with DATA received and at least one second without a
-composed read/write completion. It keeps eight samples for at most 16 identities
-in less than 32 KiB of extra fixed storage; recovered/completed/closed sessions
+composed read/write completion. It keeps the first four qualifying observations
+and latest four for at most 16 identities in less than 32 KiB of extra fixed storage; recovered/completed/closed sessions
 release slots, while persistent stalls keep theirs. Omission and overwrite are
 explicit. Other platforms return null with an unsupported reason. Sample time is
 separate from the operation-ring freeze; delayed sampling can miss transient
 states. Selected Boost and Standalone Asio regressions include a controlled
 post-DATA stall that retains an ESTABLISHED sample before timeout cleanup. See
 [usage and limits](../../benchmarks/CONNECTIONS.md#opt-in-tcp-kernel-samples).
+
+Kernel histories use schema 2 with `retention_policy: "first_4_latest_4"`;
+the nested sampler summary also declares schema 2. Up to eight observations are
+all retained; overflow omits the middle and preserves chronological head/tail
+output with explicit sample ordinals and overwrite counts. The retained head is
+the earliest admitted query after the one-second inactivity threshold, not the
+onset of TCP recovery. Admission limits, omitted middle observations, worker
+delay and non-simultaneous peer windows remain causal limits; retention alone
+neither establishes a fault nor changes the load, polling or transport.
+Kernel-history-only `clock_origin_us` converts the existing application `began`
+to microseconds since its steady-clock epoch, with explicit
+`clock_domain: "local_steady_clock"` and `clock_origin_unit` metadata. Origin plus
+`sample_time_us` supports correlation only for the same host and clock domain;
+it is not wall-clock time or a cross-host mapping, and adds no clock query.
+
+
 
 ### Frame-boundary diagnostics
 
@@ -145,7 +161,10 @@ A fixed five-run diagnostic series used the same host and workload above with
 sampling enabled: Boost 1.90 Release, TLS off, native source
 `605625dfea0efff90468771cc0839d03866a134c` (series revision `9200bfb` only adds
 documentation). All 5,000 connections reached ready/started in each run. These
-consecutive outcomes are not an estimated failure probability.
+consecutive outcomes are not an estimated failure probability. These historical
+raw kernel records are schema 1 with tail-only retention. Their overwritten
+onset observations cannot be recovered by relabeling them as schema 2; the
+head/tail policy above has not been exercised by this five-run series.
 
 | Run | Finished connections per peer | Unfinished connections per peer |
 | --- | ---: | ---: |

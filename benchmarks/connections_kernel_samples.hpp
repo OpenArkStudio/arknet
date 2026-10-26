@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cerrno>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -80,6 +81,8 @@ class tcp_kernel_samples
 {
 public:
     static constexpr std::size_t session_capacity = 16, sample_capacity = 8, memory_limit = 32 * 1024;
+    static constexpr std::size_t head_sample_capacity = 4, tail_sample_capacity = 4;
+    static constexpr unsigned schema_version = 2;
     static constexpr std::int64_t inactivity_us = 1000000;
 
     explicit tcp_kernel_samples(bool enabled)
@@ -140,7 +143,7 @@ public:
             return; // Persistent stalls keep their slots; never query omitted identities.
         }
         value->completions = completions;
-        auto& event = value->events[value->total % sample_capacity];
+        auto& event = value->events[event_index(value->total)];
         event = {time_us, idle_us, next_receive, next_send, query()};
         overwritten_ += value->total >= sample_capacity;
         ++value->total;
@@ -159,24 +162,32 @@ public:
         return data_ && find(owner);
     }
 
-    void write_history(std::ostream& out, identity owner) const {
+    void write_history(std::ostream& out, identity owner, std::chrono::steady_clock::time_point began) const {
         const auto* value = data_ ? find(owner) : nullptr;
-        out << "\"sample_phase\":\"periodic_io_worker\",\"time_unit\":\"microseconds_since_process_start\",\"samples\":"
-               "[";
+        out << "\"clock_domain\":\"local_steady_clock\",\"clock_origin_us\":"
+            << std::chrono::duration_cast<std::chrono::microseconds>(began.time_since_epoch()).count()
+            << ",\"clock_origin_unit\":\"microseconds_since_steady_clock_epoch\","
+               "\"retention_policy\":\"first_4_latest_4\",\"head_sample_capacity\":"
+            << head_sample_capacity << ",\"tail_sample_capacity\":" << tail_sample_capacity
+            << ",\"sample_phase\":\"periodic_io_worker\",\"time_unit\":\"microseconds_since_process_start\","
+               "\"samples\":[";
         if (value)
         {
             const auto size = (std::min)(value->total, std::uint64_t{sample_capacity});
+            const auto head_size = (std::min)(size, std::uint64_t{head_sample_capacity});
+            const auto tail_size = size - head_size;
             for (std::uint64_t index = 0; index < size; ++index)
             {
                 if (index)
                 {
                     out << ',';
                 }
-                const auto& event = value->events[(value->total - size + index) % sample_capacity];
+                const auto ordinal = index < head_size ? index : value->total - tail_size + index - head_size;
+                const auto& event = value->events[event_index(ordinal)];
                 const auto& info = event.info;
-                out << "{\"sample_time_us\":" << event.time_us << ",\"no_completion_age_us\":" << event.idle_us
-                    << ",\"next_receive\":" << event.next_receive << ",\"next_send\":" << event.next_send
-                    << ",\"tcp_info\":";
+                out << "{\"sample_ordinal\":" << ordinal + 1 << ",\"sample_time_us\":" << event.time_us
+                    << ",\"no_completion_age_us\":" << event.idle_us << ",\"next_receive\":" << event.next_receive
+                    << ",\"next_send\":" << event.next_send << ",\"tcp_info\":";
                 if (info.result == tcp_kernel_info::status::available)
                 {
                     out << "{\"state\":" << info.state << ",\"flags\":" << info.flags << ",\"rto_ms\":" << info.rto_ms
@@ -204,11 +215,11 @@ public:
                 }
                 out << '}';
             }
-            out << "],\"overwritten_samples\":" << value->total - size;
+            out << "],\"total_samples\":" << value->total << ",\"overwritten_samples\":" << value->total - size;
         }
         else
         {
-            out << "],\"overwritten_samples\":0";
+            out << "],\"total_samples\":0,\"overwritten_samples\":0";
         }
     }
 
@@ -221,15 +232,25 @@ public:
                 retained += value.used;
             }
         }
-        out << "{\"storage_bytes\":" << storage_bytes() << ",\"memory_limit_bytes\":" << memory_limit
-            << ",\"session_capacity\":" << session_capacity << ",\"sample_capacity\":" << sample_capacity
-            << ",\"retained_identities\":" << retained << ",\"released_histories\":" << released_
-            << ",\"slot_reuses\":" << reused_ << ",\"omitted_eligible_observations\":" << omitted_
-            << ",\"overwritten_samples\":" << overwritten_ << ",\"sampler_calls\":" << queries_
-            << ",\"frozen\":" << (frozen_ ? "true" : "false") << '}';
+        out << "{\"schema\":" << schema_version
+            << ",\"retention_policy\":\"first_4_latest_4\",\"head_sample_capacity\":" << head_sample_capacity
+            << ",\"tail_sample_capacity\":" << tail_sample_capacity << ",\"storage_bytes\":" << storage_bytes()
+            << ",\"memory_limit_bytes\":" << memory_limit << ",\"session_capacity\":" << session_capacity
+            << ",\"sample_capacity\":" << sample_capacity << ",\"retained_identities\":" << retained
+            << ",\"released_histories\":" << released_ << ",\"slot_reuses\":" << reused_
+            << ",\"omitted_eligible_observations\":" << omitted_ << ",\"overwritten_samples\":" << overwritten_
+            << ",\"sampler_calls\":" << queries_ << ",\"frozen\":" << (frozen_ ? "true" : "false") << '}';
     }
 
 private:
+    static_assert(head_sample_capacity + tail_sample_capacity == sample_capacity);
+
+    static std::size_t event_index(std::uint64_t ordinal) noexcept {
+        return ordinal < head_sample_capacity
+                   ? ordinal
+                   : head_sample_capacity + (ordinal - head_sample_capacity) % tail_sample_capacity;
+    }
+
     struct event
     {
         std::int64_t time_us{}, idle_us{};

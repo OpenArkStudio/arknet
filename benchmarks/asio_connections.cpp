@@ -930,10 +930,11 @@ void application::trace_failure() {
             {
                 ++kernel_histories_available;
                 kernel_histories_emitted += output.append([&](std::ostream& out) {
-                    out << "{\"event\":\"tcp_kernel_sample_history\",\"schema\":1,\"role\":" << std::quoted(o.role)
+                    out << "{\"event\":\"tcp_kernel_sample_history\",\"schema\":"
+                        << connection_load::tcp_kernel_samples::schema_version << ",\"role\":" << std::quoted(o.role)
                         << ",\"run_id\":" << o.run << ",\"client_id\":" << value->state.owner.client
                         << ",\"connection_id\":" << value->state.owner.connection << ',';
-                    kernel_samples.write_history(out, value->state.owner);
+                    kernel_samples.write_history(out, value->state.owner, began);
                     out << '}';
                 });
             }
@@ -1525,6 +1526,41 @@ void self_test() {
     require(kernel_enabled.deadline == enabled.deadline && kernel_enabled.request_ms == enabled.request_ms &&
             kernel_enabled.connections == enabled.connections && kernel_enabled.window == enabled.window &&
             kernel_enabled.payload == enabled.payload);
+    // Synthetic queries only: exercise retention/JSON without sockets or load.
+    connection_load::tcp_kernel_samples retained(true);
+    unsigned kernel_queries{};
+    for (unsigned index = 1; index <= 10; ++index)
+    {
+        retained.sample({7, 1, 1}, 1000000 + index, 1000000, 4, 2, 3, [&] {
+            ++kernel_queries;
+            return connection_load::tcp_kernel_info{};
+        });
+    }
+    std::ostringstream kernel_history, kernel_summary;
+    kernel_history << "{\"schema\":" << connection_load::tcp_kernel_samples::schema_version << ',';
+    retained.write_history(kernel_history, {7, 1, 1}, clock_type::time_point{std::chrono::microseconds{1234567}});
+    kernel_history << '}';
+    retained.write_summary(kernel_summary);
+    require(kernel_queries == 10 &&
+            kernel_history.str().starts_with("{\"schema\":2,\"clock_domain\":\"local_steady_clock\","));
+    require(kernel_history.str().find(
+                "\"clock_origin_us\":1234567,\"clock_origin_unit\":\"microseconds_since_steady_clock_epoch\"") !=
+            std::string::npos);
+    require(kernel_history.str().find("\"head_sample_capacity\":4,\"tail_sample_capacity\":4") != std::string::npos);
+    require(kernel_history.str().find("\"total_samples\":10,\"overwritten_samples\":2}") != std::string::npos);
+    std::size_t kernel_position{};
+    for (const auto ordinal : {1, 2, 3, 4, 7, 8, 9, 10})
+    {
+        kernel_position = kernel_history.str().find("\"sample_ordinal\":" + std::to_string(ordinal) +
+                                                        ",\"sample_time_us\":" + std::to_string(1000000 + ordinal),
+            kernel_position);
+        require(kernel_position != std::string::npos);
+        ++kernel_position;
+    }
+    require(kernel_history.str().find("\"sample_ordinal\":5,") == std::string::npos &&
+            kernel_history.str().find("\"sample_ordinal\":6,") == std::string::npos);
+    require(kernel_summary.str().starts_with("{\"schema\":2,\"retention_policy\":\"first_4_latest_4\","));
+    std::cout << "native control kernel retention schema 2 checks passed\n";
     bool kernel_rejected{};
     try
     { parse("off", false, true); }
