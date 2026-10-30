@@ -1,10 +1,16 @@
 # 数据库客户端性能对照
 
-比较 v0.2.0 与加入完整关闭等待边界的实现，测量正常请求路径的性能。192 组配置中，两个版本各测量三轮，共 1,152 轮；失败与内容错误均为零。不测连接池、协程或关闭耗时。
+v0.2.0 与完整关闭等待实现的正常请求路径对照：192 组配置、每版本三轮，共 1,152 轮；失败、内容错误均为零。
 
-[5 秒负载对照](steady-workloads_CN.md)包含 Redis 的独立五轮测量。
+<CardGrid>
+<LinkCard title="5 秒负载对照" href="steady-workloads_CN.md" description="Redis 独立五轮测量。" />
+</CardGrid>
 
-CPU 仅统计客户端进程；单核满载为 100%。MySQL RT 包含客户端排队；Redis RT 为整批流水线响应时间。
+<Aside type="caution" title="指标与范围">
+
+CPU 仅计客户端，单核 100%；MySQL RT 含客户端排队，Redis RT 为整批流水线。不测连接池、协程或关闭耗时。
+
+</Aside>
 
 | 环境项 | 记录值 |
 | --- | --- |
@@ -28,6 +34,8 @@ MySQL `mysql.cpp` SHA256: `badd0dfa01bb4c61de94893f8ad7a003eb48e146060651c8ad2f4
 
 Redis `redis.cpp` SHA256: `9de41f49ae449a1f3be1b2015d9224340a7f87f5414be7ef3e50e2148ef6cdbc`
 
+计算均为每组比值的中位数，不是合并总吞吐量。
+
 ## MySQL
 
 4 条连接 · 1 KiB · 每连接 16 个在途请求
@@ -45,7 +53,7 @@ Redis `redis.cpp` SHA256: `9de41f49ae449a1f3be1b2015d9224340a7f87f5414be7ef3e50e
 
 </details>
 
-图示 8 组的吞吐量比值变化中位数：-0.02%。全量 96 组对应中位数：-0.02%。计算均为每组比值的中位数，不是合并总吞吐量。
+吞吐量比值变化中位数：图示 8 组 -0.02%；全量 96 组 -0.02%。
 
 ## Redis
 
@@ -64,7 +72,7 @@ Redis `redis.cpp` SHA256: `9de41f49ae449a1f3be1b2015d9224340a7f87f5414be7ef3e50e
 
 </details>
 
-图示 4 组的吞吐量比值变化中位数：-0.26%。全量 96 组对应中位数：-0.3%。计算均为每组比值的中位数，不是合并总吞吐量。
+吞吐量比值变化中位数：图示 4 组 -0.26%；全量 96 组 -0.3%。
 
 <details>
 <summary>全量数据（中位数 [最小值—最大值]）</summary>
@@ -268,6 +276,23 @@ Redis `redis.cpp` SHA256: `9de41f49ae449a1f3be1b2015d9224340a7f87f5414be7ef3e50e
 
 ## 复现
 
-[使用同一基准程序对比不同库版本](../../benchmarks/comparison/README_CN.md)。
+<Steps>
 
-[MySQL 基准程序](../../benchmarks/mysql_CN.md) · [Redis 基准程序](../../benchmarks/redis_CN.md)。使用相同驱动、依赖、服务端配置和负载参数分别编译两个库版本；基准程序可直接编译运行。报告生成工具不是测试入口。
+<Step title="匹配版本与配置">
+
+[使用同一驱动构建两个库版本](../../benchmarks/comparison/README_CN.md)，保持依赖、服务端配置与负载一致。
+
+</Step>
+
+<Step title="直接运行 C++ 基准">
+
+<CardGrid>
+<LinkCard title="MySQL" href="../../benchmarks/mysql_CN.md" />
+<LinkCard title="Redis" href="../../benchmarks/redis_CN.md" />
+</CardGrid>
+
+报告生成与测量分开执行。
+
+</Step>
+
+</Steps>

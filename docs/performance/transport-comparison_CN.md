@@ -1,8 +1,10 @@
 # 网络端点性能对照
 
-比较 v0.2.0 与加入原生操作排空和回调释放等待的实现。64 组配置中，两个版本各启动三个独立进程测量，共 384 轮；请求失败、内容错误与排空超时均为零。
+v0.2.0 与原生操作排空／回调释放等待实现对照：64 组、每版本三个独立进程，共 384 轮；请求失败、内容错误、排空超时均为零。
 
-[5 秒负载对照](steady-workloads_CN.md)包含 WebSocket、TCP 与 HTTP 的独立五轮测量。
+<CardGrid>
+<LinkCard title="5 秒负载对照" href="steady-workloads_CN.md" description="WebSocket、TCP、HTTP 独立五轮测量。" />
+</CardGrid>
 
 CPU 为同进程客户端与服务端合计，单核满载为 100%；RT 为单消息往返时间。双方使用同一份驱动。
 
@@ -26,9 +28,13 @@ v0.2.0 基准库: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · 候选库: `2aa5
 
 `loopback.cpp` SHA256: `1749828c0388136bb7cea4559303c0f59b4d5d3833280e9e52ecb0bee41d17c8`
 
-## TCP · Boost.Asio
+<Aside type="note" title="共同负载与统计口径">
 
-16 条连接 · 64 B / 4096 B · 在途 1 / 16 · 1 个 io_context，1 / 4 个线程
+全部协议／依赖组均使用：16 条连接 · 64 B / 4096 B · 在途 1 / 16 · 1 个 io_context，1 / 4 个线程。计算均为每组比值的中位数，不是合并总吞吐量。
+
+</Aside>
+
+## TCP · Boost.Asio
 
 ![TCP · Boost.Asio · 吞吐量 · 往返/秒](assets/comparison-020-2aa5bc0-transport-boost-tcp_CN-throughput.svg)
 
@@ -43,11 +49,9 @@ v0.2.0 基准库: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · 候选库: `2aa5
 
 </details>
 
-图示 8 组的吞吐量比值变化中位数：-2.34%。计算均为每组比值的中位数，不是合并总吞吐量。
+图示 8 组吞吐量比值变化中位数：-2.34%。
 
 ## TLS TCP · Boost.Asio
-
-16 条连接 · 64 B / 4096 B · 在途 1 / 16 · 1 个 io_context，1 / 4 个线程
 
 <details>
 <summary>吞吐量、CPU 与响应时间</summary>
@@ -62,11 +66,9 @@ v0.2.0 基准库: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · 候选库: `2aa5
 
 </details>
 
-图示 8 组的吞吐量比值变化中位数：-0.8%。计算均为每组比值的中位数，不是合并总吞吐量。
+图示 8 组吞吐量比值变化中位数：-0.8%。
 
 ## HTTP/1.1 · Boost.Asio
-
-16 条连接 · 64 B / 4096 B · 在途 1 / 16 · 1 个 io_context，1 / 4 个线程
 
 <details>
 <summary>吞吐量、CPU 与响应时间</summary>
@@ -81,11 +83,9 @@ v0.2.0 基准库: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · 候选库: `2aa5
 
 </details>
 
-图示 8 组的吞吐量比值变化中位数：-1.44%。计算均为每组比值的中位数，不是合并总吞吐量。
+图示 8 组吞吐量比值变化中位数：-1.44%。
 
 ## HTTPS · Boost.Asio
-
-16 条连接 · 64 B / 4096 B · 在途 1 / 16 · 1 个 io_context，1 / 4 个线程
 
 <details>
 <summary>吞吐量、CPU 与响应时间</summary>
@@ -100,11 +100,9 @@ v0.2.0 基准库: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · 候选库: `2aa5
 
 </details>
 
-图示 8 组的吞吐量比值变化中位数：-1.82%。计算均为每组比值的中位数，不是合并总吞吐量。
+图示 8 组吞吐量比值变化中位数：-1.82%。
 
 ## WebSocket · Boost.Asio
-
-16 条连接 · 64 B / 4096 B · 在途 1 / 16 · 1 个 io_context，1 / 4 个线程
 
 <details>
 <summary>吞吐量、CPU 与响应时间</summary>
@@ -119,11 +117,9 @@ v0.2.0 基准库: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · 候选库: `2aa5
 
 </details>
 
-图示 8 组的吞吐量比值变化中位数：-3.02%。计算均为每组比值的中位数，不是合并总吞吐量。
+图示 8 组吞吐量比值变化中位数：-3.02%。
 
 ## TLS WebSocket · Boost.Asio
-
-16 条连接 · 64 B / 4096 B · 在途 1 / 16 · 1 个 io_context，1 / 4 个线程
 
 <details>
 <summary>吞吐量、CPU 与响应时间</summary>
@@ -138,11 +134,9 @@ v0.2.0 基准库: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · 候选库: `2aa5
 
 </details>
 
-图示 8 组的吞吐量比值变化中位数：0.15%。计算均为每组比值的中位数，不是合并总吞吐量。
+图示 8 组吞吐量比值变化中位数：0.15%。
 
 ## TCP · Standalone Asio
-
-16 条连接 · 64 B / 4096 B · 在途 1 / 16 · 1 个 io_context，1 / 4 个线程
 
 <details>
 <summary>吞吐量、CPU 与响应时间</summary>
@@ -157,11 +151,9 @@ v0.2.0 基准库: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · 候选库: `2aa5
 
 </details>
 
-图示 8 组的吞吐量比值变化中位数：-0.5%。计算均为每组比值的中位数，不是合并总吞吐量。
+图示 8 组吞吐量比值变化中位数：-0.5%。
 
 ## TLS TCP · Standalone Asio
-
-16 条连接 · 64 B / 4096 B · 在途 1 / 16 · 1 个 io_context，1 / 4 个线程
 
 <details>
 <summary>吞吐量、CPU 与响应时间</summary>
@@ -176,7 +168,7 @@ v0.2.0 基准库: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · 候选库: `2aa5
 
 </details>
 
-图示 8 组的吞吐量比值变化中位数：-0.31%。计算均为每组比值的中位数，不是合并总吞吐量。
+图示 8 组吞吐量比值变化中位数：-0.31%。
 
 <details>
 <summary>全量数据（中位数 [最小值—最大值]）</summary>
@@ -252,9 +244,15 @@ v0.2.0 基准库: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · 候选库: `2aa5
 
 ## 复现
 
-[使用同一基准程序对比不同库版本](../../benchmarks/comparison/README_CN.md)。
+<Steps>
 
-[编译配置与参数](methodology_CN.md)。使用仓库中的独立 C++ 基准程序，输出数据保存在源码目录外。
+<Step title="匹配构建与参数">
+
+[同一驱动构建两个库版本](../../benchmarks/comparison/README_CN.md)；[配置与参数](methodology_CN.md)。直接运行仓库 C++ 基准，输出保存在源码目录外。
+
+</Step>
+
+<Step title="运行基准">
 
 ```sh
 cmake -S . -B build/benchmark -DCMAKE_BUILD_TYPE=Release \
@@ -266,3 +264,7 @@ cmake --build build/benchmark --target arknet_loopback_benchmark
   --window 16 --io-model shared --io-threads 4 --work 0 \
   --warmup 0.25 --seconds 1
 ```
+
+</Step>
+
+</Steps>

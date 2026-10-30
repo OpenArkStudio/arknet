@@ -2,15 +2,11 @@
 
 Measured on 2026-10-12. [Test machine and receive-buffer diagnosis](udp-update.md).
 
-Release IPv4 loopback on the Mac mini M4 Pro: 16 clients, one context/one
-thread, no extra computation, 1 s measurement and 0.25 s warmup. Each dependency combination
-runs six payloads × three windows × three repetitions: **36 pass, 18 fail**.
+Mac mini M4 Pro Release IPv4 loopback: 16 clients, one context/thread, no added computation; 1 s measurement, 0.25 s warmup. Each dependency runs six payloads × three windows × three repetitions: **36 pass, 18 fail**.
 
 ![IPv4 UDP lost echoes by payload and request window](assets/udp-limits-loss.svg)
 
-Cells show measured-phase lost echoes per run. All three repetitions have
-identical loss counts, and both dependency combinations match. Warmup errors remain in the
-raw JSON; failed configurations are excluded from throughput comparisons.
+Cells: lost echoes/run during measurement. Counts match across three repetitions and both dependencies. Raw JSON retains warmup errors; failed configurations are excluded from throughput comparisons.
 
 - Every payload passes at window 1, including **65,507 bytes**. The 1,472-byte
   payload also passes at windows 16 and 64.
@@ -26,16 +22,13 @@ raw JSON; failed configurations are excluded from throughput comparisons.
 | Without fragmentation at MTU 1,500 | 1,472 = 1,500 − 20 − 8 | 1,452 = 1,500 − 40 − 8 |
 | Mathematical budget at MTU 16,384 | 16,356 | 16,336 |
 
-These calculations assume a 20-byte IPv4 header or a 40-byte IPv6 base
-header and an 8-byte UDP header. IP options or extension headers reduce the
-budget; IPv6 jumbograms are outside this table. IPv6 routers do not fragment
-packets. These diagnostics use IPv4 only and do not establish IPv6 limits
-under load.
+<Aside type="caution" title="MTU and validation scope">
 
-`lo0` has MTU 16,384, but its IPv4 fragmentation/reassembly counters stayed
-at zero even when larger datagrams succeeded. The mathematical MTU boundary
-is not an observed fragmentation threshold on this loopback path. Cross-host
-payload sizing must use the actual path MTU.
+Budgets assume a 20-byte IPv4 header or 40-byte IPv6 base header, plus 8-byte UDP header; options/extensions reduce payload. IPv6 jumbograms are excluded; IPv6 routers do not fragment. These IPv4-only diagnostics do not establish IPv6 load limits.
+
+`lo0` MTU is 16,384, yet larger successful datagrams recorded zero IPv4 fragmentation/reassembly. The mathematical boundary is not an observed fragmentation threshold. Size cross-host payloads by actual path MTU.
+
+</Aside>
 
 ## Kernel Evidence
 
@@ -44,19 +37,15 @@ payload sizing must use the actual path MTU.
 | Standalone Asio | 89,059 → 112,837 | 23,778 | 0 / 0 |
 | Boost.Asio | 126,672 → 150,450 | 23,778 | 0 / 0 |
 
-Each dependency combination records 11,889 lost echoes in the measurement phase. The kernel
-counts cover the whole stage, including warmup, and are system-wide. They
-record receive-buffer overflow during the bursts; there is no recorded IPv4
-fragmentation supporting fragmentation as the explanation for these losses.
-Send admission/completion and content errors are all zero.
+Each dependency lost 11,889 measured-phase echoes. System-wide kernel counts include warmup and record burst receive-buffer overflow; no recorded IPv4 fragmentation supports that explanation for the losses. Send admission/completion and content errors are zero.
 
-The configured sockets report **64 KiB send / 4 MiB receive** buffers.
-`net.inet.udp.maxdgram=9216` and `net.inet.udp.recvspace=786896` stayed unchanged;
-65,507-byte successful echoes show that 9,216 was not an effective payload
-ceiling for these configured sockets. Window 16 passes at 16 KiB, while
-window 64 overflows buffers: datagram validity and burst capacity are separate.
+Actual buffers: **64 KiB send / 4 MiB receive**. `net.inet.udp.maxdgram=9216` and `net.inet.udp.recvspace=786896` were unchanged; successful 65,507-byte echoes show 9,216 was not these sockets’ effective payload ceiling. At 16 KiB, window 16 passes and window 64 overflows: validity and burst capacity are separate.
 
 ## Reproduce
+
+<Steps>
+
+<Step title="Run an independent case">
 
 Compile using [UDP build instructions](../features/udp/performance.md#build-and-run),
 then run an independent C++ case:
@@ -67,6 +56,10 @@ build-perf/benchmarks/arknet_loopback_benchmark \
   --io-model shared --io-threads 1 --work 0 --warmup 0.25 --seconds 1
 ```
 
+</Step>
+
+<Step title="Read archives and generate charts">
+
 The archived [Standalone command and kernel snapshots](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp/limits)
 also retain the complete shell matrix and the Boost command. The optional
 offline chart tool needs the [report environment](methodology.md#metrics-and-charts):
@@ -76,6 +69,10 @@ build/report-venv/bin/python scripts/udp_limits_report.py \
   --input-dir /path/to/arknet-history/benchmarks/results/macmini-m4pro-20261012-udp/limits \
   --output docs/performance/assets/udp-limits-loss.svg
 ```
+
+</Step>
+
+<Step title="Check the offline tool">
 
 Report-tool checks use a deterministic synthetic matrix to validate calculations
 and reject malformed data; they do not load archived measurements or launch network tests:
@@ -92,3 +89,7 @@ python3 -m unittest discover -s scripts -p 'test_udp_limits_report.py' -v
 Source SHA-256: `0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`.
 
 See [Buffers and flow control](../guides/socket-buffers.md) for the overflow explanation and configuration.
+
+</Step>
+
+</Steps>
