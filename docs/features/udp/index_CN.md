@@ -4,10 +4,14 @@ arknet 通过已连接的客户端、按端点创建 session 的服务端，以�
 
 ## 开始使用
 
-- [创建服务端](server_CN.md)：监听并接收消息。
-- [创建客户端](client_CN.md)：连接、发送并验证响应。
-- [配置与进阶使用](configuration_CN.md)：协议选项与限制。
-- [性能](performance_CN.md)：本地测量与复现。
+<CardGrid>
+
+<LinkCard title="创建服务端" href="server_CN.md" description="监听并接收消息。" />
+<LinkCard title="创建客户端" href="client_CN.md" description="连接、发送并验证响应。" />
+<LinkCard title="配置与进阶使用" href="configuration_CN.md" description="协议选项、限制、扩展与关闭。" />
+<LinkCard title="性能" href="performance_CN.md" description="缓冲区配置、丢失校验与 IO 模型的本地测量。" />
+
+</CardGrid>
 
 ## 选择端点
 
@@ -25,7 +29,11 @@ arknet 通过已连接的客户端、按端点创建 session 的服务端，以�
 
 ## 交付与大小限制
 
+<Aside type="caution" title="UDP 交付边界">
+
 UDP 不保证交付、顺序、去重、对端可用性或拥塞控制。客户端 `start` 成功只表示目标已关联，不证明服务端正在监听。发送完成表示本地 socket 操作完成，不表示远端接收。客户端自动重连不会重传丢失的数据报。
+
+</Aside>
 
 每次接收预留 65536 字节；配置的接收上限小于 65536 时，启动会被拒绝。这避免因初始缓冲区过小而截断第一个普通数据报。操作系统限制和网络 MTU 仍然生效。IPv4 理论负载上限为 65507 字节，但更小的系统限制可能产生 `message_size`，大包也可能需要 IP 分片。应按实际网络选择负载大小。
 
@@ -39,6 +47,4 @@ UDP 不保证交付、顺序、去重、对端可用性或拥塞控制。客户�
 
 ## 后续阅读
 
-- [配置与进阶使用](configuration_CN.md)：协议选项、扩展与关闭。
-- [性能](performance_CN.md)：缓冲区配置、丢失校验和 IO 模型对比。
-- [UDP 测试](https://github.com/OpenArkStudio/arknet/blob/main/tests/udp.cpp)：空数据报、二进制负载、端点 session、重启、所有权和并发入队。
+[UDP 测试](https://github.com/OpenArkStudio/arknet/blob/main/tests/udp.cpp)：空数据报、二进制负载、端点 session、重启、所有权和并发入队。

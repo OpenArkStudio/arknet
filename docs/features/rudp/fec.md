@@ -39,11 +39,15 @@ server.set_fec_options(settings);
 client.set_fec_options(settings);
 ```
 
+<Aside type="caution" title="FEC negotiation">
+
 Configure both endpoints while stopped. Fixed and adaptive senders interoperate:
 each group carries its actual parameters. An FEC-enabled server also accepts an
 ARQ-only client. Requesting FEC from an arknet server with FEC disabled fails with
 `operation_not_supported`. An older server that ignores the new handshake causes
 a connection timeout; the client does not silently downgrade.
+
+</Aside>
 
 ## Coding and Buffer Limits
 
@@ -117,11 +121,13 @@ shutdown can cancel a pending query. Reconnect starts a new statistics period.
 `last_change` is `configured`, `loss`,
 `healthy` or `overload`; `policy_changes` counts adjustments.
 
-`missing_shards` counts originals absent when a group recovers or expires,
-including recovered shards and possibly originals that arrive later.
-`recovered_shards` counts originals reconstructed from parity.
-`retransmissions` counts ARQ segment retransmissions. These units differ; their
-difference is not a final-loss metric. Check application contents, order and completion.
+| Counter | Unit and scope |
+| --- | --- |
+| `missing_shards` | Original shards absent at group recovery/expiry, including recovered shards and possibly late originals |
+| `recovered_shards` | Original shards reconstructed from parity |
+| `retransmissions` | ARQ segment retransmissions |
+
+These units differ; subtraction does not measure final loss. Verify application contents, order and completion.
 
 ## Compatibility and Security
 

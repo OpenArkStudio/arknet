@@ -13,14 +13,11 @@ Strands do not pin a connection to an operating-system thread.
 | One context/several threads with independent strands | Many connections with uneven activity | Scheduling one context from several threads adds contention; callbacks can change threads |
 | Several contexts/one thread each | Stable partitions, predictable connection loads | A busy partition cannot borrow another partition's thread |
 
-The owned `arknet::io_pool` uses one context and one worker per lane. Its first
-lane handles the server listener; sessions use the remaining lanes when present.
-`arknet::io_pool` is the public scheduler name; `arknet::iopool` remains an alias.
-External contexts may use one or multiple runners. arknet creates a strand for
-each supplied external lane and never stops the host context.
-Directly constructed `arknet::io_t` lanes use a strand by default. The explicit
-`serialize = false` setting requires a single context runner, as used internally
-by the owned pool.
+| Scheduler | Lane contract |
+| --- | --- |
+| Owned `arknet::io_pool` (`arknet::iopool` alias) | One context and worker per lane; first lane listens, sessions use other lanes when present |
+| External contexts | One or multiple runners; arknet creates a strand per supplied lane and never stops the host context |
+| Direct `arknet::io_t` | Strand by default; `serialize = false` requires one context runner, as in the owned pool |
 
 Passing one context directly to a server creates one lane: its sessions share
 that lane's strand. Supply several lanes to allow concurrent session handlers,
@@ -40,12 +37,28 @@ threads therefore do not make one UDP server's receive handlers concurrent.
 User state accessed by independent lanes needs synchronization. Avoid relying
 on thread-local state across asynchronous operations.
 
-Keep the contexts, runners and work guard alive until all network objects stop.
-Stop objects first, release the work guard, then join the host runners. A network
-callback should request shutdown and let an owner thread wait for completion.
-Let every runner drain before destroying any context: a queued cancellation
-handler in one context may retain a session or strand from another context.
-See [lifetime and send rules](sending.md).
+<Aside type="caution" title="Keep external contexts alive">
+
+A queued cancellation handler can retain another context's session or strand.
+In callbacks, request shutdown; let an owner thread wait for completion.
+
+</Aside>
+
+<Steps>
+
+<Step title="Stop network objects">
+
+Keep contexts, runners and the work guard alive until every object stops.
+
+</Step>
+
+<Step title="Release the work guard and drain runners">
+
+Join every host runner before destroying any context. See [lifetime and send rules](sending.md).
+
+</Step>
+
+</Steps>
 
 An owned endpoint's final reference can be released on an IO callback after its
 close completes. arknet transfers pool draining and joining to an internal cleanup
@@ -104,6 +117,8 @@ return zero; later posts still run without restarting the runtime.
 The budget counts Asio handlers, not elapsed time or inline calls inside a
 handler. Posting is not bounded by this dispatch budget.
 
+<Aside type="caution" title="Manual runtime lifetime">
+
 The executor does not keep the context alive. Finish or cancel external
 operations and stop their producers before destroying the runtime on its owner
 thread. Active polling pins the context until that call returns; releasing the
@@ -112,6 +127,8 @@ and is **not** an IO drain, join or dynamic-library unload barrier. Use the
 runtime's poll entry point rather than running or stopping its underlying context.
 Native endpoint callbacks still use their own executors unless explicitly bridged
 to this executor; the runtime alone does not change their callback thread.
+
+</Aside>
 
 ## Asio References
 

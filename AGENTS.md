@@ -106,6 +106,9 @@ branch or worktree when the existing checkout contains uncommitted changes.
 - Keep English and Chinese documentation aligned. Keep the README concise and
   detailed usage, client/server examples and reports under `docs/`. Follow the
   current Nimbus site and its checks; do not restore retired documentation tools.
+- Use Nimbus cards for routing, Steps for procedures, Tabs for valid alternatives
+  and Aside for caveats to reduce repetition. Keep reference constraints visible;
+  preserve bilingual labels, links and code, and verify every path in AI Markdown.
 
 ## Release notes
 

@@ -8,10 +8,14 @@ and binary payloads with embedded null bytes.
 
 ## Get started
 
-- [Create a server](server.md): listen and receive messages.
-- [Create a client](client.md): connect, send and verify replies.
-- [Configuration](configuration.md): protocol options and limits.
-- [Performance](performance.md): local measurements and reproduction.
+<CardGrid>
+
+<LinkCard title="Create a server" href="server.md" description="Listen and receive messages." />
+<LinkCard title="Create a client" href="client.md" description="Connect, send and verify replies." />
+<LinkCard title="Configuration" href="configuration.md" description="Protocol options, limits, extension and shutdown." />
+<LinkCard title="Performance" href="performance.md" description="Local buffer, loss and IO-model measurements." />
+
+</CardGrid>
 
 ## Choose an Endpoint
 
@@ -37,11 +41,15 @@ group-membership service.
 
 ## Delivery and Size Limits
 
+<Aside type="caution" title="UDP delivery guarantees">
+
 UDP does not guarantee delivery, ordering, deduplication, peer availability or
 congestion control. A successful `start` on a client selects a destination; it
 does not prove a server is listening. A send completion reports a local socket
 operation, not a remote receipt. Automatic client reconnect does not retransmit
 lost datagrams.
+
+</Aside>
 
 Receivers reserve 65536 bytes per receive and reject a configured receive
 maximum below 65536 at start. This avoids truncating the first ordinary
@@ -67,6 +75,4 @@ protocol or a future transport. See [IO models](../../concepts/io-models.md).
 
 ## Next Steps
 
-- [Configuration](configuration.md): protocol options, extension and shutdown.
-- [Performance](performance.md): buffer configuration, loss checks and IO-model comparison.
-- [UDP tests](https://github.com/OpenArkStudio/arknet/blob/main/tests/udp.cpp): empty/binary payloads, endpoint sessions, restart, ownership and concurrent admission.
+[UDP tests](https://github.com/OpenArkStudio/arknet/blob/main/tests/udp.cpp): Empty/binary payloads, endpoint sessions, restart, ownership and concurrent admission.

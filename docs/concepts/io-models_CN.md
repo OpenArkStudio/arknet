@@ -12,13 +12,11 @@ strand 不会把连接固定到某个操作系统线程。
 | 1 个 io_context、多个线程和独立 strand | 大量连接且活跃程度不均衡 | 多个线程调度同一 io_context 时存在竞争，回调可能切换线程 |
 | 多个 io_context 各 1 个线程 | 分区稳定、连接负载可预测的业务 | 繁忙分区无法借用其他分区的线程 |
 
-内置 `arknet::io_pool` 为每个 IO 通道提供一个 context 和一个工作线程。服务端
-的第一个通道处理监听；存在其他通道时，session 使用其他通道。
-`arknet::io_pool` 是公开调度器名称，`arknet::iopool` 保留为别名。
-外部 context 可以由一个或多个线程运行。arknet 为每个传入的外部通道创建
-strand，不会停止宿主 context。
-直接构造的 `arknet::io_t` 默认使用 strand。显式设置 `serialize = false`
-要求对应 context 只有一个运行线程；内置 IO pool 使用这一方式。
+| 调度器 | 通道约定 |
+| --- | --- |
+| 内置 `arknet::io_pool`（别名 `arknet::iopool`） | 每通道一个 context 和工作线程；首通道监听，存在其他通道时由其他通道处理 session |
+| 外部 context | 支持一个或多个运行线程；arknet 为每个传入通道创建 strand，不停止宿主 context |
+| 直接构造 `arknet::io_t` | 默认使用 strand；`serialize = false` 要求 context 只有一个运行线程，内置池采用此设置 |
 
 直接向 server 传入一个 context 时只会创建一个通道，session 共享该通道的
 strand。传入多个通道可以让不同 session 的回调并行执行，即使这些通道使用
@@ -37,11 +35,27 @@ UDP server 的 session 共享数据报 socket 和串行通道，因此增加运�
 不会让同一个 UDP server 的接收回调并行执行。
 多个独立通道共同访问用户状态时需要同步；异步操作之间不能依赖线程局部状态。
 
-所有网络对象停止之前，context、运行线程和 work guard 都必须保持有效。
-先停止网络对象，再释放 work guard，最后等待宿主线程退出。网络回调中应请求
-停止，由拥有对象的线程等待停止完成。销毁任一 context 前，应等待所有运行线程
-排空回调；某个 context 中的取消回调可能仍持有另一个 context 的 Session 或
-strand。详见 [发送与生命周期](sending_CN.md)。
+<Aside type="caution" title="保持外部 context 有效">
+
+取消回调可能仍持有另一 context 的 Session 或 strand。网络回调中只请求停止，由拥有对象的线程等待完成。
+
+</Aside>
+
+<Steps>
+
+<Step title="停止网络对象">
+
+所有对象停止前，保持 context、运行线程和 work guard 有效。
+
+</Step>
+
+<Step title="释放 work guard 并排空运行线程">
+
+等待所有宿主运行线程退出后，再销毁任一 context。详见[发送与生命周期](sending_CN.md)。
+
+</Step>
+
+</Steps>
 
 自有端点完成关闭后，最后一个引用可能在 IO 回调中释放。arknet 将自有线程池的
 排空与回收转交给内部回收线程，避免等待当前线程自身退出。已完成关闭的端点析构
@@ -90,11 +104,15 @@ runtime.poll(64); // 最多执行 64 个就绪的 Asio handler，不等待新工
 handler 抛出的异常向调用方传播，后续仍可继续 poll。
 上限统计 Asio handler 个数，不代表执行时间，也不限制 handler 内的内联调用或投递队列容量。
 
+<Aside type="caution" title="手动 runtime 的有效期">
+
 executor 不持有 context 的所有权。请先完成或取消外部操作并停止其投递方，再由拥有者线程销毁 runtime。
 正在执行的 poll 会将 context 固定到本次调用返回；释放 runtime 不会取消其 handler。
 析构释放尚未执行的捕获，**不构成** IO 排空、线程退出或动态库卸载屏障。
 请使用 runtime 的 poll 入口，不自行运行或停止其内部 context。
 原生端点回调仍由各自的 executor 执行；只有显式转交到该 executor，才会改变回调线程。
+
+</Aside>
 
 ## Asio 参考文档
 

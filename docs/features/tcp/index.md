@@ -7,10 +7,14 @@ uses the same model through [TLS](../tls/index.md).
 
 ## Get started
 
-- [Create a server](server.md): listen and receive messages.
-- [Create a client](client.md): connect, send and verify replies.
-- [Configuration](configuration.md): protocol options and limits.
-- [Performance](performance.md): local measurements and reproduction.
+<CardGrid>
+
+<LinkCard title="Create a server" href="server.md" description="Listen and receive messages." />
+<LinkCard title="Create a client" href="client.md" description="Connect, send and verify replies." />
+<LinkCard title="Configuration" href="configuration.md" description="Protocol options, limits, extension and shutdown." />
+<LinkCard title="Performance" href="performance.md" description="Reproduce local IO-model and workload measurements." />
+
+</CardGrid>
 
 ## Objects and Extension
 
@@ -40,12 +44,16 @@ One receive callback can contain part of a send or several sends together.
 | An Asio match condition | Application-defined complete-message detection |
 | `arknet::use_dgram` | Add and remove arknet's length prefix; both peers must use this policy |
 
+<Aside type="caution" title="Framing is a protocol choice">
+
 `use_dgram` remains reliable TCP, despite its name. Its prefix is one byte for
 payload lengths below 254, marker `254` followed by a two-byte little-endian
 length up to 65535, or marker `255` followed by an eight-byte little-endian
 length. Empty frames are supported. This is a protocol choice, not a mode that
 can be enabled against an arbitrary TCP service. Receive-buffer limits also
 apply to the framed message and prefix.
+
+</Aside>
 
 ## Ownership and Scheduling
 
@@ -65,6 +73,4 @@ exactly-once application processing.
 
 ## Next Steps
 
-- [Configuration](configuration.md): protocol options, extension and shutdown.
-- [Performance](performance.md): reproduce IO-model and workload comparisons.
-- [TCP tests](https://github.com/OpenArkStudio/arknet/blob/main/tests/tcp.cpp): buffer ownership, framing boundaries and external-context shutdown.
+[TCP tests](https://github.com/OpenArkStudio/arknet/blob/main/tests/tcp.cpp): Buffer ownership, framing boundaries and external-context shutdown.

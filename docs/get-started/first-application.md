@@ -91,7 +91,19 @@ waits on the owner thread, outside IO callbacks.
 
 ## Next Steps
 
-Choose [TCP](../features/tcp/index.md), [UDP](../features/udp/index.md),
-[WebSocket](../features/websocket/index.md), [HTTP and routing](../features/http/index.md) or
-[TLS](../features/tls/index.md). Read [lifecycle and sends](../concepts/sending.md) before keeping
-objects in a service, and [IO models](../concepts/io-models.md) before sharing a context.
+<CardGrid>
+
+<LinkCard title="TCP" href="../features/tcp/index.md" description="Ordered byte streams." />
+<LinkCard title="UDP" href="../features/udp/index.md" description="Native datagrams." />
+<LinkCard title="WebSocket" href="../features/websocket/index.md" description="Complete messages." />
+<LinkCard title="HTTP and routing" href="../features/http/index.md" description="Requests, responses and middleware." />
+<LinkCard title="TLS" href="../features/tls/index.md" description="Encrypted transport." />
+
+</CardGrid>
+
+<CardGrid>
+
+<LinkCard title="Lifecycle and sends" href="../concepts/sending.md" description="Read before keeping objects in a service." />
+<LinkCard title="IO models" href="../concepts/io-models.md" description="Read before sharing a context." />
+
+</CardGrid>

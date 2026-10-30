@@ -37,10 +37,14 @@ server.set_fec_options(settings);
 client.set_fec_options(settings);
 ```
 
+<Aside type="caution" title="FEC 协商">
+
 两端在停止状态配置。固定与自适应策略可以互通，每组携带实际参数；
 两端不必采用同一发送策略。启用 FEC 的服务端也接受仅 ARQ 的客户端。
 请求 FEC 的客户端遇到未启用 FEC 的 arknet 服务端，握手返回 `operation_not_supported`。
 旧服务端无法识别新握手时，连接超时，不会静默降级。
+
+</Aside>
 
 ## 编码与缓存
 
@@ -108,10 +112,13 @@ Client 和 Session 均在已连接状态提供异步快照；未连接时查询�
 `last_change` 为 `configured`、`loss`、
 `healthy` 或 `overload`，`policy_changes` 为调整次数。
 
-`missing_shards` 统计完整组恢复时或未完成组到期时仍未到达的原始分片，
-包含被 FEC 恢复的分片，也可能包含后来才到达的原始分片。
-`recovered_shards` 统计通过校验恢复的原始分片。`retransmissions` 是 ARQ segment 重传次数。
-三个计数单位不同，不能直接相减得到最终丢失。最终交付应检查应用消息内容、顺序和完成情况。
+| 计数器 | 单位与范围 |
+| --- | --- |
+| `missing_shards` | 组恢复或到期时缺失的原始分片，包含已恢复分片及可能迟到的原始分片 |
+| `recovered_shards` | 通过校验恢复的原始分片 |
+| `retransmissions` | ARQ segment 重传次数 |
+
+单位不同，不能相减得到最终丢失。应检查应用消息内容、顺序与完成情况。
 
 ## 兼容与安全
 

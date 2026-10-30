@@ -50,13 +50,25 @@ Standalone Asio 不提供这些接口；直接包含相关头文件会给出编�
 
 在仓库根目录执行对应依赖方案的配置命令：
 
-```sh
-# Standalone Asio
-cmake -S . -B build -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+<Tabs syncKey="asio-provider">
 
-# Boost.Asio 和安全传输
+<TabItem label="Standalone Asio">
+
+```sh
+cmake -S . -B build -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+```
+
+</TabItem>
+
+<TabItem label="Boost.Asio + TLS">
+
+```sh
 cmake -S . -B build-boost -DARKNET_USE_BOOST_ASIO=ON -DARKNET_ENABLE_SSL=ON
 ```
+
+</TabItem>
+
+</Tabs>
 
 </Step>
 
@@ -64,9 +76,25 @@ cmake -S . -B build-boost -DARKNET_USE_BOOST_ASIO=ON -DARKNET_ENABLE_SSL=ON
 
 然后构建所选目录中的示例和测试程序：
 
+<Tabs syncKey="asio-provider">
+
+<TabItem label="Standalone Asio">
+
 ```sh
 cmake --build build --parallel 3
 ```
+
+</TabItem>
+
+<TabItem label="Boost.Asio + TLS">
+
+```sh
+cmake --build build-boost --parallel 3
+```
+
+</TabItem>
+
+</Tabs>
 
 使用 Visual Studio 等多配置生成器时，为构建和安装命令添加 `--config Release`。
 测试执行方式见[贡献指南](../project/contributing_CN.md)，性能测量方式见[测量方法](../performance/methodology_CN.md)。
@@ -144,9 +172,7 @@ cmake --build build-vcpkg --parallel 3
 `ws2_32` 和 `mswsock`，并在包含 Windows 头文件前定义 `NOMINMAX`。
 CMake 目标会传递 `NOMINMAX`，并为 MSVC 添加 `/bigobj`。
 
-在包含 arknet 或依赖库头文件前定义配置宏：
-
-宏的含义见[直接使用头文件时的宏](../reference/configuration_CN.md#直接使用头文件时的宏)。
+在包含 arknet 或依赖库头文件前定义配置宏，含义见[直接使用头文件时的宏](../reference/configuration_CN.md#直接使用头文件时的宏)。
 
 <Aside type="caution" title="注意：保持构建配置一致">
 
