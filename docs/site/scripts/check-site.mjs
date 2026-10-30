@@ -105,7 +105,7 @@ console.log("Checked bilingual Nimbus steps, callouts and plain Markdown exports
 // Every panel and card must remain available to agents without a selected UI tab.
 for (const collection of ["docs", "zh"]) {
   const prefix = collection === "zh" ? "zh/" : "";
-  for (const slug of ["index", "concepts/index", "concepts/io-models", "get-started/installation", "get-started/first-application", "features/tcp/index", "features/udp/index", "features/rudp/index", "features/rudp/fec"]) {
+  for (const slug of ["index", "concepts/index", "concepts/io-models", "get-started/installation", "get-started/first-application", "features/tcp/index", "features/udp/index", "features/rudp/index", "features/http/index", "features/websocket/index", "features/tls/index", "features/mysql/index", "features/redis/index", "features/rudp/fec"]) {
     const source = await readFile(new URL(`../src/content/${collection}/${slug}.mdx`, import.meta.url), "utf8");
     const route = slug === "index" ? "" : slug.replace(/\/index$/, "");
     const html = await readFile(join(root, prefix, route, "index.html"), "utf8");
@@ -134,13 +134,16 @@ for (const collection of ["docs", "zh"]) {
     assert.doesNotMatch(html, /\/arknet\/arknet\//, `${label}: doubled project base`);
     assert.doesNotMatch(markdown, /\/arknet\/arknet\//, `${label}: doubled project base in export`);
     assert.doesNotMatch(markdown, /<(?:CardGrid|LinkCard|Tabs|TabItem|Aside|Step|Steps)[\s/>]/, `${label}: component leaked into export`);
-    const constraints = route === "features/rudp/fec"
-      ? ["26", "1200", "1174", "256", "4096", "max_redundancy_percent", "operation_not_supported", "missing_shards", "recovered_shards", "retransmissions", "AFEC"]
-      : route === "concepts/io-models"
-        ? ["serialize = false", "poll(0)", "std::logic_error", "TODO", "awaitable", "co_spawn"]
-        : route === "get-started/installation"
-          ? ["1.90", "1.38", "1.1.1", "1.2", "NOMINMAX", "--config Release", "OPENSSL_ROOT_DIR"]
-          : [];
+    const constraints = {
+      "features/rudp/fec": ["26", "1200", "1174", "256", "4096", "1 MiB", "data_shards", "parity_shards", "max_parity_shards", "min_data_shards", "group_wait_ms", "max_redundancy_percent", "group_lifetime_ms", "max_groups", "max_buffer_bytes", "sample_window_ms", "min_samples", "enable_loss_percent", "disable_loss_percent", "stable_windows", "cooldown_ms", "overload_queue_percent", "operation_not_supported", "missing_shards", "recovered_shards", "retransmissions", "AFEC", "CRC"],
+      "concepts/io-models": ["serialize = false", "poll(0)", "std::logic_error", "TODO", "awaitable", "co_spawn", "manual_runtime", "io_context::run()"],
+      "get-started/installation": ["1.90", "1.38", "1.1.1", "1.2", "NOMINMAX", "--config Release", "OPENSSL_ROOT_DIR"],
+      "features/http": ["Boost.Asio", "Boost.Beast", "Standalone Asio", "8192", "16 MiB", "HTTP/1.1", "Host", "Expect", "TODO", "HTTP/2", "HTTP/3"],
+      "features/websocket": ["Boost.Asio", "Standalone Asio", "get_upgrade_response()", "bind_upgrade", "got_binary()", "UTF-8"],
+      "features/tls": ["TLS 1.2", "TLS 1.3", "verify_none", "verify_fail_if_no_peer_cert", "set_cert_file", "set_cert_buffer", "SNI", "mTLS"],
+      "features/mysql": ["ARKNET_ENABLE_SSL", "OpenSSL", "8.4.11", "SQLSTATE", "LOCAL INFILE", "caching_sha2_password"],
+      "features/redis": ["RESP2", "RESP3", "HELLO", "Sentinel", "Pub/Sub", "MONITOR", "close()"],
+    }[route] ?? [];
     for (const constraint of constraints) assert.ok(markdown.includes(constraint), `${label}: missing exported constraint ${constraint}`);
   }
 }

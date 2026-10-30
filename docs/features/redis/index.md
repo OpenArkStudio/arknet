@@ -15,9 +15,13 @@ arknet provides a native, header-only single-node Redis client and connection po
 
 ## Get started
 
-- [Client and pool examples](usage.md): compile and run complete programs against your Redis endpoint.
-- [Configuration and limits](configuration.md): authentication, typed replies, cancellation and lease isolation.
-- [Performance](performance.md): workload dimensions, units and the independent C++ benchmark.
+<CardGrid>
+
+<LinkCard title="Client and pool examples" href="usage.md" description="Compile and run complete programs against your Redis endpoint." />
+<LinkCard title="Configuration and limits" href="configuration.md" description="Authentication, typed replies, cancellation and lease isolation." />
+<LinkCard title="Performance" href="performance.md" description="Workload dimensions, units and the independent C++ benchmark." />
+
+</CardGrid>
 
 The library owns IO contexts and threads. A standalone client uses one context and thread; clients created by a pool share that pool's context and thread. Applications submit commands without starting or stopping those contexts themselves.
 

@@ -15,9 +15,13 @@ arknet 提供原生、header-only 的单节点 Redis 客户端和连接池。命
 
 ## 开始使用
 
-- [客户端与连接池示例](usage_CN.md)：编译完整程序，连接自己的 Redis 端点。
-- [配置与限额](configuration_CN.md)：认证、回复类型、取消和租约隔离。
-- [性能](performance_CN.md)：测试维度、指标单位和可独立运行的 C++ 程序。
+<CardGrid>
+
+<LinkCard title="客户端与连接池示例" href="usage_CN.md" description="编译完整程序，连接自己的 Redis 端点。" />
+<LinkCard title="配置与限额" href="configuration_CN.md" description="认证、回复类型、取消与租约隔离。" />
+<LinkCard title="性能" href="performance_CN.md" description="测试维度、指标单位与独立 C++ 基准程序。" />
+
+</CardGrid>
 
 IO context 和线程由网络库管理。独立客户端使用一个 context 和线程；连接池中的客户端共用该连接池的 context 和线程。应用提交命令，无需自行启动或停止这些 context。
 

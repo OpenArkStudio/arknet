@@ -4,15 +4,18 @@ Requires Boost.Asio and Boost.Beast; unavailable with Standalone Asio.
 
 arknet's HTTP client, server and session exchange Beast HTTP/1 messages.
 HTTPS uses the same message API over TLS when `ARKNET_ENABLE_SSL` is enabled.
-Both Asio providers expose the same public types and callback signatures.
 
 ## Get started
 
-- [Create a server](server.md): listen and receive messages.
-- [Create a client](client.md): connect, send and verify replies.
-- [Send a single request](requests.md): completion, timeout and cancellation.
-- [Configuration](configuration.md): protocol options and limits.
-- [Performance](performance.md): local measurements and reproduction.
+<CardGrid>
+
+<LinkCard title="Create a server" href="server.md" description="Listen and receive messages." />
+<LinkCard title="Create a client" href="client.md" description="Connect, send and verify replies." />
+<LinkCard title="Send a single request" href="requests.md" description="Completion, timeout and cancellation." />
+<LinkCard title="Configuration" href="configuration.md" description="Protocol options, limits, extension and shutdown." />
+<LinkCard title="Performance" href="performance.md" description="Workloads, topology comparisons and local charts." />
+
+</CardGrid>
 
 ## Capabilities
 
@@ -49,7 +52,5 @@ not provided in this release.
 
 ## Read Next
 
-- [Configuration](configuration.md): protocol options, extension and shutdown.
 - [Routing](../../guides/http-routing.md): matching, middleware, response semantics and concurrency.
-- [Performance](performance.md): workloads, topology comparison and local charts.
 - [TLS](../tls/index.md) and [lifecycle](../../concepts/lifecycle.md).

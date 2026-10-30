@@ -4,16 +4,18 @@
 
 arknet 的 HTTP 客户端、服务端和 Session 交换 Beast HTTP/1 消息。
 启用 `ARKNET_ENABLE_SSL` 后，HTTPS 通过 TLS 提供相同消息接口。
-两种 Asio 依赖方案公开相同类型和回调签名。
 
 ## 开始使用
 
-[单次 HTTP 请求](requests_CN.md)提供独立完成通知、超时与取消。
+<CardGrid>
 
-- [创建服务端](server_CN.md)：监听并接收消息。
-- [创建客户端](client_CN.md)：连接、发送并验证响应。
-- [配置与进阶使用](configuration_CN.md)：协议选项与限制。
-- [性能](performance_CN.md)：本地测量与复现。
+<LinkCard title="创建服务端" href="server_CN.md" description="监听并接收消息。" />
+<LinkCard title="创建客户端" href="client_CN.md" description="连接、发送并验证响应。" />
+<LinkCard title="单次 HTTP 请求" href="requests_CN.md" description="独立完成通知、超时与取消。" />
+<LinkCard title="配置与进阶使用" href="configuration_CN.md" description="协议选项、限制、扩展与关闭。" />
+<LinkCard title="性能" href="performance_CN.md" description="负载、线程模型与本地量化图表。" />
+
+</CardGrid>
 
 ## 能力
 
@@ -45,7 +47,5 @@ Beast 提供 HTTP/1 和 WebSocket，不包含这两种协议。
 
 ## 继续阅读
 
-- [配置与进阶使用](configuration_CN.md)：协议选项、扩展与关闭。
 - [路由](../../guides/http-routing_CN.md)：匹配、中间件、响应语义和并发。
-- [性能](performance_CN.md)：负载、线程模型与本地量化图表。
 - [TLS](../tls/index_CN.md)和[生命周期](../../concepts/lifecycle_CN.md)。

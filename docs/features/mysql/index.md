@@ -16,9 +16,13 @@ arknet provides a native, header-only client for a single MySQL Classic Protocol
 
 ## Get started
 
-- [Query, prepared statement and transaction example](usage.md).
-- [Configuration and limits](configuration.md).
-- [Performance methodology](performance.md).
+<CardGrid>
+
+<LinkCard title="Client and pool examples" href="usage.md" description="Queries, prepared statements and transactions." />
+<LinkCard title="Configuration and limits" href="configuration.md" description="Connection, authentication and execution contracts." />
+<LinkCard title="Performance methodology" href="performance.md" description="Measurement conditions and scope." />
+
+</CardGrid>
 
 Enable `ARKNET_ENABLE_SSL` to use the connection API. OpenSSL provides TLS and authentication hashing even when a connection explicitly disables TLS. Both Boost.Asio and Standalone Asio are supported; the library owns IO contexts and threads.
 

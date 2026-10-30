@@ -9,10 +9,14 @@ and control channels where both peers need to send without polling.
 
 ## Get started
 
-- [Create a server](server.md): listen and receive messages.
-- [Create a client](client.md): connect, send and verify replies.
-- [Configuration](configuration.md): protocol options and limits.
-- [Performance](performance.md): local measurements and reproduction.
+<CardGrid>
+
+<LinkCard title="Create a server" href="server.md" description="Listen and receive messages." />
+<LinkCard title="Create a client" href="client.md" description="Connect, send and verify replies." />
+<LinkCard title="Configuration" href="configuration.md" description="Protocol options, limits, extension and shutdown." />
+<LinkCard title="Performance" href="performance.md" description="Binary-message measurements across IO models." />
+
+</CardGrid>
 
 ## Protocol and Objects
 
@@ -71,6 +75,4 @@ Keep objects and any external runners alive until stop completes.
 
 ## Next Steps
 
-- [Configuration](configuration.md): protocol options, extension and shutdown.
-- [Performance](performance.md): binary-message benchmarks across IO models.
 - [WebSocket tests](https://github.com/OpenArkStudio/arknet/blob/main/tests/websocket.cpp): text/binary messages, upgrade paths and custom endpoints.

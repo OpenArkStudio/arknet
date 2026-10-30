@@ -16,9 +16,13 @@ arknet 提供原生、header-only 的单节点 MySQL Classic Protocol 客户端�
 
 ## 开始使用
 
-- [查询、预处理与事务示例](usage_CN.md)。
-- [配置与限额](configuration_CN.md)。
-- [性能测量方法](performance_CN.md)。
+<CardGrid>
+
+<LinkCard title="客户端与连接池示例" href="usage_CN.md" description="查询、预处理与事务。" />
+<LinkCard title="配置与限额" href="configuration_CN.md" description="连接、认证与执行约定。" />
+<LinkCard title="性能测量方法" href="performance_CN.md" description="测量条件与适用范围。" />
+
+</CardGrid>
 
 连接 API 需要启用 `ARKNET_ENABLE_SSL`。即便某条连接显式禁用 TLS，认证哈希仍需要 OpenSSL。支持 Boost.Asio 与 Standalone Asio，IO context 和线程由网络库管理。
 

@@ -57,17 +57,23 @@ UDP server 的 session 共享数据报 socket 和串行通道，因此增加运�
 
 </Steps>
 
-自有端点完成关闭后，最后一个引用可能在 IO 回调中释放。arknet 将自有线程池的
-排空与回收转交给内部回收线程，避免等待当前线程自身退出。已完成关闭的端点析构
-不会再投递停止回调。同一可执行文件或动态库中的自有端点共享回收线程；该线程
-不执行网络业务回调。外部 context 的有效期仍由调用方负责。
+| 自有端点回收 | 约定 |
+| --- | --- |
+| 关闭后在 IO 回调中释放最后一个引用 | 内部回收线程排空并回收池，避免等待当前线程自身退出 |
+| 析构已关闭端点 | 不再投递停止操作 |
+| 回收线程范围 | 同一可执行文件或动态库的自有端点共用；不执行网络业务回调 |
+
+外部 context 的有效期仍由调用方负责。
 
 ## 协程业务
 
-协程改变异步控制流的写法，不会创建线程或自动分配 CPU 工作。
-`co_await` 在等待操作时释放运行线程，但两个挂起点之间的计算仍占用该线程。
-同一 io_context 上的协程可能在另一个运行线程恢复。如果其他操作也访问同一连接
-状态，应在 strand 上启动协程；单个顺序协程不能保证其他操作与它串行执行。
+协程表达异步控制流，不创建线程或自动分配 CPU 工作。
+
+| 执行阶段 | 约定 |
+| --- | --- |
+| `co_await` 等待 | 释放运行线程；挂起点之间的计算仍占用该线程 |
+| 恢复 | 可能切换到同一 context 的其他运行线程 |
+| 共享连接状态 | 在 strand 上启动；单个顺序协程不能串行化其他操作 |
 
 | 业务负载 | 建议起点 | 原因 |
 | --- | --- | --- |
@@ -76,11 +82,14 @@ UDP server 的 session 共享数据报 socket 和串行通道，因此增加运�
 | 分区游戏会话、租户工作进程 | 每个分区独立 io_context 和线程 | 状态归属和业务分配明确 |
 | 压缩、解析、耗时请求计算 | 任意 IO 模型，加有容量限制的 CPU 执行器 | 避免计算阻塞其他 IO；异步等待计算结果让 IO 线程继续工作 |
 
-这些是选型起点，不是固定性能排名。单个繁忙连接在两种模型中都会被 strand
-串行化，增加 IO 线程不能把它的状态机并行化。应测试实际连接分布和回调成本。
-arknet 端点与原生数据库客户端提供回调接口；协程基准使用原生 Asio `awaitable` 和
-`co_spawn` 比较调度模型。arknet 专用协程端点 API 仍为 TODO。独立 ark 框架已提供
-公开数据库协程模块，不能把这些框架接口当作 arknet API；见[接入边界](../project/production-readiness_CN.md#框架协程与数据库边界)。
+应按实际连接分布和回调成本测量，以上只是选型起点，不是性能排名。
+两种模型中，繁忙连接的状态机均由 strand 串行化，增加运行线程不能将其并行化。
+
+| 接口 | 可用范围 |
+| --- | --- |
+| arknet 端点与原生数据库客户端 | 回调 API；专用协程端点 API 仍为 TODO |
+| 协程基准 | 使用原生 Asio `awaitable`/`co_spawn` 比较调度器 |
+| 独立 ark 框架 | 已有公开数据库协程模块，不能视为 arknet API；见[接入边界](../project/production-readiness_CN.md#框架协程与数据库边界) |
 
 ## 由调用方驱动执行
 
@@ -97,28 +106,33 @@ asio::post(runtime.get_executor(), [] { /* 在调用 poll 的线程中执行。 
 runtime.poll(64); // 最多执行 64 个就绪的 Asio handler，不等待新工作。
 ```
 
-将 `co_spawn` 和 timer 绑定到 `runtime.get_executor()`，协程便在同一线程执行。
-操作尚未完成时，持续调用 poll。空闲时 poll 返回 0，后续投递仍可执行，无需重启 runtime。
+将 `co_spawn` 和 timer 绑定到 `runtime.get_executor()`，在 poll 线程执行。
+操作未完成时持续 poll；空闲时返回 0，后续投递无需重启即可执行。
 
-`poll(0)` 不执行工作。其他线程调用或重入 poll 会抛出 `std::logic_error`；
-handler 抛出的异常向调用方传播，后续仍可继续 poll。
-上限统计 Asio handler 个数，不代表执行时间，也不限制 handler 内的内联调用或投递队列容量。
+| poll 约定 | 行为 |
+| --- | --- |
+| `poll(0)` | 不执行工作 |
+| 跨线程或重入调用 | 抛出 `std::logic_error` |
+| handler 异常 | 向调用方传播，后续仍可 poll |
+| 上限 | 统计 Asio handler 个数，不代表耗时，不限制内联调用或投递容量 |
 
 <Aside type="caution" title="手动 runtime 的有效期">
 
-executor 不持有 context 的所有权。请先完成或取消外部操作并停止其投递方，再由拥有者线程销毁 runtime。
-正在执行的 poll 会将 context 固定到本次调用返回；释放 runtime 不会取消其 handler。
-析构释放尚未执行的捕获，**不构成** IO 排空、线程退出或动态库卸载屏障。
-请使用 runtime 的 poll 入口，不自行运行或停止其内部 context。
-原生端点回调仍由各自的 executor 执行；只有显式转交到该 executor，才会改变回调线程。
+由拥有者线程销毁前，先完成或取消外部操作并停止投递方。executor 不持有 context 所有权。
 
 </Aside>
+
+| 有效期与接入 | 约定 |
+| --- | --- |
+| 执行中的 poll | 固定 context 到调用返回；释放 runtime 不取消 handler |
+| 析构 | 释放未执行的捕获；**不构成** IO 排空、线程退出或动态库卸载屏障 |
+| 派发入口 | 使用 runtime 的 poll，不自行运行或停止内部 context |
+| 原生端点回调 | 仍使用自身 executor；runtime 不自动改变回调线程，需要显式转交到该 executor |
 
 ## Asio 参考文档
 
 - [线程模型](https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/core/threads.html)
 - [Strand](https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/core/strands.html)
 - [C++20 协程](https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/composition/cpp20_coroutines.html)
-
 
 模型的吞吐量、RTT 和 CPU 对比见[性能报告](../performance/io-comparison_CN.md)。

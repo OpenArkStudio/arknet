@@ -60,21 +60,23 @@ Join every host runner before destroying any context. See [lifetime and send rul
 
 </Steps>
 
-An owned endpoint's final reference can be released on an IO callback after its
-close completes. arknet transfers pool draining and joining to an internal cleanup
-thread, avoiding a worker waiting for itself. Destruction of an already closed
-endpoint does not enqueue another stop operation. Owned endpoints in the same
-executable or shared library share the cleanup thread; it does not execute
-network business callbacks. Callers still own the lifetime of external contexts.
+| Owned endpoint cleanup | Contract |
+| --- | --- |
+| Final reference released in an IO callback after close | Internal cleanup thread drains and joins the pool, avoiding a self-join |
+| Already closed endpoint destroyed | No additional stop operation is queued |
+| Cleanup thread scope | Shared by owned endpoints in one executable or shared library; never runs network business callbacks |
+
+External context lifetime remains the caller's responsibility.
 
 ## Coroutine Workloads
 
-A coroutine changes how asynchronous control flow is expressed; it does not
-create a thread or distribute CPU work. `co_await` releases the runner while an
-operation is pending, but computation between suspension points occupies that
-runner. A suspended coroutine can resume on a different thread running the
-same context. Spawn it on a strand when other operations access the same connection
-state; a sequential coroutine alone does not serialize those other operations.
+Coroutines express asynchronous flow without creating threads or distributing CPU work.
+
+| Execution | Contract |
+| --- | --- |
+| Pending `co_await` | Releases the runner; computation between suspension points still occupies it |
+| Resume | May use another thread running the same context |
+| Shared connection state | Spawn on a strand; one sequential coroutine does not serialize other operations |
 
 | Business workload | Starting choice | Reason |
 | --- | --- | --- |
@@ -83,13 +85,14 @@ state; a sequential coroutine alone does not serialize those other operations.
 | Partitioned game sessions or tenant workers | One context and thread per partition | Explicit ownership and stable assignment of application state |
 | Compression, parsing or expensive request computation | Either IO model plus a bounded CPU executor | Long CPU tasks otherwise delay unrelated IO; awaiting their results keeps IO runners available |
 
-These are starting choices, not universal rankings. One busy connection remains
-serialized by its strand in either model. More IO runners cannot parallelize its
-state machine. Measure the actual connection distribution and handler cost.
-arknet endpoints and native database clients provide callback interfaces; the coroutine
-benchmark uses native Asio `awaitable`/`co_spawn` to test scheduler choices. Dedicated
-arknet coroutine endpoint APIs remain TODO. The separate ark framework already has
-public database coroutine modules; see the [integration boundary](../project/production-readiness.md#framework-coroutine-and-database-boundary).
+Measure connection distribution and handler cost: these are starting choices, not rankings.
+A busy connection's strand serializes its state machine in either model; extra runners cannot parallelize it.
+
+| Interface | Availability |
+| --- | --- |
+| arknet endpoints and native database clients | Callback APIs; dedicated coroutine endpoint APIs remain TODO |
+| Coroutine benchmark | Native Asio `awaitable`/`co_spawn` compares schedulers |
+| Separate ark framework | Public database coroutine modules; see the [integration boundary](../project/production-readiness.md#framework-coroutine-and-database-boundary) |
 
 ## Caller-driven execution
 
@@ -108,33 +111,34 @@ asio::post(runtime.get_executor(), [] { /* Runs in the thread calling poll. */ }
 runtime.poll(64); // At most 64 ready Asio handlers; never waits for work.
 ```
 
-Bind `co_spawn` and timers to `runtime.get_executor()` to keep coroutine execution
-on that same thread. Continue polling while operations are pending. Idle polls
-return zero; later posts still run without restarting the runtime.
+Bind `co_spawn` and timers to `runtime.get_executor()` for execution on the polling thread.
+Poll while operations are pending; idle polls return zero and later posts work without a restart.
 
-`poll(0)` executes nothing. A foreign-thread or reentrant poll throws
-`std::logic_error`; handler exceptions propagate, and a later poll remains valid.
-The budget counts Asio handlers, not elapsed time or inline calls inside a
-handler. Posting is not bounded by this dispatch budget.
+| Poll contract | Behavior |
+| --- | --- |
+| `poll(0)` | Executes nothing |
+| Foreign-thread or reentrant call | Throws `std::logic_error` |
+| Handler exception | Propagates; later polls remain valid |
+| Budget | Counts Asio handlers, not elapsed time or inline calls; does not bound posting |
 
 <Aside type="caution" title="Manual runtime lifetime">
 
-The executor does not keep the context alive. Finish or cancel external
-operations and stop their producers before destroying the runtime on its owner
-thread. Active polling pins the context until that call returns; releasing the
-runtime does not cancel its handlers. Destruction releases unexecuted captures
-and is **not** an IO drain, join or dynamic-library unload barrier. Use the
-runtime's poll entry point rather than running or stopping its underlying context.
-Native endpoint callbacks still use their own executors unless explicitly bridged
-to this executor; the runtime alone does not change their callback thread.
+Finish or cancel external operations and stop producers before owner-thread destruction.
+The executor does not keep the context alive.
 
 </Aside>
+
+| Lifetime and integration | Contract |
+| --- | --- |
+| Active poll | Pins the context until return; releasing runtime does not cancel handlers |
+| Destruction | Releases unexecuted captures; **not** an IO drain, join or dynamic-library unload barrier |
+| Dispatch | Use runtime's poll entry point; do not run or stop the underlying context |
+| Native endpoint callbacks | Use their own executors; runtime does not change their callback thread unless explicitly bridged to this executor |
 
 ## Asio References
 
 - [Threads and Asio](https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/core/threads.html)
 - [Strands](https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/core/strands.html)
 - [C++20 Coroutines](https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/composition/cpp20_coroutines.html)
-
 
 See the [performance comparison](../performance/io-comparison.md) for throughput, RTT and CPU results.

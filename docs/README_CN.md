@@ -44,12 +44,12 @@ CMake 接口目标传递头文件路径、编译设置和依赖；arknet 无需�
 
 ## 测量与开发
 
-[性能](performance/index_CN.md)提供本地测量的吞吐量、RTT、CPU 占用、机器配置
-和原始数据。[测试](project/testing_CN.md)记录正确性检查及覆盖范围。
+[性能](performance/index_CN.md)提供本地测量的吞吐量、RTT、CPU 占用、测量条件
+和适用范围。[测试](project/testing_CN.md)记录正确性检查及覆盖范围。
 
 [项目](project/index_CN.md)包含架构、贡献规范与路线图。HTTP/2、HTTP/3、
 named pipe、Unix domain socket 和 RPC 仍为 TODO。
-[版本说明](project/releases_CN.md)记录已发布的 v0.2.2 及更早标签；当前 main 的文档与测试范围另行说明。
+[版本说明](project/releases_CN.md)记录已发布标签；当前 main 的文档与测试范围另行说明。
 部署容量与耐久验证见[生产验收](project/production-readiness_CN.md)。
 
 [源码](https://github.com/OpenArkStudio/arknet) ·

@@ -47,12 +47,12 @@ Each guide records configuration, limits and performance.
 ## Measure and contribute
 
 [Performance](performance/index.md) provides local results with throughput, RTT,
-CPU utilization, host configuration and raw data. [Testing](project/testing.md)
+CPU utilization, measurement conditions and scope. [Testing](project/testing.md)
 records correctness checks and their coverage.
 
 [Project](project/index.md) covers architecture, contribution guidelines and the
 roadmap. HTTP/2, HTTP/3, named pipes, Unix domain sockets and RPC remain TODO.
-[Release notes](project/releases.md) cover published v0.2.2 and earlier tags; current-main documentation and test scopes are identified separately.
+[Release notes](project/releases.md) cover published tags; current-main documentation and test scopes are identified separately.
 Deployment capacity and endurance are covered by [production acceptance](project/production-readiness.md).
 
 [Source](https://github.com/OpenArkStudio/arknet) ·

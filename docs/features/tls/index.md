@@ -7,10 +7,14 @@ The supported minimum protocol version is TLS 1.2.
 
 ## Get started
 
-- [Create a server](server.md): listen and receive messages.
-- [Create a client](client.md): connect, send and verify replies.
-- [Configuration](configuration.md): protocol options and limits.
-- [Performance](performance.md): local measurements and reproduction.
+<CardGrid>
+
+<LinkCard title="Create a server" href="server.md" description="Listen and receive messages." />
+<LinkCard title="Create a client" href="client.md" description="Connect, send and verify replies." />
+<LinkCard title="Configuration" href="configuration.md" description="Protocol options, limits, extension and shutdown." />
+<LinkCard title="Performance" href="performance.md" description="Steady-state TCPS/WSS/HTTPS measurement limits." />
+
+</CardGrid>
 
 ## Secure Endpoints
 
@@ -70,7 +74,5 @@ Keep external contexts running until stop completes.
 
 ## Next Steps
 
-- [Configuration](configuration.md): protocol options, extension and shutdown.
-- [Performance](performance.md): steady-state TCPS/WSS/HTTPS measurement limits.
 - [TLS tests](https://github.com/OpenArkStudio/arknet/blob/main/tests/tls.cpp): trust, DNS/IP rejection, SNI, mTLS and reconnect.
 - [HTTP](../http/index.md) and [WebSocket](../websocket/index.md): application-level message APIs.
