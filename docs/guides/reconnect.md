@@ -9,7 +9,10 @@ client.set_auto_reconnect(true, std::chrono::seconds(2));
 client.set_auto_reconnect(false);
 ```
 
-A successful reconnect advances the connection generation. An old queued send
-cannot be replayed on the new connection; stale operations complete with
-`operation_aborted`. Re-establish application state in the connect callback
-only after checking its error.
+<Aside type="caution" title="Reconnect does not replay sends">
+
+Successful reconnect advances the connection generation; stale queued operations
+complete with `operation_aborted` instead of replaying. Check the connect callback's
+error before restoring application state.
+
+</Aside>

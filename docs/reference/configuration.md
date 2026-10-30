@@ -1,7 +1,6 @@
 # Build Options and Defaults
 
-Use this page to look up build switches and public defaults. Follow
-[installation](../get-started/installation.md) to configure a consuming application.
+For application setup, follow [installation](../get-started/installation.md).
 
 ## CMake options
 
@@ -22,8 +21,12 @@ Use this page to look up build switches and public defaults. Follow
 | `ARKNET_HEADER_ONLY` | Internal provider macro, not a switch for a compiled library |
 | `ARKNET_ENABLE_TIMER_CALLBACK_WHEN_ERROR` | Invoke timer callbacks on errors; inspect `get_last_error()` |
 
+<Aside type="caution" title="Keep build settings consistent">
+
 Use identical provider, TLS and behavior macros in every translation unit.
-CMake `ON`/`OFF` values and C++ macro-presence checks are different conventions.
+CMake `ON`/`OFF` values differ from C++ macro-presence checks.
+
+</Aside>
 
 ## Runtime defaults
 

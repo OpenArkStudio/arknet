@@ -1,7 +1,7 @@
 # 公共 API 索引
 
-包含 `<arknet/arknet.hpp>` 可使用已启用的传输能力，也可以只包含特定的公开头文件。
-数据库客户端需要显式包含对应头文件。安全传输头文件和 MySQL 连接需要启用 `ARKNET_ENABLE_SSL`。
+包含 `<arknet/arknet.hpp>` 使用已启用的传输能力，或只包含特定公开头文件。
+数据库客户端需显式包含对应头文件；安全传输头文件与 MySQL 连接需启用 `ARKNET_ENABLE_SSL`。
 
 ## 公开类型
 
@@ -27,8 +27,7 @@ WebSocket 协议类型位于 `arknet::websocket`。
 
 ## 常用操作
 
-下列操作适用于传输端点。数据库客户端的请求、结果和关闭约定见
-[数据库指南](../features/database-clients_CN.md)。
+下表适用于传输端点。数据库请求、结果与关闭约定见[数据库指南](../features/database-clients_CN.md)。
 
 | 分类 | API | 约定 |
 | --- | --- | --- |
@@ -43,7 +42,11 @@ WebSocket 协议类型位于 `arknet::websocket`。
 
 ## 扩展与源码参考
 
-自定义客户端／Session 继承对应协议的 `*_t<Derived>`，
-服务端模板接受 Session 类型。参见[架构](../project/architecture_CN.md)和永久
-[测试](https://github.com/OpenArkStudio/arknet/tree/main/tests)。
-`base/impl` 与 `detail` 下的实现头文件不是稳定的公共 API。
+自定义客户端／Session 继承对应协议的 `*_t<Derived>`，服务端模板接受 Session 类型。
+参见[架构](../project/architecture_CN.md)与[测试](https://github.com/OpenArkStudio/arknet/tree/main/tests)。
+
+<Aside type="caution" title="公共 API 边界">
+
+`base/impl` 与 `detail` 实现头文件不是稳定的公共 API。
+
+</Aside>

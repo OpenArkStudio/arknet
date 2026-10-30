@@ -1,7 +1,6 @@
 # 构建选项与默认值
 
-本页用于查询构建开关与公开默认值。应用接入步骤见
-[安装与配置](../get-started/installation_CN.md)。
+应用接入步骤见[安装与配置](../get-started/installation_CN.md)。
 
 ## CMake 选项
 
@@ -22,8 +21,11 @@
 | `ARKNET_HEADER_ONLY` | 内部依赖实现宏，不用于切换编译库 |
 | `ARKNET_ENABLE_TIMER_CALLBACK_WHEN_ERROR` | 错误时调用定时器回调；回调中检查 `get_last_error()` |
 
-全部翻译单元必须使用一致的依赖方案、TLS 和行为宏。
-CMake 的 `ON`／`OFF` 值与 C++ 宏是否定义是不同的配置约定。
+<Aside type="caution" title="保持构建配置一致">
+
+全部翻译单元须使用一致的依赖方案、TLS 和行为宏。CMake 的 `ON`／`OFF` 与 C++ 宏是否定义含义不同。
+
+</Aside>
 
 ## 运行时默认值
 
