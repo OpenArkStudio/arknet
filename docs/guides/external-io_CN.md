@@ -12,20 +12,27 @@ std::vector<asio::io_context*> lanes(5, &context);
 arknet::tcp_server server(1024, 16 * 1024 * 1024, lanes);
 ```
 
-在所需数量的应用线程中运行 `context.run()`。示例在一个 context 上创建五个
-串行通道。多个运行线程可并行执行独立通道，单个通道的回调仍串行执行。
-直接向服务端传入一个 `io_context&` 时，只创建一个由 Session 共用的通道。
+在所需数量的应用线程运行 `context.run()`。示例创建五个串行通道，多线程可并行执行独立通道。
 
-分片执行则传入不同的 context，并分别使用独立线程运行。无论选择哪种模型，
-UDP 服务端 Session 都共用服务端 socket 和接收通道。选型前阅读
-[IO 模型](../concepts/io-models_CN.md)。
+| 传入的 IO | 执行约定 |
+| --- | --- |
+| 直接向服务端传入一个 `io_context&` | Session 共享一个串行通道 |
+| 不同 context，各自独立线程 | 分区执行 |
+| UDP 服务端，两种布局均相同 | Session 共享 socket 与接收通道 |
+
+选型见 [IO 模型](../concepts/io-models_CN.md)。
+
 
 ## 停止与排空
+
+<Steps>
 
 1. IO 回调中调用 `request_stop()`，然后返回。
 2. 保持运行线程工作，由所有者线程调用 `stop()` 或 `wait_stopped()`。
 3. 销毁网络对象，再通过 `work.reset()` 释放 work guard。
 4. 等待全部运行线程退出，最后销毁 context。
+
+</Steps>
 
 让 `run()` 排空已排队的完成回调后自然返回。`io_context::stop()` 会中断派发，
 不能完成排空。一个 context 中排队的回调可能仍持有另一个 context 的 Session 或 strand。

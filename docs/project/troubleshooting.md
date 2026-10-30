@@ -1,30 +1,28 @@
 # Troubleshooting
 
-Record the error in the callback where it occurs. `get_last_error()` is
-thread-local; an unrelated thread's value does not describe the failed
-operation. For sends, record the completion's explicit `error_code` and byte
-count. See [Runtime](../concepts/lifecycle.md) for the execution and shutdown contracts.
+Record thread-local `get_last_error()` where it occurs; another thread's value
+does not describe the failure. For sends, record the completion's explicit
+`error_code` and byte count. See [Runtime](../concepts/lifecycle.md) for execution and shutdown.
 
 ## Diagnose by Symptom
 
 | Symptom | Check first | Next action |
 | --- | --- | --- |
-| `asio.hpp` is missing | Check that standalone mode is selected and locate the installed header | Set `ARKNET_ASIO_INCLUDE_DIR` to the directory containing `asio.hpp`, then reconfigure; see [installation](../get-started/installation.md) |
-| CMake cannot find Boost or OpenSSL | Check the requested version, installed package and CMake prefix | Set `CMAKE_PREFIX_PATH` or `OPENSSL_ROOT_DIR` to the installed dependency; use a separate build directory when changing providers |
-| Asio/Beast socket types do not match | Inspect compile definitions in the verbose build output and check earlier provider includes | Use one provider in all translation units; use the `arknet::arknet` interface target to propagate its definitions |
-| Secure headers or OpenSSL symbols are unavailable | Check `ARKNET_ENABLE_SSL` and the OpenSSL headers and link libraries | Enable TLS in CMake and use the exported interface target; for direct headers, define the macro and supply OpenSSL dependencies |
-| TLS handshake rejects a certificate | Record the callback error; check the trust chain, certificate validity and requested DNS/IP identity | Load the intended CA and connect using a name or address present in the certificate's subject alternative names; check the system clock |
-| A TLS server fails to start or reports `invalid_argument` | Check the error immediately after loading its certificate and private key | Load a usable certificate and matching key before start; for mTLS, also configure the client CA and server verify mode |
-| `async_send()` returns `false` with `no_buffer_space` | Inspect the configured limit, queued bytes and outstanding application requests | Pace the producer or reduce concurrency; retry only according to application policy after completions free capacity |
-| `send()` returns zero with `in_progress` | Check whether the call ran on a worker of the object's context | Observe the asynchronous completion with `async_send()`; do not wait for a future on that context's workers |
-| Timer query returns a default result with `operation_not_supported` or `operation_aborted` | Check whether the call uses a different strand on the same context, or a stopped context | Query on the object's executor or from an owner thread while runners remain active |
-| Start, future or shutdown waits indefinitely with external IO | Check that `run()` threads and the work guard are still active | Keep the host context running until objects finish stopping; follow the [shutdown order](../concepts/lifecycle.md#lifecycle-and-execution) |
-| TCP receive callbacks split or combine application messages | Check the framing configured at both ends | Treat raw TCP as a byte stream, or use matching delimiter/custom framing or `use_dgram` at both ends; see [TCP usage](../features/tcp/index.md) |
-| Documentation returns 404 locally | Check the preview URL and server output | Open `/arknet/` using the Nimbus development server below |
+| `asio.hpp` is missing | Standalone Asio selected; installed header location | Set `ARKNET_ASIO_INCLUDE_DIR` to the directory containing `asio.hpp`, then reconfigure; see [installation](../get-started/installation.md) |
+| CMake cannot find Boost or OpenSSL | Required version, installed package and CMake prefix | Set `CMAKE_PREFIX_PATH` or `OPENSSL_ROOT_DIR` to the installed dependency; use a separate build directory when changing providers |
+| Asio/Beast socket types do not match | Compile definitions in verbose build output; earlier provider includes | Use one provider in all translation units; use the `arknet::arknet` interface target to propagate its definitions |
+| Secure headers or OpenSSL symbols are unavailable | `ARKNET_ENABLE_SSL`, OpenSSL headers and link libraries | Enable TLS in CMake and use the exported interface target; for direct headers, define the macro and supply OpenSSL dependencies |
+| TLS handshake rejects a certificate | Callback error, trust chain, certificate validity and requested DNS/IP identity | Load the intended CA and connect using a name or address present in the certificate's subject alternative names; check the system clock |
+| A TLS server fails to start or reports `invalid_argument` | Error immediately after loading certificate and private key | Load a usable certificate and matching key before start; for mTLS, also configure the client CA and server verify mode |
+| `async_send()` returns `false` with `no_buffer_space` | Configured limit, queued bytes and outstanding application requests | Pace the producer or reduce concurrency; retry only according to application policy after completions free capacity |
+| `send()` returns zero with `in_progress` | Whether the call runs on the object's context worker | Observe the asynchronous completion with `async_send()`; do not wait for a future on that context's workers |
+| Timer query returns a default result with `operation_not_supported` or `operation_aborted` | Different strand on the same context, or stopped context | Query on the object's executor or from an owner thread while runners remain active |
+| Start, future or shutdown waits indefinitely with external IO | Active `run()` threads and work guard | Keep the host context running until objects finish stopping; follow the [shutdown order](../concepts/lifecycle.md#lifecycle-and-execution) |
+| TCP receive callbacks split or combine application messages | Framing at both ends | Treat raw TCP as a byte stream, or use matching delimiter/custom framing or `use_dgram` at both ends; see [TCP usage](../features/tcp/index.md) |
+| Documentation returns 404 locally | Preview URL and server output | Open `/arknet/` using the Nimbus development server below |
 
-A send completing without error proves transport completion, not an
-application-level acknowledgment. If the peer must confirm processing, record
-and validate a response in the application protocol.
+An error-free send completion confirms transport completion. To confirm peer application processing,
+record and validate an application-protocol response.
 
 <Aside type="danger" title="Error: TLS certificate verification failed">
 
@@ -73,7 +71,7 @@ This checks content conversion, types, the static build, links and AI Markdown e
 
 ## Include Reproduction Evidence
 
-When reporting an issue, include:
+Include in issue reports:
 
 - Source revision and the relevant minimal client/server or test case.
 - OS, architecture, compiler and dependency versions.
@@ -83,6 +81,5 @@ When reporting an issue, include:
 - For sends, payload size, framing, queue limit and completion byte count.
 - Test logs or a benchmark JSON file, with the exact command used.
 
-Use [Testing](testing.md) for current validation evidence and reproduction
-commands. Repository certificates and keys are for testing; use your deployment's
-trust and identity configuration when diagnosing TLS.
+For validation evidence and reproduction commands, see [Testing](testing.md).
+Repository certificates and keys are test-only; diagnose TLS using deployment trust and identity settings.
