@@ -3,7 +3,7 @@
 // Offline report tool. The benchmark remains a standalone C++ executable.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -358,10 +358,12 @@ export function documentation(report, zh = false, rawURL) {
   const configurations = rows.length, measured = rows.reduce((sum, row) => sum + row.rounds, 0);
   const messages = rows.reduce((sum, row) => sum + row.total_messages, 0);
   const lines = [zh ? "# RUDP 性能" : "# RUDP Performance", "",
-    zh ? "本机 " + configurations + " 组配置、" + measured + " 次测量全部通过，共完成 " + format(messages, 0) +
-      " 次消息往返。内容、顺序、发送完成和收尾检查均通过；中继错误和容量溢出均为零。" :
-      "All " + configurations + " configurations and " + measured + " measured runs passed, completing " +
-      format(messages, 0) + " message round trips. Content, ordering, send completion and drain checks passed, with zero relay errors or queue overflows.",
+    zh ? "本机 " + configurations + " 组配置、" + measured + " 次测量通过，共 " + format(messages, 0) +
+      " 次消息往返；内容、顺序、发送完成与收尾检查通过，中继错误与溢出为零。" :
+      "All " + configurations + " configurations / " + measured + " measured runs passed: " +
+      format(messages, 0) + " message round trips; content, order, send-completion and drain checks passed; zero relay errors or queue overflows.",
+    "", zh ? "[并发与端点线程数](rudp-concurrency_CN.md)比较 128／512／1024 个客户端、一个共享 io_context 下的 1 与 4 个端点线程。" :
+      "[Concurrency and endpoint threads](rudp-concurrency.md) compares 128/512/1,024 clients with one shared io_context and one or four endpoint threads.",
     "", zh ? "## 测试环境" : "## Test Environment", "",
     zh ? "| 项目 | 实际参数 |" : "| Item | Recorded Parameters |", "| --- | --- |"];
   const environment = [
@@ -418,38 +420,50 @@ export function documentation(report, zh = false, rawURL) {
     zh ? "| 持续测试 | 连续丢包，另对剩余报文随机丢 2% | 10 ms | 同上 |" :
       "| Sustained runs | Burst loss plus 2% random loss of remaining datagrams | 10 ms | Same as above |",
     "", "![" + (zh ? "RUDP 测试拓扑" : "RUDP benchmark topology") + "](assets/rudp-fec-topology.svg)", "",
-    zh ? "这是同一进程、本机 IPv4 回环上的网络条件模拟，不是 WAN 实测。中继始终另用 1 个 io_context 和 1 个线程；统计采样另有线程。图中 IO 模型仅表示端点配置。" :
-      "These are network-condition simulations within one process on local IPv4 loopback, not WAN measurements. The relay always adds one io_context and one thread; statistics sampling uses another thread. Chart IO models describe endpoints only.",
-    "",
-    zh ? "服务端会话共用 UDP socket 及其 strand。4 个 io_context 各 1 个线程主要分散客户端，不能据此推断服务端已并行分片。" :
-      "Server sessions share a UDP socket and its strand. Four io_contexts with one thread each mainly distribute clients and do not establish parallel server sharding.",
-    "",
-    zh ? "RTT 包含模拟延迟、拥塞控制、FEC 组包等待和 ARQ 重传。吞吐量按完成的消息往返计算，分母包含收完在途请求的时长。柱高为三轮中位数，误差线为这三个实际结果的最小／最大值，不是置信区间。" :
-      "RTT includes simulated delay, congestion control, FEC group wait and ARQ retransmission. Throughput counts completed message round trips and includes in-flight drain time. Bars are medians; whiskers are the actual minimum/maximum of three runs, not confidence intervals.",
+    zh ? '<Aside type="caution" title="本地模拟范围">' : '<Aside type="caution" title="Local simulation scope">', "",
+    zh ? "同一进程、本机 IPv4 回环的网络条件模拟，不是 WAN 实测。" :
+      "Network conditions are simulated in one process on local IPv4 loopback, not WAN measurements.",
+    "", "</Aside>", "",
+    zh ? "| 测量项 | 口径 |" : "| Measurement | Scope |", "| --- | --- |",
+    zh ? "| IO 模型 | 图中仅含端点；中继另用 1 个 io_context 和 1 个线程，采样另有线程 |" :
+      "| IO model | Charts describe endpoints; relay adds one io_context/thread, sampling another thread |",
+    zh ? "| 服务端并发 | 会话共用 UDP socket 与 strand；4 个 io_context 各 1 线程主要分散客户端，不代表服务端并行分片 |" :
+      "| Server concurrency | Sessions share a UDP socket/strand; four single-thread contexts mainly distribute clients, not proof of parallel server sharding |",
+    zh ? "| RTT | 包含模拟延迟、拥塞控制、FEC 组包等待与 ARQ 重传 |" :
+      "| RTT | Includes simulated delay, congestion control, FEC group wait and ARQ retransmission |",
+    zh ? "| 吞吐量 | 完成的消息往返数；时长包含收完在途请求的时间 |" :
+      "| Throughput | Completed message round trips; elapsed time includes in-flight drain |",
+    zh ? "| 柱高／误差线 | 三轮中位数／实际最小和最大值，不是置信区间 |" :
+      "| Bars / whiskers | Three-run medians / actual minimum and maximum, not confidence intervals |",
     "", zh ? "## 吞吐量与 p99 RTT" : "## Throughput and p99 RTT", "",
     "![RUDP FEC throughput](assets/rudp-fec-throughput.svg)", "",
     "![RUDP FEC p99 RTT](assets/rudp-fec-rtt.svg)", "",
     zh ? "## CPU 与网络开销" : "## CPU and Wire Overhead", "",
     "![RUDP FEC process CPU](assets/rudp-fec-cpu.svg)", "",
-    zh ? "CPU 为整个进程的平均占用，包含客户端、服务端、中继和采样线程；单个逻辑核心为 100%，多线程可以超过 100%。本机整机占比为进程 CPU% / " +
-      host.logical_cpus + "，完整数值同时保存这两种口径。" :
-      "CPU is average process utilization including clients, server, relay and sampling. One logical CPU is 100%; multiple threads can exceed 100%. Machine share is process CPU% / " +
-      host.logical_cpus + "; the full summary includes both measures.",
+    zh ? "CPU 为进程平均占用，含客户端、服务端、中继和采样；100% 表示一个逻辑核心，多线程可超过 100%。整机占比 = 进程 CPU% / " +
+      host.logical_cpus + "；完整数值保留两种口径。" :
+      "Average process CPU includes clients, server, relay and sampling; 100% is one logical CPU, and multiple threads can exceed it. Machine share = process CPU% / " +
+      host.logical_cpus + "; the summary retains both measures.",
     "", "![RUDP FEC wire overhead](assets/rudp-fec-wire-overhead.svg)", "",
-    zh ? "网络开销 =（端点发送的 UDP 载荷字节／双向应用消息字节 − 1）× 100%。它包含 ARQ 控制与重传、FEC 头部、校验和填充，不含 IP／UDP 头，也不重复计算中继再次转发的字节；不能把它直接当作 FEC 校验比例。" :
-      "Wire overhead = (endpoint UDP payload bytes sent / bidirectional application bytes − 1) × 100%. It includes ARQ control/retransmission, FEC headers, parity and padding; excludes IP/UDP headers and the relay's second forwarding hop. It is not the FEC parity ratio.",
+    zh ? "网络开销 =（端点发送的 UDP 载荷字节／双向应用消息字节 − 1）× 100%。含 ARQ 控制／重传、FEC 头部、校验与填充，不含 IP／UDP 头或中继二次转发；不是 FEC 校验比例。" :
+      "Wire overhead = (endpoint UDP payload bytes sent / bidirectional application bytes − 1) × 100%. Includes ARQ control/retransmission, FEC headers, parity and padding; excludes IP/UDP headers and the relay's second hop. This is not the FEC parity ratio.",
     "", zh ? "## 恢复、重传与保留内存" : "## Recovery, Retransmission and Retained Memory", "",
     "![RUDP FEC recovered shards](assets/rudp-fec-recovery.svg)", "",
     "![RUDP ARQ retransmitted segments](assets/rudp-fec-retransmissions.svg)", "",
-    zh ? "恢复数统计 FEC 还原的数据分片，重传数统计 ARQ 重发的协议分片；都按每 1000 次应用消息往返归一化，两者不是互为补数。" :
-      "Recovery counts data shards restored by FEC; retransmissions count ARQ segments sent again. Both are normalized per 1,000 application round trips and are not complementary quantities.",
+    zh ? "恢复计 FEC 还原的数据分片，重传计 ARQ 重发的协议分片；均按每 1000 次消息往返归一化，不能互补计算。" :
+      "Recovery counts FEC-restored data shards; retransmission counts resent ARQ segments. Both use units per 1,000 application round trips and are not complements.",
     "", "![RUDP FEC sampled retention](assets/rudp-fec-memory.svg)", "",
-    zh ? "FEC 保留量是各端点统计之和，每 100 ms 采样一次，可能错过更短的峰值；不包含全部临时编解码空间。中继指标是各路由独立峰值之和，峰值可能出现在不同时间。RSS 是每组进程的最高值，包含预热及该组全部轮次，不是 FEC 独占内存。" :
-      "FEC retention sums endpoint statistics sampled every 100 ms and can miss shorter peaks; it excludes some temporary codec storage. Relay values sum independent route peaks that may occur at different times. RSS is the process high-water mark for a case, including warmup and all its rounds, not FEC-only memory.",
+    zh ? "| 内存项 | 口径与限制 |" : "| Memory metric | Scope and limits |", "| --- | --- |",
+    zh ? "| FEC 保留 | 各端点合计，100 ms 采样；可能漏掉短峰值，不含全部临时编解码空间 |" :
+      "| FEC retention | Endpoint sum sampled every 100 ms; may miss shorter peaks and excludes some temporary codec storage |",
+    zh ? "| 中继 | 各路由独立峰值之和，峰值未必同时出现 |" :
+      "| Relay | Sum of independent route peaks, which may occur at different times |",
+    zh ? "| RSS | 每组进程最高值，含预热与全部轮次，不是 FEC 独占内存 |" :
+      "| RSS | Case process high-water mark including warmup and all rounds, not FEC-only memory |",
     "", zh ? "### 随机丢包下的资源数值" : "### Resource Values Under Random Loss", "",
     zh ? "1024 B、窗口 16、1 个 io_context／1 个端点线程；采样峰值使用三轮中位数。" :
       "1,024 B; window 16; one io_context / one endpoint thread. Sampled peaks are medians across three rounds.",
-    "", zh ? "| 依赖方案／策略 | 恢复／1000 往返 | 重传／1000 往返 | FEC 保留／KiB | 中继路由峰值和／KiB | 进程 RSS／MiB | 观测最大校验数 |" :
+    "", zh ? "| 依赖库／策略 | 恢复／1000 往返 | 重传／1000 往返 | FEC 保留／KiB | 中继路由峰值和／KiB | 进程 RSS／MiB | 观测最大校验数 |" :
       "| Dependency / Policy | Restored / 1,000 | Retransmitted / 1,000 | FEC Retained / KiB | Relay Route Peaks Sum / KiB | Process RSS / MiB | Max Observed Parity |",
     "| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
   for (const backend of BACKENDS) for (const policy of POLICIES) {
@@ -463,8 +477,8 @@ export function documentation(report, zh = false, rawURL) {
       row.fec_observed_parity_max.max + " |");
   }
   lines.push("", zh ? "## 包体大小与批量请求" : "## Payload Size and In-Flight Requests", "",
-    zh ? "随机丢包条件、1 个 io_context／1 个端点线程。每格为「消息往返/s／p99 RTT 毫秒」，均为三轮中位数；CPU、网络开销和资源计数见完整 JSON。" :
-      "Random-loss condition; one io_context / one endpoint thread. Cells show round trips/s / p99 RTT in milliseconds, both three-run medians. Full JSON contains CPU, wire overhead and resource counters.");
+    zh ? "随机丢包，1 个 io_context／1 个端点线程。每格为三轮中位数「消息往返/s／p99 RTT 毫秒」；CPU、网络开销与资源计数见完整 JSON。" :
+      "Random loss; one io_context / one endpoint thread. Cells: round trips/s / p99 RTT in ms, three-run medians. Full JSON adds CPU, wire overhead and resource counters.");
   for (const backend of BACKENDS) {
     lines.push("", "### " + labelBackend(backend), "",
       zh ? "| 消息／B | 每连接在途 | 仅 ARQ | 固定 FEC | 自适应 FEC |" :
@@ -479,12 +493,12 @@ export function documentation(report, zh = false, rawURL) {
       lines.push("| " + format(payload, 0) + " | " + window + " | " + cells.join(" | ") + " |");
     }
   }
-  lines.push("", zh ? "应用消息按协议 MTU 分片；16 KiB 表示应用消息大小，不是一个 UDP 数据报。FEC 模式从 1200 B UDP 载荷上限中扣除 26 B 开销，ARQ 数据报上限为 1174 B。" :
-    "Application messages are fragmented to the protocol MTU. 16 KiB denotes a message, not one UDP datagram. FEC subtracts 26 B from the 1,200 B UDP payload ceiling, leaving 1,174 B for an ARQ datagram.",
+  lines.push("", zh ? "消息按协议 MTU 分片；16 KiB 是应用消息，不是 UDP 数据报。FEC 从 1200 B UDP 载荷上限扣除 26 B，ARQ 数据报上限为 1174 B。" :
+    "Messages fragment to the protocol MTU: 16 KiB is an application message, not a UDP datagram. FEC reserves 26 B of the 1,200 B UDP payload ceiling, leaving 1,174 B per ARQ datagram.",
     "", zh ? "## 120 秒持续测试" : "## 120-Second Sustained Runs", "",
-    zh ? "每组仅测一次，不绘制重复测量的误差线。所有消息校验通过；表中内存仍使用上文的统计口径，不能仅凭峰值宣称不存在长期泄漏。" :
-      "Each case has one measured run, so no repeated-run whiskers are shown. All message checks passed. Memory uses the definitions above; peaks alone do not establish the absence of long-term leaks.",
-    "", zh ? "| 依赖方案／策略 | 消息往返数 | 往返/s | p99／ms | CPU／% | 网络开销／% | FEC 采样峰值／KiB |" :
+    zh ? "每组单次测量，无重复测量误差线；消息校验全部通过。内存口径同上，峰值不能证明没有长期泄漏。" :
+      "One measured run per case, without repeated-run whiskers; all message checks passed. Memory follows the definitions above; peaks cannot rule out long-term leaks.",
+    "", zh ? "| 依赖库／策略 | 消息往返数 | 往返/s | p99／ms | CPU／% | 网络开销／% | FEC 采样峰值／KiB |" :
       "| Dependency / Policy | Message Round Trips | Round Trips/s | p99 / ms | CPU / % | Wire Overhead / % | FEC Sampled Peak / KiB |",
     "| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
   for (const row of soak)
@@ -494,9 +508,9 @@ export function documentation(report, zh = false, rawURL) {
       format(row.wire_payload_overhead_percent.median) + " | " +
       format(row.fec_retained_sampled_peak_bytes.median / 1024) + " |");
   lines.push("", zh ? "## 结果与选型" : "## Results and Policy Selection", "",
-    zh ? "以下仅比较主矩阵的 1 个 io_context／1 个端点线程，避免把不同线程配置混成策略排名。" :
-      "The following compares main-matrix cases with one io_context / one endpoint thread, keeping IO models separate from policy ranking.",
-    "", zh ? "| 依赖方案 | 网络条件 | 最高往返吞吐量 | 最低 p99 RTT |" :
+    zh ? "仅比较主矩阵的 1 个 io_context／1 个端点线程，不跨 IO 模型排名。" :
+      "Main matrix, one io_context / one endpoint thread; rank policies within the same IO model.",
+    "", zh ? "| 依赖库 | 网络条件 | 最高往返吞吐量 | 最低 p99 RTT |" :
       "| Dependency | Network Condition | Highest Round-Trip Throughput | Lowest p99 RTT |",
     "| --- | --- | ---: | ---: |");
   for (const backend of BACKENDS) for (const profile of NETWORKS) {
@@ -520,10 +534,10 @@ export function documentation(report, zh = false, rawURL) {
   const randomFec = comparable.filter(row => row.profile === "random" && row.policy !== "off");
   const small = dimensions.filter(row => row.payload === 64 && row.window === 1);
   lines.push("",
-    zh ? "以下范围为两个依赖方案的三轮中位数范围：" : "The ranges below span the two dependency configurations' three-run medians:", "",
+    zh ? "以下范围为两种依赖方案的三轮中位数范围：" : "The ranges below span the two dependency configurations' three-run medians:", "",
     (zh ? "- 无主动丢包：仅 ARQ 达到 " : "- No injected loss: ARQ only reached ") +
       range(cleanArq, "roundtrips_per_second", 1, 0) + (zh ? " 往返/s，p99 为 " : " round trips/s, with p99 ") +
-      range(cleanArq, "rtt_p99_us", 1000, 2) + (zh ? " ms；两个依赖方案的吞吐量和 p99 均优于本次测量的 FEC 策略。" :
+      range(cleanArq, "rtt_p99_us", 1000, 2) + (zh ? " ms；两种依赖方案的吞吐量和 p99 均优于本次测量的 FEC 策略。" :
         " ms. Both throughput and p99 favored ARQ-only over the measured FEC policies on both dependency configurations."),
     (zh ? "- 随机丢包：FEC 的吞吐量为 " : "- Random loss: FEC throughput was ") +
       range(randomFec, "roundtrips_per_second", 1, 0) + (zh ? " 往返/s，仅 ARQ 为 " : " round trips/s versus ") +
@@ -539,12 +553,17 @@ export function documentation(report, zh = false, rawURL) {
       range(small.filter(row => row.policy === "off"), "roundtrips_per_second", 1, 0) +
       (zh ? "；小消息低并发场景也需要单独评估。" : ". Small-message, low-concurrency workloads need separate evaluation."));
   lines.push("",
-    zh ? "这些结果不构成通用赢家。策略选择需要同时考虑 p99、CPU、网络字节和内存预算；固定 FEC 的实际校验数仍受分组密度及字节预算约束，自适应 FEC 也需要足够样本和调整时间。完整数值保留实际丢包比例、观测校验数及策略变化次数。" :
-      "These results do not establish a universal winner. Select against p99, CPU, wire-byte and memory budgets together. Fixed FEC parity still depends on group density and byte budgets; adaptive FEC needs enough samples and adjustment time. Full values retain realized loss, observed parity and policy changes.",
+    zh ? "这些结果不构成通用赢家；须同时考虑 p99、CPU、网络字节与内存预算。固定 FEC 校验数受分组密度和字节预算约束，自适应 FEC 需要足够样本与调整时间。完整数值保留实际丢包率、观测校验数与策略变化次数。" :
+      "These results do not establish a universal winner; budget p99, CPU, wire bytes and memory together. Fixed FEC parity depends on group density and byte budgets; adaptive FEC needs sufficient samples and adjustment time. Full values retain realized loss, observed parity and policy changes.",
     "",
-    zh ? "本报告没有跨主机、真实 WAN、IPv6 压力或 RUDP 协程测量。RUDP 公开 API 当前使用回调，协程属于 TODO。仅 ARQ 与两个 FEC 策略使用相同中继拓扑，应在相同网络条件和端点 IO 模型下比较。" :
-      "This report has no cross-host, real-WAN, IPv6 stress or RUDP coroutine measurements. The public RUDP API currently uses callbacks; coroutine support is TODO. ARQ-only and both FEC policies use the same relay topology; compare them under the same network conditions and endpoint IO model.",
-    "", zh ? "## 复现与完整数据" : "## Reproduction and Full Data", "", fence + "sh",
+    zh ? '<Aside type="caution" title="测量与协议边界">' : '<Aside type="caution" title="Measurement and protocol limits">', "",
+    zh ? "未测跨主机、真实 WAN、IPv6 压力或 RUDP 协程；公开 API 使用回调，协程为 TODO。FEC 不提供认证或加密，见[兼容与安全](../features/rudp/fec_CN.md#兼容与安全)。" :
+      "No cross-host, real-WAN, IPv6 stress or RUDP coroutine measurements; the public API uses callbacks, with coroutines TODO. FEC provides no authentication or encryption; see [compatibility and security](../features/rudp/fec.md#compatibility-and-security).",
+    "", "</Aside>", "",
+    zh ? "仅 ARQ 与两种 FEC 共用中继拓扑；须保持网络条件和端点 IO 模型相同再比较。" :
+      "ARQ-only and both FEC policies share the relay topology; compare under matching network conditions and endpoint IO models.",
+    "", zh ? "## 复现与完整数据" : "## Reproduction and Full Data", "",
+    "<Steps>", "", zh ? '<Step title="构建并运行 C++ 用例">' : '<Step title="Build and run the C++ case">', "", fence + "sh",
     "cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release -DARKNET_BUILD_BENCHMARKS=ON \\",
     "  -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include",
     "cmake --build build-perf --target arknet_rudp_benchmark",
@@ -553,19 +572,20 @@ export function documentation(report, zh = false, rawURL) {
     "  --loss-percent 5 --delay-ms 10 --duplicate-percent 1 --reorder-percent 5 \\",
     "  --seconds 3 --warmup 2 --rounds 3 --seed 42", fence, "",
     zh ? "Boost 在另一构建目录设置 " + inline("-DARKNET_USE_BOOST_ASIO=ON") +
-      "。单项用例由 C++ 程序直接执行；维护者批量入口为 " + inline("bash benchmarks/run_rudp_fec.sh BUILD_DIR OUTPUT_DIR") +
-      "，不需要 Python 或 Ruby。每组实际命令、退出码及错误输出均随原始数据保存。" :
+      "。C++ 程序直接执行用例；维护者批量入口为 " + inline("bash benchmarks/run_rudp_fec.sh BUILD_DIR OUTPUT_DIR") +
+      "，无需 Python 或 Ruby。原始数据保留各组实际命令、退出码与错误输出。" :
       "Configure Boost in a separate build directory with " + inline("-DARKNET_USE_BOOST_ASIO=ON") +
-      ". Individual cases run directly as C++ executables; the maintainer batch entry is " +
+      ". Cases run as C++ executables; maintainers batch with " +
       inline("bash benchmarks/run_rudp_fec.sh BUILD_DIR OUTPUT_DIR") +
-      ", with no Python or Ruby dependency. Raw data retains every actual command, exit code and stderr file.",
-    "",
-    zh ? "可选离线报告工具只需要 Node，不参与网络测试启动：" :
-      "The optional offline report tool needs Node only and does not launch network tests:",
+      ", without Python or Ruby. Raw data retains each actual command, exit code and stderr file.",
+    "", "</Step>", "", zh ? '<Step title="生成离线报告">' : '<Step title="Generate the offline report">', "",
+    zh ? "可选离线报告工具只需 Node，不启动网络测试：" :
+      "The optional offline report tool needs only Node; it does not launch network tests:",
     "", fence + "sh",
     "node benchmarks/report_rudp_fec.mjs --self-check",
     "node benchmarks/report_rudp_fec.mjs \\",
     "  --results /path/to/arknet-results/rudp-fec --output docs/performance", fence, "",
+    "</Step>", "", "</Steps>", "",
     "[" + (zh ? "完整指标与测量元数据" : "Full Metrics and Measurement Metadata") + "](rudp-fec-summary.json)", "",
     rawURL ? "[" + (zh ? "原始 JSON、实际命令与退出码" : "Raw JSON, Actual Commands and Exit Codes") + "](" + rawURL + ")" :
       (zh ? "原始输入保存在调用者的外部目录。发布归档后可用 `--raw-url` 指定链接。" :
@@ -592,6 +612,59 @@ function writeReport(report, output, rawURL) {
     [join(output, "rudp-fec-summary.json"), JSON.stringify({ report_schema_version: 1, ...report }, null, 2) + "\n"]);
   mkdirSync(join(output, "assets"), { recursive: true });
   for (const [path, content] of files) writeFileSync(path, content, "utf8");
+}
+
+function resultTableRows(document, zh) {
+  const headers = zh ? ["| 项目 |", "| 条件 |", "| 依赖库／策略 |", "| 消息／B |", "| 依赖库 |"] :
+    ["| Item |", "| Condition |", "| Dependency / Policy |", "| Message / B |", "| Dependency |"];
+  return Array.from(document.matchAll(/^\|[^\n]*\n(?:\|[^\n]*(?:\n|$))*/gm), match => match[0])
+    .filter(table => headers.some(header => table.startsWith(header)))
+    .map(table => table.trimEnd()).join("\n");
+}
+
+function checkBuiltPresentation() {
+  const root = new URL("../docs/site/dist/", import.meta.url);
+  if (!existsSync(new URL("performance/rudp/index.html", root))) {
+    console.log("RUDP presentation: emitted HTML/Markdown not checked; build docs/site to enable this check.");
+    return;
+  }
+  const recorded = readJSON(new URL("../docs/performance/rudp-fec-summary.json", import.meta.url));
+  for (const zh of [false, true]) {
+    const source = readFileSync(new URL("../docs/performance/" + (zh ? "rudp_CN.md" : "rudp.md"), import.meta.url), "utf8");
+    const prefix = zh ? "zh/" : "";
+    const html = readFileSync(new URL(prefix + "performance/rudp/index.html", root), "utf8");
+    const markdown = readFileSync(new URL(prefix + "performance/rudp/index.md", root), "utf8");
+    const rawURL = Array.from(source.matchAll(/\]\((https:[^)]+)\)/g)).at(-1)?.[1];
+    assert.equal(source, documentation(recorded, zh, rawURL), "published source must come from the recorded report renderer");
+    assert.match(html, /data-steps/);
+    assert.match(html, /data-step/);
+    const plain = value => value.replace(/\s+/g, " ").trim();
+    for (const block of source.matchAll(/^```[^\n]*\n([\s\S]*?)^```/gm))
+      assert.ok(plain(markdown).includes(plain(block[1])), "complete reproduction command in AI Markdown");
+    for (const heading of source.matchAll(/^#{1,6} .+$/gm)) assert.ok(markdown.includes(heading[0]));
+    for (const label of source.matchAll(/<(Aside|Step)[^>]*title="([^"]+)"/g)) {
+      assert.ok(html.includes(label[1] === "Aside" ? 'aria-label="' + label[2] + '"' : label[2]), "rendered component label");
+      assert.ok(markdown.includes("**" + label[2] + "**"), "AI component label");
+    }
+    for (const image of source.matchAll(/!\[[^\]]*\]\((assets\/[^)]+)\)/g)) {
+      const url = "/arknet/performance/" + image[1];
+      assert.ok(html.includes('src="' + url + '"'), "rendered chart path");
+      assert.ok(markdown.includes("](" + url + ")"), "AI chart path");
+      const main = html.match(/<main\b[\s\S]*?<\/main>/)?.[0];
+      assert.ok(main, "rendered report content");
+      const beforeChart = main.slice(0, main.indexOf('src="' + url + '"'));
+      assert.equal((beforeChart.match(/<details\b/g) || []).length,
+        (beforeChart.match(/<\/details>/g) || []).length, "main chart must remain outside optional disclosures");
+    }
+    for (const row of resultTableRows(source, zh).split("\n")) assert.ok(markdown.includes(row), "recorded table row in AI Markdown");
+    assert.ok(markdown.includes(recorded.metadata.source_sha256));
+    assert.ok(markdown.includes(zh ? "不是 WAN 实测" : "not WAN measurements"));
+    assert.ok(markdown.includes(zh ? "认证或加密" : "authentication or encryption"));
+    assert.ok(markdown.includes("TODO"));
+    assert.doesNotMatch(markdown, /<(?:Aside|Steps|Step)[\s/>]/);
+    assert.doesNotMatch(html + markdown, /\/arknet\/arknet\//);
+  }
+  console.log("RUDP presentation: PASS (built bilingual HTML/Markdown; commands, charts, table values and limits).");
 }
 
 function selfCheck() {
@@ -698,8 +771,20 @@ function selfCheck() {
     assert.equal(report.rows.reduce((sum, row) => sum + row.rounds, 0), 276);
     assert.equal(report.rows.reduce((sum, row) => sum + row.total_messages, 0), 5460);
     assert.equal(report.rows[0].cpu_machine_percent.median, 10);
+    const reportBeforePresentation = JSON.stringify(report);
     for (const zh of [false, true]) {
       const document = documentation(report, zh);
+      // Golden hashes cover all pre-existing fixture result/environment rows;
+      // layout-only measurement definitions are deliberately outside this set.
+      assert.equal(sha256(resultTableRows(document, zh)), zh ?
+        "7a389275f609e6911b7eaac0d74f87a39566a68b30c46b8cd775d8709bc99bf8" :
+        "5be00e2b20fdeaa353089de68faaf5ac3fe91daceb3f7df78ccd5ca1f13f6a35");
+      assert.equal((document.match(/<Aside /g) || []).length, 2);
+      assert.equal((document.match(/<\/Aside>/g) || []).length, 2);
+      assert.equal((document.match(/<Step /g) || []).length, 2);
+      assert.equal((document.match(/<\/Step>/g) || []).length, 2);
+      assert.equal((document.match(/<Steps>/g) || []).length, 1);
+      assert.equal((document.match(/<\/Steps>/g) || []).length, 1);
       assert.ok(document.includes("276"));
       assert.ok(document.includes("5,460"));
       assert.ok(!document.includes("[object Object]") && !document.includes("undefined") && !document.includes("NaN"));
@@ -714,11 +799,16 @@ function selfCheck() {
       assert.ok(document.includes("](assets/rudp-fec-topology.svg)"));
       assert.ok(!document.includes("flowchart") && !document.includes("mermaid"));
     }
+    assert.equal(JSON.stringify(report), reportBeforePresentation, "rendering must not mutate report data");
     const output = join(directory, "generated");
     writeReport(report, output);
     const summaryBeforeLink = readFileSync(join(output, "rudp-fec-summary.json"), "utf8");
+    const chartsBeforeLink = new Map(readdirSync(join(output, "assets")).map(name =>
+      [name, readFileSync(join(output, "assets", name), "utf8")]));
     writeReport(report, output, "https://example.test/archive.tar.gz");
     assert.equal(readFileSync(join(output, "rudp-fec-summary.json"), "utf8"), summaryBeforeLink);
+    for (const [name, bytes] of chartsBeforeLink)
+      assert.equal(readFileSync(join(output, "assets", name), "utf8"), bytes, "presentation link must not change charts");
     assert.ok(readFileSync(join(output, "rudp.md"), "utf8").includes("](https://example.test/archive.tar.gz)"));
     assert.ok(readFileSync(join(output, "rudp_CN.md"), "utf8").includes("](https://example.test/archive.tar.gz)"));
     const diagram = readFileSync(join(output, "assets", "rudp-fec-topology.svg"), "utf8");
@@ -750,7 +840,8 @@ function selfCheck() {
     meta.complete = false;
     writeFileSync(join(directory, "metadata.json"), JSON.stringify(meta));
     assert.throws(() => loadResults(directory), /complete metadata required/);
-    console.log("RUDP FEC report self-check: PASS (synthetic data; no network)");
+    checkBuiltPresentation();
+    console.log("RUDP FEC report self-check: PASS (synthetic data; unchanged tables/charts/JSON; no network)");
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 
