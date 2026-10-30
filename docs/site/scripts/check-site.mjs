@@ -153,3 +153,5 @@ for (const [page, locale] of [["features/rudp/fec/index.html", "en"], ["zh/featu
   assertUiControls(await readFile(join(root, page), "utf8"), locale);
 }
 console.log("Checked English/Chinese FEC controls, including the search dialog locale.");
+
+await import("./check-reference-guides.mjs");
