@@ -1,10 +1,8 @@
 # RUDP 性能
 
-96 组配置、276 次测量完成 7,960,439 次消息往返，通过内容、顺序、发送完成与收尾检查；中继错误、容量溢出均为零。
+本机 96 组配置、276 次测量全部通过，共完成 7,960,439 次消息往返。内容、顺序、发送完成和收尾检查均通过；中继错误和容量溢出均为零。
 
-<CardGrid>
-<LinkCard title="并发与端点线程数" href="rudp-concurrency_CN.md" description="128／512／1024 客户端，共享 io_context，1 与 4 个端点线程。" />
-</CardGrid>
+[并发与端点线程数](rudp-concurrency_CN.md)比较 128／512／1024 个客户端、一个共享 io_context 下的 1 与 4 个端点线程。
 
 ## 测试环境
 
@@ -39,11 +37,9 @@
 
 ![RUDP 测试拓扑](assets/rudp-fec-topology.svg)
 
-<Aside type="caution" title="拓扑范围">
+这是同一进程、本机 IPv4 回环上的网络条件模拟，不是 WAN 实测。中继始终另用 1 个 io_context 和 1 个线程；统计采样另有线程。图中 IO 模型仅表示端点配置。
 
-同进程、本机 IPv4 回环模拟，不是 WAN 实测。图中 IO 模型仅计端点；中继另用 1 个 io_context、1 个线程，采样另有线程。服务端共用 UDP socket 与 strand；4 个 io_context 各 1 个线程主要分散客户端，不证明服务端并行分片。
-
-</Aside>
+服务端会话共用 UDP socket 及其 strand。4 个 io_context 各 1 个线程主要分散客户端，不能据此推断服务端已并行分片。
 
 RTT 包含模拟延迟、拥塞控制、FEC 组包等待和 ARQ 重传。吞吐量按完成的消息往返计算，分母包含收完在途请求的时长。柱高为三轮中位数，误差线为这三个实际结果的最小／最大值，不是置信区间。
 
@@ -148,19 +144,11 @@ FEC 保留量是各端点统计之和，每 100 ms 采样一次，可能错过�
 - 随机丢包：FEC 的吞吐量为 835 - 869 往返/s，仅 ARQ 为 560 - 572。代价是进程 CPU 从 25.4 - 26.6% 升至 52.7 - 56.2%，网络额外字节比例从 21.7 - 21.9% 升至 55.1 - 60.1%。
 - 随机丢包、64 B、每连接仅 1 条在途请求：固定 FEC 为 116 - 117 往返/s，低于仅 ARQ 的 138 - 139；小消息低并发场景也需要单独评估。
 
-按 p99、CPU、网络字节与内存预算共同选型。固定 FEC 校验数受分组密度、字节预算约束；自适应 FEC 需要足够样本与调整时间。完整数据保留实际丢包比例、观测校验数和策略变化次数，不构成通用排名。
+这些结果不构成通用赢家。策略选择需要同时考虑 p99、CPU、网络字节和内存预算；固定 FEC 的实际校验数仍受分组密度及字节预算约束，自适应 FEC 也需要足够样本和调整时间。完整数值保留实际丢包比例、观测校验数及策略变化次数。
 
-<Aside type="caution" title="适用范围">
-
-未测跨主机、真实 WAN、IPv6 压力或 RUDP 协程；公开 API 使用回调，协程仍为 TODO。仅 ARQ 与两个 FEC 策略共用中继拓扑，仅在相同网络条件、端点 IO 模型下比较。
-
-</Aside>
+本报告没有跨主机、真实 WAN、IPv6 压力或 RUDP 协程测量。RUDP 公开 API 当前使用回调，协程属于 TODO。仅 ARQ 与两个 FEC 策略使用相同中继拓扑，应在相同网络条件和端点 IO 模型下比较。
 
 ## 复现与完整数据
-
-<Steps>
-
-<Step title="编译并测量">
 
 ```sh
 cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release -DARKNET_BUILD_BENCHMARKS=ON \
@@ -172,11 +160,7 @@ build-perf/benchmarks/arknet_rudp_benchmark --payload 1024 --clients 4 --window 
   --seconds 3 --warmup 2 --rounds 3 --seed 42
 ```
 
-Boost 在独立构建目录设置 `-DARKNET_USE_BOOST_ASIO=ON`。C++ 直接运行单项；批量入口为 `bash benchmarks/run_rudp_fec.sh BUILD_DIR OUTPUT_DIR`，不需要 Python 或 Ruby。原始数据保留各组命令、退出码与错误输出。
-
-</Step>
-
-<Step title="离线生成报告">
+Boost 在另一构建目录设置 `-DARKNET_USE_BOOST_ASIO=ON`。单项用例由 C++ 程序直接执行；维护者批量入口为 `bash benchmarks/run_rudp_fec.sh BUILD_DIR OUTPUT_DIR`，不需要 Python 或 Ruby。每组实际命令、退出码及错误输出均随原始数据保存。
 
 可选离线报告工具只需要 Node，不参与网络测试启动：
 
@@ -189,7 +173,3 @@ node benchmarks/report_rudp_fec.mjs \
 [完整指标与测量元数据](rudp-fec-summary.json)
 
 [原始 JSON、实际命令与退出码](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261013/rudp-fec)
-
-</Step>
-
-</Steps>
