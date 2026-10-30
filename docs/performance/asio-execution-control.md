@@ -116,7 +116,8 @@ These starting points use 16 balanced connections in a short closed-loop local r
 
 ## Full results
 
-**Boost.Asio 1.90 · 48 configurations: median [minimum–maximum]**
+<details>
+<summary>Boost.Asio 1.90 · 48 configurations: median [minimum–maximum]</summary>
 
 | Payload B | Window | Iterations | Contexts / total workers | API | Round trips/s | P50 µs | P99 µs | CPU% |
 | ---: | ---: | ---: | --- | --- | ---: | ---: | ---: | ---: |
@@ -169,8 +170,11 @@ These starting points use 16 balanced connections in a short closed-loop local r
 | 4096 | 16 | 10000 | 4 / 4 | callback | 200,057.67 [199,275.15–200,472.99] | 1,258.67 [1,258.21–1,259.42] | 1,313.21 [1,307.38–1,361.25] | 399.7 [399.62–399.78] |
 | 4096 | 16 | 10000 | 4 / 4 | coroutine | 199,521.34 [197,414.18–200,107.95] | 1,257.54 [1,254.58–1,262.29] | 1,493.13 [1,465.75–1,527.92] | 399.59 [399.04–399.8] |
 
+</details>
 
-**Standalone Asio 1.38.2 · 48 configurations: median [minimum–maximum]**
+
+<details>
+<summary>Standalone Asio 1.38.2 · 48 configurations: median [minimum–maximum]</summary>
 
 | Payload B | Window | Iterations | Contexts / total workers | API | Round trips/s | P50 µs | P99 µs | CPU% |
 | ---: | ---: | ---: | --- | --- | ---: | ---: | ---: | ---: |
@@ -222,6 +226,8 @@ These starting points use 16 balanced connections in a short closed-loop local r
 | 4096 | 1 | 10000 | 4 / 4 | coroutine | 135,581.78 [130,649.39–135,932.83] | 113.67 [113.58–116.79] | 158.88 [156.96–164.83] | 399.27 [399.19–399.59] |
 | 4096 | 16 | 10000 | 4 / 4 | callback | 200,877.78 [200,853.23–201,365.33] | 1,255.54 [1,255.21–1,256.79] | 1,321.63 [1,306.17–1,418.79] | 399.59 [399.56–399.64] |
 | 4096 | 16 | 10000 | 4 / 4 | coroutine | 200,758.38 [198,967.33–201,314.41] | 1,255.58 [1,252.96–1,260.71] | 1,541.13 [1,482.96–1,876.13] | 399.58 [398.55–399.7] |
+
+</details>
 
 
 ## Reproduction
