@@ -1,10 +1,12 @@
 # RUDP concurrency
 
-All 18 configurations and 54 measured rounds passed content, ordering,
-send-completion and drain checks, completing 5,692,552 message round trips.
-Four endpoint threads did not give a uniform
-throughput gain: at 1,024 clients, all three policies delivered fewer round
-trips/s than with one endpoint thread, while process CPU increased.
+18 configurations and 54 rounds completed 5,692,552 message round trips, passing content, ordering, send-completion and drain checks.
+
+<Aside type="caution" title="Concurrency regression">
+
+Four endpoint threads gave no uniform gain: at 1,024 clients, all three policies had lower throughput and higher process CPU than one thread.
+
+</Aside>
 
 ## Environment and method
 
@@ -22,16 +24,9 @@ Source commit: `025eb361b614c6ba8d298f7b40a2b9a00f7d2e3c`.
 The same binary and compile dependencies served both thread configurations.
 Binary SHA-256: `30cdf295b62badb3a1797fdb9fe738ed4934168bc14d88a124de7800736645ec`.
 
-Each matched pair changes only `--io-threads 1` to `--io-threads 4`.
-Results were checked for `io_contexts=1`, the requested `io_threads`, and
-`relay_io_contexts=1, relay_io_threads=1`. Server sessions share their UDP socket
-and strand; four threads do not establish independent server shards.
+Matched pairs change only `--io-threads 1` to `--io-threads 4`. Results confirm `io_contexts=1`, requested `io_threads`, and `relay_io_contexts=1, relay_io_threads=1`. Server sessions share a UDP socket and strand; four threads do not establish independent shards.
 
-CPU covers the whole process: clients, server, relay and statistics sampling.
-**100% is one logical core**, so process CPU can exceed 100%. Throughput and CPU
-use the measured phase's actual elapsed time, including drain and IO barriers,
-not a fixed three-second denominator. Statistics are sampled every 100 ms.
-RTT quantiles use a reservoir of up to 8,192 observations per round.
+CPU includes clients, server, relay and sampling. **100% is one logical core**; usage can exceed 100%. Throughput and CPU use actual measurement-phase time including drain and IO barriers, rather than three seconds. Sampling: every 100 ms; RTT reservoir: up to 8,192 observations per round.
 
 ## Throughput, CPU and p99
 
@@ -78,12 +73,7 @@ At 512 clients, adaptive FEC emitted 2,395 → 72,798 parity packets over the th
 measured rounds, with 0 → 63 policy changes. Adaptive cannot be treated as off
 under this clean workload.
 
-Relay errors, queue overflows and injected impairment counters were zero;
-application message counts matched, with no pending send completions. Relay
-forwarding still copies and queues every datagram on its additional thread.
-Endpoint wire-byte overhead excludes IP/UDP headers and that second forwarding
-hop. Sequential endpoint/relay snapshots are not one atomic accounting interval;
-there is no isolated relay CPU measurement.
+Relay errors, queue overflows and injected impairments were zero; message counts matched and sends completed. The additional relay thread still copies, queues and forwards every datagram. Endpoint wire-byte overhead excludes IP/UDP headers and the second hop. Sequential endpoint/relay snapshots are not atomic; relay CPU was not measured separately.
 
 At 1,024 clients the topology uses 3,073 UDP sockets, including two relay sockets
 per client. Endpoint effective receive buffers were 4 MiB. These kernel capacity
@@ -94,8 +84,11 @@ application window is not a whole-process memory limit.
 
 ## Reproduction and scope
 
-Build the existing native [benchmark](../../benchmarks/rudp.cpp) at the source
-commit above. This example uses GNU `timeout` (`gtimeout` on some macOS installs):
+<Steps>
+
+<Step title="Build and run">
+
+Build the native [benchmark](../../benchmarks/rudp.cpp) at the recorded commit. Use GNU `timeout` (`gtimeout` on some macOS installs):
 
 ```sh
 cmake -S . -B build-rudp -G Ninja -DCMAKE_BUILD_TYPE=Release \
@@ -111,15 +104,28 @@ cmake --build build-rudp --target arknet_rudp_benchmark --parallel 2
   --duplicate-percent 0 --reorder-percent 0 --seed 42)
 ```
 
+</Step>
+
+<Step title="Expand the matched matrix">
+
 Use clients 128/512/1024, FEC off/fixed/adaptive and endpoint threads 1/4 for the
 18 configurations. Collection kept existing native timeouts, a 120 s outer
 limit, child-only soft FD 20,000, at least 6,000 conservatively free UDP ephemeral
 ports and 16 GiB estimated free/reclaimable memory. Processes were cleaned up
 between cases; no other local builds or load tests ran during measurement.
 
-The one-thread cases preceded the four-thread cases, without interleaving or
-randomizing order. Ordinary OS/desktop activity and thermal state remain possible
-influences. Short same-host IPv4 loopback runs do not establish production PCU,
-cross-host capacity, long-term stability, or a cause for the observed scaling.
+</Step>
+
+<Step title="Check comparison scope">
+
+<Aside type="caution" title="Order and scope">
+
+One-thread cases ran first, without interleaving or randomization. OS/desktop activity and thermals may influence results. Short same-host IPv4 loopback runs establish neither production PCU, cross-host capacity, long-term stability nor the scaling cause.
+
+</Aside>
 
 [RUDP policy and impairment measurements](rudp.md) · [Performance reports](index.md)
+
+</Step>
+
+</Steps>

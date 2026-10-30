@@ -149,6 +149,42 @@ for (const collection of ["docs", "zh"]) {
 }
 console.log("Checked all bilingual component-guide cards, tab paths, step labels and key constraints in emitted HTML/Markdown.");
 
+// Performance UI may collapse exact-value tables, but never interpretation or
+// evidence limits. Every command and chart remains present in the AI export.
+{
+  const { unified } = await import("unified");
+  const { default: remarkParse } = await import("remark-parse");
+  const { parse } = await import("parse5");
+  const parser = unified().use(remarkParse);
+  const walk = node => [node, ...(node.children ?? []).flatMap(walk)];
+  const plain = value => value.replace(/\s+/g, " ").trim();
+  const names = ["index", "methodology", "io-comparison", "asio-execution-control", "rudp-concurrency", "database-comparison", "transport-comparison", "steady-workloads", "udp-update", "udp-limits"];
+  for (const name of names) for (const suffix of ["", "_CN"]) {
+    const prefix = suffix ? "zh/" : "";
+    const route = prefix + "performance" + (name === "index" ? "" : "/" + name);
+    const source = await readFile(new URL(`../../performance/${name}${suffix}.md`, import.meta.url), "utf8");
+    const markdown = await readFile(join(root, route, "index.md"), "utf8");
+    const html = await readFile(join(root, route, "index.html"), "utf8");
+    for (const node of walk(parser.parse(source))) {
+      if (node.type === "code") assert.ok(plain(markdown).includes(plain(node.value)), `${route}: missing benchmark command or example`);
+      if (node.type === "image" && node.url.startsWith("assets/")) {
+        const url = "/arknet/performance/" + node.url;
+        assert.ok(markdown.includes(url), `${route}: missing exported chart ${url}`);
+        assert.ok(html.includes(`src="${url}"`), `${route}: missing rendered chart ${url}`);
+      }
+    }
+    for (const step of source.matchAll(/<Step title="([^"]+)"/g)) assert.ok(markdown.includes(`**${step[1]}**`), `${route}: missing benchmark step label`);
+    for (const aside of source.matchAll(/<Aside[^>]*title="([^"]+)"/g)) assert.ok(markdown.includes(`> **${aside[1]}**`), `${route}: missing interpretation label`);
+    function checkCaveats(node, inDetails = false) {
+      if (node.tagName === "aside") assert.equal(inDetails, false, `${route}: concealed evidence or interpretation caveat`);
+      for (const child of node.childNodes ?? []) checkCaveats(child, inDetails || node.tagName === "details");
+    }
+    checkCaveats(parse(html));
+    assert.doesNotMatch(markdown, /<(?:Aside|Steps|Step|Tabs|TabItem|LinkCard|CardGrid)[\s/>]/, `${route}: component markup in AI Markdown`);
+  }
+  console.log("Checked twenty handwritten performance HTML/Markdown outputs: commands, charts, procedure labels and visible caveats.");
+}
+
 for (const [page, locale] of [["features/rudp/fec/index.html", "en"], ["zh/features/rudp/fec/index.html", "zh-CN"]]) {
   assertUiControls(await readFile(join(root, page), "utf8"), locale);
 }

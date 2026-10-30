@@ -1,10 +1,16 @@
 # Database client performance comparison
 
-Compare v0.2.0 with the implementation that adds complete shutdown waits, measuring ordinary request paths. Each of 192 configurations runs three rounds per version: 1,152 measured rounds, with no failed requests or content errors. Connection pools, coroutines and shutdown duration are outside this scope.
+Ordinary request paths: v0.2.0 versus complete shutdown waits. Each of 192 configurations runs three rounds per version: 1,152 rounds, zero failed requests or content errors.
 
-The [five-second workload comparison](steady-workloads.md) includes independent five-run Redis measurements.
+<CardGrid>
+<LinkCard title="Five-second workload comparison" href="steady-workloads.md" description="Independent five-run Redis measurements." />
+</CardGrid>
 
-CPU covers the client process only; one full core is 100%. MySQL RT includes client queueing; Redis RT covers the complete pipeline batch.
+<Aside type="caution" title="Metrics and scope">
+
+CPU counts the client only; one core is 100%. MySQL RT includes client queueing; Redis RT covers the pipeline batch. Pools, coroutines and shutdown duration are unmeasured.
+
+</Aside>
 
 | Environment | Recorded value |
 | --- | --- |
@@ -28,6 +34,8 @@ MySQL `mysql.cpp` SHA256: `badd0dfa01bb4c61de94893f8ad7a003eb48e146060651c8ad2f4
 
 Redis `redis.cpp` SHA256: `9de41f49ae449a1f3be1b2015d9224340a7f87f5414be7ef3e50e2148ef6cdbc`
 
+Each summary is a median of case ratios, not pooled throughput.
+
 ## MySQL
 
 4 connections · 1 KiB · 16 in-flight requests per connection
@@ -45,7 +53,7 @@ Redis `redis.cpp` SHA256: `9de41f49ae449a1f3be1b2015d9224340a7f87f5414be7ef3e50e
 
 </details>
 
-Shown 8 cases: median per-case throughput ratio change -0.02%.All 96 cases: corresponding median -0.02%.Each summary is a median of case ratios, not pooled throughput.
+Median throughput ratio change: shown 8 cases -0.02%; all 96 cases -0.02%.
 
 ## Redis
 
@@ -64,7 +72,7 @@ Shown 8 cases: median per-case throughput ratio change -0.02%.All 96 cases: corr
 
 </details>
 
-Shown 4 cases: median per-case throughput ratio change -0.26%.All 96 cases: corresponding median -0.3%.Each summary is a median of case ratios, not pooled throughput.
+Median throughput ratio change: shown 4 cases -0.26%; all 96 cases -0.3%.
 
 <details>
 <summary>All data (median [min–max])</summary>
@@ -268,6 +276,23 @@ Shown 4 cases: median per-case throughput ratio change -0.26%.All 96 cases: corr
 
 ## Reproduce
 
-[Build both library revisions with the same benchmark drivers](../../benchmarks/comparison/README.md).
+<Steps>
 
-[MySQL benchmark](../../benchmarks/mysql.md) · [Redis benchmark](../../benchmarks/redis.md). Build both library revisions with the same drivers, dependencies, server configuration and workload. Compile and run the C++ programs directly; report generation is separate from measurement.
+<Step title="Match versions and configuration">
+
+[Build both library revisions with the same drivers](../../benchmarks/comparison/README.md), dependencies, server configuration and workload.
+
+</Step>
+
+<Step title="Run the C++ benchmark directly">
+
+<CardGrid>
+<LinkCard title="MySQL" href="../../benchmarks/mysql.md" />
+<LinkCard title="Redis" href="../../benchmarks/redis.md" />
+</CardGrid>
+
+Generate reports separately from measurement.
+
+</Step>
+
+</Steps>

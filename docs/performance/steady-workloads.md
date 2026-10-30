@@ -1,25 +1,29 @@
 # Five-second workload comparison
 
-The 4 KiB WebSocket case has 6.51% lower median throughput and 13.29% higher P99. Five-run throughput ranges overlap for every configuration; the cause of the differences is unconfirmed. The charts and tables show all other cases.
+<Aside type="caution" title="WebSocket regression">
 
-Each version/configuration uses five fresh processes, with 1 s warmup and 5 s measurement. Baseline and candidate run adjacently with alternating order. All 80 rows are complete, with zero failures, errors or timeouts. Tables show median [minimum–maximum]; ranges are five observations, not confidence intervals.
+WebSocket 4 KiB: median throughput −6.51%, P99 +13.29%. Five-run throughput ranges overlap in every configuration; the cause remains unconfirmed. Charts and tables show the other cases.
+
+</Aside>
+
+Each version/configuration uses five fresh processes: 1 s warmup, 5 s measurement. Baseline/candidate run adjacently in alternating order. All 80 rows are complete, with zero failures, errors or timeouts. Tables: median [min–max]; five observations, not confidence intervals.
 
 ![Normalized throughput and five-run observed ranges](assets/comparison-020-2aa5bc0-five-second.svg)
 
 ## Throughput and CPU
 
-Redis throughput counts thousands of successful commands/s; TCP/HTTP/WebSocket count thousands of message roundtrips/s. Configurations are not added together. One full CPU core is 100%: Redis counts the client process; public endpoints count the colocated client/server process. CPU efficiency is throughput per CPU core, calculated per run before taking the median.
+Redis counts thousands of successful commands/s; TCP/HTTP/WebSocket count thousands of message roundtrips/s. Do not sum configurations. One CPU core is 100%: Redis counts the client, endpoints the colocated client/server. CPU efficiency is throughput/core, calculated per run then summarized by median.
 
 | Configuration | Baseline throughput, k/s | Candidate throughput, k/s | Change | CPU%, baseline → candidate | CPU efficiency change |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Redis · Standalone Asio · 4 KiB<br>pipeline16 · window1 · 4 clients | 97.11 [95.52–99.63] | 95.20 [94.97–96.62] | −1.96% | 96.57 → 97.73 | −2.96% |
-| Redis · Standalone Asio · 1 KiB<br>pipeline64 · window1 · 4 clients | 365.97 [363.32–385.05] | 368.73 [363.17–376.57] | +0.75% | 102.34 → 103.23 | −0.88% |
-| WebSocket · Boost · 64 B<br>window16 · 4 workers · 16 clients | 236.16 [210.92–237.84] | 233.98 [232.33–234.42] | −0.92% | 366.14 → 368.33 | −1.55% |
-| WebSocket · Boost · 4 KiB<br>window16 · 4 workers · 16 clients | 159.67 [147.66–161.17] | 149.27 [139.90–156.68] | −6.51% | 372.05 → 369.21 | −5.79% |
-| Redis · Boost · 4 KiB<br>pipeline16 · window1 · 4 clients | 95.47 [95.05–99.16] | 95.46 [95.36–97.58] | −0.01% | 97.28 → 97.38 | −0.08% |
-| Redis · Boost · 1 KiB<br>pipeline64 · window1 · 4 clients | 365.88 [363.26–375.79] | 367.87 [363.90–374.77] | +0.54% | 102.30 → 102.76 | +0.18% |
-| TCP · Boost · 64 B<br>window16 · 4 workers · 16 clients | 315.96 [272.55–317.00] | 311.26 [267.16–314.56] | −1.49% | 359.25 → 361.72 | −1.98% |
-| HTTP · Boost · 4 KiB<br>window16 · 1 worker · 16 clients | 53.21 [53.06–53.80] | 53.12 [52.71–53.39] | −0.17% | 82.15 → 82.26 | −0.30% |
+| Redis · Standalone Asio · 4 KiB<br />pipeline16 · window1 · 4 clients | 97.11 [95.52–99.63] | 95.20 [94.97–96.62] | −1.96% | 96.57 → 97.73 | −2.96% |
+| Redis · Standalone Asio · 1 KiB<br />pipeline64 · window1 · 4 clients | 365.97 [363.32–385.05] | 368.73 [363.17–376.57] | +0.75% | 102.34 → 103.23 | −0.88% |
+| WebSocket · Boost · 64 B<br />window16 · 4 workers · 16 clients | 236.16 [210.92–237.84] | 233.98 [232.33–234.42] | −0.92% | 366.14 → 368.33 | −1.55% |
+| WebSocket · Boost · 4 KiB<br />window16 · 4 workers · 16 clients | 159.67 [147.66–161.17] | 149.27 [139.90–156.68] | −6.51% | 372.05 → 369.21 | −5.79% |
+| Redis · Boost · 4 KiB<br />pipeline16 · window1 · 4 clients | 95.47 [95.05–99.16] | 95.46 [95.36–97.58] | −0.01% | 97.28 → 97.38 | −0.08% |
+| Redis · Boost · 1 KiB<br />pipeline64 · window1 · 4 clients | 365.88 [363.26–375.79] | 367.87 [363.90–374.77] | +0.54% | 102.30 → 102.76 | +0.18% |
+| TCP · Boost · 64 B<br />window16 · 4 workers · 16 clients | 315.96 [272.55–317.00] | 311.26 [267.16–314.56] | −1.49% | 359.25 → 361.72 | −1.98% |
+| HTTP · Boost · 4 KiB<br />window16 · 1 worker · 16 clients | 53.21 [53.06–53.80] | 53.12 [52.71–53.39] | −0.17% | 82.15 → 82.26 | −0.30% |
 
 ## Latency (µs)
 
@@ -45,4 +49,8 @@ Baseline `25fe2e5fac4e09edee597f312d58b0362b9e0681`, candidate `2aa5bc0ef7d383d8
 
 ## Reproduce
 
-[Shared-driver build](../../benchmarks/comparison/README.md) · [Database configuration grid](database-comparison.md) · [Transport configuration grid](transport-comparison.md)
+<CardGrid>
+<LinkCard title="Shared-driver build" href="../../benchmarks/comparison/README.md" />
+<LinkCard title="Database configuration grid" href="database-comparison.md" />
+<LinkCard title="Transport configuration grid" href="transport-comparison.md" />
+</CardGrid>

@@ -1,6 +1,6 @@
 # UDP Performance Report
 
-Local measurements on 2026-10-12 include 504 matrix runs, 21 receive-buffer isolation runs, and a 60-second UDP stress run for each dependency configuration. Independent Release C++ programs produced these results, not CI.
+Local Release C++ measurements on 2026-10-12: 504 matrix runs, 21 receive-buffer isolation runs and a 60-second UDP stress run per dependency configuration; collected outside CI.
 
 ## Test Conditions
 
@@ -14,7 +14,7 @@ Local measurements on 2026-10-12 include 504 matrix runs, 21 receive-buffer isol
 | Measurement | Three independent processes per configuration; 1 s measurement, 0.25 s warmup; isolation runs have no warmup |
 | Socket buffers | 64 KiB send / 4 MiB receive; isolation runs vary the server receive capacity |
 
-Matrix source SHA-256: `0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`. Isolation runs add server receive counts and a configurable receive buffer; their archive includes the patch and executable hash.
+Matrix source SHA-256: `0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`. Isolation adds server receive counts and configurable receive buffers; its archive retains the patch and executable hash.
 
 ## Correctness and Load Range
 
@@ -25,7 +25,7 @@ Matrix source SHA-256: `0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e
 | Payload / batch: 3 payloads × 4 windows × 3 models | 93 / 108 passed | 93 / 108 passed | 62 valid configurations and 10 failed configurations combined |
 | Size boundaries: 6 payloads × 3 windows | 36 / 54 passed | 36 / 54 passed | Large bursts exceed receive capacity |
 
-All failed records remain archived. A failed repetition excludes all three runs of that configuration from throughput rankings.
+All failures remain archived; any failed repetition excludes that configuration’s three runs from throughput rankings.
 
 ## Throughput and Latency
 
@@ -42,9 +42,9 @@ All failed records remain archived. A failed repetition excludes all three runs 
 | Boost | 1 / 1 | 90,452 | 207.96 | 99.7 |
 | Boost | 1 / 2 | 95,095 | 270.71 | 157.4 |
 
-Standalone has the highest median throughput with one thread at this load. Boost gains some throughput with two threads, at higher p99 latency and CPU use.
+At this load, Standalone’s one thread has the highest throughput median; Boost’s two threads gain throughput at higher p99 and CPU.
 
-Bars show medians; error bars show the minimum and maximum of three runs, not confidence intervals. CPU uses one core as 100% and includes both clients and server. Whole-machine share is process CPU% / 14.
+Bars: medians; whiskers: three-run min/max, not confidence intervals. CPU includes clients/server, with 100% per core. Machine share = process CPU% / 14.
 
 [All IO values](udp-summary.json) · [Complete 64/1024/16384-byte results](udp.md) · [Payload and outstanding-window charts](dimensions-udp.md)
 
@@ -66,13 +66,17 @@ Every run satisfies: client sends − server receives = missing datagrams; serve
 
 <Aside type="caution" title="Warning: Receive queue overflow">
 
-**These losses come from the server receive queue overflowing.** A large burst of small datagrams reproduces the same condition. Loopback still uses finite queues. Total outstanding payload is neither an exact instantaneous queue length nor a universal capacity threshold.
+**Loss comes from server receive queue overflow**, also reproduced with small-datagram bursts. Loopback queues remain finite; outstanding payload is neither instantaneous queue length nor a universal capacity threshold.
 
 </Aside>
 
-See [Buffers and flow control](../guides/socket-buffers.md) for configuration and the TCP/UDP distinction. Native UDP datagram semantics remain unchanged: no new default throttling, fragmentation or retransmission.
+[Buffers and flow control](../guides/socket-buffers.md) covers configuration and TCP/UDP differences. Native UDP semantics remain: no new default throttling, fragmentation or retransmission.
 
 ## Reproduce and Inspect Evidence
+
+<Steps>
+
+<Step title="Build and run">
 
 Compile using the [UDP build instructions](../features/udp/performance.md#build-and-run), then directly run the C++ case:
 
@@ -83,8 +87,28 @@ build-perf/benchmarks/arknet_loopback_benchmark \
   --udp-server-receive-buffer 4194304
 ```
 
-This overflow probe is expected to return a nonzero status. Set the window to 16, or the payload to 1472, to reproduce the corresponding loss-free configurations above.
+</Step>
+
+<Step title="Check the expected result">
+
+<Aside type="caution" title="Expected result">
+
+The overflow probe should return nonzero. Window 16 or payload 1472 reproduces the corresponding loss-free configuration above.
+
+</Aside>
+
+</Step>
+
+<Step title="Inspect archived evidence">
 
 [Raw records, commands and machine metadata](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp) · [Per-run kernel snapshots](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261012-udp/buffer-probes) · [Size-boundary charts](udp-limits.md)
 
-Results cover short IPv4 loopback runs on this machine. Cross-host capacity and IPv6 stress capacity are not measured. RUDP has a [separate report](rudp.md). Coroutine comparisons use native TCP and must not be generalized to UDP.
+<Aside type="caution" title="Scope">
+
+Short same-host IPv4 loopback only; cross-host and IPv6 stress capacity are unmeasured. [RUDP](rudp.md) is measured separately; native TCP coroutine comparisons do not apply to UDP.
+
+</Aside>
+
+</Step>
+
+</Steps>

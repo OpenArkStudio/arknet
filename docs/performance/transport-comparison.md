@@ -1,8 +1,10 @@
 # Network endpoint performance comparison
 
-Compare v0.2.0 with the implementation that waits for native operations and callback capture retirement. Each of 64 configurations runs three fresh processes per version: 384 measured rounds, with no failed requests, content errors or drain timeouts.
+v0.2.0 versus waiting for native operations and callback captures to retire: 64 configurations × three fresh processes per version; 384 rounds with zero failed requests, content errors or drain timeouts.
 
-The [five-second workload comparison](steady-workloads.md) includes independent five-run WebSocket, TCP and HTTP measurements.
+<CardGrid>
+<LinkCard title="Five-second workload comparison" href="steady-workloads.md" description="Independent five-run WebSocket, TCP and HTTP measurements." />
+</CardGrid>
 
 CPU combines the colocated client and server; one full core is 100%. RT is per-message roundtrip time. Both versions use the same driver.
 
@@ -26,9 +28,13 @@ v0.2.0 library: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · Candidate: `2aa5bc
 
 `loopback.cpp` SHA256: `1749828c0388136bb7cea4559303c0f59b4d5d3833280e9e52ecb0bee41d17c8`
 
-## TCP · Boost.Asio
+<Aside type="note" title="Shared load and statistics">
 
-16 connections · 64 B / 4096 B · 1 / 16 in flight · one io_context with 1 / 4 threads
+Every protocol/dependency group uses: 16 connections · 64 B / 4096 B · 1 / 16 in flight · one io_context with 1 / 4 threads. Each summary is a median of case ratios, not pooled throughput.
+
+</Aside>
+
+## TCP · Boost.Asio
 
 ![TCP · Boost.Asio · Throughput · roundtrips/s](assets/comparison-020-2aa5bc0-transport-boost-tcp-throughput.svg)
 
@@ -43,11 +49,9 @@ v0.2.0 library: `25fe2e5fac4e09edee597f312d58b0362b9e0681` · Candidate: `2aa5bc
 
 </details>
 
-Shown 8 cases: median per-case throughput ratio change -2.34%.Each summary is a median of case ratios, not pooled throughput.
+Shown 8 cases: median throughput ratio change -2.34%.
 
 ## TCP over TLS · Boost.Asio
-
-16 connections · 64 B / 4096 B · 1 / 16 in flight · one io_context with 1 / 4 threads
 
 <details>
 <summary>Throughput, CPU and response time</summary>
@@ -62,11 +66,9 @@ Shown 8 cases: median per-case throughput ratio change -2.34%.Each summary is a 
 
 </details>
 
-Shown 8 cases: median per-case throughput ratio change -0.8%.Each summary is a median of case ratios, not pooled throughput.
+Shown 8 cases: median throughput ratio change -0.8%.
 
 ## HTTP/1.1 · Boost.Asio
-
-16 connections · 64 B / 4096 B · 1 / 16 in flight · one io_context with 1 / 4 threads
 
 <details>
 <summary>Throughput, CPU and response time</summary>
@@ -81,11 +83,9 @@ Shown 8 cases: median per-case throughput ratio change -0.8%.Each summary is a m
 
 </details>
 
-Shown 8 cases: median per-case throughput ratio change -1.44%.Each summary is a median of case ratios, not pooled throughput.
+Shown 8 cases: median throughput ratio change -1.44%.
 
 ## HTTPS · Boost.Asio
-
-16 connections · 64 B / 4096 B · 1 / 16 in flight · one io_context with 1 / 4 threads
 
 <details>
 <summary>Throughput, CPU and response time</summary>
@@ -100,11 +100,9 @@ Shown 8 cases: median per-case throughput ratio change -1.44%.Each summary is a 
 
 </details>
 
-Shown 8 cases: median per-case throughput ratio change -1.82%.Each summary is a median of case ratios, not pooled throughput.
+Shown 8 cases: median throughput ratio change -1.82%.
 
 ## WebSocket · Boost.Asio
-
-16 connections · 64 B / 4096 B · 1 / 16 in flight · one io_context with 1 / 4 threads
 
 <details>
 <summary>Throughput, CPU and response time</summary>
@@ -119,11 +117,9 @@ Shown 8 cases: median per-case throughput ratio change -1.82%.Each summary is a 
 
 </details>
 
-Shown 8 cases: median per-case throughput ratio change -3.02%.Each summary is a median of case ratios, not pooled throughput.
+Shown 8 cases: median throughput ratio change -3.02%.
 
 ## WebSocket over TLS · Boost.Asio
-
-16 connections · 64 B / 4096 B · 1 / 16 in flight · one io_context with 1 / 4 threads
 
 <details>
 <summary>Throughput, CPU and response time</summary>
@@ -138,11 +134,9 @@ Shown 8 cases: median per-case throughput ratio change -3.02%.Each summary is a 
 
 </details>
 
-Shown 8 cases: median per-case throughput ratio change 0.15%.Each summary is a median of case ratios, not pooled throughput.
+Shown 8 cases: median throughput ratio change 0.15%.
 
 ## TCP · Standalone Asio
-
-16 connections · 64 B / 4096 B · 1 / 16 in flight · one io_context with 1 / 4 threads
 
 <details>
 <summary>Throughput, CPU and response time</summary>
@@ -157,11 +151,9 @@ Shown 8 cases: median per-case throughput ratio change 0.15%.Each summary is a m
 
 </details>
 
-Shown 8 cases: median per-case throughput ratio change -0.5%.Each summary is a median of case ratios, not pooled throughput.
+Shown 8 cases: median throughput ratio change -0.5%.
 
 ## TCP over TLS · Standalone Asio
-
-16 connections · 64 B / 4096 B · 1 / 16 in flight · one io_context with 1 / 4 threads
 
 <details>
 <summary>Throughput, CPU and response time</summary>
@@ -176,7 +168,7 @@ Shown 8 cases: median per-case throughput ratio change -0.5%.Each summary is a m
 
 </details>
 
-Shown 8 cases: median per-case throughput ratio change -0.31%.Each summary is a median of case ratios, not pooled throughput.
+Shown 8 cases: median throughput ratio change -0.31%.
 
 <details>
 <summary>All data (median [min–max])</summary>
@@ -252,9 +244,15 @@ Shown 8 cases: median per-case throughput ratio change -0.31%.Each summary is a 
 
 ## Reproduce
 
-[Build both library revisions with the same benchmark drivers](../../benchmarks/comparison/README.md).
+<Steps>
 
-[Build configuration and parameters](methodology.md). Run the standalone C++ benchmark programs and keep measured output outside the source directory.
+<Step title="Match build and parameters">
+
+[Build both revisions with the same drivers](../../benchmarks/comparison/README.md); [configuration and parameters](methodology.md). Run C++ benchmarks directly; keep measurements outside the source directory.
+
+</Step>
+
+<Step title="Run the benchmark">
 
 ```sh
 cmake -S . -B build/benchmark -DCMAKE_BUILD_TYPE=Release \
@@ -266,3 +264,7 @@ cmake --build build/benchmark --target arknet_loopback_benchmark
   --window 16 --io-model shared --io-threads 4 --work 0 \
   --warmup 0.25 --seconds 1
 ```
+
+</Step>
+
+</Steps>

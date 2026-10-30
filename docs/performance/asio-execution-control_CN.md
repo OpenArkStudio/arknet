@@ -1,6 +1,6 @@
 # Asio 回调、协程与线程模型
 
-16 条 TCP 连接，比较三种 IO 模型、回调与协程、64 B / 4096 B 包体、每连接 1 / 16 条在途请求，以及每次回显 0 / 10,000 次计算迭代。两种依赖共 96 组配置，每组启动三个独立进程，合计 288 次测量，内容校验与 IO 错误均为零。
+16 条 TCP 连接：三种 IO 模型、回调／协程、64 B / 4096 B 包体、每连接 1 / 16 条在途请求、每次回显 0 / 10,000 次迭代。两种依赖共 96 组，每组三个独立进程；288 次测量的内容校验与 IO 错误均为零。
 
 <Aside type="note" title="测量范围">
 
@@ -32,13 +32,13 @@
 
 ## 吞吐量、CPU 与响应时间
 
-柱高为三次独立进程测量的中位数，误差线为最小值到最大值。吞吐量按每秒完成的 TCP 请求—回显往返数计数，每次往返计一次。点击图表可打开完整 SVG。
+柱高为三次独立进程测量的中位数，误差线为最小／最大值；吞吐量为每秒完成的 TCP 请求—回显往返数，每次计一次。点击可打开完整 SVG。
 
 CPU 为同进程客户端与服务端的用户态和内核态合计，包含预热与测量，100% 表示一个逻辑核满载；吞吐量排除预热，按实际测量时长计算，包含最后一批在途请求的完成时间。
 
 <Aside type="note" title="响应时间的范围">
 
-在途数为 1 时，RTT 是单条消息的往返时间；在途数为 16 时，是整批 16 条请求的往返时间，不能除以 16 当作单条消息 RTT。每个连接最多保留 8192 条抽样记录，合并样本得到的 P99 是估计值；表中对三轮各自的 P99 取中位数，不是所有请求合并后的全局 P99。
+在途数 1 测单消息 RTT；在途数 16 测整批 16 条请求 RTT，不能除以 16 作为单消息 RTT。每连接最多保留 8192 条样本，合并样本的 P99 是估计值；表中为三轮 P99 的中位数，不是全部请求的全局 P99。
 
 </Aside>
 
@@ -50,12 +50,10 @@ CPU 为同进程客户端与服务端的用户态和内核态合计，包含预�
 
 [![Boost.Asio 1.90 · 无额外计算 · CPU 占用](assets/asio-022-boost-work0-cpu_CN.svg)](assets/asio-022-boost-work0-cpu_CN.svg)
 
-<details>
-<summary>P99 响应时间</summary>
+**P99 响应时间**
 
 [![Boost.Asio 1.90 · 无额外计算 · P99](assets/asio-022-boost-work0-p99_CN.svg)](assets/asio-022-boost-work0-p99_CN.svg)
 
-</details>
 
 #### 每次回显增加 10,000 次计算迭代
 
@@ -63,12 +61,10 @@ CPU 为同进程客户端与服务端的用户态和内核态合计，包含预�
 
 [![Boost.Asio 1.90 · 每次回显增加 10,000 次计算迭代 · CPU 占用](assets/asio-022-boost-work10000-cpu_CN.svg)](assets/asio-022-boost-work10000-cpu_CN.svg)
 
-<details>
-<summary>P99 响应时间</summary>
+**P99 响应时间**
 
 [![Boost.Asio 1.90 · 每次回显增加 10,000 次计算迭代 · P99](assets/asio-022-boost-work10000-p99_CN.svg)](assets/asio-022-boost-work10000-p99_CN.svg)
 
-</details>
 
 ### Standalone Asio 1.38.2
 
@@ -78,12 +74,10 @@ CPU 为同进程客户端与服务端的用户态和内核态合计，包含预�
 
 [![Standalone Asio 1.38.2 · 无额外计算 · CPU 占用](assets/asio-022-standalone-work0-cpu_CN.svg)](assets/asio-022-standalone-work0-cpu_CN.svg)
 
-<details>
-<summary>P99 响应时间</summary>
+**P99 响应时间**
 
 [![Standalone Asio 1.38.2 · 无额外计算 · P99](assets/asio-022-standalone-work0-p99_CN.svg)](assets/asio-022-standalone-work0-p99_CN.svg)
 
-</details>
 
 #### 每次回显增加 10,000 次计算迭代
 
@@ -91,12 +85,10 @@ CPU 为同进程客户端与服务端的用户态和内核态合计，包含预�
 
 [![Standalone Asio 1.38.2 · 每次回显增加 10,000 次计算迭代 · CPU 占用](assets/asio-022-standalone-work10000-cpu_CN.svg)](assets/asio-022-standalone-work10000-cpu_CN.svg)
 
-<details>
-<summary>P99 响应时间</summary>
+**P99 响应时间**
 
 [![Standalone Asio 1.38.2 · 每次回显增加 10,000 次计算迭代 · P99](assets/asio-022-standalone-work10000-p99_CN.svg)](assets/asio-022-standalone-work10000-p99_CN.svg)
 
-</details>
 
 10,000 次迭代是在 IO 处理逻辑中执行的确定性计算，不是独立计算线程池，也不代表固定的业务耗时。
 
@@ -116,7 +108,11 @@ CPU 为同进程客户端与服务端的用户态和内核态合计，包含预�
 | 连接可按实例或分片分配 | 多个事件循环、每个一个线程 | 分片负载是否均衡、跨分片消息成本 |
 | 包含压缩、解析等耗时计算 | 在 IO 模型之外配置有容量限制的计算执行器 | 协程不会自动把计算转移到其他线程 |
 
-这些是起始选择。本报告使用同机回环、16 条均衡连接和短时闭环负载，不代表生产容量或普遍最优模型。三次测量的范围也不是统计置信区间。
+<Aside type="caution" title="选型限制">
+
+选型建议仅为起点：同机回环、16 条均衡连接、短时闭环负载不证明生产容量或普遍最优模型；三次测量的范围不是统计置信区间。
+
+</Aside>
 
 ## 完整数据
 
@@ -176,6 +172,7 @@ CPU 为同进程客户端与服务端的用户态和内核态合计，包含预�
 
 </details>
 
+
 <details>
 <summary>Standalone Asio 1.38.2 · 48 组配置：中位数 [最小值—最大值]</summary>
 
@@ -232,9 +229,14 @@ CPU 为同进程客户端与服务端的用户态和内核态合计，包含预�
 
 </details>
 
+
 ## 复现
 
-使用仓库中的正式 C++ 基准程序；单独编译和运行不需要 Python、Ruby 或 Node.js。以下使用默认的 Boost 依赖。
+<Steps>
+
+<Step title="运行单项基准">
+
+直接编译运行仓库 C++ 基准，不需要 Python、Ruby 或 Node.js；以下默认使用 Boost。
 
 ```sh
 cmake -S . -B build/benchmark -DCMAKE_BUILD_TYPE=Release \
@@ -254,6 +256,10 @@ Standalone Asio 使用独立构建目录，并设置以下选项：
 -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 ```
 
+</Step>
+
+<Step title="运行批量矩阵">
+
 批量复现可使用维护脚本，另需 jq 与 GNU timeout。将 `--executable` 指向对应依赖的程序，并为 Standalone Asio 设置 `--backend standalone`。
 
 ```sh
@@ -266,6 +272,10 @@ bash scripts/benchmark_matrix.sh \
   --repetitions 3 --seconds 2 --warmup 0.5
 ```
 
+</Step>
+
+<Step title="保留环境与本地记录">
+
 macOS 测量使用 Command Line Tools 的 AppleClang，并显式设置 SDK：`-DCMAKE_CXX_COMPILER=/Library/Developer/CommandLineTools/usr/bin/clang++ -DCMAKE_OSX_SYSROOT="$(xcrun --show-sdk-path)"`。未固定 CPU 核或频率。这些结果不代表 Homebrew LLVM 22 的验证。
 
 原始测量和构建日志仅保存在本地验收记录中，不纳入源码或提供公开下载。本报告使用的测量文件 SHA256：
@@ -274,3 +284,7 @@ macOS 测量使用 Command Line Tools 的 AppleClang，并显式设置 SDK：`-D
 - Standalone Asio 1.38.2: `fe40cc8f647d3b3f877751456dae2c45df60331f02063448eba92afabf971a7c`
 
 基准源码：[coroutine.cpp](https://github.com/OpenArkStudio/arknet/blob/c5432ca176edf9f4c06db03713f03764184c5cea/benchmarks/coroutine.cpp) · [runtime.hpp](https://github.com/OpenArkStudio/arknet/blob/c5432ca176edf9f4c06db03713f03764184c5cea/benchmarks/runtime.hpp)。[指标定义与其他协议测试](methodology_CN.md)。
+
+</Step>
+
+</Steps>
