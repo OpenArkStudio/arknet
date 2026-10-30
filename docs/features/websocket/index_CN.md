@@ -6,10 +6,14 @@ arknet 提供 WebSocket 客户端、服务端和 session，用于持久的双向
 
 ## 开始使用
 
-- [创建服务端](server_CN.md)：监听并接收消息。
-- [创建客户端](client_CN.md)：连接、发送并验证响应。
-- [配置与进阶使用](configuration_CN.md)：协议选项与限制。
-- [性能](performance_CN.md)：本地测量与复现。
+<CardGrid>
+
+<LinkCard title="创建服务端" href="server_CN.md" description="监听并接收消息。" />
+<LinkCard title="创建客户端" href="client_CN.md" description="连接、发送并验证响应。" />
+<LinkCard title="配置与进阶使用" href="configuration_CN.md" description="协议选项、限制、扩展与关闭。" />
+<LinkCard title="性能" href="performance_CN.md" description="不同 IO 模型下的二进制消息测量。" />
+
+</CardGrid>
 
 ## 协议与对象
 
@@ -43,6 +47,4 @@ Socket 和协议操作在串行 IO 通道上执行。在客户端 init/connect�
 
 ## 后续阅读
 
-- [配置与进阶使用](configuration_CN.md)：协议选项、扩展与关闭。
-- [性能](performance_CN.md)：不同 IO 模型下的二进制消息基准。
 - [WebSocket 测试](https://github.com/OpenArkStudio/arknet/blob/main/tests/websocket.cpp)：文本与二进制消息、升级路径和自定义端点。

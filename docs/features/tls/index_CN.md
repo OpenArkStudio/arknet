@@ -4,10 +4,14 @@ TLS 为 TCP、WebSocket 和 HTTP 提供传输加密及基于证书的对端校�
 
 ## 开始使用
 
-- [创建服务端](server_CN.md)：监听并接收消息。
-- [创建客户端](client_CN.md)：连接、发送并验证响应。
-- [配置与进阶使用](configuration_CN.md)：协议选项与限制。
-- [性能](performance_CN.md)：本地测量与复现。
+<CardGrid>
+
+<LinkCard title="创建服务端" href="server_CN.md" description="监听并接收消息。" />
+<LinkCard title="创建客户端" href="client_CN.md" description="连接、发送并验证响应。" />
+<LinkCard title="配置与进阶使用" href="configuration_CN.md" description="协议选项、限制、扩展与关闭。" />
+<LinkCard title="性能" href="performance_CN.md" description="TCPS、WSS 与 HTTPS 的稳态测量限制。" />
+
+</CardGrid>
 
 ## 安全端点
 
@@ -41,7 +45,5 @@ mTLS 进一步要求客户端证明其持有可信证书。为服务端配置可
 
 ## 后续阅读
 
-- [配置与进阶使用](configuration_CN.md)：协议选项、扩展与关闭。
-- [性能](performance_CN.md)：TCPS、WSS 和 HTTPS 的稳态测量限制。
 - [TLS 测试](https://github.com/OpenArkStudio/arknet/blob/main/tests/tls.cpp)：信任、DNS/IP 拒绝、SNI、mTLS 和重连。
 - [HTTP](../http/index_CN.md)与 [WebSocket](../websocket/index_CN.md)：应用消息 API。

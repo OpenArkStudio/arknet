@@ -13,11 +13,15 @@ FEC 需要两端协商，仍由 ARQ 保证完整消息交付。
 
 ## 开始使用
 
-- [创建服务端](server_CN.md)：接收并回显完整消息。
-- [创建客户端](client_CN.md)：完成握手并验证回显。
-- [配置](configuration_CN.md)：MTU、窗口、限制和兼容范围。
-- [FEC 策略](fec_CN.md)：编码参数、动态阈值与统计。
-- [性能](performance_CN.md)：本地测量与复现。
+<CardGrid>
+
+<LinkCard title="创建服务端" href="server_CN.md" description="接收并回显完整消息。" />
+<LinkCard title="创建客户端" href="client_CN.md" description="完成握手并验证回显。" />
+<LinkCard title="配置" href="configuration_CN.md" description="MTU、窗口、限制和兼容范围。" />
+<LinkCard title="FEC 策略" href="fec_CN.md" description="编码参数、动态阈值与统计。" />
+<LinkCard title="性能" href="performance_CN.md" description="本地测量与复现。" />
+
+</CardGrid>
 
 | 能力 | 行为 |
 | --- | --- |
@@ -36,9 +40,13 @@ FEC 需要两端协商，仍由 ARQ 保证完整消息交付。
 可靠传递完整消息时，使用 RUDP。重传会增加延迟，有序交付需要等待缺失分片。
 可靠字节流通常使用 [TCP](../tcp/index_CN.md)。
 
+<Aside type="caution" title="报文兼容与安全">
+
 RUDP 使用兼容 KCP **消息模式**的 segment，另有 SYN/ACK/FIN 连接报文。
 它不能直接与只收发裸 KCP segment 的端点互换，也不提供认证、加密、NAT 穿透、
 流模式或自动路径 MTU 探测。详见[兼容范围](configuration_CN.md#报文兼容范围)。
+
+</Aside>
 
 发送完成表示进入可靠队列，不表示对端已经 ACK 或业务已经接收。断线后，未确认
 消息不会自动重放到新会话。业务需要收据或重放时，应在应用协议中定义相应行为。

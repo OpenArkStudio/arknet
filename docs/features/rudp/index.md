@@ -16,11 +16,15 @@ requires its business regression tests.
 
 ## Get started
 
-- [Create a server](server.md): receive and echo complete messages.
-- [Create a client](client.md): complete the handshake and verify an echo.
-- [Configuration](configuration.md): MTU, windows, limits and compatibility.
-- [FEC policies](fec.md): coding parameters, adaptive thresholds and statistics.
-- [Performance](performance.md): local measurements and reproduction.
+<CardGrid>
+
+<LinkCard title="Create a server" href="server.md" description="Receive and echo complete messages." />
+<LinkCard title="Create a client" href="client.md" description="Complete the handshake and verify an echo." />
+<LinkCard title="Configuration" href="configuration.md" description="MTU, windows, limits and compatibility." />
+<LinkCard title="FEC policies" href="fec.md" description="Coding parameters, adaptive thresholds and statistics." />
+<LinkCard title="Performance" href="performance.md" description="Local measurements and reproduction." />
+
+</CardGrid>
 
 | Capability | Behavior |
 | --- | --- |
@@ -40,10 +44,14 @@ the application already handles. Use RUDP for reliable message delivery over
 UDP. Retransmission adds latency; ordered delivery waits for missing fragments.
 [TCP](../tcp/index.md) remains the standard choice for reliable byte streams.
 
+<Aside type="caution" title="Wire compatibility and security">
+
 RUDP uses KCP-compatible **message-mode segments** and a separate SYN/ACK/FIN
 connection envelope. This does not make it interchangeable with a bare KCP
 endpoint. It does not provide authentication, encryption, NAT traversal, stream
 mode or automatic path-MTU discovery. See [compatibility](configuration.md#wire-compatibility).
+
+</Aside>
 
 A send completion confirms admission into the reliable queue, not a peer ACK
 or application receipt. Disconnecting does not replay unacknowledged messages

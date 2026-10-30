@@ -101,6 +101,54 @@ for (const prefix of ["", "zh/"]) {
 }
 console.log("Checked bilingual Nimbus steps, callouts and plain Markdown exports.");
 
+// Exercise the emitted surfaces, rather than trusting MDX import detection alone.
+// Every panel and card must remain available to agents without a selected UI tab.
+for (const collection of ["docs", "zh"]) {
+  const prefix = collection === "zh" ? "zh/" : "";
+  for (const slug of ["index", "concepts/index", "concepts/io-models", "get-started/installation", "get-started/first-application", "features/tcp/index", "features/udp/index", "features/rudp/index", "features/http/index", "features/websocket/index", "features/tls/index", "features/mysql/index", "features/redis/index", "features/rudp/fec"]) {
+    const source = await readFile(new URL(`../src/content/${collection}/${slug}.mdx`, import.meta.url), "utf8");
+    const route = slug === "index" ? "" : slug.replace(/\/index$/, "");
+    const html = await readFile(join(root, prefix, route, "index.html"), "utf8");
+    const markdown = await readFile(join(root, prefix, route, "index.md"), "utf8");
+    const label = `${prefix}${route || "home"}`;
+    const plain = value => value.replace(/\s+/g, " ").trim();
+    for (const card of source.matchAll(/<LinkCard\b[^>]*>/g)) {
+      const attribute = name => new RegExp(`${name}="([^"]*)"`).exec(card[0])?.[1];
+      const title = attribute("title");
+      const href = attribute("href");
+      const destination = href.startsWith("/") ? `/arknet${href}` : href;
+      assert.ok(html.includes(`href="${destination}"`), `${label}: missing card destination ${destination}`);
+      assert.ok(markdown.includes(`[${title}](${destination})`), `${label}: missing exported card ${title}`);
+      assert.ok(markdown.includes(attribute("description")), `${label}: missing card description`);
+    }
+    for (const tab of source.matchAll(/<TabItem label="([^"]+)">([\s\S]*?)<\/TabItem>/g)) {
+      assert.ok(html.includes(`data-nb-tab-label="${tab[1]}"`), `${label}: missing tab label`);
+      assert.ok(markdown.includes(`### ${tab[1]}`), `${label}: missing exported tab label`);
+      for (const code of tab[2].matchAll(/```[^\n]*\n([\s\S]*?)\n```/g)) {
+        assert.ok(plain(markdown).includes(plain(code[1])), `${label}: missing tab code`);
+      }
+    }
+    for (const step of source.matchAll(/<Step title="([^"]+)">/g)) {
+      assert.ok(markdown.includes(`**${step[1]}**`), `${label}: missing exported step label`);
+    }
+    assert.doesNotMatch(html, /\/arknet\/arknet\//, `${label}: doubled project base`);
+    assert.doesNotMatch(markdown, /\/arknet\/arknet\//, `${label}: doubled project base in export`);
+    assert.doesNotMatch(markdown, /<(?:CardGrid|LinkCard|Tabs|TabItem|Aside|Step|Steps)[\s/>]/, `${label}: component leaked into export`);
+    const constraints = {
+      "features/rudp/fec": ["26", "1200", "1174", "256", "4096", "1 MiB", "data_shards", "parity_shards", "max_parity_shards", "min_data_shards", "group_wait_ms", "max_redundancy_percent", "group_lifetime_ms", "max_groups", "max_buffer_bytes", "sample_window_ms", "min_samples", "enable_loss_percent", "disable_loss_percent", "stable_windows", "cooldown_ms", "overload_queue_percent", "operation_not_supported", "missing_shards", "recovered_shards", "retransmissions", "AFEC", "CRC"],
+      "concepts/io-models": ["serialize = false", "poll(0)", "std::logic_error", "TODO", "awaitable", "co_spawn", "manual_runtime", "io_context::run()"],
+      "get-started/installation": ["1.90", "1.38", "1.1.1", "1.2", "NOMINMAX", "--config Release", "OPENSSL_ROOT_DIR"],
+      "features/http": ["Boost.Asio", "Boost.Beast", "Standalone Asio", "8192", "16 MiB", "HTTP/1.1", "Host", "Expect", "TODO", "HTTP/2", "HTTP/3"],
+      "features/websocket": ["Boost.Asio", "Standalone Asio", "get_upgrade_response()", "bind_upgrade", "got_binary()", "UTF-8"],
+      "features/tls": ["TLS 1.2", "TLS 1.3", "verify_none", "verify_fail_if_no_peer_cert", "set_cert_file", "set_cert_buffer", "SNI", "mTLS"],
+      "features/mysql": ["ARKNET_ENABLE_SSL", "OpenSSL", "8.4.11", "SQLSTATE", "LOCAL INFILE", "caching_sha2_password"],
+      "features/redis": ["RESP2", "RESP3", "HELLO", "Sentinel", "Pub/Sub", "MONITOR", "close()"],
+    }[route] ?? [];
+    for (const constraint of constraints) assert.ok(markdown.includes(constraint), `${label}: missing exported constraint ${constraint}`);
+  }
+}
+console.log("Checked all bilingual component-guide cards, tab paths, step labels and key constraints in emitted HTML/Markdown.");
+
 for (const [page, locale] of [["features/rudp/fec/index.html", "en"], ["zh/features/rudp/fec/index.html", "zh-CN"]]) {
   assertUiControls(await readFile(join(root, page), "utf8"), locale);
 }

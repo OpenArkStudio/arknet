@@ -89,8 +89,19 @@ cmake --build build --parallel 3
 
 ## 下一步
 
-按业务选择 [TCP](../features/tcp/index_CN.md)、[UDP](../features/udp/index_CN.md)、
-[WebSocket](../features/websocket/index_CN.md)、[HTTP 与路由](../features/http/index_CN.md)或
-[TLS](../features/tls/index_CN.md)。将对象用于服务前，阅读
-[生命周期与发送](../concepts/sending_CN.md)；共享 context 前，阅读
-[IO 模型](../concepts/io-models_CN.md)。
+<CardGrid>
+
+<LinkCard title="TCP" href="../features/tcp/index_CN.md" description="有序字节流。" />
+<LinkCard title="UDP" href="../features/udp/index_CN.md" description="原生数据报。" />
+<LinkCard title="WebSocket" href="../features/websocket/index_CN.md" description="完整消息。" />
+<LinkCard title="HTTP 与路由" href="../features/http/index_CN.md" description="请求、响应与中间件。" />
+<LinkCard title="TLS" href="../features/tls/index_CN.md" description="加密传输。" />
+
+</CardGrid>
+
+<CardGrid>
+
+<LinkCard title="生命周期与发送" href="../concepts/sending_CN.md" description="将对象用于服务前阅读。" />
+<LinkCard title="IO 模型" href="../concepts/io-models_CN.md" description="共享 context 前阅读。" />
+
+</CardGrid>

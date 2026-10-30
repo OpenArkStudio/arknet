@@ -53,13 +53,25 @@ Install one Asio provider and OpenSSL if you need MySQL or TLS. Choose a provide
 
 From the repository root, run the command for your selected provider:
 
-```sh
-# Standalone Asio
-cmake -S . -B build -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+<Tabs syncKey="asio-provider">
 
-# Boost.Asio with secure transports
+<TabItem label="Standalone Asio">
+
+```sh
+cmake -S . -B build -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
+```
+
+</TabItem>
+
+<TabItem label="Boost.Asio + TLS">
+
+```sh
 cmake -S . -B build-boost -DARKNET_USE_BOOST_ASIO=ON -DARKNET_ENABLE_SSL=ON
 ```
+
+</TabItem>
+
+</Tabs>
 
 </Step>
 
@@ -67,9 +79,25 @@ cmake -S . -B build-boost -DARKNET_USE_BOOST_ASIO=ON -DARKNET_ENABLE_SSL=ON
 
 Then build the examples and tests in the selected directory:
 
+<Tabs syncKey="asio-provider">
+
+<TabItem label="Standalone Asio">
+
 ```sh
 cmake --build build --parallel 3
 ```
+
+</TabItem>
+
+<TabItem label="Boost.Asio + TLS">
+
+```sh
+cmake --build build-boost --parallel 3
+```
+
+</TabItem>
+
+</Tabs>
 
 For a multi-configuration generator such as Visual Studio, add `--config Release`
 to build and install commands. See [Contributing](../project/contributing.md) for test
@@ -156,9 +184,7 @@ MySQL connections and secure transports also require OpenSSL's headers and libra
 link `ws2_32` and `mswsock`, and define `NOMINMAX` before including Windows headers.
 The CMake target propagates `NOMINMAX` and additionally sets `/bigobj` for MSVC.
 
-Define configuration macros before including arknet or provider headers:
-
-See [direct-header macros](../reference/configuration.md#direct-header-macros) for their meanings.
+Define configuration macros before including arknet or provider headers; see [direct-header macros](../reference/configuration.md#direct-header-macros) for their meanings.
 
 <Aside type="caution" title="Warning: Keep build settings consistent">
 

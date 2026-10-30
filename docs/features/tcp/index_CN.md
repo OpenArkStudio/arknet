@@ -4,10 +4,14 @@ arknet 提供 TCP 客户端、服务端和每连接 session，用于建立持久
 
 ## 开始使用
 
-- [创建服务端](server_CN.md)：监听并接收消息。
-- [创建客户端](client_CN.md)：连接、发送并验证响应。
-- [配置与进阶使用](configuration_CN.md)：协议选项与限制。
-- [性能](performance_CN.md)：本地测量与复现。
+<CardGrid>
+
+<LinkCard title="创建服务端" href="server_CN.md" description="监听并接收消息。" />
+<LinkCard title="创建客户端" href="client_CN.md" description="连接、发送并验证响应。" />
+<LinkCard title="配置与进阶使用" href="configuration_CN.md" description="协议选项、限制、扩展与关闭。" />
+<LinkCard title="性能" href="performance_CN.md" description="复现 IO 模型与工作负载的本地测量。" />
+
+</CardGrid>
 
 ## 对象与扩展
 
@@ -33,7 +37,11 @@ TCP 保留字节内容及顺序，不保留每次发送的边界。一次接收�
 | Asio 匹配条件 | 由应用判断完整消息 |
 | `arknet::use_dgram` | 自动添加和去除 arknet 长度前缀；两端必须使用同一策略 |
 
+<Aside type="caution" title="拆包属于协议约定">
+
 `use_dgram` 仍通过可靠的 TCP 传输。负载长度小于 254 时，前缀为一个字节；长度不超过 65535 时，为标记 `254` 加两字节小端长度；更长的消息使用标记 `255` 加八字节小端长度。支持空消息。该策略属于应用协议约定，不能直接用于任意 TCP 服务。接收缓冲区限制同时覆盖消息负载和长度前缀。
+
+</Aside>
 
 ## 所有权与调度
 
@@ -45,6 +53,4 @@ TCP 保留字节内容及顺序，不保留每次发送的边界。一次接收�
 
 ## 后续阅读
 
-- [配置与进阶使用](configuration_CN.md)：协议选项、扩展与关闭。
-- [性能](performance_CN.md)：复现 IO 模型与工作负载对比。
-- [TCP 测试](https://github.com/OpenArkStudio/arknet/blob/main/tests/tcp.cpp)：缓冲区所有权、长度前缀边界和外部 context 关闭。
+[TCP 测试](https://github.com/OpenArkStudio/arknet/blob/main/tests/tcp.cpp)：缓冲区所有权、长度前缀边界和外部 context 关闭。

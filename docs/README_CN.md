@@ -6,9 +6,14 @@ RUDP、WebSocket、HTTP、TLS，以及原生 MySQL 和 Redis 客户端。端点�
 
 ## 开始使用
 
-先[安装与配置](get-started/installation_CN.md)，再构建
-[第一个客户端与服务端](get-started/first-application_CN.md)。CMake 接口目标
-传递头文件路径、编译设置和依赖；arknet 没有需要构建的二进制库。
+<CardGrid>
+
+<LinkCard title="安装与配置" href="get-started/installation_CN.md" description="依赖、CMake 与直接使用头文件。" />
+<LinkCard title="第一个客户端与服务端" href="get-started/first-application_CN.md" description="构建并验证 TCP 回显。" />
+
+</CardGrid>
+
+CMake 接口目标传递头文件路径、编译设置和依赖；arknet 无需编译二进制库。
 
 ## 功能
 
@@ -28,19 +33,23 @@ RUDP、WebSocket、HTTP、TLS，以及原生 MySQL 和 Redis 客户端。端点�
 
 ## 使用 arknet
 
-- [核心概念](concepts/index_CN.md)：端点、IO 模型、生命周期与发送所有权。
-- [使用指南](guides/index_CN.md)：缓冲、外部 IO、重连、定时器、路由与 IPv6。
-- [示例](examples/index_CN.md)：完整程序与构建命令。
-- [参考](reference/api_CN.md)：公开类型、常用操作与配置项。
+<CardGrid>
+
+<LinkCard title="核心概念" href="concepts/index_CN.md" description="端点、IO 模型、生命周期与发送所有权。" />
+<LinkCard title="使用指南" href="guides/index_CN.md" description="缓冲、外部 IO、重连、定时器、路由与 IPv6。" />
+<LinkCard title="示例" href="examples/index_CN.md" description="完整程序与构建命令。" />
+<LinkCard title="参考" href="reference/api_CN.md" description="公开类型、常用操作与配置项。" />
+
+</CardGrid>
 
 ## 测量与开发
 
-[性能](performance/index_CN.md)提供本地测量的吞吐量、RTT、CPU 占用、机器配置
-和原始数据。[测试](project/testing_CN.md)记录正确性检查及覆盖范围。
+[性能](performance/index_CN.md)提供本地测量的吞吐量、RTT、CPU 占用、测量条件
+和适用范围。[测试](project/testing_CN.md)记录正确性检查及覆盖范围。
 
 [项目](project/index_CN.md)包含架构、贡献规范与路线图。HTTP/2、HTTP/3、
 named pipe、Unix domain socket 和 RPC 仍为 TODO。
-[版本说明](project/releases_CN.md)记录已发布的 v0.2.2 及更早标签；当前 main 的文档与测试范围另行说明。
+[版本说明](project/releases_CN.md)记录已发布标签；当前 main 的文档与测试范围另行说明。
 部署容量与耐久验证见[生产验收](project/production-readiness_CN.md)。
 
 [源码](https://github.com/OpenArkStudio/arknet) ·

@@ -43,3 +43,25 @@ test("component examples inside code blocks and inline code stay plain Markdown"
   assert.doesNotMatch(result, /import \{/);
   assert.ok(result.includes('```md\n<Aside type="note">'));
 });
+
+test("cards and tabs import vendored components and resolve bilingual card destinations", () => {
+  const source = '# Routing\n\n<CardGrid>\n\n<LinkCard title="安装" href="../get-started/installation_CN.md#环境要求" description="依赖与构建。" />\n<LinkCard title="Source" href="../../include/arknet.hpp" />\n<LinkCard title="Nimbus" href="https://nimbus-docs.com/components/" />\n\n</CardGrid>\n\n<Tabs>\n\n<TabItem label="Boost">\n\n[Install](../get-started/installation.md)\n\n</TabItem>\n\n</Tabs>\n';
+  const result = convertPage(source, "concepts/index.md", new Set(["get-started/installation.md", "get-started/installation_CN.md"]));
+  assert.equal(pageExtension(source), ".mdx");
+  assert.match(result, /import \{ CardGrid \} from "@\/components\/ui\/card-grid"/);
+  assert.match(result, /import \{ LinkCard \} from "@\/components\/ui\/link-card"/);
+  assert.match(result, /import \{ Tabs, TabItem \} from "@\/components\/ui\/tabs"/);
+  assert.match(result, /href="\/zh\/get-started\/installation#%E7%8E%AF%E5%A2%83%E8%A6%81%E6%B1%82"/);
+  assert.match(result, /href="https:\/\/github.com\/OpenArkStudio\/arknet\/blob\/main\/include\/arknet.hpp"/);
+  assert.match(result, /href="https:\/\/nimbus-docs.com\/components\/"/);
+  assert.match(result, /\[Install\]\(\/get-started\/installation\)/);
+  assert.throws(() => convertPage('# Missing\n\n<LinkCard title="Missing" href="missing.md" />', "index.md", new Set()), /missing document/);
+});
+
+test("card and tab samples in code do not activate MDX or rewrite hrefs", () => {
+  const source = '# Authoring\n\nUse `<TabItem label="A">`.\n\n```md\n<CardGrid>\n<LinkCard title="Example" href="missing.md" />\n</CardGrid>\n```\n';
+  assert.equal(pageExtension(source), ".md");
+  const result = convertPage(source, "authoring.md", new Set());
+  assert.doesNotMatch(result, /import \{/);
+  assert.ok(result.includes('href="missing.md"'));
+});

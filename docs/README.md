@@ -7,9 +7,14 @@ Boost.Asio by default or Standalone Asio for supported capabilities.
 
 ## Get started
 
-[Install and configure](get-started/installation.md) the library, then build your
-[first client and server](get-started/first-application.md). The CMake interface
-target supplies headers, compile settings and dependencies; arknet has no compiled library.
+<CardGrid>
+
+<LinkCard title="Install and configure" href="get-started/installation.md" description="Dependencies, CMake and direct-header integration." />
+<LinkCard title="First client and server" href="get-started/first-application.md" description="Build and verify a TCP echo." />
+
+</CardGrid>
+
+The CMake interface target supplies headers, compile settings and dependencies; arknet has no compiled library.
 
 ## Features
 
@@ -30,20 +35,24 @@ Each guide records configuration, limits and performance.
 
 ## Build with arknet
 
-- [Core concepts](concepts/index.md): endpoints, IO models, lifecycle and owned sends.
-- [Guides](guides/index.md): socket buffers, external IO, reconnect, timers, routing and IPv6.
-- [Examples](examples/index.md): complete programs and build commands.
-- [Reference](reference/api.md): public types, common operations and configuration.
+<CardGrid>
+
+<LinkCard title="Core concepts" href="concepts/index.md" description="Endpoints, IO models, lifecycle and owned sends." />
+<LinkCard title="Guides" href="guides/index.md" description="Socket buffers, external IO, reconnect, timers, routing and IPv6." />
+<LinkCard title="Examples" href="examples/index.md" description="Complete programs and build commands." />
+<LinkCard title="Reference" href="reference/api.md" description="Public types, common operations and configuration." />
+
+</CardGrid>
 
 ## Measure and contribute
 
 [Performance](performance/index.md) provides local results with throughput, RTT,
-CPU utilization, host configuration and raw data. [Testing](project/testing.md)
+CPU utilization, measurement conditions and scope. [Testing](project/testing.md)
 records correctness checks and their coverage.
 
 [Project](project/index.md) covers architecture, contribution guidelines and the
 roadmap. HTTP/2, HTTP/3, named pipes, Unix domain sockets and RPC remain TODO.
-[Release notes](project/releases.md) cover published v0.2.2 and earlier tags; current-main documentation and test scopes are identified separately.
+[Release notes](project/releases.md) cover published tags; current-main documentation and test scopes are identified separately.
 Deployment capacity and endurance are covered by [production acceptance](project/production-readiness.md).
 
 [Source](https://github.com/OpenArkStudio/arknet) ·
