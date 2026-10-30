@@ -16,7 +16,11 @@
 
 测量 1.0 秒，预热 0.25 秒。图表为中位数及最小／最大值，误差线不是置信区间；p99 为各次运行采样分位数的中位数。
 
-平均进程 CPU 占用率以单核为 100%，多线程可超过 100%；估算值单独标注，三次 CPU 采样不完整时为 N/A。 本机有 14 个逻辑核心，整机占比 = 进程 CPU% / 14，单核 100% 对应整机 7.14%。
+<Aside type="note" title="CPU">
+
+进程 CPU 单核为 100%，多线程可超过 100%；标注估算值，三次采样不全记 N/A。 本机有 14 个逻辑核心，整机占比 = 进程 CPU% / 14，单核 100% 对应整机 7.14%。
+
+</Aside>
 
 - Source SHA-256: `fa69d6ce97745281290a263cb0f2515470ede0edb77f5132ce6e3ac7ae7cd9b4`
 - UDP 源码 SHA-256：`0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`；[原始记录与测试条件](udp-update_CN.md)。
@@ -24,7 +28,11 @@
 
 Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch arm64; TLS ON; sanitizers OFF. Standalone Asio 1.38.2 with BHO Beast based on Boost 1.84 (API 351); Boost 1.90.0 with Asio 1.38.0 and Beast API 359; OpenSSL 3.6.4. Mac mini on AC power, low power mode disabled, no CPU affinity.
 
-arknet 协议测试记录单消息 RTT；原生 Asio 的回调／协程匹配测试记录批次 RTT。后者的固定批次数据不能与前者直接组成协程加速比；公开协程端点 API 仍为 TODO。
+<Aside type="caution" title="RTT 范围">
+
+arknet 协议测单消息 RTT，原生 Asio 回调／协程匹配测试测批次 RTT；固定批次不能据此推导相对 arknet 端点的协程加速比，公开协程端点 API 仍为 TODO。
+
+</Aside>
 
 <a id="tcp"></a>
 
@@ -85,4 +93,8 @@ arknet 协议测试记录单消息 RTT；原生 Asio 的回调／协程匹配测
 
 [复现命令与指标定义](methodology_CN.md)
 
-本机回环、固定连接分布和短时测量不代表生产容量，业务选型仍需使用实际消息与连接分布测量。
+<Aside type="caution" title="适用范围">
+
+回环、固定连接分布与短时测量不证明生产容量；选型需测实际消息与连接分布。
+
+</Aside>

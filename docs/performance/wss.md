@@ -1,10 +1,14 @@
 # WSS Local Performance
 
-Measurements come from independent local Release loopback processes, not CI.
+Independent local Release loopback measurements; collected outside CI.
 
 [Metric definitions and methodology](methodology.md).
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+<Aside type="note" title="CPU">
+
+Process CPU: 100% per logical CPU; multiple threads can exceed 100%. Estimates are labeled; incomplete three-sample sets show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+
+</Aside>
 
 ## No added computation
 
@@ -13,6 +17,9 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 ![p99 RTT](assets/wss-work0-latency.svg)
 
 ### All Measured Profiles
+
+<details>
+<summary>Full values</summary>
 
 #### 64 B / 1 clients / window=1
 
@@ -104,4 +111,6 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 | Standalone Asio / 1 context / 2 threads | 24,551 [23,839, 24,614] | 767.23 | 10,401.75 | 11,389.29 | 11,687.58 | 197.7 (estimated) | 48.48 |
 | Standalone Asio / 1 context / 4 threads | 31,271 [30,987, 31,342] | 977.22 | 8,056.33 | 9,162.50 | 9,669.79 | 383.9 (estimated) | 48.58 |
 
-Tables show repeated-run medians; throughput brackets show min/max, not confidence intervals. Latencies are medians of per-run sampled percentiles, without pooling samples.
+</details>
+
+Run medians; throughput brackets are min/max, not confidence intervals. Latencies: median of per-run sampled percentiles, without pooling.
