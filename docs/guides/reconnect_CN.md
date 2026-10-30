@@ -8,5 +8,9 @@ client.set_auto_reconnect(true, std::chrono::seconds(2));
 client.set_auto_reconnect(false);
 ```
 
-重连成功后，连接的代次会更新。旧队列中的发送不能重放到新连接；过期操作以
-`operation_aborted` 完成。在 connect 回调中检查错误后，再恢复应用状态。
+<Aside type="caution" title="重连不重放发送">
+
+重连成功后更新连接代次；旧队列操作以 `operation_aborted` 完成，不向新连接重放。
+在 connect 回调中检查错误后，再恢复应用状态。
+
+</Aside>

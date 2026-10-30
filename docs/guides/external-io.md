@@ -13,21 +13,28 @@ std::vector<asio::io_context*> lanes(5, &context);
 arknet::tcp_server server(1024, 16 * 1024 * 1024, lanes);
 ```
 
-Run `context.run()` on the desired number of application threads. This example
-creates five serialized lanes on one context. With multiple runners, independent
-lanes can execute concurrently; a lane's handlers still run serially. Passing a
-single `io_context&` directly to a server instead creates one lane shared by its sessions.
+Run `context.run()` on the desired application threads. The example creates five
+serialized lanes: independent lanes can run concurrently with multiple runners.
 
-For partitioned execution, supply distinct contexts and run each on its own
-thread. UDP server sessions share the server socket and receive lane in either
-model. See [IO models](../concepts/io-models.md) before selecting a layout.
+| Supplied IO | Execution contract |
+| --- | --- |
+| One `io_context&` passed directly to a server | One serialized lane shared by its sessions |
+| Distinct contexts, each with its own thread | Partitioned execution |
+| UDP server, either layout | Sessions share its socket and receive lane |
+
+Choose a layout using [IO models](../concepts/io-models.md).
+
 
 ## Stop and drain
+
+<Steps>
 
 1. From an IO callback, use `request_stop()` and return.
 2. On the owner thread, call `stop()` or `wait_stopped()` while the runners remain active.
 3. Destroy network objects, then release the work guard with `work.reset()`.
 4. Join every runner before destroying any context.
+
+</Steps>
 
 Allow `run()` to drain queued completion handlers and return naturally.
 `io_context::stop()` interrupts dispatch and does not complete that drain.

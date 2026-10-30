@@ -1,8 +1,8 @@
 # Public API Index
 
-Include `<arknet/arknet.hpp>` for enabled transport capabilities, or include only
-the specific public header. Database clients use their own explicit headers.
-Secure transport headers and MySQL connections require `ARKNET_ENABLE_SSL`.
+Include `<arknet/arknet.hpp>` for enabled transports, or a specific public header.
+Database clients require their explicit headers; secure transport headers and MySQL
+connections require `ARKNET_ENABLE_SSL`.
 
 ## Public Types
 
@@ -28,8 +28,8 @@ in `arknet::http`; WebSocket protocol types live in `arknet::websocket`.
 
 ## Common Operations
 
-The following operations describe transport endpoints. Database clients use
-their own request, result and shutdown contracts in the [database guide](../features/database-clients.md).
+These operations apply to transport endpoints. For database request, result and
+shutdown contracts, see the [database guide](../features/database-clients.md).
 
 | Area | API | Contract |
 | --- | --- | --- |
@@ -44,7 +44,11 @@ their own request, result and shutdown contracts in the [database guide](../feat
 
 ## Extension and Source Reference
 
-Custom clients/sessions derive from the protocol's `*_t<Derived>`.
-Server templates accept the session type. See [architecture](../project/architecture.md) and
-the permanent [tests](https://github.com/OpenArkStudio/arknet/tree/main/tests).
-Implementation headers under `base/impl` and `detail` are not stable public APIs.
+Derive custom clients/sessions from `*_t<Derived>`; pass the session type to server templates.
+See [architecture](../project/architecture.md) and [tests](https://github.com/OpenArkStudio/arknet/tree/main/tests).
+
+<Aside type="caution" title="Public API boundary">
+
+`base/impl` and `detail` implementation headers are not stable public APIs.
+
+</Aside>
