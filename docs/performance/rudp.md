@@ -1,8 +1,10 @@
 # RUDP Performance
 
-All 96 configurations and 276 measured runs passed, completing 7,960,439 message round trips. Content, ordering, send completion and drain checks passed, with zero relay errors or queue overflows.
+96 configurations and 276 runs completed 7,960,439 message round trips, passing content, ordering, send-completion and drain checks with zero relay errors or queue overflows.
 
-[Concurrency and endpoint threads](rudp-concurrency.md) compares 128/512/1,024 clients with one shared io_context and one or four endpoint threads.
+<CardGrid>
+<LinkCard title="Concurrency and endpoint threads" href="rudp-concurrency.md" description="128/512/1,024 clients; one shared io_context; one/four endpoint threads." />
+</CardGrid>
 
 ## Test Environment
 
@@ -37,9 +39,11 @@ Source SHA-256: `15cb6ced6425d82086a083fd310f6d75016ac3a1018264856d41b460e4412d8
 
 ![RUDP benchmark topology](assets/rudp-fec-topology.svg)
 
-These are network-condition simulations within one process on local IPv4 loopback, not WAN measurements. The relay always adds one io_context and one thread; statistics sampling uses another thread. Chart IO models describe endpoints only.
+<Aside type="caution" title="Topology scope">
 
-Server sessions share a UDP socket and its strand. Four io_contexts with one thread each mainly distribute clients and do not establish parallel server sharding.
+These one-process IPv4 loopback simulations do not measure WAN performance. Chart IO models count endpoints only; relay and sampling add their own threads, with one extra relay io_context. Server sessions share a UDP socket and strand; four io_contexts with one thread each mainly distribute clients, without establishing parallel server sharding.
+
+</Aside>
 
 RTT includes simulated delay, congestion control, FEC group wait and ARQ retransmission. Throughput counts completed message round trips and includes in-flight drain time. Bars are medians; whiskers are the actual minimum/maximum of three runs, not confidence intervals.
 
@@ -144,11 +148,19 @@ The ranges below span the two dependency configurations' three-run medians:
 - Random loss: FEC throughput was 835 - 869 round trips/s versus 560 - 572 for ARQ only. Process CPU increased from 25.4 - 26.6% to 52.7 - 56.2%, and wire-byte overhead from 21.7 - 21.9% to 55.1 - 60.1%.
 - Random loss, 64 B and one in-flight request per client: fixed FEC reached 116 - 117 round trips/s, below ARQ-only's 138 - 139. Small-message, low-concurrency workloads need separate evaluation.
 
-These results do not establish a universal winner. Select against p99, CPU, wire-byte and memory budgets together. Fixed FEC parity still depends on group density and byte budgets; adaptive FEC needs enough samples and adjustment time. Full values retain realized loss, observed parity and policy changes.
+Select against p99, CPU, wire-byte and memory budgets together. Fixed parity depends on group density and byte budgets; adaptation needs samples and adjustment time. Full data retains realized loss, observed parity and policy changes, without establishing a universal winner.
 
-This report has no cross-host, real-WAN, IPv6 stress or RUDP coroutine measurements. The public RUDP API currently uses callbacks; coroutine support is TODO. ARQ-only and both FEC policies use the same relay topology; compare them under the same network conditions and endpoint IO model.
+<Aside type="caution" title="Scope">
+
+No cross-host, real-WAN, IPv6 stress or RUDP coroutine measurements. Public RUDP uses callbacks; coroutines remain TODO. ARQ-only and both FEC policies share the relay topology; compare matching network conditions and endpoint IO models.
+
+</Aside>
 
 ## Reproduction and Full Data
+
+<Steps>
+
+<Step title="Build and measure">
 
 ```sh
 cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release -DARKNET_BUILD_BENCHMARKS=ON \
@@ -160,7 +172,11 @@ build-perf/benchmarks/arknet_rudp_benchmark --payload 1024 --clients 4 --window 
   --seconds 3 --warmup 2 --rounds 3 --seed 42
 ```
 
-Configure Boost in a separate build directory with `-DARKNET_USE_BOOST_ASIO=ON`. Individual cases run directly as C++ executables; the maintainer batch entry is `bash benchmarks/run_rudp_fec.sh BUILD_DIR OUTPUT_DIR`, with no Python or Ruby dependency. Raw data retains every actual command, exit code and stderr file.
+Configure Boost separately with `-DARKNET_USE_BOOST_ASIO=ON`. Run C++ cases directly or batch with `bash benchmarks/run_rudp_fec.sh BUILD_DIR OUTPUT_DIR`, without Python or Ruby. Raw data retains each command, exit code and stderr file.
+
+</Step>
+
+<Step title="Generate the report offline">
 
 The optional offline report tool needs Node only and does not launch network tests:
 
@@ -173,3 +189,7 @@ node benchmarks/report_rudp_fec.mjs \
 [Full Metrics and Measurement Metadata](rudp-fec-summary.json)
 
 [Raw JSON, Actual Commands and Exit Codes](https://github.com/OpenArkStudio/arknet/tree/7685e241bebd086d50da403f2cf06a72bbef1085/benchmarks/results/macmini-m4pro-20261013/rudp-fec)
+
+</Step>
+
+</Steps>

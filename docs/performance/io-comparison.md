@@ -36,9 +36,11 @@ Native Asio TCP coroutine Release local loopback: 1024-byte messages,
 
 ## Reproducing the Comparison
 
-The checked-in programs `benchmarks/loopback.cpp` (arknet callbacks) and
-`benchmarks/coroutine.cpp` (native Asio callbacks/coroutines) each have an
-independent `main`. Build with CMake and run the C++ executable directly:
+<Steps>
+
+<Step title="Build and run">
+
+`benchmarks/loopback.cpp` uses arknet callbacks; `benchmarks/coroutine.cpp` uses native Asio callbacks/coroutines. Each has an independent `main`. Build with CMake and run directly:
 
 ```sh
 cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release \
@@ -50,32 +52,39 @@ build-perf/benchmarks/arknet_coroutine_benchmark \
   --io-model shared --io-threads 4 --work 0 --warmup 0.25 --seconds 1
 ```
 
+</Step>
+
+<Step title="Match configuration and RTT scope">
+
 This example uses one context/four threads, 1024-byte messages, 16 clients and
 window 16, writing JSON to standard output. Replace the Asio include argument
 with `-DARKNET_USE_BOOST_ASIO=ON` for Boost. With Visual Studio, add
 `--config Release` and run the `.exe` under `benchmarks/Release/`.
 
-The `--io-model` values `shared` and `sharded` select one context with multiple
-threads and one context per thread, respectively. Set `--io-threads 1` to test
-one context/one thread. `--execution callback` runs the matched native callback
-mode. `--work 10000` adds 10,000
-deterministic iterations per server echo; `0` adds no application computation.
-This is a synthetic load, not a production parser or crypto algorithm. Compare
-topologies within the same benchmark program, dependency combination, payload, concurrency and
-computation setting. The Asio coroutine program sends and reads fixed-size batches:
-with `--window` above one, its latency is batch RTT. The arknet callback program continuously
-replenishes its window and reports individual-message RTT. Their throughput and
-latency do not establish a coroutine-versus-callback speedup.
+`--io-model shared` uses one context with multiple threads; `sharded` uses one context per thread. `--io-threads 1` selects one context/one thread. `--execution callback` selects matched native callbacks. `--work 10000` adds 10,000 deterministic iterations per echo; `0` adds none. This synthetic load does not represent a production parser or crypto algorithm.
 
-The expanded comparison runs callback and coroutine modes of the same native
-Asio TCP program. Its server reads a complete batch, performs the configured
-computation on each message, then writes the full reply. Window 1 measures
-message RTT; larger windows measure batch RTT. See the
-[matched comparison](dimensions.md#native-tcp).
+<Aside type="caution" title="RTT comparison scope">
+
+Compare topologies with the same program, dependency, payload, concurrency and computation. Native Asio sends/reads fixed batches: `--window` above one measures batch RTT. Arknet callbacks replenish a window and measure message RTT; these results cannot establish coroutine speedups.
+
+</Aside>
+
+The [matched comparison](dimensions.md#native-tcp) uses callback/coroutine modes of one native Asio TCP program: read a full batch, compute on each message, then echo the batch. Window 1 measures message RTT; larger windows measure batch RTT.
+
+</Step>
+
+<Step title="Repeat configurations">
 
 Repeat configurations in fresh C++ processes, or use the maintainer's shell
 matrix in [Testing](methodology.md#performance-matrix). Only that batch tool needs
 `jq`, GNU `timeout` and `shasum`; direct C++ tests and single benchmarks do not.
 
-Raw results and test commands are documented in [Testing and Performance](methodology.md).
-Short loopback measurements cannot predict WAN latency or production capacity.
+<Aside type="caution" title="Scope">
+
+[Testing and Performance](methodology.md) records raw results and commands. Short loopback runs cannot predict WAN latency or production capacity.
+
+</Aside>
+
+</Step>
+
+</Steps>

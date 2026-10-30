@@ -1,8 +1,8 @@
 # 本地性能报告
 
-本页汇总各协议的最终测量：UDP 测量于 2026-10-12，其他协议和原生 TCP 协程测量于 2026-10-10。各协议保留自己的源码哈希与原始记录。
+最终测量日期：UDP 为 2026-10-12，其他协议与原生 TCP 协程为 2026-10-10；各协议保留源码哈希与原始记录。
 
-本机完成 **1,620 次 IPv4 测量**，比较不同 Asio 依赖方案下的吞吐量、p99 延迟和 IO 模型。
+**1,620 次 IPv4 测量**：比较 Asio 依赖方案、吞吐量、p99 延迟与 IO 模型。
 
 ## 测试条件
 
@@ -20,7 +20,7 @@ Release 构建；测量 1.0 s，预热 0.25 s，重复 3 次。
 
 主图：**1024 字节、16 个客户端、无额外业务计算**；每连接在途消息上限为 UDP 1 条、其他协议 16 条。客户端与服务端在同一进程内共享 IO 线程，使用本机回环网络。
 
-平均进程 CPU 占用率以单核为 100%，多线程可超过 100%；估算值单独标注，三次 CPU 采样不完整时为 N/A。 本机有 14 个逻辑核心，整机占比 = 进程 CPU% / 14，单核 100% 对应整机 7.14%。
+平均进程 CPU 单核为 100%，多线程可超过 100%；标注估算值，三次采样不全记 N/A。14 个逻辑核心的整机占比 = 进程 CPU% / 14；单核 100% 占整机 7.14%。
 
 ## 核心结果
 
@@ -29,7 +29,7 @@ Release 构建；测量 1.0 s，预热 0.25 s，重复 3 次。
 - **协程 TCP / Standalone Asio / 无额外业务计算**：本组吞吐量最高的模型为 1 个 io_context / 4 个线程，相对单线程为 1.84×；对应 p99 为 870.46 us，单线程为 1,028.71 us。
 - **协程 TCP / Standalone Asio / 每次回显执行 10,000 次 CPU 计算**：本组吞吐量最高的模型为 4 个 io_context / 4 个线程，相对单线程为 3.54×；对应 p99 为 1,749.29 us，单线程为 5,687.25 us。
 
-最高中位数仅适用于对应负载；完整数据见下表。
+最高中位数仅适用于对应负载；完整数据见各协议报告。
 
 ## 吞吐量
 
@@ -53,26 +53,36 @@ Release 构建；测量 1.0 s，预热 0.25 s，重复 3 次。
 
 ## 各协议的详细结果
 
-- [TCP](tcp_CN.md)
-- [UDP](udp_CN.md)
-- [WebSocket](websocket_CN.md)
-- [TCP+TLS](tcps_CN.md)
-- [WSS](wss_CN.md)
-- [HTTP](http_CN.md)
-- [HTTPS](https_CN.md)
-- [协程 TCP](coroutine_CN.md)
+<CardGrid>
+<LinkCard title="TCP" href="tcp_CN.md" />
+<LinkCard title="UDP" href="udp_CN.md" />
+<LinkCard title="WebSocket" href="websocket_CN.md" />
+<LinkCard title="TCP+TLS" href="tcps_CN.md" />
+<LinkCard title="WSS" href="wss_CN.md" />
+<LinkCard title="HTTP" href="http_CN.md" />
+<LinkCard title="HTTPS" href="https_CN.md" />
+<LinkCard title="协程 TCP" href="coroutine_CN.md" />
+</CardGrid>
 
-详细页包含 64/1024/16384 字节、1/16 个客户端的全部数据。柱子为重复运行的中位数；误差线为最小／最大值，不是置信区间。
+详细页保留全部 64/1024/16384 字节、1/16 客户端数据；柱高中位数、误差线最小／最大值，非置信区间。
 
 [全部数值（JSON）](summary.json ':ignore') | [包体、批量与执行方式对比](dimensions_CN.md)
 
+<Aside type="caution" title="RTT 比较范围">
+
 协程 window=16 测量整批 RTT，回调测试程序测量逐消息 RTT；不能据此判断协程加速比。
+
+</Aside>
 
 ## 工具链与构建
 
 Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch arm64; TLS ON; sanitizers OFF. Standalone Asio 1.38.2 with BHO Beast based on Boost 1.84 (API 351); Boost 1.90.0 with Asio 1.38.0 and Beast API 359; OpenSSL 3.6.4. Mac mini on AC power, low power mode disabled, no CPU affinity.
 
+<Aside type="caution" title="依赖版本">
+
 两种依赖方案使用的 Beast 版本不同，方案之间的性能差异同时包含依赖版本的影响，不能全部归因于 Asio。
+
+</Aside>
 
 ## 指标定义
 
@@ -104,4 +114,4 @@ Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch 
 
 ## 适用范围
 
-本机回环结果不代表跨主机或生产容量。短时测量、调度和温度可能带来波动；部署前需使用实际负载测量。
+回环结果不代表跨主机或生产容量；短时测量、调度与温度可带来波动，部署前需测实际负载。

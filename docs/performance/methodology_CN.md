@@ -1,10 +1,14 @@
 # 性能测量方法与指标
 
-使用独立的 Release C++ 程序在本地测量。CI 只执行回归与 smoke 检查；公开报告记录机器、配置、原始数据和测量范围。
+使用独立 Release C++ 程序本地测量。CI 执行回归与 smoke 检查；公开报告记录机器、配置、原始数据与范围。
 
 原始 JSON 和日志保存到源码仓库外。下文的 `/path/to/arknet-results` 需替换为已创建的外部目录。离线报告工具的 `--raw-base`（RUDP 工具为 `--raw-url`）可指定已发布归档；未指定时仅显示输入名称，不生成原始数据链接。
 
 ## 单项基准
+
+<Steps>
+
+<Step title="选择程序">
 
 ```sh
 build/benchmarks/arknet_loopback_benchmark \
@@ -15,8 +19,11 @@ build/benchmarks/arknet_coroutine_benchmark \
   --io-model shared --io-threads 4 --work 0 --warmup 0.25 --seconds 1
 ```
 
-每个程序向标准输出写入一条 JSON 结果，失败时返回非零退出码。
-用简短 shell 循环为同一配置启动独立进程重复测量：
+</Step>
+
+<Step title="独立进程重复测量">
+
+每个程序向标准输出写入一条 JSON，失败时返回非零退出码。用 shell 循环启动独立进程重复配置：
 
 ```sh
 for repetition in 1 2 3; do
@@ -27,6 +34,10 @@ for repetition in 1 2 3; do
 done
 ```
 
+</Step>
+
+</Steps>
+
 ## 性能矩阵
 
 原有 IO 拓扑基线与扩展负载矩阵是独立数据集。
@@ -34,9 +45,7 @@ done
 
 ### 包体、批量与执行方式
 
-维护者可用 `bash scripts/benchmark_matrix.sh` 收集完整矩阵。
-只有批量工具需要 `jq`、GNU `timeout`（macOS 可用 `gtimeout`）、`shasum` 和常用
-shell 工具。它直接启动相同的 C++ 程序，保留执行命令、JSON、失败信息、机器信息和哈希。
+`bash scripts/benchmark_matrix.sh` 收集完整矩阵。批量工具另需 `jq`、GNU `timeout`（macOS 为 `gtimeout`）、`shasum` 和常用 shell 工具；它启动同一 C++ 程序，保留命令、JSON、失败、机器信息与哈希。
 
 ```sh
 bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_loopback_benchmark \
@@ -58,11 +67,7 @@ bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_coroutine_
 432 次原生 TCP 对照测量**。七种协议均使用显式设置的四档在途请求上限，
 包括 UDP；批量大小与连接数分别设置。
 
-原生测试使用相同的服务端整批读取与回显、客户端整批读写、包体检查、CPU 计算和
-每连接 strand，对比 Asio 回调与 C++20 协程。它测量整批完成 RTT；每批只有
-一个请求时等同于逐消息 RTT。arknet 的公共协程端点 API 仍为 TODO。
-两种执行方式的 CPU 时间均包含预热与测量；服务端在回显前对批次中的每条消息
-分别执行指定计算。
+原生 Asio 回调与 C++20 协程使用相同的整批读写／回显、包体检查、每连接 strand 与逐消息 CPU 计算。两者均测整批完成 RTT，单请求批次等同于逐消息 RTT；CPU 时间含预热与测量。arknet 公共协程端点 API 仍为 TODO。
 
 `--keep-going` 保留失败负载配置，完成请求的矩阵；只要有失败就返回非零退出码。
 失败组展示错误和 UDP 丢包量，不参与有效吞吐量、RTT 对比。每组用独立进程
@@ -164,7 +169,8 @@ build/report-venv/bin/python -m unittest discover -s benchmarks -p 'test_report.
 build/report-venv/bin/python -m unittest discover -s benchmarks -p 'test_dimensions.py' -v
 ```
 
-每连接允许多条在途请求时，协程测试程序测量**整批 RTT**，回调测试程序持续
-补充请求并测量**逐消息 RTT**。只在同一测试程序内比较 IO 配置，不能据此
-从这组原有基线推导协程相对回调的加速比。上面的原生对照测试为两种执行方式
-使用相同测量方法。
+<Aside type="caution" title="RTT 比较范围">
+
+原有基线中，多条在途请求的协程测**整批 RTT**，回调持续补充窗口并测**逐消息 RTT**。仅在同一程序内比较 IO 配置，不能推导协程加速比；原生对照则为两种执行方式使用相同口径。
+
+</Aside>

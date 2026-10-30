@@ -1,10 +1,14 @@
 # Performance Methodology and Metrics
 
-Measure locally with independent Release C++ programs. CI runs regressions and smoke checks; published reports record the host, configuration, raw results and scope.
+Measure locally with independent Release C++ programs. CI runs regressions and smoke checks; reports record host, configuration, raw results and scope.
 
 Keep raw JSON and logs outside the source repository. Replace `/path/to/arknet-results` below with an existing external directory. Offline report tools accept `--raw-base` (`--raw-url` for RUDP) for a published archive; without it, input names appear without raw-data links.
 
 ## Single Benchmark
+
+<Steps>
+
+<Step title="Choose a program">
 
 ```sh
 build/benchmarks/arknet_loopback_benchmark \
@@ -15,8 +19,11 @@ build/benchmarks/arknet_coroutine_benchmark \
   --io-model shared --io-threads 4 --work 0 --warmup 0.25 --seconds 1
 ```
 
-Each executable writes one JSON result to standard output and returns nonzero
-on failure. Repeat a configuration in fresh processes with a short shell loop:
+</Step>
+
+<Step title="Repeat in fresh processes">
+
+Each executable writes one JSON result to stdout and returns nonzero on failure. Repeat configurations in fresh processes:
 
 ```sh
 for repetition in 1 2 3; do
@@ -27,6 +34,10 @@ for repetition in 1 2 3; do
 done
 ```
 
+</Step>
+
+</Steps>
+
 ## Performance Matrix
 
 The original IO-topology baseline and the expanded workload matrix are separate
@@ -35,10 +46,7 @@ hold connection counts constant while varying the other dimensions.
 
 ### Payload, Batch and Execution Modes
 
-Maintainers can collect complete matrices with `bash scripts/benchmark_matrix.sh`.
-Only this batch tool requires `jq`, GNU `timeout` (`gtimeout` on macOS) and
-`shasum`, in addition to the usual shell tools. It launches the same C++ programs
-and preserves their commands, JSON, failures, host details and hashes.
+`bash scripts/benchmark_matrix.sh` collects complete matrices. It additionally needs `jq`, GNU `timeout` (`gtimeout` on macOS), `shasum` and usual shell tools. It launches the same C++ programs, retaining commands, JSON, failures, host details and hashes.
 
 ```sh
 bash scripts/benchmark_matrix.sh --executable build/benchmarks/arknet_loopback_benchmark \
@@ -61,13 +69,7 @@ callback measurements and 432 matched native TCP measurements per dependency con
 All seven protocols use the four explicit outstanding-request limits, including
 UDP. Batch size and connection count are independent settings.
 
-The native program compares Asio callbacks and C++20 coroutines with identical
-full-batch server reads/echoes, full-batch client writes/reads, payload checks, CPU
-computation and per-connection strands. It measures batch completion RTT;
-one request per batch is equivalent to message RTT. Public arknet coroutine
-endpoint APIs remain TODO. Its CPU time includes warmup and measurement for
-both execution modes. Each server batch applies the configured computation to
-every payload-sized message before echoing the batch.
+Native Asio callbacks and C++20 coroutines share full-batch reads/writes/echoes, payload checks, per-connection strands and per-message CPU computation before echo. Both measure batch completion RTT (message RTT with one request) and CPU across warmup and measurement. Public arknet coroutine endpoint APIs remain TODO.
 
 `--keep-going` retains unsuccessful load cases, finishes the requested matrix
 and returns nonzero if any case failed. Failed groups remain visible with their
@@ -185,9 +187,8 @@ build/report-venv/bin/python -m unittest discover -s benchmarks -p 'test_report.
 build/report-venv/bin/python -m unittest discover -s benchmarks -p 'test_dimensions.py' -v
 ```
 
-With several requests in flight per connection, the coroutine benchmark measures
-a **batch RTT**, whereas callback traffic
-replenishes a window and measures **message RTT**. Compare topology within
-a benchmark program; do not infer a coroutine-versus-callback speedup from this
-original baseline. The matched native comparison above uses one measurement
-method for both execution modes.
+<Aside type="caution" title="RTT comparison scope">
+
+In the original baseline, multiple in-flight requests produce coroutine **batch RTT**; callbacks replenish a window and measure **message RTT**. Compare topologies within one program, without inferring coroutine speedups. The matched native comparison uses one method for both modes.
+
+</Aside>

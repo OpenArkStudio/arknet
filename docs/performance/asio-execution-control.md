@@ -1,6 +1,6 @@
 # Asio callbacks, coroutines and IO models
 
-16 TCP connections compare three IO models, callbacks and coroutines, 64 B / 4096 B payloads, 1 / 16 outstanding requests per connection, and 0 / 10,000 computation iterations per echo. Across both dependencies, each of 96 configurations runs in three independent processes: 288 measurements, with zero content-validation or IO errors.
+16 TCP connections: three IO models, callbacks/coroutines, 64 B / 4096 B payloads, 1 / 16 outstanding requests per connection, 0 / 10,000 iterations per echo. Both dependencies total 96 configurations × three independent processes: 288 measurements, zero content-validation or IO errors.
 
 <Aside type="note" title="Measurement scope">
 
@@ -32,13 +32,13 @@ Each connection serializes its handlers through a strand. The one-context, one-t
 
 ## Throughput, CPU and response time
 
-Bars show the median of three independent process runs; whiskers show their minimum and maximum. Throughput counts completed TCP request–echo round trips per second, counting each once. Click a chart to open its full SVG.
+Bars show three independent processes’ median; whiskers show min/max. Throughput counts completed TCP request–echo round trips/s, each once. Click for the full SVG.
 
 CPU combines user and system CPU for the process containing both client and server, including warmup and traffic; 100% means one saturated logical core. Throughput excludes warmup and uses the actual measured duration, including completion of the final outstanding batch.
 
 <Aside type="note" title="Response-time scope">
 
-Window 1 measures a single-message round trip. Window 16 measures the whole batch of 16 requests; dividing by 16 does not yield per-message RTT. Each connection retains at most 8192 reservoir samples, so P99 from their combined sample is an estimate. The table summarizes the three per-run P99 values, not a global P99 over all requests.
+Window 1 measures message RTT; window 16 measures the batch of 16 requests. Dividing by 16 does not yield message RTT. Each connection retains up to 8192 reservoir samples; combined-sample P99 is estimated. Tables summarize three per-run P99 values, not all requests’ global P99.
 
 </Aside>
 
@@ -50,12 +50,10 @@ Window 1 measures a single-message round trip. Window 16 measures the whole batc
 
 [![Boost.Asio 1.90 · No additional computation · CPU utilization](assets/asio-022-boost-work0-cpu.svg)](assets/asio-022-boost-work0-cpu.svg)
 
-<details>
-<summary>P99 response time</summary>
+**P99 response time**
 
 [![Boost.Asio 1.90 · No additional computation · P99](assets/asio-022-boost-work0-p99.svg)](assets/asio-022-boost-work0-p99.svg)
 
-</details>
 
 #### 10,000 computation iterations per echo
 
@@ -63,12 +61,10 @@ Window 1 measures a single-message round trip. Window 16 measures the whole batc
 
 [![Boost.Asio 1.90 · 10,000 computation iterations per echo · CPU utilization](assets/asio-022-boost-work10000-cpu.svg)](assets/asio-022-boost-work10000-cpu.svg)
 
-<details>
-<summary>P99 response time</summary>
+**P99 response time**
 
 [![Boost.Asio 1.90 · 10,000 computation iterations per echo · P99](assets/asio-022-boost-work10000-p99.svg)](assets/asio-022-boost-work10000-p99.svg)
 
-</details>
 
 ### Standalone Asio 1.38.2
 
@@ -78,12 +74,10 @@ Window 1 measures a single-message round trip. Window 16 measures the whole batc
 
 [![Standalone Asio 1.38.2 · No additional computation · CPU utilization](assets/asio-022-standalone-work0-cpu.svg)](assets/asio-022-standalone-work0-cpu.svg)
 
-<details>
-<summary>P99 response time</summary>
+**P99 response time**
 
 [![Standalone Asio 1.38.2 · No additional computation · P99](assets/asio-022-standalone-work0-p99.svg)](assets/asio-022-standalone-work0-p99.svg)
 
-</details>
 
 #### 10,000 computation iterations per echo
 
@@ -91,12 +85,10 @@ Window 1 measures a single-message round trip. Window 16 measures the whole batc
 
 [![Standalone Asio 1.38.2 · 10,000 computation iterations per echo · CPU utilization](assets/asio-022-standalone-work10000-cpu.svg)](assets/asio-022-standalone-work10000-cpu.svg)
 
-<details>
-<summary>P99 response time</summary>
+**P99 response time**
 
 [![Standalone Asio 1.38.2 · 10,000 computation iterations per echo · P99](assets/asio-022-standalone-work10000-p99.svg)](assets/asio-022-standalone-work10000-p99.svg)
 
-</details>
 
 The 10,000 deterministic iterations execute inside the IO handler. This is neither a separate compute pool nor a fixed amount of business processing time.
 
@@ -116,12 +108,15 @@ The coroutine throughput change relative to callbacks spans the following ranges
 | Connections assignable to explicit instances or shards | Multiple event loops, one worker each | Shard imbalance and cross-shard communication |
 | Expensive parsing, compression or computation | A bounded compute executor alongside the IO model | Coroutines do not automatically move computation to another thread |
 
-These are starting points. This short closed-loop run uses 16 balanced connections on local loopback; it establishes neither production capacity nor a universally best model. The range of three measurements is not a statistical confidence interval.
+<Aside type="caution" title="Selection limits">
+
+These starting points use 16 balanced connections in a short closed-loop local run; they establish neither production capacity nor a universal best model. Three-run ranges are not confidence intervals.
+
+</Aside>
 
 ## Full results
 
-<details>
-<summary>Boost.Asio 1.90 · 48 configurations: median [minimum–maximum]</summary>
+**Boost.Asio 1.90 · 48 configurations: median [minimum–maximum]**
 
 | Payload B | Window | Iterations | Contexts / total workers | API | Round trips/s | P50 µs | P99 µs | CPU% |
 | ---: | ---: | ---: | --- | --- | ---: | ---: | ---: | ---: |
@@ -174,10 +169,8 @@ These are starting points. This short closed-loop run uses 16 balanced connectio
 | 4096 | 16 | 10000 | 4 / 4 | callback | 200,057.67 [199,275.15–200,472.99] | 1,258.67 [1,258.21–1,259.42] | 1,313.21 [1,307.38–1,361.25] | 399.7 [399.62–399.78] |
 | 4096 | 16 | 10000 | 4 / 4 | coroutine | 199,521.34 [197,414.18–200,107.95] | 1,257.54 [1,254.58–1,262.29] | 1,493.13 [1,465.75–1,527.92] | 399.59 [399.04–399.8] |
 
-</details>
 
-<details>
-<summary>Standalone Asio 1.38.2 · 48 configurations: median [minimum–maximum]</summary>
+**Standalone Asio 1.38.2 · 48 configurations: median [minimum–maximum]**
 
 | Payload B | Window | Iterations | Contexts / total workers | API | Round trips/s | P50 µs | P99 µs | CPU% |
 | ---: | ---: | ---: | --- | --- | ---: | ---: | ---: | ---: |
@@ -230,11 +223,14 @@ These are starting points. This short closed-loop run uses 16 balanced connectio
 | 4096 | 16 | 10000 | 4 / 4 | callback | 200,877.78 [200,853.23–201,365.33] | 1,255.54 [1,255.21–1,256.79] | 1,321.63 [1,306.17–1,418.79] | 399.59 [399.56–399.64] |
 | 4096 | 16 | 10000 | 4 / 4 | coroutine | 200,758.38 [198,967.33–201,314.41] | 1,255.58 [1,252.96–1,260.71] | 1,541.13 [1,482.96–1,876.13] | 399.58 [398.55–399.7] |
 
-</details>
 
 ## Reproduction
 
-Use the permanent C++ benchmark; compiling and running it requires neither Python, Ruby nor Node.js. The following uses the default Boost dependency.
+<Steps>
+
+<Step title="Run one benchmark">
+
+Run the repository’s C++ benchmark directly, without Python, Ruby or Node.js. This example defaults to Boost.
 
 ```sh
 cmake -S . -B build/benchmark -DCMAKE_BUILD_TYPE=Release \
@@ -254,6 +250,10 @@ For Standalone Asio, use a separate build directory and these options:
 -DARKNET_USE_BOOST_ASIO=OFF -DARKNET_ASIO_INCLUDE_DIR=/path/to/asio/include
 ```
 
+</Step>
+
+<Step title="Run the matrix">
+
 The maintainer batch script additionally requires jq and GNU timeout. Point `--executable` at the matching build and use `--backend standalone` for Standalone Asio.
 
 ```sh
@@ -266,6 +266,10 @@ bash scripts/benchmark_matrix.sh \
   --repetitions 3 --seconds 2 --warmup 0.5
 ```
 
+</Step>
+
+<Step title="Retain environment and local records">
+
 The macOS measurements use Command Line Tools AppleClang and an explicit SDK: `-DCMAKE_CXX_COMPILER=/Library/Developer/CommandLineTools/usr/bin/clang++ -DCMAKE_OSX_SYSROOT="$(xcrun --show-sdk-path)"`. CPU affinity and frequency were not pinned. These results do not validate Homebrew LLVM 22.
 
 Raw measurements and build logs remain in local acceptance records; they are not included in source or offered as public downloads. SHA256 digests of the measurement files used here:
@@ -274,3 +278,7 @@ Raw measurements and build logs remain in local acceptance records; they are not
 - Standalone Asio 1.38.2: `fe40cc8f647d3b3f877751456dae2c45df60331f02063448eba92afabf971a7c`
 
 Benchmark source: [coroutine.cpp](https://github.com/OpenArkStudio/arknet/blob/c5432ca176edf9f4c06db03713f03764184c5cea/benchmarks/coroutine.cpp) · [runtime.hpp](https://github.com/OpenArkStudio/arknet/blob/c5432ca176edf9f4c06db03713f03764184c5cea/benchmarks/runtime.hpp). [Metric definitions and other protocol tests](methodology.md).
+
+</Step>
+
+</Steps>

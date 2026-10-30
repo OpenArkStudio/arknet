@@ -1,36 +1,35 @@
 # Performance
 
-These reports measure local loopback workloads on a Mac mini M4 Pro, not CI
-runner performance. Choose a report with matching protocol, payload, concurrency
-and execution mode; each report records its host, source, commands and scope.
+Mac mini M4 Pro loopback measurements, collected outside CI. Each report records its host, source, commands and scope. Match protocol, payload, concurrency and execution mode when comparing.
 
 Download the [raw measurements and verification tools](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-benchmark-comparison.tar.gz) with the [SHA256 checksum](https://github.com/OpenArkStudio/arknet/releases/download/v0.2.1/arknet-0.2.1-benchmark-comparison.tar.gz.sha256). The data is distributed as a release asset, outside the source repository.
 
 ## Version and execution comparisons
 
-- [Database clients](database-comparison.md): MySQL and Redis throughput, response time and CPU for v0.2.0 and the complete-shutdown implementation.
-- [Network endpoints](transport-comparison.md): matched TCP, TLS TCP, HTTP, HTTPS, WebSocket and WSS workloads.
-- [Five-second workload comparison](steady-workloads.md): eight selected workloads, five fresh processes per version, with throughput, CPU and response time.
-- [Asio callbacks and coroutines](asio-execution-control.md): execution modes and worker counts within the same revision.
+<CardGrid>
+<LinkCard title="Database clients" href="database-comparison.md" description="MySQL and Redis throughput, response time and CPU: v0.2.0 versus complete shutdown." />
+<LinkCard title="Network endpoints" href="transport-comparison.md" description="Matched TCP, TLS TCP, HTTP, HTTPS, WebSocket and WSS workloads." />
+<LinkCard title="Five-second workload comparison" href="steady-workloads.md" description="Eight workloads; five fresh processes per version; throughput, CPU and response time." />
+<LinkCard title="Asio callbacks and coroutines" href="asio-execution-control.md" description="Execution modes and worker counts within one revision." />
+</CardGrid>
 
 The configuration grids contain 1,632 rounds; the five-second comparison contains 80 rounds. Databases use native connection callbacks; the Asio control bypasses arknet endpoints. They do not measure ark's database coroutine bridge.
 
 ## RUDP measurements
 
-[RUDP FEC report](rudp.md): 96 configurations and 276 measured runs across both
-Asio dependency combinations, three IO models, ARQ-only/fixed/adaptive policies, payloads,
-in-flight requests and injected loss. SVG charts compare throughput, p99 RTT,
-CPU, wire overhead, recovery, retransmissions and retained memory.
-The public RUDP API currently uses callbacks; RUDP coroutines remain TODO.
+<CardGrid>
+<LinkCard title="RUDP FEC report" href="rudp.md" description="Both Asio dependencies; 96 configurations, 276 runs; three IO models, ARQ-only/fixed/adaptive policies, payloads, in-flight requests and injected loss. Charts cover throughput, p99 RTT, CPU, wire overhead, recovery, retransmissions and retained memory." />
+<LinkCard title="RUDP concurrency report" href="rudp-concurrency.md" description="128/512/1,024 clients, one shared io_context, one/four endpoint threads; 18 cases, 54 rounds; throughput, CPU, p99 and process peak RSS." />
+</CardGrid>
 
-[RUDP concurrency report](rudp-concurrency.md): 128/512/1,024 clients on one shared io_context, comparing one and four endpoint threads; 18 cases and 54 rounds with throughput, CPU, p99 and whole-process peak RSS.
+The public RUDP API uses callbacks; coroutines remain TODO.
 
 ## Database clients
 
-- [MySQL](../features/mysql/performance.md): read-only text and prepared queries,
-  payloads, connections and client queue depth; query RT, throughput, CPU and memory.
-- [Redis](../features/redis/performance.md): binary ECHO with pipeline sizes and
-  in-flight batches; whole-batch RT, command throughput, CPU and memory.
+<CardGrid>
+<LinkCard title="MySQL" href="../features/mysql/performance.md" description="Read-only text/prepared queries; payloads, connections, queue depth; query RT, throughput, CPU and memory." />
+<LinkCard title="Redis" href="../features/redis/performance.md" description="Binary ECHO; pipeline sizes, in-flight batches; whole-batch RT, command throughput, CPU and memory." />
+</CardGrid>
 
 Both reports compare Boost.Asio and Standalone Asio, plain TCP and verified TLS.
 They use callback clients; connection pools and database coroutines are outside these measurements.
@@ -64,6 +63,11 @@ These programs use native Asio; public arknet coroutine endpoints remain TODO.
 
 The [multi-protocol summary](overview.md) and [dimension summary](dimensions.md)
 show the final results for each measured workload, with dates and source hashes.
+
+<Aside type="caution" title="Scope">
+
 Measurements do not establish WAN capacity, IPv6 performance or production endurance.
+
+</Aside>
 
 [Methodology and metric definitions](methodology.md) · [Correctness validation](../project/testing.md) · [Buffer configuration](../guides/socket-buffers.md)
