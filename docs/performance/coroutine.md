@@ -1,12 +1,20 @@
 # Coroutine TCP Local Performance
 
-The native Asio TCP coroutine test program compares no added computation with 10,000 CPU iterations per echo. Public coroutine endpoint APIs remain TODO.
+Native Asio TCP coroutines: no added computation versus 10,000 CPU iterations per echo. Public coroutine endpoints remain TODO.
 
-With window>1, RTT measures batch completion; the callback program measures individual messages. These results cannot establish coroutine speedups.
+<Aside type="caution" title="RTT scope">
+
+With window>1, coroutines measure batch RTT; callbacks measure messages. These results cannot establish coroutine speedups.
+
+</Aside>
 
 [Metric definitions and methodology](methodology.md).
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+<Aside type="note" title="CPU">
+
+Process CPU: 100% per logical CPU; multiple threads can exceed 100%. Estimates are labeled; incomplete three-sample sets show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+
+</Aside>
 
 ## No added computation
 
@@ -15,6 +23,9 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 ![p99 RTT](assets/coroutine-work0-latency.svg)
 
 ### All Measured Profiles
+
+<details>
+<summary>Full values</summary>
 
 #### 64 B / 1 clients / window=1
 
@@ -106,6 +117,8 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 | Standalone Asio / 1 context / 2 threads | 176,942 [175,812, 181,342] | 5,529.45 | 1,336.75 | 1,651.92 | 1,923.62 | 199.1 (estimated) | 11.83 |
 | Standalone Asio / 1 context / 4 threads | 223,382 [221,670, 236,886] | 6,980.67 | 1,026.96 | 1,434.21 | 1,581.50 | 356.3 (estimated) | 12.08 |
 
+</details>
+
 ## 10,000 CPU iterations per echo
 
 ![Throughput](assets/coroutine-work10000-throughput.svg)
@@ -113,6 +126,9 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 ![p99 RTT](assets/coroutine-work10000-latency.svg)
 
 ### All Measured Profiles
+
+<details>
+<summary>Full values</summary>
 
 #### 64 B / 1 clients / window=1
 
@@ -204,4 +220,6 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 | Standalone Asio / 1 context / 2 threads | 72,900 [72,273, 73,140] | 2,278.14 | 3,368.38 | 3,829.58 | 4,074.96 | 199.3 (estimated) | 11.78 |
 | Standalone Asio / 1 context / 4 threads | 124,867 [123,505, 126,990] | 3,902.10 | 1,951.50 | 2,139.71 | 2,219.33 | 397.0 (estimated) | 11.81 |
 
-Tables show repeated-run medians; throughput brackets show min/max, not confidence intervals. Latencies are medians of per-run sampled percentiles, without pooling samples.
+</details>
+
+Run medians; throughput brackets are min/max, not confidence intervals. Latencies: median of per-run sampled percentiles, without pooling.

@@ -9,6 +9,8 @@ from pathlib import Path
 import statistics
 from urllib.parse import quote
 
+from report_presentation import format_report
+
 METRICS = ("roundtrips_per_second", "payload_mib_per_second", "rtt_p50_us", "rtt_p95_us", "rtt_p99_us", "peak_rss_bytes")
 PROTOCOLS = ("tcp", "udp", "websocket", "tcps", "wss", "http", "https")
 PROTOCOL_LABELS = {"tcp": "TCP", "udp": "UDP", "websocket": "WebSocket", "tcps": "TCP+TLS",
@@ -203,7 +205,7 @@ def chart(rows, output, metric, title, work=None):
 
 
 def table(rows, chinese):
-    labels = ("后端 / 模型", "往返 / s", "MiB/s", "p50 / us", "p95 / us", "p99 / us", "CPU / %", "RSS / MiB") if chinese else ("Backend / model", "Round trips/s", "MiB/s", "p50 / us", "p95 / us", "p99 / us", "CPU / %", "RSS / MiB")
+    labels = ("依赖库 / 模型", "往返 / s", "MiB/s", "p50 / us", "p95 / us", "p99 / us", "CPU / %", "RSS / MiB") if chinese else ("Dependency / model", "Round trips/s", "MiB/s", "p50 / us", "p95 / us", "p99 / us", "CPU / %", "RSS / MiB")
     lines = ["| " + " | ".join(labels) + " |", "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for row in rows:
         throughput = row["roundtrips_per_second"]
@@ -312,7 +314,7 @@ def protocol_page(name, rows, chinese, logical_cpus=None):
                   "window>1 时测量整批 RTT；回调测试程序测量逐消息 RTT，两者不能用来推导协程加速比。" if chinese else "With window>1, RTT measures batch completion; the callback program measures individual messages. These results cannot establish coroutine speedups.", ""]
     else:
         lines += ["数据来自本机 Release 构建的独立回环进程，不来自 CI。" if chinese else "Measurements come from independent local Release loopback processes, not CI.", ""]
-    lines += [f"[{'指标定义与测量方法' if chinese else 'Metric definitions and methodology'}](../testing{suffix}.md).", "",
+    lines += [f"[{'指标定义与测量方法' if chinese else 'Metric definitions and methodology'}](methodology{suffix}.md).", "",
               cpu_note(chinese, logical_cpus), ""]
     works = sorted({row["handler_work"] for row in rows})
     for work in works:
@@ -325,7 +327,7 @@ def protocol_page(name, rows, chinese, logical_cpus=None):
                 if subset:
                     lines += [f"#### {payload} B / {clients} " + ("客户端" if chinese else "clients") + f" / window={subset[0]['window']}", "", table(subset, chinese), ""]
     lines += ["表格记录重复运行的中位数，吞吐量方括号为最小值和最大值；误差范围不是置信区间。延迟取各次采样分位数的中位数，不合并样本。" if chinese else "Tables show repeated-run medians; throughput brackets show min/max, not confidence intervals. Latencies are medians of per-run sampled percentiles, without pooling samples.", ""]
-    return "\n".join(lines)
+    return format_report("\n".join(lines), "protocol", chinese)
 
 
 def host_table(host, chinese):
@@ -385,7 +387,7 @@ def overview(reports, rows, chinese, raw_base, host_description):
     settings = first["settings"]
     family = {"ipv4": "IPv4", "ipv6": "IPv6"}[validate_address_families(reports)]
     lines = ["# " + ("本地性能报告" if chinese else "Local Performance Report"), "",
-             (f"本机完成 **{sum(len(value['results']) for _, value in reports):,} 次 {family} 测量**，比较 Asio 后端配置下的吞吐量、p99 延迟和 IO 模型。" if chinese else f"**{sum(len(value['results']) for _, value in reports):,} local {family} measurements** compare throughput, p99 latency and IO models across the Asio backends."), "",
+             (f"本机完成 **{sum(len(value['results']) for _, value in reports):,} 次 {family} 测量**，比较 Asio 依赖配置下的吞吐量、p99 延迟和 IO 模型。" if chinese else f"**{sum(len(value['results']) for _, value in reports):,} local {family} measurements** compare throughput, p99 latency and IO models across the Asio dependencies."), "",
              "## " + ("测试条件" if chinese else "Test Conditions"), "",
              host_table(first["host"], chinese), "",
              (f"Release 构建；测量 {settings['seconds']} s，预热 {settings['warmup']} s，重复 {settings['repetitions']} 次。" if chinese else f"Release build; measurement={settings['seconds']} s; warmup={settings['warmup']} s; repetitions={settings['repetitions']}."), "",
@@ -403,7 +405,7 @@ def overview(reports, rows, chinese, raw_base, host_description):
     lines += ["## " + ("如何选择 IO 模型" if chinese else "Choosing an IO Model"), "",
               ("| 模型 | 对应业务 | 需要注意 |\n| --- | --- | --- |\n| 1 个 io_context / 1 个线程 | 低并发、控制服务、较轻的状态处理 | 耗时回调会影响所有连接 |\n| 1 个 io_context / 多线程 | 连接活跃程度不均衡、希望共享空闲线程 | 使用每连接 strand；共享调度有开销 |\n| 多个 io_context / 各 1 个线程 | 分区会话、租户或负载分配稳定的服务 | 繁忙分片无法借用其他分片线程 |" if chinese else
                "| Model | Workload | Tradeoff |\n| --- | --- | --- |\n| 1 context / 1 thread | Low concurrency, control services, light state handling | Long handlers delay every connection |\n| 1 context / several threads | Uneven connection activity, shared available workers | Use per-connection strands; shared scheduling has overhead |\n| Several contexts / 1 thread each | Partitioned sessions, tenants or stable assignment | A busy shard cannot borrow other shards' workers |"), "",
-              f"[{'协程的 IO 与 CPU 负载比较' if chinese else 'Coroutine IO and CPU workload comparisons'}](../threading{suffix}.md).", "",
+              f"[{'协程的 IO 与 CPU 负载比较' if chinese else 'Coroutine IO and CPU workload comparisons'}](../concepts/io-models{suffix}.md).", "",
               "## " + ("各协议的详细结果" if chinese else "Detailed Results by Protocol"), ""]
     names = [name for name in (*PROTOCOLS, "coroutine") if any((row["implementation"] == "asio-coroutine" if name == "coroutine" else row["implementation"] == "arknet-callback" and row["protocol"] == name) for row in rows)]
     for name in names:
@@ -413,19 +415,19 @@ def overview(reports, rows, chinese, raw_base, host_description):
               "协程 window=16 测量整批 RTT，回调测试程序测量逐消息 RTT；不能据此判断协程加速比。" if chinese else "Coroutine window=16 measures batch RTT; the callback program measures message RTT. These results do not establish coroutine speedups.", "",
               "## " + ("工具链与构建" if chinese else "Toolchain and Build"), "",
               host_description, "",
-              "两种后端使用的 Beast 版本不同，后端之间的性能差异同时包含依赖版本的影响，不能全部归因于 Asio。" if chinese else "The backends use different Beast versions, so differences between backends also include dependency-version effects and cannot be attributed solely to Asio.", "",
+              "两种依赖方案使用的 Beast 版本不同，方案之间的性能差异同时包含依赖版本的影响，不能全部归因于 Asio。" if chinese else "The dependency combinations use different Beast versions, so differences between them also include dependency-version effects and cannot be attributed solely to Asio.", "",
               "## " + ("指标定义" if chinese else "Metric Definitions"), "",
-              f"[{'吞吐量、RTT、CPU、RSS 和错误定义' if chinese else 'Throughput, RTT, CPU, RSS and error definitions'}](../testing{suffix}.md).", "",
+              f"[{'吞吐量、RTT、CPU、RSS 和错误定义' if chinese else 'Throughput, RTT, CPU, RSS and error definitions'}](../project/testing{suffix}.md).", "",
               "## " + ("原始数据与复现" if chinese else "Raw Data and Reproduction"), "",
               f"- Source SHA-256: `{first['source_sha256']}`",
               f"- [{'已完成测量' if chinese else 'Completed measurements'}]: {sum(len(report['results']) for _, report in reports)}",
-              f"- [{'复现命令与检查范围' if chinese else 'Commands and validation scope'}](../testing{suffix}.md)", ""]
+              f"- [{'复现命令与检查范围' if chinese else 'Commands and validation scope'}](methodology{suffix}.md)", ""]
     for path, report in reports:
         label = f"[{path.name}]({raw_base.rstrip('/')}/{quote(path.name)})" if raw_base else f"`{path.name}`"
         lines.append(f"- {label}: {len(report['results'])} measurements; {report['recorded_at_utc']}; executable SHA-256 `{report['executable_sha256']}`")
     lines += ["", "## " + ("适用范围" if chinese else "Scope"), "",
               "本机回环结果不代表跨主机或生产容量。短时测量、调度和温度可能带来波动；部署前需使用实际负载测量。" if chinese else "Local loopback results do not establish cross-host or production capacity. Short runs, scheduling and thermals introduce variance; repeat with the deployment workload.", ""]
-    return "\n".join(lines)
+    return format_report("\n".join(lines), "overview", chinese)
 
 
 def main():

@@ -1,6 +1,6 @@
 # RUDP Performance
 
-All 96 configurations and 276 measured runs passed, completing 7,960,439 message round trips. Content, ordering, send completion and drain checks passed, with zero relay errors or queue overflows.
+All 96 configurations / 276 measured runs passed: 7,960,439 message round trips; content, order, send-completion and drain checks passed; zero relay errors or queue overflows.
 
 [Concurrency and endpoint threads](rudp-concurrency.md) compares 128/512/1,024 clients with one shared io_context and one or four endpoint threads.
 
@@ -37,11 +37,19 @@ Source SHA-256: `15cb6ced6425d82086a083fd310f6d75016ac3a1018264856d41b460e4412d8
 
 ![RUDP benchmark topology](assets/rudp-fec-topology.svg)
 
-These are network-condition simulations within one process on local IPv4 loopback, not WAN measurements. The relay always adds one io_context and one thread; statistics sampling uses another thread. Chart IO models describe endpoints only.
+<Aside type="caution" title="Local simulation scope">
 
-Server sessions share a UDP socket and its strand. Four io_contexts with one thread each mainly distribute clients and do not establish parallel server sharding.
+Network conditions are simulated in one process on local IPv4 loopback, not WAN measurements.
 
-RTT includes simulated delay, congestion control, FEC group wait and ARQ retransmission. Throughput counts completed message round trips and includes in-flight drain time. Bars are medians; whiskers are the actual minimum/maximum of three runs, not confidence intervals.
+</Aside>
+
+| Measurement | Scope |
+| --- | --- |
+| IO model | Charts describe endpoints; relay adds one io_context/thread, sampling another thread |
+| Server concurrency | Sessions share a UDP socket/strand; four single-thread contexts mainly distribute clients, not proof of parallel server sharding |
+| RTT | Includes simulated delay, congestion control, FEC group wait and ARQ retransmission |
+| Throughput | Completed message round trips; elapsed time includes in-flight drain |
+| Bars / whiskers | Three-run medians / actual minimum and maximum, not confidence intervals |
 
 ## Throughput and p99 RTT
 
@@ -53,11 +61,11 @@ RTT includes simulated delay, congestion control, FEC group wait and ARQ retrans
 
 ![RUDP FEC process CPU](assets/rudp-fec-cpu.svg)
 
-CPU is average process utilization including clients, server, relay and sampling. One logical CPU is 100%; multiple threads can exceed 100%. Machine share is process CPU% / 14; the full summary includes both measures.
+Average process CPU includes clients, server, relay and sampling; 100% is one logical CPU, and multiple threads can exceed it. Machine share = process CPU% / 14; the summary retains both measures.
 
 ![RUDP FEC wire overhead](assets/rudp-fec-wire-overhead.svg)
 
-Wire overhead = (endpoint UDP payload bytes sent / bidirectional application bytes − 1) × 100%. It includes ARQ control/retransmission, FEC headers, parity and padding; excludes IP/UDP headers and the relay's second forwarding hop. It is not the FEC parity ratio.
+Wire overhead = (endpoint UDP payload bytes sent / bidirectional application bytes − 1) × 100%. Includes ARQ control/retransmission, FEC headers, parity and padding; excludes IP/UDP headers and the relay's second hop. This is not the FEC parity ratio.
 
 ## Recovery, Retransmission and Retained Memory
 
@@ -65,11 +73,15 @@ Wire overhead = (endpoint UDP payload bytes sent / bidirectional application byt
 
 ![RUDP ARQ retransmitted segments](assets/rudp-fec-retransmissions.svg)
 
-Recovery counts data shards restored by FEC; retransmissions count ARQ segments sent again. Both are normalized per 1,000 application round trips and are not complementary quantities.
+Recovery counts FEC-restored data shards; retransmission counts resent ARQ segments. Both use units per 1,000 application round trips and are not complements.
 
 ![RUDP FEC sampled retention](assets/rudp-fec-memory.svg)
 
-FEC retention sums endpoint statistics sampled every 100 ms and can miss shorter peaks; it excludes some temporary codec storage. Relay values sum independent route peaks that may occur at different times. RSS is the process high-water mark for a case, including warmup and all its rounds, not FEC-only memory.
+| Memory metric | Scope and limits |
+| --- | --- |
+| FEC retention | Endpoint sum sampled every 100 ms; may miss shorter peaks and excludes some temporary codec storage |
+| Relay | Sum of independent route peaks, which may occur at different times |
+| RSS | Case process high-water mark including warmup and all rounds, not FEC-only memory |
 
 ### Resource Values Under Random Loss
 
@@ -86,7 +98,7 @@ FEC retention sums endpoint statistics sampled every 100 ms and can miss shorter
 
 ## Payload Size and In-Flight Requests
 
-Random-loss condition; one io_context / one endpoint thread. Cells show round trips/s / p99 RTT in milliseconds, both three-run medians. Full JSON contains CPU, wire overhead and resource counters.
+Random loss; one io_context / one endpoint thread. Cells: round trips/s / p99 RTT in ms, three-run medians. Full JSON adds CPU, wire overhead and resource counters.
 
 ### Standalone Asio
 
@@ -110,11 +122,11 @@ Random-loss condition; one io_context / one endpoint thread. Cells show round tr
 | 16,384 | 1 | 21 / 383.5 | 30 / 235.1 | 31 / 264.8 |
 | 16,384 | 64 | 41 / 6,212.4 | 63 / 4,157.4 | 66 / 4,102.8 |
 
-Application messages are fragmented to the protocol MTU. 16 KiB denotes a message, not one UDP datagram. FEC subtracts 26 B from the 1,200 B UDP payload ceiling, leaving 1,174 B for an ARQ datagram.
+Messages fragment to the protocol MTU: 16 KiB is an application message, not a UDP datagram. FEC reserves 26 B of the 1,200 B UDP payload ceiling, leaving 1,174 B per ARQ datagram.
 
 ## 120-Second Sustained Runs
 
-Each case has one measured run, so no repeated-run whiskers are shown. All message checks passed. Memory uses the definitions above; peaks alone do not establish the absence of long-term leaks.
+One measured run per case, without repeated-run whiskers; all message checks passed. Memory follows the definitions above; peaks cannot rule out long-term leaks.
 
 | Dependency / Policy | Message Round Trips | Round Trips/s | p99 / ms | CPU / % | Wire Overhead / % | FEC Sampled Peak / KiB |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -127,7 +139,7 @@ Each case has one measured run, so no repeated-run whiskers are shown. All messa
 
 ## Results and Policy Selection
 
-The following compares main-matrix cases with one io_context / one endpoint thread, keeping IO models separate from policy ranking.
+Main matrix, one io_context / one endpoint thread; rank policies within the same IO model.
 
 | Dependency | Network Condition | Highest Round-Trip Throughput | Lowest p99 RTT |
 | --- | --- | ---: | ---: |
@@ -144,11 +156,21 @@ The ranges below span the two dependency configurations' three-run medians:
 - Random loss: FEC throughput was 835 - 869 round trips/s versus 560 - 572 for ARQ only. Process CPU increased from 25.4 - 26.6% to 52.7 - 56.2%, and wire-byte overhead from 21.7 - 21.9% to 55.1 - 60.1%.
 - Random loss, 64 B and one in-flight request per client: fixed FEC reached 116 - 117 round trips/s, below ARQ-only's 138 - 139. Small-message, low-concurrency workloads need separate evaluation.
 
-These results do not establish a universal winner. Select against p99, CPU, wire-byte and memory budgets together. Fixed FEC parity still depends on group density and byte budgets; adaptive FEC needs enough samples and adjustment time. Full values retain realized loss, observed parity and policy changes.
+These results do not establish a universal winner; budget p99, CPU, wire bytes and memory together. Fixed FEC parity depends on group density and byte budgets; adaptive FEC needs sufficient samples and adjustment time. Full values retain realized loss, observed parity and policy changes.
 
-This report has no cross-host, real-WAN, IPv6 stress or RUDP coroutine measurements. The public RUDP API currently uses callbacks; coroutine support is TODO. ARQ-only and both FEC policies use the same relay topology; compare them under the same network conditions and endpoint IO model.
+<Aside type="caution" title="Measurement and protocol limits">
+
+No cross-host, real-WAN, IPv6 stress or RUDP coroutine measurements; the public API uses callbacks, with coroutines TODO. FEC provides no authentication or encryption; see [compatibility and security](../features/rudp/fec.md#compatibility-and-security).
+
+</Aside>
+
+ARQ-only and both FEC policies share the relay topology; compare under matching network conditions and endpoint IO models.
 
 ## Reproduction and Full Data
+
+<Steps>
+
+<Step title="Build and run the C++ case">
 
 ```sh
 cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release -DARKNET_BUILD_BENCHMARKS=ON \
@@ -160,15 +182,23 @@ build-perf/benchmarks/arknet_rudp_benchmark --payload 1024 --clients 4 --window 
   --seconds 3 --warmup 2 --rounds 3 --seed 42
 ```
 
-Configure Boost in a separate build directory with `-DARKNET_USE_BOOST_ASIO=ON`. Individual cases run directly as C++ executables; the maintainer batch entry is `bash benchmarks/run_rudp_fec.sh BUILD_DIR OUTPUT_DIR`, with no Python or Ruby dependency. Raw data retains every actual command, exit code and stderr file.
+Configure Boost in a separate build directory with `-DARKNET_USE_BOOST_ASIO=ON`. Cases run as C++ executables; maintainers batch with `bash benchmarks/run_rudp_fec.sh BUILD_DIR OUTPUT_DIR`, without Python or Ruby. Raw data retains each actual command, exit code and stderr file.
 
-The optional offline report tool needs Node only and does not launch network tests:
+</Step>
+
+<Step title="Generate the offline report">
+
+The optional offline report tool needs only Node; it does not launch network tests:
 
 ```sh
 node benchmarks/report_rudp_fec.mjs --self-check
 node benchmarks/report_rudp_fec.mjs \
   --results /path/to/arknet-results/rudp-fec --output docs/performance
 ```
+
+</Step>
+
+</Steps>
 
 [Full Metrics and Measurement Metadata](rudp-fec-summary.json)
 

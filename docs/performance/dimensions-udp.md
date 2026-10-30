@@ -2,7 +2,7 @@
 
 Local measurements on 2026-10-12: 216 runs, 62 valid configurations and 10 failed configurations. [Machine, source and buffer diagnosis](udp-update.md).
 
-16 clients; 64/1024/16384-byte messages; windows 1/4/16/64; three repetitions per configuration.
+16 clients; 64/1024/16384 bytes; windows 1/4/16/64; three runs/configuration.
 
 ## No extra application computation
 
@@ -12,8 +12,8 @@ Local measurements on 2026-10-12: 216 runs, 62 valid configurations and 10 faile
 
 ![Message p99 RTT](assets/dimensions-udp-latency.svg)
 
-- Standalone Asio: At 1024 bytes, the highest throughput median uses 1 context / 1 thread, window 4; the lowest p99 median uses 1 context / 1 thread, window 1.
-- Boost.Asio: At 1024 bytes, the highest throughput median uses 1 context / 1 thread, window 1; the lowest p99 median uses 1 context / 1 thread, window 1.
+- Standalone Asio, 1024 bytes: highest throughput median — 1 context / 1 thread, window 4; lowest p99 median — 1 context / 1 thread, window 1.
+- Boost.Asio, 1024 bytes: highest throughput median — 1 context / 1 thread, window 1; lowest p99 median — 1 context / 1 thread, window 1.
 
 [Complete numeric JSON (p95, run ranges and failures)](udp-dimensions-summary.json)
 
@@ -32,8 +32,16 @@ Local measurements on 2026-10-12: 216 runs, 62 valid configurations and 10 faile
 | Standalone Asio / callback | 16384 / 64 | 1 context / 1 thread | No extra application computation | #1: benchmark failed with exit code 1; UDP lost messages: 767, Drain timeouts: 1, Warmup errors: 768; #2: benchmark failed with exit code 1; UDP lost messages: 767, Drain timeouts: 1, Warmup errors: 768; #3: benchmark failed with exit code 1; UDP lost messages: 767, Drain timeouts: 1, Warmup errors: 768 |
 | Standalone Asio / callback | 16384 / 64 | 1 context / 4 threads | No extra application computation | #1: benchmark failed with exit code 1; UDP lost messages: 769, Drain timeouts: 1, Warmup errors: 770; #2: benchmark failed with exit code 1; UDP lost messages: 769, Drain timeouts: 1, Warmup errors: 769; #3: benchmark failed with exit code 1; UDP lost messages: 769, Drain timeouts: 1, Warmup errors: 770 |
 
-If any repetition fails, all three measurements for that profile are excluded from rate, latency and matched-ratio summaries; raw failures are retained.
+<Aside type="caution" title="Failed profiles">
 
-Larger UDP windows can lose traffic; profiles with loss are failed measurements, not capacity results. The server still receives through one serialized socket.
+Any failed repetition excludes the profile’s three runs from rate, latency and matched-ratio summaries. Raw failures remain.
+
+</Aside>
+
+<Aside type="caution" title="UDP limits">
+
+Larger UDP windows may lose traffic; such profiles are failed measurements, not capacity results. Server reception still uses one serialized socket.
+
+</Aside>
 
 [Metrics, statistics and reproduction](methodology.md)

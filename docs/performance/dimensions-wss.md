@@ -1,6 +1,6 @@
 # WSS Load Comparison
 
-16 clients; 64/1024/16384-byte messages; windows 1/4/16/64; three repetitions per configuration.
+16 clients; 64/1024/16384 bytes; windows 1/4/16/64; three runs/configuration.
 
 ## No extra application computation
 
@@ -10,15 +10,19 @@
 
 ![Message p99 RTT](assets/dimensions-wss-latency.svg)
 
-- Standalone Asio: At 1024 bytes, the highest throughput median uses 4 contexts / one thread each, window 64; the lowest p99 median uses 4 contexts / one thread each, window 1.
-- Boost.Asio: At 1024 bytes, the highest throughput median uses 4 contexts / one thread each, window 64; the lowest p99 median uses 4 contexts / one thread each, window 1.
+- Standalone Asio, 1024 bytes: highest throughput median — 4 contexts / one thread each, window 64; lowest p99 median — 4 contexts / one thread each, window 1.
+- Boost.Asio, 1024 bytes: highest throughput median — 4 contexts / one thread each, window 64; lowest p99 median — 4 contexts / one thread each, window 1.
 
 [Complete numeric JSON (p95, run ranges and failures)](dimensions-summary.json ':ignore')
 
 ## Failed Profiles
 
-No failed profiles for this protocol.
+No failed profiles.
 
-If any repetition fails, all three measurements for that profile are excluded from rate, latency and matched-ratio summaries; raw failures are retained.
+<Aside type="caution" title="Failed profiles">
+
+Any failed repetition excludes the profile’s three runs from rate, latency and matched-ratio summaries. Raw failures remain.
+
+</Aside>
 
 [Metrics, statistics and reproduction](methodology.md)

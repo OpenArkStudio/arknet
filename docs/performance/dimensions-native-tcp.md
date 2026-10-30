@@ -1,10 +1,14 @@
 # Native Asio TCP: Callbacks and Coroutines Load Comparison
 
-16 clients; 64/1024/16384-byte messages; windows 1/4/16/64; three repetitions per configuration.
+16 clients; 64/1024/16384 bytes; windows 1/4/16/64; three runs/configuration.
 
-Both executions use native Asio and fixed-size TCP batches: the server reads a complete batch, applies the same computation to each message, then writes the entire reply. Window 1 records message RTT; larger windows record batch RTT. The public arknet coroutine endpoint API remains TODO.
+Native Asio callbacks/coroutines share fixed-size TCP batches: the server reads a full batch, applies the same computation per message, then writes the entire reply. Window 1 records message RTT; larger windows batch RTT. Public arknet coroutine endpoints remain TODO.
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+<Aside type="note" title="CPU">
+
+Process CPU: 100% per logical CPU; multiple threads can exceed 100%. Estimates are labeled; incomplete three-sample sets show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+
+</Aside>
 
 ## No extra application computation
 
@@ -20,10 +24,10 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 
 ![Coroutine/callback CPU utilization ratio](assets/dimensions-native-tcp-iterations0-cpu-ratio.svg)
 
-- Standalone Asio: Matched coroutine/callback throughput medians range from 0.92× to 1.08×.
-- Standalone Asio: Matched coroutine/callback CPU medians range from 0.98× to 1.02×; below 1 means lower average process CPU. Compare with the throughput ratio.
-- Boost.Asio: Matched coroutine/callback throughput medians range from 0.92× to 1.11×.
-- Boost.Asio: Matched coroutine/callback CPU medians range from 0.92× to 1.05×; below 1 means lower average process CPU. Compare with the throughput ratio.
+- Standalone Asio: Matched coroutine/callback throughput median range: 0.92×–1.08×.
+- Standalone Asio: Matched coroutine/callback CPU median range: 0.98×–1.02×; below 1 means lower average process CPU. Compare throughput.
+- Boost.Asio: Matched coroutine/callback throughput median range: 0.92×–1.11×.
+- Boost.Asio: Matched coroutine/callback CPU median range: 0.92×–1.05×; below 1 means lower average process CPU. Compare throughput.
 
 ## 10,000 deterministic iterations per echo
 
@@ -39,19 +43,27 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 
 ![Coroutine/callback CPU utilization ratio](assets/dimensions-native-tcp-iterations10000-cpu-ratio.svg)
 
-- Standalone Asio: Matched coroutine/callback throughput medians range from 0.95× to 1.01×.
-- Standalone Asio: Matched coroutine/callback CPU medians range from 0.96× to 1.01×; below 1 means lower average process CPU. Compare with the throughput ratio.
-- Boost.Asio: Matched coroutine/callback throughput medians range from 0.93× to 1.02×.
-- Boost.Asio: Matched coroutine/callback CPU medians range from 0.95× to 1.01×; below 1 means lower average process CPU. Compare with the throughput ratio.
+- Standalone Asio: Matched coroutine/callback throughput median range: 0.95×–1.01×.
+- Standalone Asio: Matched coroutine/callback CPU median range: 0.96×–1.01×; below 1 means lower average process CPU. Compare throughput.
+- Boost.Asio: Matched coroutine/callback throughput median range: 0.93×–1.02×.
+- Boost.Asio: Matched coroutine/callback CPU median range: 0.95×–1.01×; below 1 means lower average process CPU. Compare throughput.
 
 [Complete numeric JSON (p95, run ranges and failures)](dimensions-summary.json ':ignore')
 
 ## Failed Profiles
 
-No failed profiles for this protocol.
+No failed profiles.
 
-If any repetition fails, all three measurements for that profile are excluded from rate, latency and matched-ratio summaries; raw failures are retained.
+<Aside type="caution" title="Failed profiles">
 
-Throughput and CPU ratios pair repetitions at the same dependency combination, payload, batch size, thread model and computation before taking the median; 1 means equal values. Lower CPU utilization does not necessarily complete more requests; compare throughput too. If any CPU sample is missing, its CPU summary and matched ratio are N/A while throughput may remain valid. These results do not predict arknet callback endpoint versus future coroutine API speed.
+Any failed repetition excludes the profile’s three runs from rate, latency and matched-ratio summaries. Raw failures remain.
+
+</Aside>
+
+<Aside type="caution" title="Ratios and limits">
+
+Pair repetitions with the same dependency combination, payload, batch, thread model and computation, then take throughput/CPU ratio medians; 1 means equal. Lower CPU need not complete more requests; compare throughput. Any missing CPU sample makes CPU summaries/ratios N/A; throughput may remain valid. This cannot predict arknet callback versus future coroutine API speed.
+
+</Aside>
 
 [Metrics, statistics and reproduction](methodology.md)

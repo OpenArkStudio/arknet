@@ -1,10 +1,14 @@
 # HTTP Local Performance
 
-Measurements come from independent local Release loopback processes, not CI.
+Independent local Release loopback measurements; collected outside CI.
 
 [Metric definitions and methodology](methodology.md).
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+<Aside type="note" title="CPU">
+
+Process CPU: 100% per logical CPU; multiple threads can exceed 100%. Estimates are labeled; incomplete three-sample sets show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+
+</Aside>
 
 ## No added computation
 
@@ -13,6 +17,9 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 ![p99 RTT](assets/http-work0-latency.svg)
 
 ### All Measured Profiles
+
+<details>
+<summary>Full values</summary>
 
 #### 64 B / 1 clients / window=1
 
@@ -104,4 +111,6 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 | Standalone Asio / 1 context / 2 threads | 38,472 [36,113, 38,709] | 1,202.25 | 6,612.17 | 7,079.25 | 7,517.17 | 189.9 (estimated) | 20.77 |
 | Standalone Asio / 1 context / 4 threads | 43,545 [42,816, 44,201] | 1,360.80 | 5,738.17 | 6,652.54 | 7,347.25 | 369.8 (estimated) | 20.86 |
 
-Tables show repeated-run medians; throughput brackets show min/max, not confidence intervals. Latencies are medians of per-run sampled percentiles, without pooling samples.
+</details>
+
+Run medians; throughput brackets are min/max, not confidence intervals. Latencies: median of per-run sampled percentiles, without pooling.

@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 import report
+from report_presentation import format_report
 
 PAYLOADS = (64, 1024, 16384)
 WINDOWS = (1, 4, 16, 64)
@@ -330,8 +331,8 @@ def chart(rows, failed, output, name, metric, work=0):
 def failure_table(rows, chinese):
     if not rows:
         return "本协议没有失败配置。" if chinese else "No failed profiles for this protocol."
-    lines = ["| " + ("后端 / 模式 | 消息字节 / 窗口 | 线程模型 | 业务计算 | 失败信息 |" if chinese else
-                      "Backend / execution | Payload bytes / window | Thread model | Application computation | Failure |"),
+    lines = ["| " + ("依赖方案 / 模式 | 消息字节 / 窗口 | 线程模型 | 业务计算 | 失败信息 |" if chinese else
+                      "Dependency / execution | Payload bytes / window | Thread model | Application computation | Failure |"),
              "| --- | --- | --- | --- | --- |"]
     for row in rows:
         errors = []
@@ -412,13 +413,13 @@ def detail_page(name, rows, failed, ratios, chinese, logical_cpus=None):
               "任一次重复失败，该配置的三次测量均不进入吞吐量、延迟或匹配倍率统计；原始数据保留失败记录。" if chinese else
               "If any repetition fails, all three measurements for that profile are excluded from rate, latency and matched-ratio summaries; raw failures are retained.", ""]
     if native:
-        lines += ["吞吐和 CPU 倍率按相同后端、消息、批次大小、线程模型和计算量逐次配对后取中位数；1 表示相同。CPU 占用更低不一定处理更多请求，需结合吞吐倍率判断。CPU 缺少任一次采样时，CPU 统计和对应倍率为 N/A，吞吐统计仍可保留。该结果不能推算 arknet 回调端点与未来协程 API 的速度差异。" if chinese else
-                  "Throughput and CPU ratios pair repetitions at the same backend, payload, batch size, thread model and computation before taking the median; 1 means equal values. Lower CPU utilization does not necessarily complete more requests; compare throughput too. If any CPU sample is missing, its CPU summary and matched ratio are N/A while throughput may remain valid. These results do not predict arknet callback endpoint versus future coroutine API speed.", ""]
+        lines += ["吞吐和 CPU 倍率按相同依赖方案、消息、批次大小、线程模型和计算量逐次配对后取中位数；1 表示相同。CPU 占用更低不一定处理更多请求，需结合吞吐倍率判断。CPU 缺少任一次采样时，CPU 统计和对应倍率为 N/A，吞吐统计仍可保留。该结果不能推算 arknet 回调端点与未来协程 API 的速度差异。" if chinese else
+                  "Throughput and CPU ratios pair repetitions at the same dependency combination, payload, batch size, thread model and computation before taking the median; 1 means equal values. Lower CPU utilization does not necessarily complete more requests; compare throughput too. If any CPU sample is missing, its CPU summary and matched ratio are N/A while throughput may remain valid. These results do not predict arknet callback endpoint versus future coroutine API speed.", ""]
     elif name == "udp":
         lines += ["UDP 窗口增加可能导致丢失；出现丢失的配置属于失败测量，不能作为吞吐能力。服务端仍通过一个 socket 串行接收。" if chinese else
                   "Larger UDP windows can lose traffic; profiles with loss are failed measurements, not capacity results. The server still receives through one serialized socket.", ""]
-    lines += [f"[{'指标、统计口径与复现' if chinese else 'Metrics, statistics and reproduction'}](../testing{suffix}.md)", ""]
-    return "\n".join(lines)
+    lines += [f"[{'指标、统计口径与复现' if chinese else 'Metrics, statistics and reproduction'}](methodology{suffix}.md)", ""]
+    return format_report("\n".join(lines), "dimension", chinese)
 
 
 def raw_link(path, raw_base):
@@ -459,10 +460,10 @@ def index_page(reports, rows, failed, chinese, raw_base, host_description="", na
         lines.append(f"- {label}: {len(value['results'])} " +
                      ("次测量" if chinese else "measurements") +
                      f"; executable SHA-256 `{value.get('executable_sha256', 'not recorded')}`")
-    lines += ["", f"[{'复现命令与指标定义' if chinese else 'Reproduction and metric definitions'}](../testing{suffix}.md)", "",
+    lines += ["", f"[{'复现命令与指标定义' if chinese else 'Reproduction and metric definitions'}](methodology{suffix}.md)", "",
               "本机回环、固定连接分布和短时测量不代表生产容量，业务选型仍需使用实际消息与连接分布测量。" if chinese else
               "Local loopback, fixed connection distributions and short runs do not establish production capacity; repeat with real messages and connection activity.", ""]
-    return "\n".join(lines)
+    return format_report("\n".join(lines), "dimension-index", chinese)
 
 
 def generate(reports, groups, failed, output, raw_base, host_description="", names=NAMES):

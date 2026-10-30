@@ -1,10 +1,14 @@
 # TCP Local Performance
 
-Measurements come from independent local Release loopback processes, not CI.
+Independent local Release loopback measurements; collected outside CI.
 
 [Metric definitions and methodology](methodology.md).
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+<Aside type="note" title="CPU">
+
+Process CPU: 100% per logical CPU; multiple threads can exceed 100%. Estimates are labeled; incomplete three-sample sets show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+
+</Aside>
 
 ## 12,500 idle connections
 
@@ -77,6 +81,9 @@ original workload/deadlines; see [operation history](../../benchmarks/CONNECTION
 ![p99 RTT](assets/tcp-work0-latency.svg)
 
 ### All Measured Profiles
+
+<details>
+<summary>Full values</summary>
 
 #### 64 B / 1 clients / window=1
 
@@ -168,4 +175,6 @@ original workload/deadlines; see [operation history](../../benchmarks/CONNECTION
 | Standalone Asio / 1 context / 2 threads | 100,397 [97,068, 101,140] | 3,137.40 | 2,511.00 | 2,765.21 | 3,189.75 | 197.7 (estimated) | 20.62 |
 | Standalone Asio / 1 context / 4 threads | 154,490 [153,953, 160,717] | 4,827.80 | 1,583.00 | 2,191.58 | 2,474.79 | 389.5 (estimated) | 20.64 |
 
-Tables show repeated-run medians; throughput brackets show min/max, not confidence intervals. Latencies are medians of per-run sampled percentiles, without pooling samples.
+</details>
+
+Run medians; throughput brackets are min/max, not confidence intervals. Latencies: median of per-run sampled percentiles, without pooling.

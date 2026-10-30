@@ -2,11 +2,15 @@
 
 Measured on 2026-10-12: all 180 measurements passed. [Machine, source and raw records](udp-update.md).
 
-Measurements come from independent local Release loopback processes, not CI.
+Independent local Release loopback measurements; collected outside CI.
 
 [Metric definitions and methodology](methodology.md).
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+<Aside type="note" title="CPU">
+
+Process CPU: 100% per logical CPU; multiple threads can exceed 100%. Estimates are labeled; incomplete three-sample sets show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+
+</Aside>
 
 ## No added computation
 
@@ -15,6 +19,9 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 ![p99 RTT](assets/udp-work0-latency.svg)
 
 ### All Measured Profiles
+
+<details>
+<summary>Full values</summary>
 
 #### 64 B / 1 clients / window=1
 
@@ -106,4 +113,6 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 | Standalone Asio / 1 context / 2 threads | 60,677 [60,419, 60,720] | 1,896.14 | 255.75 | 264.62 | 276.17 | 188.8 | 10.92 |
 | Standalone Asio / 1 context / 4 threads | 71,873 [71,163, 72,138] | 2,246.03 | 207.00 | 246.79 | 307.04 | 309.8 | 10.97 |
 
-Tables show repeated-run medians; throughput brackets show min/max, not confidence intervals. Latencies are medians of per-run sampled percentiles, without pooling samples.
+</details>
+
+Run medians; throughput brackets are min/max, not confidence intervals. Latencies: median of per-run sampled percentiles, without pooling.

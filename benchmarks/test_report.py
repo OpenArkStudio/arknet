@@ -231,7 +231,7 @@ class ReportTests(unittest.TestCase):
                 self.assertFalse(generated.splitlines()[2].startswith("["))
                 self.assertNotIn("[English]", generated)
                 self.assertNotIn("[中文]", generated)
-                self.assertIn("../testing", generated)
+                self.assertIn("methodology", generated)
             for text in (page, table, report.comparison_table(rows, chinese)):
                 for obsolete in (".png", "work=", "shared:", "sharded:", "夹具", "fixture"):
                     self.assertNotIn(obsolete, text)

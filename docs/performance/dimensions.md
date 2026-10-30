@@ -16,7 +16,11 @@ Local Release IPv4 loopback: 16 clients, three payload sizes, four windows and t
 
 Measurement 1.0 s, warmup 0.25 s. Charts show medians and min/max, not confidence intervals; p99 is the median of per-run sampled percentiles.
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+<Aside type="note" title="CPU">
+
+Process CPU: 100% per logical CPU; multiple threads can exceed 100%. Estimates are labeled; incomplete three-sample sets show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+
+</Aside>
 
 - Source SHA-256: `fa69d6ce97745281290a263cb0f2515470ede0edb77f5132ce6e3ac7ae7cd9b4`
 - UDP source SHA-256: `0771574af8ca56f1914deb544b956079e0a2f24021953ded5f5d524e3df334b1`; [raw records and conditions](udp-update.md).
@@ -24,7 +28,11 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 
 Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch arm64; TLS ON; sanitizers OFF. Standalone Asio 1.38.2 with BHO Beast based on Boost 1.84 (API 351); Boost 1.90.0 with Asio 1.38.0 and Beast API 359; OpenSSL 3.6.4. Mac mini on AC power, low power mode disabled, no CPU affinity.
 
-The arknet protocol program measures message RTT; matched native Asio callback/coroutine executions measure batch RTT. Their fixed-batch results do not establish speedups over arknet endpoints; public coroutine endpoint APIs remain TODO.
+<Aside type="caution" title="RTT scope">
+
+Arknet protocols measure message RTT; matched native Asio callbacks/coroutines measure batch RTT. Fixed batches cannot establish speedups over arknet endpoints; public coroutine APIs remain TODO.
+
+</Aside>
 
 <a id="tcp"></a>
 
@@ -85,4 +93,8 @@ The arknet protocol program measures message RTT; matched native Asio callback/c
 
 [Reproduction and metric definitions](methodology.md)
 
-Local loopback, fixed connection distributions and short runs do not establish production capacity; repeat with real messages and connection activity.
+<Aside type="caution" title="Scope">
+
+Loopback, fixed connections and short runs do not establish production capacity; repeat with real messages and connection activity.
+
+</Aside>

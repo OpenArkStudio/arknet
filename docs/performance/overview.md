@@ -20,7 +20,11 @@ Release build; measurement=1.0 s; warmup=0.25 s; repetitions=3.
 
 Main charts: **1024 bytes, 16 clients, no added computation**. Inflight messages per connection: UDP 1; other protocols 16. Both peers share the process and IO workers over local loopback.
 
-Average process CPU uses 100% for one logical CPU and can exceed 100% with multiple threads; estimated values are labeled, and incomplete sets of three CPU samples show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+<Aside type="note" title="CPU">
+
+Process CPU: 100% per logical CPU; multiple threads can exceed 100%. Estimates are labeled; incomplete three-sample sets show N/A. On this 14-logical-CPU host, machine share = process CPU% / 14; 100% of one CPU is 7.14% of the machine.
+
+</Aside>
 
 ## Key Results
 
@@ -29,7 +33,7 @@ Average process CPU uses 100% for one logical CPU and can exceed 100% with multi
 - **Coroutine TCP / Standalone Asio / No added computation**: 1 context / 4 threads has this group's highest throughput median (1.84× one thread); its p99 is 870.46 us versus 1,028.71 us with one thread.
 - **Coroutine TCP / Standalone Asio / 10,000 CPU iterations per echo**: 4 contexts / 4 threads has this group's highest throughput median (3.54× one thread); its p99 is 1,749.29 us versus 5,687.25 us with one thread.
 
-The highest median applies only to the stated load; complete results appear below.
+Highest medians apply only to the stated load; see protocol reports.
 
 ## Throughput
 
@@ -53,26 +57,36 @@ The highest median applies only to the stated load; complete results appear belo
 
 ## Detailed Results by Protocol
 
-- [TCP](tcp.md)
-- [UDP](udp.md)
-- [WebSocket](websocket.md)
-- [TCP+TLS](tcps.md)
-- [WSS](wss.md)
-- [HTTP](http.md)
-- [HTTPS](https.md)
-- [Coroutine TCP](coroutine.md)
+<CardGrid>
+<LinkCard title="TCP" href="tcp.md" />
+<LinkCard title="UDP" href="udp.md" />
+<LinkCard title="WebSocket" href="websocket.md" />
+<LinkCard title="TCP+TLS" href="tcps.md" />
+<LinkCard title="WSS" href="wss.md" />
+<LinkCard title="HTTP" href="http.md" />
+<LinkCard title="HTTPS" href="https.md" />
+<LinkCard title="Coroutine TCP" href="coroutine.md" />
+</CardGrid>
 
-Detailed pages retain all 64/1024/16384-byte and 1/16-client profiles. Bars show repeated-run medians; error bars show min/max, not confidence intervals.
+Detailed pages retain all 64/1024/16384-byte and 1/16-client profiles. Bars: repeated-run medians; whiskers: min/max, not confidence intervals.
 
 [All measured values (JSON)](summary.json ':ignore') | [Payload, batch and execution comparisons](dimensions.md)
 
-Coroutine window=16 measures batch RTT; the callback program measures message RTT. These results do not establish coroutine speedups.
+<Aside type="caution" title="RTT scope">
+
+Coroutine window=16 measures batch RTT; callbacks measure message RTT. This does not establish coroutine speedups.
+
+</Aside>
 
 ## Toolchain and Build
 
 Apple Clang 21.0.0; CMake 4.3.3; Ninja; Release -O3 -DNDEBUG -std=gnu++20 -arch arm64; TLS ON; sanitizers OFF. Standalone Asio 1.38.2 with BHO Beast based on Boost 1.84 (API 351); Boost 1.90.0 with Asio 1.38.0 and Beast API 359; OpenSSL 3.6.4. Mac mini on AC power, low power mode disabled, no CPU affinity.
 
-The dependency combinations use different Beast versions, so differences between them also include dependency-version effects and cannot be attributed solely to Asio.
+<Aside type="caution" title="Dependencies">
+
+Different Beast versions also affect these combinations; differences cannot be attributed solely to Asio.
+
+</Aside>
 
 ## Metric Definitions
 
@@ -104,4 +118,8 @@ The dependency combinations use different Beast versions, so differences between
 
 ## Scope
 
-Local loopback results do not establish cross-host or production capacity. Short runs, scheduling and thermals introduce variance; repeat with the deployment workload.
+<Aside type="caution" title="Scope">
+
+Loopback does not establish cross-host or production capacity. Short runs, scheduling and thermals add variance; repeat with the deployment workload.
+
+</Aside>
