@@ -190,6 +190,12 @@ for (const [page, locale] of [["features/rudp/fec/index.html", "en"], ["zh/featu
 }
 console.log("Checked English/Chinese FEC controls, including the search dialog locale.");
 
+// This gate runs after the build, so the renderer's optional offline check must
+// inspect real emitted pages here rather than merely synthetic measurements.
+await readFile(join(root, "performance/rudp/index.md"), "utf8");
+const { checkBuiltPresentation } = await import("../../../benchmarks/report_rudp_fec.mjs");
+checkBuiltPresentation();
+
 // Check emitted reference/report content within the existing documentation gate.
 {
 const { default: assert } = await import("node:assert/strict");

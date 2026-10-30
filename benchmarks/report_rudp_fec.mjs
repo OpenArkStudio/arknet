@@ -622,7 +622,7 @@ function resultTableRows(document, zh) {
     .map(table => table.trimEnd()).join("\n");
 }
 
-function checkBuiltPresentation() {
+export function checkBuiltPresentation() {
   const root = new URL("../docs/site/dist/", import.meta.url);
   if (!existsSync(new URL("performance/rudp/index.html", root))) {
     console.log("RUDP presentation: emitted HTML/Markdown not checked; build docs/site to enable this check.");
