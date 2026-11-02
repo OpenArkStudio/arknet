@@ -39,14 +39,15 @@ The host was an arm64 Mac mini with Apple M4 Pro, 14 cores and 48 GiB RAM,
 macOS 27.0.1, AppleClang 21.0.0, C++20 Release and Boost 1.92.0 (Boost.Asio);
 TLS was off.
 
-The permanent native RUDP benchmark passed nine independent seeded cases,
-each with 20 seconds of traffic after warmup:
+The permanent native RUDP benchmark passed nine independent seeded cases: six
+clean/random cases with 20 seconds of traffic each and three burst-loss cases
+with 600 seconds each. Each case ran once after warmup. Completed round trips:
 
-| Network condition | ARQ-only | Fixed FEC | Adaptive FEC |
-| --- | --- | --- | --- |
-| Clean | Pass | Pass | Pass |
-| Random loss | Pass | Pass | Pass |
-| Burst loss | Pass | Pass | Pass |
+| Network condition | Traffic per case | ARQ-only | Fixed FEC | Adaptive FEC |
+| --- | --- | ---: | ---: | ---: |
+| Clean | 20 s | 908,461 | 663,209 | 861,952 |
+| Random loss | 20 s | 10,903 | 14,762 | 14,570 |
+| Burst loss | 600 s | 440,809 | 435,279 | 443,732 |
 
 Sent, server-received and client-received totals matched. All recorded error,
 rejection, unfinished-message, pending-completion, drain-timeout and relay-overflow
@@ -58,12 +59,12 @@ counters were zero.
 
 | Setting | Recorded scope |
 | --- | --- |
-| Workload | Seed 42; four IPv4 loopback clients; four shared IO workers; 1,024-byte payloads; eight messages in flight per client; one second warmup, 20 seconds traffic, then drain |
+| Workload | Seed 42; four IPv4 loopback clients; four shared IO workers; 1,024-byte payloads; eight messages in flight per client; one second warmup, 20 seconds clean/random or 600 seconds burst traffic, then drain |
 | Impairment | Clean: no injected loss/delay; random: 5% loss; burst: three packets dropped per 100. Both impaired profiles: 10 ms one-way delay, 1% duplication and 5% reordering |
 | Endpoint bounds, checked every 100 ms | Separate 4 MiB ARQ/raw queues; FEC retained bytes ≤1 MiB and retained groups ≤128; all sampled endpoints within bounds |
 | Relay route bounds | 8 MiB and 8,192 packets per route |
-| Sampled aggregate peaks | ARQ 65,536 bytes; raw queues 30,744 bytes; FEC 139,438 bytes |
-| Process peak RSS | 6 MiB |
+| Sampled aggregate peaks | ARQ 65,536 bytes; raw queues 31,602 bytes; FEC 165,616 bytes |
+| Process peak RSS | 6,782,976 bytes (6.47 MiB) |
 
 </CollapsibleContent>
 </Collapsible>
@@ -72,10 +73,11 @@ counters were zero.
 
 Queue/FEC peaks aggregate sampled endpoint values; individual endpoint traces
 and exact instantaneous peaks were not exported. RSS is a process high-water
-mark, not a post-teardown allocation trace. This short local batch does not
-establish leak freedom, production-duration endurance, cross-host capacity or
-performance. Other builds ran concurrently; no throughput/latency comparison was
-made. Raw JSON, commands, binary fingerprints and logs remain local.
+mark, not a post-teardown allocation trace. These independent local cases,
+including ten minutes per burst-loss policy, do not establish leak freedom,
+production-duration endurance, cross-host capacity or performance. Other builds
+ran concurrently; no throughput/latency comparison was made. Raw JSON, commands,
+binary fingerprints and logs remain local.
 
 </Aside>
 
