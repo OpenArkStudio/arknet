@@ -1,5 +1,7 @@
 # Production acceptance and ARK adoption
 
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+
 arknet is intended for production use and direct replacement of zephyr in ARK.
 A working echo example is only a functional check. Adoption also requires bounded
 resources, failure recovery, concurrency checks and regression tests of the consumer.
@@ -28,6 +30,54 @@ are not additions to v0.2.2.
 measured scopes and results. Local loopback and simulated loss do not establish production
 capacity on a deployment network. Deployment acceptance requires the remaining
 evidence below.
+
+## Bounded local RUDP stability check
+
+On 2026-11-02, source `ca11745878b0a5fce963eb0d25fe26edfb55943f` passed
+`rudp`, `rudp_stability`, `fec` and `rudp_fec`: 47 cases and 13,993 assertions.
+The host was an arm64 Mac mini with Apple M4 Pro, 14 cores and 48 GiB RAM,
+macOS 27.0.1, AppleClang 21.0.0, C++20 Release and Boost 1.92.0 (Boost.Asio);
+TLS was off.
+
+The permanent native RUDP benchmark passed nine independent seeded cases,
+each with 20 seconds of traffic after warmup:
+
+| Network condition | ARQ-only | Fixed FEC | Adaptive FEC |
+| --- | --- | --- | --- |
+| Clean | Pass | Pass | Pass |
+| Random loss | Pass | Pass | Pass |
+| Burst loss | Pass | Pass | Pass |
+
+Sent, server-received and client-received totals matched. All recorded error,
+rejection, unfinished-message, pending-completion, drain-timeout and relay-overflow
+counters were zero.
+
+<Collapsible class="my-4 rounded-lg border p-4">
+<CollapsibleTrigger class="font-semibold">Network and resource settings</CollapsibleTrigger>
+<CollapsibleContent>
+
+| Setting | Recorded scope |
+| --- | --- |
+| Workload | Seed 42; four IPv4 loopback clients; four shared IO workers; 1,024-byte payloads; eight messages in flight per client; one second warmup, 20 seconds traffic, then drain |
+| Impairment | Clean: no injected loss/delay; random: 5% loss; burst: three packets dropped per 100. Both impaired profiles: 10 ms one-way delay, 1% duplication and 5% reordering |
+| Endpoint bounds, checked every 100 ms | Separate 4 MiB ARQ/raw queues; FEC retained bytes ≤1 MiB and retained groups ≤128; all sampled endpoints within bounds |
+| Relay route bounds | 8 MiB and 8,192 packets per route |
+| Sampled aggregate peaks | ARQ 65,536 bytes; raw queues 30,744 bytes; FEC 139,438 bytes |
+| Process peak RSS | 6 MiB |
+
+</CollapsibleContent>
+</Collapsible>
+
+<Aside type="note" title="Validation scope">
+
+Queue/FEC peaks aggregate sampled endpoint values; individual endpoint traces
+and exact instantaneous peaks were not exported. RSS is a process high-water
+mark, not a post-teardown allocation trace. This short local batch does not
+establish leak freedom, production-duration endurance, cross-host capacity or
+performance. Other builds ran concurrently; no throughput/latency comparison was
+made. Raw JSON, commands, binary fingerprints and logs remain local.
+
+</Aside>
 
 ## Recorded acceptance status
 

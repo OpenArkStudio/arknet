@@ -1,5 +1,7 @@
 # 生产验收与 ARK 接入
 
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+
 arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 回显示例只能验证基本功能。正式采用还需要资源上限、故障恢复、并发检查与调用方业务回归。
 
@@ -24,6 +26,49 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 [测试与验证](testing_CN.md)、[RUDP/FEC 报告](../performance/rudp_CN.md)和独立的
 [RUDP 并发报告](../performance/rudp-concurrency_CN.md)分别记录实际范围与结果。
 本机回环与模拟丢包不能确定部署网络上的生产容量。生产部署仍需补齐下面列出的验收证据。
+
+## 本机短时 RUDP 稳定性验证
+
+2026-11-02，源码 `ca11745878b0a5fce963eb0d25fe26edfb55943f` 通过
+`rudp`、`rudp_stability`、`fec` 和 `rudp_fec` 的 47 个用例、13,993 项断言。
+主机为 arm64 Mac mini，Apple M4 Pro、14 核、48 GiB 内存，运行 macOS 27.0.1；
+使用 AppleClang 21.0.0、C++20 Release、Boost 1.92.0 的 Boost.Asio，关闭 TLS。
+
+仓库内的原生 RUDP 基准程序通过九组独立的种子控制场景，每组在预热后发送 20 秒：
+
+| 网络条件 | 仅 ARQ | 固定 FEC | 自适应 FEC |
+| --- | --- | --- | --- |
+| 无故障 | 通过 | 通过 | 通过 |
+| 随机丢包 | 通过 | 通过 | 通过 |
+| 突发丢包 | 通过 | 通过 | 通过 |
+
+发送、服务端接收和客户端接收总数一致；记录的错误、拒绝、未完成消息、待完成回调、
+排空超时和中继溢出计数均为零。
+
+<Collapsible class="my-4 rounded-lg border p-4">
+<CollapsibleTrigger class="font-semibold">网络与资源设置</CollapsibleTrigger>
+<CollapsibleContent>
+
+| 设置 | 实际范围 |
+| --- | --- |
+| 负载 | 种子 42；四个 IPv4 回环客户端；四个共享 IO 工作线程；1,024 字节包体；每客户端八条在途消息；预热 1 秒、发送 20 秒，随后排空 |
+| 故障条件 | 无故障：不注入丢包和延迟；随机丢包：5%；突发丢包：每 100 个包丢弃三个。两种故障场景均加入 10 ms 单向延迟、1% 重复和 5% 乱序 |
+| 端点上限，每 100 ms 检查 | ARQ／原始发送队列分别为 4 MiB；FEC 保留数据 ≤1 MiB、保留分组 ≤128；所有采样端点均满足上限 |
+| 中继路由上限 | 每条路由 8 MiB、8,192 个包 |
+| 采样聚合峰值 | ARQ 65,536 字节；原始发送队列 30,744 字节；FEC 139,438 字节 |
+| 进程 RSS 峰值 | 6 MiB |
+
+</CollapsibleContent>
+</Collapsible>
+
+<Aside type="note" title="验证范围">
+
+队列／FEC 峰值来自各端点采样值的聚合，未导出逐端点轨迹或精确瞬时峰值。
+RSS 是进程内存高水位，不是销毁后的分配轨迹。这批短时本机检查不证明无泄漏、
+生产时长耐久、跨主机容量或性能。运行期间还有其他构建，未进行吞吐量或延迟对比。
+原始 JSON、命令、程序指纹和日志仅留本地。
+
+</Aside>
 
 ## 验收状态
 
