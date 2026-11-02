@@ -29,6 +29,41 @@ measured scopes and results. Local loopback and simulated loss do not establish 
 capacity on a deployment network. Deployment acceptance requires the remaining
 evidence below.
 
+## Bounded local RUDP stability check
+
+On 2026-11-02, source `ca11745878b0a5fce963eb0d25fe26edfb55943f` passed
+`rudp`, `rudp_stability`, `fec` and `rudp_fec`: 47 cases and 13,993 assertions.
+The host was an arm64 Mac mini with Apple M4 Pro, 14 cores and 48 GB RAM,
+macOS 27.0.1, AppleClang 21.0.0, C++20 Release and Boost 1.92.0 (Boost.Asio);
+TLS was off.
+
+The permanent native RUDP benchmark ran nine independent cases: clean, random
+and burst relay profiles × ARQ-only, fixed FEC and adaptive FEC. Each used seed
+42, four IPv4 loopback clients, four shared IO workers, 1,024-byte payloads, an
+eight-message window per client, one second of warmup and 20 seconds of traffic
+before drain.
+Random loss was 5%; bursts dropped three packets per 100. Both impaired profiles
+added 10 ms one-way delay, 1% duplication and 5% reordering.
+
+All nine cases passed. Sent, server-received and client-received totals matched;
+all recorded error, rejection, unfinished-message, pending-completion,
+drain-timeout and relay-overflow counters were zero. At 100 ms sampling intervals,
+each endpoint stayed within separate 4 MiB ARQ/raw queue limits and FEC limits of
+1 MiB retained bytes and 128 groups. Each relay route was limited to 8 MiB and
+8,192 packets. Sampled aggregate peaks were 65,536 bytes for ARQ, 30,744 for raw
+queues and 139,438 for FEC; peak process RSS was 6 MiB.
+
+<Aside type="note" title="Validation scope">
+
+Queue/FEC peaks aggregate sampled endpoint values; individual endpoint traces
+and exact instantaneous peaks were not exported. RSS is a process high-water
+mark, not a post-teardown allocation trace. This short local batch does not
+establish leak freedom, production-duration endurance, cross-host capacity or
+performance. Other builds ran concurrently; no throughput/latency comparison was
+made. Raw JSON, commands, binary fingerprints and logs remain local.
+
+</Aside>
+
 ## Recorded acceptance status
 
 | Scope | Evidence |
