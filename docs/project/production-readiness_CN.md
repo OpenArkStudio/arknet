@@ -1,5 +1,7 @@
 # 生产验收与 ARK 接入
 
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+
 arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 回显示例只能验证基本功能。正式采用还需要资源上限、故障恢复、并发检查与调用方业务回归。
 
@@ -29,20 +31,35 @@ arknet 的目标是用于生产环境，并在 ARK 中直接替换 zephyr。
 
 2026-11-02，源码 `ca11745878b0a5fce963eb0d25fe26edfb55943f` 通过
 `rudp`、`rudp_stability`、`fec` 和 `rudp_fec` 的 47 个用例、13,993 项断言。
-主机为 arm64 Mac mini，Apple M4 Pro、14 核、48 GB 内存，运行 macOS 27.0.1；
+主机为 arm64 Mac mini，Apple M4 Pro、14 核、48 GiB 内存，运行 macOS 27.0.1；
 使用 AppleClang 21.0.0、C++20 Release、Boost 1.92.0 的 Boost.Asio，关闭 TLS。
 
-仓库内的原生 RUDP 基准程序执行九组独立功能场景：无故障、随机丢包、突发丢包中继，
-分别配合仅 ARQ、固定 FEC、自适应 FEC。每组使用种子 42、四个 IPv4 回环客户端、
-四个共享 IO 工作线程、1,024 字节包体，每客户端八条在途消息，预热 1 秒后发送 20 秒，
-随后排空。随机丢包率为 5%；突发场景每 100 个包丢弃三个。两种故障场景均加入
-10 ms 单向延迟、1% 重复和 5% 乱序。
+仓库内的原生 RUDP 基准程序通过九组独立的种子控制场景，每组在预热后发送 20 秒：
 
-九组均通过。发送、服务端接收和客户端接收总数一致；记录的错误、拒绝、未完成消息、
-待完成回调、排空超时和中继溢出计数均为零。按 100 ms 间隔采样时，各端点分别满足
-ARQ／原始发送队列各 4 MiB、FEC 保留数据 1 MiB 和 128 个分组的上限。
-每条中继路由上限为 8 MiB 和 8,192 个包。采样聚合峰值分别为 ARQ 65,536 字节、
-原始发送队列 30,744 字节、FEC 139,438 字节；进程 RSS 峰值为 6 MiB。
+| 网络条件 | 仅 ARQ | 固定 FEC | 自适应 FEC |
+| --- | --- | --- | --- |
+| 无故障 | 通过 | 通过 | 通过 |
+| 随机丢包 | 通过 | 通过 | 通过 |
+| 突发丢包 | 通过 | 通过 | 通过 |
+
+发送、服务端接收和客户端接收总数一致；记录的错误、拒绝、未完成消息、待完成回调、
+排空超时和中继溢出计数均为零。
+
+<Collapsible class="my-4 rounded-lg border p-4">
+<CollapsibleTrigger class="font-semibold">网络与资源设置</CollapsibleTrigger>
+<CollapsibleContent>
+
+| 设置 | 实际范围 |
+| --- | --- |
+| 负载 | 种子 42；四个 IPv4 回环客户端；四个共享 IO 工作线程；1,024 字节包体；每客户端八条在途消息；预热 1 秒、发送 20 秒，随后排空 |
+| 故障条件 | 无故障：不注入丢包和延迟；随机丢包：5%；突发丢包：每 100 个包丢弃三个。两种故障场景均加入 10 ms 单向延迟、1% 重复和 5% 乱序 |
+| 端点上限，每 100 ms 检查 | ARQ／原始发送队列分别为 4 MiB；FEC 保留数据 ≤1 MiB、保留分组 ≤128；所有采样端点均满足上限 |
+| 中继路由上限 | 每条路由 8 MiB、8,192 个包 |
+| 采样聚合峰值 | ARQ 65,536 字节；原始发送队列 30,744 字节；FEC 139,438 字节 |
+| 进程 RSS 峰值 | 6 MiB |
+
+</CollapsibleContent>
+</Collapsible>
 
 <Aside type="note" title="验证范围">
 
