@@ -37,11 +37,21 @@ test("native Nimbus components use MDX and retain nested Markdown links", () => 
 });
 
 test("component examples inside code blocks and inline code stay plain Markdown", () => {
-  const source = '# Authoring\n\nUse `<Steps>`.\n\n```md\n<Aside type="note">\n\nExample\n\n</Aside>\n```\n';
+  const source = '# Authoring\n\nUse `<Steps>` or `<FileTree>`.\n\n```md\n<Aside type="note">\n\nExample\n\n</Aside>\n<FileTree>\n- src/\n</FileTree>\n```\n';
   const result = convertPage(source, "authoring.md", new Set());
   assert.equal(pageExtension(source), ".md");
   assert.doesNotMatch(result, /import \{/);
   assert.ok(result.includes('```md\n<Aside type="note">'));
+});
+
+test("FileTree imports the site component and preserves nested directory Markdown", () => {
+  const source = '# Layout\n\n<FileTree>\n\n- src/ — Framework sources\n  - core/ — Module lifecycle\n    - client.hpp\n- config/ — TOML samples\n  - ...\n\n</FileTree>\n\nUse `<arknet/base/client.hpp>`; see [examples](guides/examples.md).\n';
+  const result = convertPage(source, "layout.md", new Set(["guides/examples.md"]));
+  assert.equal(pageExtension(source), ".mdx");
+  assert.match(result, /import \{ FileTree \} from "@\/components\/ui\/file-tree"/);
+  assert.ok(result.includes('- src/ — Framework sources\n  - core/ — Module lifecycle\n    - client.hpp\n- config/ — TOML samples\n  - ...'));
+  assert.ok(result.includes('`<arknet/base/client.hpp>`'));
+  assert.ok(result.includes('[examples](/guides/examples)'));
 });
 
 test("cards and tabs import vendored components and resolve bilingual card destinations", () => {

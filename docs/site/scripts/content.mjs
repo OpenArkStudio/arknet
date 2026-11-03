@@ -20,7 +20,7 @@ function components(tree) {
   const names = new Set();
   function walk(node) {
     if (node.type === "html") {
-      for (const match of node.value.matchAll(/<(Aside|Steps|Step|CardGrid|LinkCard|Tabs|TabItem)(?=[\s/>])/g)) names.add(match[1]);
+      for (const match of node.value.matchAll(/<(Aside|Steps|Step|CardGrid|LinkCard|Tabs|TabItem|FileTree)(?=[\s/>])/g)) names.add(match[1]);
     }
     for (const child of node.children ?? []) walk(child);
   }
@@ -91,6 +91,7 @@ export function convertPage(source, file, files) {
   if (steps.length) imports.push(`import { ${steps.join(", ")} } from "@/components/ui/steps";`);
   if (names.has("CardGrid")) imports.push('import { CardGrid } from "@/components/ui/card-grid";');
   if (names.has("LinkCard")) imports.push('import { LinkCard } from "@/components/ui/link-card";');
+  if (names.has("FileTree")) imports.push('import { FileTree } from "@/components/ui/file-tree";');
   const tabs = ["Tabs", "TabItem"].filter(name => names.has(name));
   if (tabs.length) imports.push(`import { ${tabs.join(", ")} } from "@/components/ui/tabs";`);
   return `---\ntitle: ${JSON.stringify(title)}\n---\n\n${imports.length ? imports.join("\n") + "\n\n" : ""}${body.trim()}\n`;
