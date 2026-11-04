@@ -18,7 +18,9 @@
 | `map`、`attribute` | `elements` 中交替排列键和值，保留键的类型 |
 | `null` | 无数据 |
 
-`attributes` 保存附着在该值上的 RESP3 属性。读取数据前先检查类型。服务端错误是类型化回复，不是传输失败：`bool(result)` 检查 `client_errc`，应用仍需检查每一项回复。流水线失败时，结果可能保留失败前已经收到的回复。
+`attributes` 保存附着在该值上的 RESP3 属性。读取数据前先检查类型。服务端错误是类型化回复，不是传输失败：`bool(result)` 检查 `client_errc`，应用仍需检查每一项回复。流水线失败或取消时，结果保留完成前已经收到的完整回复；后续解码和客户端析构不会使这些值失效。不完整的回复不会暴露给调用者。
+
+解码器遵循 [Redis 协议规范](https://redis.io/docs/latest/develop/reference/protocol-spec/)：RESP3 double 的小数点后必须有数字，推送必须位于消息顶层。回复格式错误或超出 `response_limits` 时，以 `client_errc::protocol_error` 关闭连接，让在途请求失败，不重放命令。
 
 ## 限额与超时
 

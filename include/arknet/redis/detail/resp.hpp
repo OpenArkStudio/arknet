@@ -139,6 +139,10 @@ public:
                 {
                     return fail(resp_status::malformed);
                 }
+                else if (byte == '>' && !frames_.empty())
+                {
+                    return fail(resp_status::malformed);
+                }
                 else if (++values_ > limits_.max_values || frames_.size() >= limits_.max_depth)
                 {
                     return fail(resp_status::limit_exceeded);
@@ -560,6 +564,12 @@ private:
                 integral.remove_prefix(1);
             }
             if (integral.empty() || integral.front() < '0' || integral.front() > '9')
+            {
+                return fail(resp_status::malformed);
+            }
+            const auto point = integral.find('.');
+            if (point != std::string_view::npos &&
+                (point + 1 == integral.size() || integral[point + 1] < '0' || integral[point + 1] > '9'))
             {
                 return fail(resp_status::malformed);
             }

@@ -90,6 +90,46 @@ DOCTEST_TEST_CASE("RESP3 represents scalars, maps, sets, pushes and verbatim val
     check(push.type == resp_type::push && push.elements[0].text == "invalidate", "push remains distinguishable");
 }
 
+DOCTEST_TEST_CASE("RESP3 doubles require digits after a decimal point") {
+    check(decode(",1.0\r\n").real == 1.0, "fractional digits");
+    check(decode(",-1.25e+2\r\n").real == -125.0, "fraction and exponent");
+    check(decode(",+1e-2\r\n").real == 0.01, "exponent without a fraction");
+    for (const std::string wire : {",1.\r\n", ",-1.e+2\r\n", ",+0.E-1\r\n"})
+    {
+        DOCTEST_INFO(wire);
+        resp_decoder decoder;
+        resp_value value;
+        value.text = "unchanged";
+        check(decoder.append(wire + "+VALID\r\n"), "append invalid double and following reply");
+        check(decoder.next(value) == resp_status::malformed && value.text == "unchanged",
+            "incomplete fraction is not a reply");
+        check(decoder.next(value) == resp_status::malformed, "invalid double cannot expose the following reply");
+    }
+}
+
+DOCTEST_TEST_CASE("RESP3 pushes cannot be nested inside another value") {
+    for (const std::string aggregate : {"*1", "%1", "~1", "|1", ">2\r\n+outer", "*?", "%?", "~?"})
+    {
+        DOCTEST_INFO(aggregate);
+        const auto wire = aggregate + "\r\n>1\r\n+invalid\r\n:1\r\n+VALID\r\n";
+        for (std::size_t split = 0; split < wire.size(); ++split)
+        {
+            resp_decoder decoder;
+            resp_value value;
+            value.text = "unchanged";
+            check(decoder.append(std::string_view(wire).substr(0, split)), "append prefix");
+            auto status = decoder.next(value);
+            if (status == resp_status::need_more)
+            {
+                check(decoder.append(std::string_view(wire).substr(split)), "append suffix");
+                status = decoder.next(value);
+            }
+            check(status == resp_status::malformed && value.text == "unchanged", "reject nested push");
+            check(decoder.next(value) == resp_status::malformed, "nested push failure is sticky");
+        }
+    }
+}
+
 DOCTEST_TEST_CASE("RESP3 attributes decorate the correct nested value without consuming a reply") {
     auto value = decode("|1\r\n+outer\r\n:1\r\n|1\r\n+other\r\n:2\r\n"
                         "*2\r\n|1\r\n+ttl\r\n:9\r\n$1\r\na\r\n:5\r\n");
