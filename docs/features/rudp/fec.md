@@ -70,6 +70,7 @@ client.set_fec_options(settings);
 | Burst removes more than 2 shards | ARQ is still required |
 | Effective parity | Byte budgets and minimum group size may reduce it below configuration |
 | Group retention | Complete groups release immediately; incomplete groups expire |
+| Shard staging allocation failure | `fec::transport::input` releases the affected incomplete recovery group and propagates the exception; application delivery callback exceptions preserve accepted state |
 | Retention full | Skip extra FEC buffering; valid systematic data still reaches ARQ |
 | Duplicate filtering | Fixed 4096-group window |
 | Coding scratch space | Bounded by shard count and MTU, separate from retention budget |

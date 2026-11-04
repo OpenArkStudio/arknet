@@ -86,6 +86,7 @@ function(arknet_configure_allocation_failure_test target)
         BOOST_ASIO_DISABLE_SMALL_BLOCK_RECYCLING BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC BOOST_ASIO_DISABLE_BOOST_ALIGN
         ASIO_DISABLE_SMALL_BLOCK_RECYCLING ASIO_DISABLE_STD_ALIGNED_ALLOC ASIO_DISABLE_BOOST_ALIGN)
 endfunction()
+target_sources(arknet_fec_test PRIVATE scoped_allocation_failure.cpp)
 add_executable(arknet_allocation_failure_test allocation_failure.cpp scoped_allocation_failure.cpp test_main.cpp)
 arknet_configure_allocation_failure_test(arknet_allocation_failure_test)
 arknet_add_check(allocation_failure 30 arknet_allocation_failure_test)
