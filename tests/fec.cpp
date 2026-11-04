@@ -4,13 +4,16 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include <arknet/arq/core.hpp>
 #include <arknet/fec/transport.hpp>
 #include "check.hpp"
+#include "scoped_allocation_failure.hpp"
 
 namespace {
 
@@ -99,6 +102,90 @@ DOCTEST_TEST_CASE("Rejected FEC metadata cannot advance the receive replay windo
     check(!value.receiver.input(invalid, 0), "zero-parity multi-data group is invalid");
     check(value.receiver.input(value.wire.front(), 0), "rejected future group did not poison replay state");
     check(value.received == expected, "legitimate original still arrives");
+}
+
+DOCTEST_TEST_CASE("FEC input allocation failure releases incomplete recovery state and permits retry") {
+    for (const unsigned index : {1U, 2U})
+    {
+        DOCTEST_CAPTURE(index);
+        const auto settings = fixed(2, 1);
+        arknet::arq::options arq_settings;
+        arq_settings.mtu = 88;
+        arq_settings.congestion_control = false;
+        arknet::arq::control_block arq_sender(conversation, arq_settings), arq_receiver(conversation, arq_settings);
+        std::vector<std::string> wire;
+        unsigned forwarded = 0;
+        transport receiver(
+            conversation, mtu, settings, [](auto) {},
+            [&](auto bytes) {
+                ++forwarded;
+                return arq_receiver.input(bytes) == 0;
+            });
+        transport sender(
+            conversation, mtu, settings, [&](auto bytes) { wire.emplace_back(bytes); }, [](auto) { return true; });
+        arq_sender.set_output([&](auto bytes) { sender.send(bytes, 0); });
+        const std::vector<std::string> original{message(0), message(1)};
+        for (const auto& bytes : original)
+        {
+            check(arq_sender.send(bytes) == 0, "complete message queues in ARQ");
+        }
+        arq_sender.update(0);
+        check(wire.size() == 3, "two systematic ARQ datagrams and one parity shard are emitted");
+        check(receiver.input(wire[0], 0), "first systematic shard starts recovery group");
+        const auto before = scoped_allocation_failure::injections.load();
+        bool threw = false;
+        {
+            scoped_allocation_failure::scope failure;
+            try
+            { receiver.input(wire[index], 0); }
+            catch (const std::bad_alloc&)
+            { threw = true; }
+        }
+        check(threw && scoped_allocation_failure::injections == before + 1,
+            "systematic delivery staging or parity storage allocation fails once");
+        check(!scoped_allocation_failure::armed, "allocation failure is disarmed before checking recovery");
+        const auto failed = receiver.snapshot();
+        check(failed.retained_groups == 0 && failed.retained_bytes == 0,
+            "exception releases the incomplete group and its byte reservation");
+        check(receiver.input(wire[index], 1), "failed shard can be accepted again");
+        check(receiver.input(wire[index == 1 ? 0 : 1], 1), "an intact original completes the replacement group");
+        std::vector<std::string> received;
+        std::string bytes;
+        while (arq_receiver.receive(bytes))
+        {
+            received.push_back(bytes);
+        }
+        check(forwarded == 3, "the discarded group permits a previously forwarded original to reach ARQ again");
+        check(received == original, "ARQ delivers exact messages once and in order after the shard retry");
+        check(receiver.snapshot().retained_groups == 0 && receiver.snapshot().retained_bytes == 0,
+            "completed replacement group releases its cache");
+    }
+}
+
+DOCTEST_TEST_CASE("FEC staging cleanup preserves delivery callback exception semantics") {
+    fec_pair source(fixed(2, 1));
+    const auto original = source.send(2);
+    bool throw_delivery = true;
+    std::vector<std::string> received;
+    transport receiver(
+        conversation, mtu, fixed(2, 1), [](auto) {},
+        [&](auto bytes) {
+            if (throw_delivery)
+            {
+                throw std::bad_alloc();
+            }
+            received.emplace_back(bytes);
+            return true;
+        });
+    DOCTEST_CHECK_THROWS_AS(receiver.input(source.wire[0], 0), std::bad_alloc);
+    check(receiver.snapshot().retained_groups == 1 && receiver.snapshot().retained_bytes > 0,
+        "user callback exception preserves accepted recovery state");
+    throw_delivery = false;
+    check(!receiver.input(source.wire[0], 1), "accepted shard stays duplicate after its delivery callback throws");
+    check(receiver.input(source.wire[1], 1), "later original completes the accepted recovery group");
+    check(received == std::vector<std::string>{original[1]}, "callback exception does not schedule another delivery");
+    check(receiver.snapshot().retained_groups == 0 && receiver.snapshot().retained_bytes == 0,
+        "completed group releases the accepted state");
 }
 
 DOCTEST_TEST_CASE("Adaptive FEC compares segment and datagram loss ratios independently") {

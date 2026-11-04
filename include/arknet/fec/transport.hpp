@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <functional>
 #include <map>
 #include <stdexcept>
@@ -447,6 +448,7 @@ public:
             ++stats_.evicted_groups;
             return kind != 1 && deliver_packet(original);
         }
+        input_guard guard{*this, id};
         value.present[index] = true;
         ++value.count;
         std::vector<std::string> deliveries;
@@ -495,6 +497,7 @@ public:
                 retained_bytes_ -= group_cost + value.bytes;
                 groups_.erase(it);
                 ++stats_.invalid_packets;
+                guard.release();
                 for (const auto& message : deliveries)
                 {
                     if (!deliver_packet(message))
@@ -517,6 +520,7 @@ public:
             retained_bytes_ -= group_cost + value.bytes;
             groups_.erase(it);
         }
+        guard.release();
         // All group references are released before callbacks can stop the channel.
         for (const auto& message : deliveries)
         {
@@ -557,6 +561,31 @@ private:
         std::array<std::string, 48> shards;
         std::array<bool, 48> present{};
         std::array<bool, 32> delivered{};
+    };
+
+    // Drop partially updated shards during unwinding; subsequent input may retry the group.
+    struct input_guard
+    {
+        transport& owner;
+        std::uint32_t id;
+        int exceptions = std::uncaught_exceptions();
+        bool active = true;
+
+        void release() noexcept {
+            active = false;
+        }
+
+        ~input_guard() {
+            if (active && std::uncaught_exceptions() > exceptions)
+            {
+                const auto it = owner.groups_.find(id);
+                if (it != owner.groups_.end())
+                {
+                    owner.retained_bytes_ -= group_cost + it->second.bytes;
+                    owner.groups_.erase(it);
+                }
+            }
+        }
     };
 
     static constexpr std::size_t group_cost = sizeof(group) + 64;
