@@ -269,6 +269,87 @@ DOCTEST_TEST_CASE("Redis disconnect and malformed replies fail outstanding comma
     }
 }
 
+DOCTEST_TEST_CASE("Redis failed pipelines retain complete owning replies and retire completion captures") {
+    const std::string binary("a\0\r\nb", 5);
+    const std::vector<std::pair<std::string, client_errc>> failures{{",1.\r\n+VALID\r\n", client_errc::protocol_error},
+        {"*1\r\n>1\r\n+invalid\r\n+VALID\r\n", client_errc::protocol_error}, {"$3\r\nab", client_errc::disconnected}};
+    for (const auto& [wire, error] : failures)
+    {
+        server endpoint([&](peer& remote) {
+            remote.hello();
+            remote.expect({"ECHO", binary});
+            remote.expect({"GET", "broken"});
+            remote.expect({"PING"});
+            remote.send("$5\r\n" + binary + "\r\n" + wire);
+        });
+        auto connection = std::make_unique<client>();
+        check(connect(*connection, endpoint.port()), "connected");
+        auto capture = std::make_shared<int>(1);
+        const std::weak_ptr<int> retained = capture;
+        std::atomic<unsigned> calls{};
+        std::promise<result> failed, following;
+        auto failed_future = failed.get_future(), following_future = following.get_future();
+        connection->async_pipeline({{"ECHO", binary}, {"GET", "broken"}}, [&, capture](result reply) {
+            ++calls;
+            failed.set_value(std::move(reply));
+        });
+        capture.reset();
+        connection->async_execute({"PING"}, [&](result reply) { following.set_value(std::move(reply)); });
+        auto response = await(failed_future);
+        check(response.error == error && response.command_may_have_run, "failure preserves unknown write outcome");
+        check(await(following_future).error == error, "later command fails without receiving a stray reply");
+        check(connection->close_and_wait(), "retire failed connection");
+        connection.reset();
+        endpoint.finish();
+        check(calls == 1 && retained.expired(), "complete once and release callback captures");
+        check(response.replies.size() == 1 && response.replies[0].type == value_type::bulk_string &&
+                  response.replies[0].text == binary,
+            "complete prefix survives parser and client destruction");
+    }
+}
+
+DOCTEST_TEST_CASE("Redis cancellation preserves an owning pipeline prefix while later replies drain") {
+    const std::string binary("a\0\r\nb", 5);
+    std::promise<void> release;
+    auto allowed = release.get_future();
+    server endpoint([&](peer& remote) {
+        remote.hello();
+        remote.expect({"ECHO", binary});
+        remote.expect({"INCR", "cancelled"});
+        remote.expect({"GET", "following"});
+        remote.send("$5\r\n" + binary + "\r\n>1\r\n+prefix-ready\r\n");
+        if (allowed.wait_for(5s) != std::future_status::ready)
+        {
+            throw std::runtime_error("Missing drain signal");
+        }
+        remote.send(":22\r\n:33\r\n");
+    });
+    client connection;
+    std::promise<void> prefix;
+    auto prefix_ready = prefix.get_future();
+    connection.set_push_handler([&](auto) { prefix.set_value(); });
+    check(connect(connection, endpoint.port()), "connected");
+    std::atomic<unsigned> calls{};
+    std::promise<result> cancelled, following;
+    auto cancelled_future = cancelled.get_future(), following_future = following.get_future();
+    auto id = connection.async_pipeline({{"ECHO", binary}, {"INCR", "cancelled"}}, [&](result reply) {
+        ++calls;
+        cancelled.set_value(std::move(reply));
+    });
+    connection.async_execute({"GET", "following"}, [&](result reply) { following.set_value(std::move(reply)); });
+    await(prefix_ready);
+    connection.cancel(id);
+    auto response = await(cancelled_future);
+    check(response.error == client_errc::cancelled && response.command_may_have_run, "cancel sent pipeline");
+    release.set_value();
+    auto next = await(following_future);
+    check(next && next.replies.size() == 1 && next.replies[0].integer == 33, "remaining reply keeps its old slot");
+    check(connection.close_and_wait(), "retire drained connection");
+    endpoint.finish();
+    check(calls == 1 && response.replies.size() == 1 && response.replies[0].text == binary,
+        "cancelled owning prefix survives subsequent decoding and shutdown");
+}
+
 DOCTEST_TEST_CASE("Redis owner destruction inside a completion aborts later slots safely") {
     server endpoint([](peer& remote) {
         remote.hello();

@@ -18,7 +18,9 @@ Configure `redis::connect_options` before `async_connect`: `host`, `port`, `user
 | `map`, `attribute` | Alternating key/value entries in `elements`, retaining all key types |
 | `null` | No payload |
 
-`attributes` contains RESP3 attributes attached to the value. Inspect types before accessing data. A server error is a typed reply, not a transport failure: `bool(result)` checks `client_errc`, so applications must also inspect individual replies. Failed pipelines can contain replies received before the failure.
+`attributes` contains RESP3 attributes attached to the value. Inspect types before accessing data. A server error is a typed reply, not a transport failure: `bool(result)` checks `client_errc`, so applications must also inspect individual replies. Failed or cancelled pipelines retain complete replies received before completion; those values remain valid after subsequent decoding and client destruction. Partial replies are never exposed.
+
+The decoder follows the [Redis protocol specification](https://redis.io/docs/latest/develop/reference/protocol-spec/): RESP3 double fractions require digits after the decimal point, and pushes are top-level messages. A malformed reply or a `response_limits` violation closes the connection with `client_errc::protocol_error` and fails outstanding requests without replay.
 
 ## Limits and deadlines
 
