@@ -3,6 +3,7 @@
 #include <cmath>
 #include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 
@@ -42,6 +43,116 @@ void check_sample(const connection_load::resource_snapshot& snapshot) {
 }
 
 } // namespace
+
+DOCTEST_TEST_CASE("Port diagnostics validate OS ranges and namespace-wide TIME_WAIT without estimating headroom") {
+    using namespace connection_load::port_resource_detail;
+    const auto range = parse_port_range("49152 65535\n");
+    DOCTEST_REQUIRE(range.value);
+    DOCTEST_CHECK(range.value->first == 49152);
+    DOCTEST_CHECK(range.value->last == 65535);
+    for (const auto text : {"", "0 65535", "49152 65536", "60000 50000", "-1 20", "1", "1 2 3", "1 x"})
+    {
+        const auto invalid = parse_port_range(text);
+        DOCTEST_CHECK_FALSE(invalid.value);
+        DOCTEST_CHECK_FALSE(invalid.unavailable_reason.empty());
+    }
+    for (const auto text : {"TCP: inuse 5 orphan 0 tw 0 alloc 7 mem 1\n", "UDP: inuse 4\nTCP: tw 0\n"})
+    {
+        const auto zero = parse_time_wait(text);
+        DOCTEST_REQUIRE(zero.value);
+        DOCTEST_CHECK(*zero.value == 0);
+    }
+    DOCTEST_CHECK(parse_time_wait("TCP: inuse 1 tw 15000 mem 3\n").value == 15000);
+    for (const auto text : {"", "TCP6: tw 10", "TCP: inuse 5", "TCP: tw", "TCP: tw -1", "TCP: tw 1x", "TCP: tw 1 tw 2",
+             "TCP: tw 1\nTCP: tw 2", "TCP: tw 18446744073709551616"})
+    {
+        DOCTEST_CHECK_FALSE(parse_time_wait(text).value);
+    }
+    const auto missing = read_query_file("");
+    DOCTEST_CHECK_FALSE(missing.value);
+    DOCTEST_CHECK(missing.unavailable_reason.find("fopen() failed (OS error ") == 0);
+}
+
+DOCTEST_TEST_CASE("Native port queries retain their source scope and explicit OS errors") {
+    using connection_load::port_resource_detail::read_macos_range;
+    const auto range = read_macos_range([](const char* name, int* value, std::size_t*) {
+        *value = std::string_view(name).ends_with("first") ? 49152 : 65535;
+        return 0;
+    });
+    DOCTEST_REQUIRE(range.value);
+    DOCTEST_CHECK(range.value->first == 49152);
+    const auto failed = read_macos_range([](const char*, int*, std::size_t*) {
+        errno = EACCES;
+        return -1;
+    });
+    DOCTEST_CHECK_FALSE(failed.value);
+    DOCTEST_CHECK(failed.unavailable_reason ==
+                  "sysctlbyname(net.inet.ip.portrange.first) failed (OS error " + std::to_string(EACCES) + ")");
+    const auto short_result = read_macos_range([](const char*, int*, std::size_t* length) {
+        *length = 0;
+        return 0;
+    });
+    DOCTEST_CHECK_FALSE(short_result.value);
+    const auto actual = connection_load::read_port_resources();
+    if (actual.ephemeral_ports.value)
+    {
+        DOCTEST_CHECK(actual.ephemeral_ports.value->first > 0);
+        DOCTEST_CHECK(actual.ephemeral_ports.value->first <= actual.ephemeral_ports.value->last);
+        DOCTEST_CHECK(actual.ephemeral_ports.value->last <= 65535);
+    }
+    else
+    {
+        DOCTEST_CHECK_FALSE(actual.ephemeral_ports.unavailable_reason.empty());
+    }
+#if defined(__linux__)
+    DOCTEST_CHECK(actual.time_wait_scope == "network_namespace_all_processes");
+#else
+    DOCTEST_CHECK_FALSE(actual.tcp_time_wait.value);
+    DOCTEST_CHECK_FALSE(actual.tcp_time_wait.unavailable_reason.empty());
+#endif
+}
+
+DOCTEST_TEST_CASE("Connect failures retain their first pre-cleanup snapshot and error identity") {
+    connection_load::connect_failure_observer observer;
+    std::ostringstream empty;
+    observer.write_fields(empty);
+    DOCTEST_CHECK(empty.str() == ",\"connect_failure_resources\":null");
+    std::ostringstream no_event;
+    observer.write_event(no_event, "client", 42, 7);
+    DOCTEST_CHECK(no_event.str().empty());
+    unsigned queries = 0;
+    observer.capture(49, "system", 1312, [&] {
+        ++queries;
+        auto resources = connection_load::read_port_resources();
+        resources.ephemeral_ports = {connection_load::ephemeral_port_range{49152, 65535}, {}};
+        resources.tcp_time_wait = {0, {}};
+        return resources;
+    });
+    observer.capture(24, "later", 0, [&]() -> connection_load::port_resources {
+        ++queries;
+        throw std::runtime_error("must not query twice");
+    });
+    DOCTEST_CHECK(queries == 1);
+    std::ostringstream text;
+    observer.write_fields(text);
+    DOCTEST_CHECK(text.str().find("\"phase\":\"first_connect_failure_before_cleanup\",\"established\":1312") !=
+                  std::string::npos);
+    DOCTEST_CHECK(text.str().find("\"error_code\":49,\"error_category\":\"system\"") != std::string::npos);
+    DOCTEST_CHECK(text.str().find("\"ephemeral_ports\":{\"first\":49152,\"last\":65535}") != std::string::npos);
+    DOCTEST_CHECK(text.str().find("\"tcp_time_wait\":0") != std::string::npos);
+    DOCTEST_CHECK(text.str().find("free") == std::string::npos);
+    std::ostringstream event;
+    observer.write_event(event, "client", 42, 7, true);
+    DOCTEST_CHECK(event.str().starts_with(
+        "{\"event\":\"connect_resource_failure\",\"role\":\"client\",\"run_id\":\"42\",\"client_id\":\"7\","));
+    DOCTEST_CHECK(event.str().find("\"established\":1312") != std::string::npos);
+    DOCTEST_CHECK(event.str().ends_with("}\n"));
+    connection_load::connect_failure_observer failed;
+    failed.capture(49, "system", 0, []() -> connection_load::port_resources { throw std::runtime_error("query"); });
+    std::ostringstream unavailable;
+    failed.write_fields(unavailable);
+    DOCTEST_CHECK(unavailable.str().find("Failure resource snapshot could not be captured") != std::string::npos);
+}
 
 DOCTEST_TEST_CASE("Connection resource JSON preserves numbers, real zero and explicit missing values") {
     connection_load::resource_snapshot sample;

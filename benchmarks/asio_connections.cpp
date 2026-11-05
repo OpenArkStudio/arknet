@@ -572,6 +572,7 @@ struct application
                            stopped_at{}, drained_at{};
     clock_type::time_point sampled = began;
     connection_load::resource_observer resources{began};
+    connection_load::connect_failure_observer connect_resources;
 };
 
 session::session(application& owner, asio::io_context& context)
@@ -1219,6 +1220,7 @@ void application::launch() {
                 if (!stopping && error)
                 {
                     ++connect_errors;
+                    connect_resources.capture(error.value(), error.category().name(), established.load());
                     fail("connect callback", error.message());
                 }
                 else if (!stopping)
@@ -1417,6 +1419,7 @@ void application::run() {
     {
         if (failed)
         {
+            connect_resources.write_event(std::cout, o.role, o.run, o.client);
             stop();
         }
         else if (clock_type::now() >= until_deadline)
@@ -1487,6 +1490,7 @@ void application::result() const {
             std::cout << ",\"tcp_kernel_samples_enabled\":true";
         }
     }
+    connect_resources.write_fields(std::cout);
     std::cout << "}\n";
     if (!failure.empty() || !clean || !complete)
     {
