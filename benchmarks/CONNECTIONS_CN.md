@@ -98,13 +98,13 @@ Windows 下由 CMake 提供系统网络与进程内存库。构建或使用 arkn
 
 本地大量建连还会占用客户端临时端口。TCP 连接关闭后可能仍处于 `TIME_WAIT`；连续运行会耗尽可用端口，即使 FD 和内存尚未达到限额，也可能报 `EADDRNOTAVAIL`。记录系统端口范围和 TCP 状态，等上一轮连接释放后再独立运行，或将客户端分布到合适的主机与地址。失败记录应保留，不能算作完成了目标连接数；本地客户端的端口限制也不代表服务端容量。
 
-每轮开始前，都应将空闲源端口余量与连接目标比较，并计入 `TIME_WAIT` 占用。余量不足时等待自然释放，或让预检失败；上一轮进程清理成功，不代表源端口已经可以复用。
+每轮开始前，都应记录源端口范围和可用的 TCP 状态观察。配置范围的宽度不等于空闲容量：保留端口、本地地址、目标四元组、其他应用及复用规则都会影响可用性。命名空间／主机范围的 `TIME_WAIT` 数量不是当前进程的数量，不能从端口范围中直接扣减来推算空闲余量。无法确认可用余量时应记录为 unavailable，等待独立运行时机或让预检失败。上一轮进程清理成功，不代表源端口已经可以复用。尚未达到目标连接数就出现 `EADDRNOTAVAIL` 的建连失败，与全部目标连接建立后的 TCP 停滞必须分别记录。
 
 除指定的 IO 工作线程外，每进程还有一条主调度线程和一条清理监控线程，不会为每条连接创建线程。Ctrl+C 或 SIGTERM 会请求失败退出，并执行正常清理。如果总期限加清理宽限期后，运行、最终输出或清理仍未完成，监控线程请求操作系统立即终止进程：Windows 使用 `TerminateProcess`，退出码为 124；POSIX 使用 `SIGKILL`。POSIX shell 通常将信号 9 显示为 137，但这不是跨平台统一退出码的保证。该路径表示 `clean_shutdown=false`，不产生完整成功摘要；终止过程不依赖再写日志、C 运行时的 flush 或 sanitizer 退出处理。
 
 ## 输出与指标
 
-Stdout 使用 JSON Lines：每个进程的 `resource_startup`、服务端的 `ready`、定期 `sample` 和最终 `result`。原生 Asio 对照程序也输出 `resource_startup`。启动标识沿用各工具已有的格式：arknet 程序使用十进制字符串，原生对照程序使用整数。启动记录复用建连准入前已有的首次资源采样，不新增采样，也不改变采样周期。消费方应按 `event` 选择事件，并忽略新增字段。Stderr 用于参数或启动错误。清理超时中止可能留下不完整输出，因此还需记录进程退出码。分别保存各进程输出，原始结果放在 Git 仓库外。
+Stdout 使用 JSON Lines：每个进程的 `resource_startup`、服务端的 `ready`、定期 `sample`、客户端清理前可选的 `connect_resource_failure` 和最终 `result`。原生 Asio 对照程序也输出 `resource_startup`。启动标识沿用各工具已有的格式：arknet 程序使用十进制字符串，原生对照程序使用整数。启动记录复用建连准入前已有的首次进程资源采样；另在启动和首次建连失败时执行只读端口查询，不改变周期采样频率。消费方应按 `event` 选择事件，并忽略新增字段。Stderr 用于参数或启动错误。清理超时中止可能留下不完整输出，因此还需记录进程退出码。分别保存各进程输出，原始结果放在 Git 仓库外。
 
 | 字段 | 口径 |
 | --- | --- |
@@ -122,6 +122,9 @@ Stdout 使用 JSON Lines：每个进程的 `resource_startup`、服务端的 `re
 | `resource_sample_elapsed_s`、`resource_cpu_interval_s` | CPU 查询中点相对本次运行开始的秒数，以及 CPU 占用率实际使用的区间长度。CPU 占用率不可用时，区间为 null；这些值不能作为跨机器时间戳。 |
 | `resource_phase` | 启动和周期记录为 `running`，周期记录可能处于建连、保持或协议排空阶段；最终记录为 `after_cleanup`，在端点和 IO 工作线程停止后读取。最终内存和数量指标不是负载阶段的值。 |
 | `resource_unavailable` | 以缺失资源字段名为键、诊断原因为值的对象。真实零值仍是数字；原因文本用于诊断，不是稳定错误码。 |
+| 启动记录的 `network_resources` | `ephemeral_ports` 含闭区间的 `first`／`last`，并附 `range_source` 和 `range_scope`。macOS 通过 `sysctlbyname` 读取 `net.inet.ip.portrange.first`／`last`，范围为整台主机；Linux 读取 `/proc/sys/net/ipv4/ip_local_port_range`，范围为当前网络命名空间。不支持或查询失败时为 null，`unavailable` 记录原因，系统查询失败时包含数字 OS 错误。不调用外部命令，不修改设置。 |
+| 网络资源内的 `tcp_time_wait`、`time_wait_source`、`time_wait_scope` | Linux 仅读取 `/proc/net/sockstat` 的 `TCP: tw`，涵盖当前网络命名空间的所有进程；其他平台明确报告 unavailable。这既不是本进程计数，也不是特定目标已占用的临时端口数；系统查询与连接计数不是原子快照。 |
+| `connect_resource_failure` 事件和最终记录的 `connect_failure_resources` | 主线程在客户端清理前输出失败事件，并在最终记录中重复保留的快照。保留清理前首次建连失败的数字 `error_code`、`error_category`、当时观察到的 `established` 和 `network_resources`。虽然最终结果在清理后输出，`phase` 仍为 `first_connect_failure_before_cleanup`。后续错误不覆盖它。Null 表示未观察到建连失败，不解释后续流量停滞；诊断采样自身失败也会明确记录。 |
 | `sample_interval_ms` | 最终结果中的计划采样间隔。实际 CPU 采样区间单独报告。 |
 | `content_errors`、`sequence_errors`、`send_errors`、`timeouts`、`resource_rejections` | 内容、序号、发送、期限或预算失败；停止过程中取消的发送单独记为 `shutdown_cancelled_sends`。 |
 | `clean_shutdown`、`outcome`、`first_error` | 清理状态，以及 `target_complete`、`observation_complete` 或 `failed`。清理完成本身不代表交付成功或达到连接目标。 |
@@ -151,7 +154,7 @@ JSON 只新增字段，原有字段的类型和测量阶段保持不变。对比
 
 配置 `-DARKNET_BUILD_TESTS=ON` 后可以构建 `arknet_connection_protocol_test`，检查身份保真、损坏与截断消息拒绝、长度溢出及可合并延迟桶边界。`arknet_check` 包含这些检查及 `--help`；POSIX 的满输出管道进程用例会检查监控线程在无人读取输出时仍可终止。部署负载仍在本地手动运行。
 
-`arknet_connection_resources_test` 检查实际资源输出字段、真实零值与缺失指标及其原因、诊断文本转义，以及周期和全程时间范围的独立性。系统计数器本身由独立的[进程资源检查程序](process_resources_CN.md)验证。
+`arknet_connection_resources_test` 检查实际资源输出字段、真实零值与缺失指标及其原因、诊断文本转义、周期和全程时间范围的独立性，以及端口范围／TIME_WAIT 解析、原生查询错误和首次清理前建连失败快照的保留。使用注入错误计数，不耗尽端口。进程计数器本身由独立的[进程资源检查程序](process_resources_CN.md)验证。
 
 扩大规模之前，先用少量连接检查 idle、traffic、IPv4 和 IPv6 的双端最终计数，再验证拒绝连接、错误运行标识、目标期限、重复身份及非法缓冲或窗口预算均非零退出。每次测量保留命令、可执行文件与源码身份、机器配置、全部失败和双端日志。本工具的测试协议不能替代 ark 应用、鉴权、重连恢复或跨机器生产验收。
 

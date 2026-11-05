@@ -311,6 +311,7 @@ struct counters
         outstanding{}, shutdown_cancelled_sends{};
     std::atomic<std::int64_t> work_begin{}, work_end{};
     connection_load::latency_distribution latency;
+    connection_load::connect_failure_observer connect_resources;
     std::mutex error_mutex;
     std::string first_error;
 
@@ -531,6 +532,8 @@ public:
                     }
                     if (!values_.closing)
                     {
+                        values_.connect_resources.capture(
+                            error.value(), error.category().name(), values_.established.load());
                         values_.fail("connect: " + error.message());
                     }
                     return;
@@ -572,6 +575,7 @@ public:
         {
             --values_.connecting;
             ++values_.connect_failures;
+            values_.connect_resources.capture(0, "connect_submission_rejected", values_.established.load());
             values_.fail("connect submission rejected");
         }
     }
@@ -987,6 +991,7 @@ void result(const options& settings, const counters& values, std::string_view ou
         << ",\"buffer_budget_bytes\":" << settings.buffer_budget << ",\"sample_interval_ms\":" << settings.sample_ms
         << ",\"peak_pending_send_bytes\":" << values.peak_pending_bytes;
     connection_load::write_resource_fields(std::cout, resources, true);
+    values.connect_resources.write_fields(std::cout);
     std::cout << ",\"first_error\":" << quoted(values.first_error)
               << ",\"latency_observations\":" << values.latency.total();
     for (const auto percent : {50, 95, 99})
@@ -1143,6 +1148,7 @@ int run(const options& settings) {
             }
         }
         active_before_stop = values.active;
+        values.connect_resources.write_event(std::cout, settings.role, settings.run, settings.client, true);
         client.stop();
     }
     runtime.stop();

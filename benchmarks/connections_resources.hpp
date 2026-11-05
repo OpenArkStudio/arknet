@@ -2,10 +2,12 @@
 #pragma once
 
 #include <chrono>
+#include <mutex>
 #include <optional>
 #include <ostream>
 #include <string_view>
 
+#include "connections_ports.hpp"
 #include "process_resources.hpp"
 
 namespace connection_load {
@@ -69,6 +71,120 @@ inline void write_resource_string(std::ostream& output, std::string_view value) 
     }
     output << '"';
 }
+
+inline void write_port_resources(std::ostream& output, const port_resources& sample) {
+    output << "{\"ephemeral_ports\":";
+    if (sample.ephemeral_ports.value)
+    {
+        output << "{\"first\":" << sample.ephemeral_ports.value->first
+               << ",\"last\":" << sample.ephemeral_ports.value->last << '}';
+    }
+    else
+    {
+        output << "null";
+    }
+    output << ",\"range_source\":";
+    write_resource_string(output, sample.range_source);
+    output << ",\"range_scope\":";
+    write_resource_string(output, sample.range_scope);
+    output << ",\"tcp_time_wait\":";
+    if (sample.tcp_time_wait.value)
+    {
+        output << *sample.tcp_time_wait.value;
+    }
+    else
+    {
+        output << "null";
+    }
+    output << ",\"time_wait_source\":";
+    write_resource_string(output, sample.time_wait_source);
+    output << ",\"time_wait_scope\":";
+    write_resource_string(output, sample.time_wait_scope);
+    output << ",\"unavailable\":{\"ephemeral_ports\":";
+    write_resource_string(output, sample.ephemeral_ports.unavailable_reason);
+    output << ",\"tcp_time_wait\":";
+    write_resource_string(output, sample.tcp_time_wait.unavailable_reason);
+    output << "}}";
+}
+
+// First failure is sampled at the connect callback, before cleanup changes the
+// socket population. Final output does not turn this into an after-cleanup count.
+class connect_failure_observer
+{
+public:
+    template<class Query>
+    void capture(int error, std::string_view category, std::uint64_t established, Query query) noexcept {
+        try
+        {
+            const std::lock_guard lock(mutex_);
+            if (attempted_)
+            {
+                return;
+            }
+            attempted_ = true;
+            error_ = error;
+            established_ = established;
+            category_ = category;
+            sample_ = query();
+        }
+        catch (...)
+        {}
+    }
+
+    void capture(int error, std::string_view category, std::uint64_t established) noexcept {
+        capture(error, category, established, read_port_resources);
+    }
+
+    void write_fields(std::ostream& output) const {
+        const std::lock_guard lock(mutex_);
+        write_fields_unlocked(output);
+    }
+
+    void write_event(std::ostream& output, std::string_view role, std::uint64_t run, std::uint64_t client,
+        bool string_ids = false) const {
+        const std::lock_guard lock(mutex_);
+        if (!attempted_)
+        {
+            return;
+        }
+        output << "{\"event\":\"connect_resource_failure\",\"role\":";
+        write_resource_string(output, role);
+        const auto quote = string_ids ? "\"" : "";
+        output << ",\"run_id\":" << quote << run << quote << ",\"client_id\":" << quote << client << quote;
+        write_fields_unlocked(output);
+        output << "}\n" << std::flush;
+    }
+
+private:
+    void write_fields_unlocked(std::ostream& output) const {
+        output << ",\"connect_failure_resources\":";
+        if (!attempted_)
+        {
+            output << "null";
+            return;
+        }
+        output << "{\"phase\":\"first_connect_failure_before_cleanup\",\"established\":" << established_
+               << ",\"error_code\":" << error_ << ",\"error_category\":";
+        write_resource_string(output, category_);
+        output << ",\"network_resources\":";
+        if (sample_)
+        {
+            write_port_resources(output, *sample_);
+        }
+        else
+        {
+            output << "{\"unavailable\":\"Failure resource snapshot could not be captured\"}";
+        }
+        output << '}';
+    }
+
+    mutable std::mutex mutex_;
+    bool attempted_{};
+    int error_{};
+    std::uint64_t established_{};
+    std::string category_;
+    std::optional<port_resources> sample_;
+};
 
 inline void write_resource_fields(std::ostream& output, const resource_snapshot& sample, bool after_cleanup) {
     const auto metric = [&](std::string_view name, const auto& value) {
@@ -137,6 +253,8 @@ inline void write_resource_startup(std::ostream& output, const resource_snapshot
     const auto quote = string_ids ? "\"" : "";
     output << ",\"run_id\":" << quote << run << quote << ",\"client_id\":" << quote << client << quote;
     write_resource_fields(output, sample, false);
+    output << ",\"network_resources\":";
+    write_port_resources(output, read_port_resources());
     output << "}\n" << std::flush;
 }
 
