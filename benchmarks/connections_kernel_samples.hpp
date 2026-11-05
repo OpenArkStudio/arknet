@@ -36,23 +36,15 @@ struct tcp_kernel_info
     int error{};
 };
 
-inline tcp_kernel_info query_tcp_kernel_info(int descriptor) noexcept {
-    tcp_kernel_info result;
 #if defined(__APPLE__) && defined(TCP_CONNECTION_INFO)
-    if (descriptor < 0)
-    {
-        result.result = tcp_kernel_info::status::closed;
-        return result;
-    }
-    tcp_connection_info info{};
-    socklen_t length = sizeof(info);
-    if (getsockopt(descriptor, IPPROTO_TCP, TCP_CONNECTION_INFO, &info, &length) != 0)
-    {
-        result.result = tcp_kernel_info::status::query_failed;
-        result.error = errno;
-        return result;
-    }
-    if (length < offsetof(tcp_connection_info, tcpi_rxoutoforderbytes) + sizeof(info.tcpi_rxoutoforderbytes))
+inline constexpr std::size_t tcp_kernel_info_required_length =
+    offsetof(tcp_connection_info, tcpi_rxoutoforderbytes) + sizeof(tcp_connection_info::tcpi_rxoutoforderbytes);
+#endif
+
+#if defined(__APPLE__) && defined(TCP_CONNECTION_INFO)
+inline tcp_kernel_info decode_tcp_kernel_info(const tcp_connection_info& info, std::size_t length) noexcept {
+    tcp_kernel_info result;
+    if (length < tcp_kernel_info_required_length)
     {
         result.result = tcp_kernel_info::status::short_response;
         return result;
@@ -70,10 +62,31 @@ inline tcp_kernel_info query_tcp_kernel_info(int descriptor) noexcept {
     result.rx_bytes = info.tcpi_rxbytes;
     result.retransmit_bytes = info.tcpi_txretransmitbytes;
     result.out_of_order_bytes = info.tcpi_rxoutoforderbytes;
+    return result;
+}
+#endif
+
+inline tcp_kernel_info query_tcp_kernel_info(int descriptor) noexcept {
+    tcp_kernel_info result;
+#if defined(__APPLE__) && defined(TCP_CONNECTION_INFO)
+    if (descriptor < 0)
+    {
+        result.result = tcp_kernel_info::status::closed;
+        return result;
+    }
+    tcp_connection_info info{};
+    socklen_t length = sizeof(info);
+    if (getsockopt(descriptor, IPPROTO_TCP, TCP_CONNECTION_INFO, &info, &length) != 0)
+    {
+        result.result = tcp_kernel_info::status::query_failed;
+        result.error = errno;
+        return result;
+    }
+    return decode_tcp_kernel_info(info, length);
 #else
     (void)descriptor;
-#endif
     return result;
+#endif
 }
 
 // Single IO-worker ownership. No per-session allocation or work in disabled mode.

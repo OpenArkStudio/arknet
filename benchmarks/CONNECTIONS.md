@@ -416,3 +416,29 @@ deterministic fake stream without sockets to check partial writes, buffered read
 zero-byte operations, move-only completions, forwarded associations, cancellation
 and frozen history. These are observer correctness checks, not a reproduced stall
 or performance/capacity acceptance.
+
+### Independent socket observation (native control)
+
+`--socket-observer on` is an optional Unix-only diagnostic for
+`arknet_asio_connection_control`; it defaults to `off`, requires
+`--operation-trace on`, and is rejected on Windows. After the IO worker publishes
+a session idle for at least one second, the existing controller samples at most
+16 pinned descriptors, at most eight times per session, at least 100 ms apart.
+`poll(..., 0)`, `FIONREAD` and `recv(MSG_PEEK | MSG_DONTWAIT)` inspect readiness and
+up to 67 bytes without consuming application data, sending traffic or running the
+Asio reactor. A slot generation and owned duplicate prevent descriptor reuse from
+changing identity; the duplicate is retired before the original socket closes.
+Recovered sessions release slots. Closed/still-stalled histories are printed after
+worker cleanup, including on successful runs; omissions and pin failures are counted.
+
+`socket_observation` schema 1 records controller time, the IO-owned immutable
+buffer/read snapshot, endpoints, the global marker and a per-session strand probe.
+Apple queries also retain requested/returned TCP info lengths, bounded raw bytes
+and decoded fields; the summary records struct size/field offsets. TCP status
+values are 0=available, 1=unsupported, 2=closed, 3=query failed, 4=short response.
+Unavailable TCP info is `null`; failed FIONREAD/peek use -1 plus errno, not a false
+zero. Retain compiler/SDK identity with the raw output. The collector does not
+calibrate kernel counter semantics or prove an OS fault. Its initial publication
+still depends on IO-worker progress; a worker blocked before publication leaves
+no independent per-socket history. Diagnostic overhead and `dup` lifetime are
+part of the measured configuration, not a transparent production measurement.
