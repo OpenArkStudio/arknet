@@ -122,6 +122,15 @@ if(ARKNET_BUILD_TESTS AND UNIX)
     target_compile_features(arknet_asio_control_process_test PRIVATE cxx_std_20)
     add_dependencies(arknet_asio_control_process_test arknet_asio_connection_control arknet_connection_benchmark)
     target_link_libraries(arknet_asio_control_process_test PRIVATE Threads::Threads)
+    arknet_add_check(benchmark_asio_socket_observer 10 arknet_asio_control_process_test
+        "$<TARGET_FILE:arknet_asio_connection_control>" --observer-only)
     arknet_add_check(benchmark_asio_connections_processes 90 arknet_asio_control_process_test
         "$<TARGET_FILE:arknet_asio_connection_control>" "$<TARGET_FILE:arknet_connection_benchmark>")
+endif()
+
+if(ARKNET_BUILD_TESTS)
+    add_executable(arknet_connection_socket_observer_test
+        ../tests/connection_socket_observer.cpp ../tests/test_main.cpp)
+    target_link_libraries(arknet_connection_socket_observer_test PRIVATE arknet_test_framework Threads::Threads)
+    arknet_add_check(connection_socket_observer 10 arknet_connection_socket_observer_test)
 endif()

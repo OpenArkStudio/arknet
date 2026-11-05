@@ -404,7 +404,7 @@ void progress_then_stall(const std::string& executable) {
         {"--role", "client", "--target", "127.0.0.1", "--port", std::to_string(ntohs(address.sin_port)), "--run-id",
             "97", "--client-id", "3", "--connections", "1", "--scenario", "traffic", "--payload", "1", "--window", "1",
             "--hold-seconds", "4", "--deadline-seconds", "6", "--request-timeout-ms", "3200", "--cleanup-seconds", "1",
-            "--operation-trace", "on", "--tcp-kernel-samples", "on"});
+            "--operation-trace", "on", "--tcp-kernel-samples", "on", "--socket-observer", "on"});
     const auto deadline = clock_type::now() + std::chrono::seconds(6);
     auto wait_ready = [&](int fd, short events) {
         while (clock_type::now() < deadline)
@@ -549,6 +549,43 @@ void progress_then_stall(const std::string& executable) {
     if (history.find("\"tcp_info\":null,\"unavailable_reason\":\"unsupported_platform\"") == std::string::npos)
     {
         throw std::runtime_error("unsupported periodic TCP info reason missing: " + client.log);
+    }
+#endif
+    const auto observation = output.find("\"event\":\"socket_observation\"");
+    if (observation == std::string::npos || output.find("\"event\":\"socket_observer_summary\"") == std::string::npos ||
+        output.find("\"readable_bytes\":0,\"readable_error\":0,\"peek_bytes\":-1,\"peek_error\":" +
+                    std::to_string(EAGAIN)) == std::string::npos ||
+        output.find("\"read_pending\":true,\"input_bytes\":0,\"input_frame_ready\":false", observation) ==
+            std::string::npos ||
+        counter(output.substr(observation), "global_marker_completed_us") < 1 ||
+        counter(output.substr(observation), "strand_probe_submitted_us") < 1)
+    {
+        throw std::runtime_error("independent controller observation missing: " + client.log);
+    }
+    if (output.find("\"event\":\"socket_observer_before_cancel\"") == std::string::npos ||
+        output.find("\"clock_anchor\":{\"steady_before_ns\":\"", observation) == std::string::npos ||
+        output.find("\"query_completed_steady_ns\":\"", observation) == std::string::npos)
+    {
+        throw std::runtime_error("observer wall/steady anchors missing: " + client.log);
+    }
+    bool strand_completed = false;
+    for (auto position = observation; position != std::string::npos;
+         position = output.find("\"event\":\"socket_observation\"", position + 1))
+    {
+        const auto line = output.substr(position, output.find('\n', position) - position);
+        strand_completed = strand_completed ||
+                           counter(line, "strand_probe_completed_us") >= counter(line, "strand_probe_submitted_us");
+    }
+    if (!strand_completed)
+    {
+        throw std::runtime_error("session strand probe did not complete: " + client.log);
+    }
+#if defined(__APPLE__)
+    if (counter(output.substr(observation), "tcp_requested_length") < 100 ||
+        counter(output.substr(observation), "tcp_returned_length") < 100 ||
+        output.find("\"tcp_raw_hex\":\"\"", observation) != std::string::npos)
+    {
+        throw std::runtime_error("raw TCP ABI provenance missing: " + client.log);
     }
 #endif
     std::cout << "controlled post-DATA stall retained periodic samples before timeout cleanup: " << client.log << '\n';
@@ -746,6 +783,11 @@ int main(int argc, char** argv) {
         }
         directory = result;
         std::cout << "child logs and exits: " << directory << '\n';
+        if (std::string_view(argv[2]) == "--observer-only")
+        {
+            progress_then_stall(argv[1]);
+            return 0;
+        }
         invalid_arguments(argv[1]);
         silent_peer(argv[1]);
         silent_peer(argv[1], true);

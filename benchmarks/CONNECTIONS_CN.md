@@ -346,3 +346,28 @@ Echo，完成 FIN 确认并正常退出。这项检查在不反复执行高连�
 在原有完成回调体内记录事件。`connection_socket_operation_trace` 使用无需 socket 的确定性模拟流，
 检查部分写入、已有缓冲读取、零字节操作、仅移动完成处理器、关联转发、取消与历史冻结。
 这些检查验证观察器本身，不代表重现停顿，也不构成性能或容量验收。
+
+### 独立 socket 观察（原生对照）
+
+`arknet_asio_connection_control` 的 `--socket-observer on` 仅支持 Unix，默认关闭，
+要求 `--operation-trace on`；Windows 明确拒绝。IO worker 发布静止至少一秒的会话后，
+既有 controller 对最多16个固定身份的 fd 各观察最多8次，间隔至少100ms。
+`poll(..., 0)`、`FIONREAD` 和 `recv(MSG_PEEK | MSG_DONTWAIT)` 检查可读性及最多67字节，
+不消费业务数据、不发送流量、不运行 Asio reactor。槽位代次和持有的 fd 副本防止复用误配；
+原 socket 关闭前先释放副本。恢复进展的会话释放槽位；关闭或持续停滞的历史在 worker
+清理后输出，成功运行也保留，并统计遗漏和固定 fd 失败次数。
+
+`socket_observation` schema 1 包含 controller 时间、IO worker 发布的不可变缓冲/读状态、
+端点、全局 marker 及单会话 strand probe。Apple 查询另存 TCP info 请求/返回长度、
+有界原始字节和解码字段，摘要记录结构大小/字段偏移。TCP status：0可用、1平台不支持、
+2已关闭、3查询失败、4响应过短；不可用信息为 `null`，FIONREAD/peek 失败用 -1及errno，
+不伪装为零。原始输出须同时保留 compiler/SDK 身份；采集器不校准内核计数语义，不能证明
+OS 缺陷。首次发布仍依赖 IO worker，发布前 worker 已阻塞时不会有独立会话历史。
+诊断开销与 fd 副本生存期属于本次观测配置，不能当作无扰动的生产测量。
+
+每次独立查询增加 `clock_anchor`：steady-before、Unix wall、steady-after纳秒值，
+以及query完成的steady时间，均用JSON字符串保留精度。IO worker还在取消原socket前输出
+`socket_observer_before_cancel`。由anchor `(a,w,b)`把steady时间`q`映射为wall区间
+`[w+q-b, w+q-a]`，再纳入PCAP时间戳量化误差。应使用query区间，不用较旧的IO状态快照时间。
+须检查anchor间wall/steady偏移稳定性；时钟跳变、过宽区间或缺取消anchor时，精确跨进程
+对齐不可判定。旧输出仅有steady epoch，无法精确对齐包的wall时间戳。

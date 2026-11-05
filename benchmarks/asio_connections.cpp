@@ -53,6 +53,7 @@ constexpr auto dependency_version = ASIO_VERSION;
 #include "connections_kernel_samples.hpp"
 #include "connections_protocol.hpp"
 #include "connections_resources.hpp"
+#include "connections_socket_observer.hpp"
 #include "connections_socket_trace.hpp"
 #include "connections_trace.hpp"
 
@@ -73,7 +74,7 @@ struct options
     std::size_t connect_ms = 5000, request_ms = 5000, inflight = 20000;
     std::size_t inflight_bytes = 64 * 1024 * 1024, budget = 512 * 1024 * 1024;
     double hold = 1, deadline = 30, cleanup = 5;
-    bool operation_trace{}, socket_operation_trace{}, tcp_kernel_samples{};
+    bool operation_trace{}, socket_operation_trace{}, tcp_kernel_samples{}, socket_observer{};
 };
 
 std::uint64_t integer(std::string_view text) {
@@ -97,6 +98,16 @@ double seconds(const std::string& text) {
 }
 
 void validate(const options& o) {
+    if (o.socket_observer && !o.operation_trace)
+    {
+        throw std::invalid_argument("socket-observer requires operation-trace on");
+    }
+#if defined(_WIN32)
+    if (o.socket_observer)
+    {
+        throw std::invalid_argument("socket-observer is unavailable on Windows");
+    }
+#endif
     if (o.tcp_kernel_samples && !o.operation_trace)
     {
         throw std::invalid_argument("tcp-kernel-samples requires operation-trace on");
@@ -153,6 +164,7 @@ void help() {
                  "  --operation-trace off|on (default off; bounded composed-operation diagnostics)\n"
                  "  --socket-operation-trace off|on (default off; requires operation-trace on)\n"
                  "  --tcp-kernel-samples off|on (default off; requires operation-trace on; Apple TCP info)\n"
+                 "  --socket-observer off|on (default off; Unix only; non-consuming controller observations)\n"
                  "  --self-test (unit checks only; no sockets)\n"
                  "One native Asio context/worker, session strands, TCP_NODELAY, 4096B read_until cap.\n"
                  "Defaults permit 5000 active connections, 32 connecting and 20000 data inflight.\n"
@@ -270,6 +282,10 @@ options arguments(int argc, char** argv) {
         else if (key == "--tcp-kernel-samples" && (value == "on" || value == "off"))
         {
             o.tcp_kernel_samples = value == "on";
+        }
+        else if (key == "--socket-observer" && (value == "on" || value == "off"))
+        {
+            o.socket_observer = value == "on";
         }
         else if (key == "--io-threads" && integer(value) == 1)
         {
@@ -525,6 +541,7 @@ struct application
               sizeof(connection_load::socket_trace_stream<tcp::socket>) +
                   2 * connection_load::socket_handler_reservation)
         , kernel_samples(o.tcp_kernel_samples)
+        , socket_observer(o.socket_observer)
         , acceptor(io)
         , cleanup(io)
         , signals(io, SIGINT, SIGTERM) {}
@@ -548,6 +565,8 @@ struct application
     options o;
     connection_load::operation_recorder operations;
     connection_load::tcp_kernel_samples kernel_samples;
+    connection_load::socket_observer socket_observer;
+    std::atomic<std::int64_t> marker_completed_us{};
     bool trace_emitted{};
     asio::io_context io{1};
     tcp::acceptor acceptor;
@@ -605,6 +624,7 @@ void session::close() {
         return;
     }
     closed = true;
+    app.socket_observer.close(state.owner);
     error_code ignored;
     socket.cancel(ignored);
     socket.close(ignored);
@@ -1012,25 +1032,25 @@ void session::diagnose() {
               << ",\"available_error\":" << available_error.value()
               << ",\"receive_buffer_bytes\":" << (receive_error ? -1 : receive_buffer.value())
               << ",\"send_buffer_bytes\":" << (send_error ? -1 : send_buffer.value());
-#if defined(__APPLE__) && defined(TCP_CONNECTION_INFO)
-    tcp_connection_info info{};
-    socklen_t length = sizeof(info);
-    if (socket.is_open() && getsockopt(socket.native_handle(), IPPROTO_TCP, TCP_CONNECTION_INFO, &info, &length) == 0)
+#if defined(__APPLE__)
+    const auto info = connection_load::query_tcp_kernel_info(socket.is_open() ? socket.native_handle() : -1);
+#else
+    const auto info = connection_load::query_tcp_kernel_info(-1);
+#endif
+    if (info.result == connection_load::tcp_kernel_info::status::available)
     {
-        std::cout << ",\"tcp_info\":{\"state\":" << unsigned(info.tcpi_state)
-                  << ",\"send_buffer_bytes\":" << info.tcpi_snd_sbbytes
-                  << ",\"send_window_bytes\":" << info.tcpi_snd_wnd << ",\"receive_window_bytes\":" << info.tcpi_rcv_wnd
-                  << ",\"rto_ms\":" << info.tcpi_rto << ",\"tx_bytes\":" << info.tcpi_txbytes
-                  << ",\"rx_bytes\":" << info.tcpi_rxbytes << ",\"retransmit_bytes\":" << info.tcpi_txretransmitbytes
-                  << ",\"out_of_order_bytes\":" << info.tcpi_rxoutoforderbytes << '}';
+        std::cout << ",\"tcp_info\":{\"state\":" << info.state << ",\"send_buffer_bytes\":" << info.send_buffer_bytes
+                  << ",\"send_window_bytes\":" << info.send_window_bytes
+                  << ",\"receive_window_bytes\":" << info.receive_window_bytes << ",\"rto_ms\":" << info.rto_ms
+                  << ",\"tx_bytes\":" << info.tx_bytes << ",\"rx_bytes\":" << info.rx_bytes
+                  << ",\"retransmit_bytes\":" << info.retransmit_bytes
+                  << ",\"out_of_order_bytes\":" << info.out_of_order_bytes << '}';
     }
     else
     {
-        std::cout << ",\"tcp_info\":null,\"tcp_info_error\":" << (socket.is_open() ? errno : -1);
+        std::cout << ",\"tcp_info\":null,\"tcp_info_error\":" << info.error
+                  << ",\"tcp_info_status\":" << static_cast<unsigned>(info.result);
     }
-#else
-    std::cout << ",\"tcp_info\":null";
-#endif
     std::cout << ",\"frame_boundary\":";
     boundary.write_json(std::cout);
     std::cout << "}\n";
@@ -1342,11 +1362,39 @@ void application::sample_kernel() {
     for (const auto& value : sessions)
     {
         kernel_samples.prune(value->state.owner, stalled(*value), value->read_completions + value->write_completions);
+        socket_observer.prune(value->state.owner, stalled(*value), value->read_completions + value->write_completions);
     }
     for (const auto& value : sessions)
     {
         if (stalled(*value))
         {
+            if (o.socket_observer)
+            {
+                error_code local_error, remote_error;
+                const auto local = value->socket.local_endpoint(local_error);
+                const auto remote = value->socket.remote_endpoint(remote_error);
+                const auto endpoint = [](tcp::endpoint item, const error_code& error) {
+                    return error ? std::string{} : item.address().to_string() + ":" + std::to_string(item.port());
+                };
+                const auto bytes = value->input.data();
+                std::string_view input;
+                if (value->input.size())
+                {
+                    const auto buffer = *asio::buffer_sequence_begin(bytes);
+                    input = {static_cast<const char*>(buffer.data()), buffer.size()};
+                }
+#if !defined(_WIN32)
+                const auto probe = socket_observer.publish(value->socket.native_handle(),
+                    {value->state.owner, elapsed_us(), idle(*value), value->read_completions + value->write_completions,
+                        value->state.next_receive, value->state.next_send, value->input.size(), value->read_pending,
+                        inspect_frame_boundary(input).complete(), endpoint(local, local_error),
+                        endpoint(remote, remote_error)});
+                if (probe.generation)
+                {
+                    asio::post(value->strand, [this, probe] { socket_observer.complete(probe, elapsed_us()); });
+                }
+#endif
+            }
             kernel_samples.sample(value->state.owner, elapsed_us(), idle(*value),
                 value->read_completions + value->write_completions, value->state.next_receive, value->state.next_send,
                 [&] {
@@ -1372,7 +1420,8 @@ void application::sample() {
         const auto submitted = elapsed_us();
         asio::post(io, [this, submitted] {
             operations.complete_marker(submitted, elapsed_us());
-            if (o.tcp_kernel_samples)
+            marker_completed_us = elapsed_us();
+            if (o.tcp_kernel_samples || o.socket_observer)
             {
                 sample_kernel();
             }
@@ -1432,10 +1481,13 @@ void application::run() {
         if (!stopping)
         {
             sample();
+            socket_observer.sample(elapsed_us(), marker_completed_us.load());
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
     worker.join();
+    socket_observer.write_json(
+        std::cout, o.role, std::chrono::duration_cast<std::chrono::microseconds>(began.time_since_epoch()).count());
 }
 
 void application::result() const {
@@ -1485,6 +1537,10 @@ void application::result() const {
         if (o.tcp_kernel_samples)
         {
             std::cout << ",\"tcp_kernel_samples_enabled\":true";
+        }
+        if (o.socket_observer)
+        {
+            std::cout << ",\"socket_observer_enabled\":true";
         }
     }
     std::cout << "}\n";
