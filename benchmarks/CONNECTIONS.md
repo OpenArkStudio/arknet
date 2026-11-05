@@ -442,3 +442,14 @@ calibrate kernel counter semantics or prove an OS fault. Its initial publication
 still depends on IO-worker progress; a worker blocked before publication leaves
 no independent per-socket history. Diagnostic overhead and `dup` lifetime are
 part of the measured configuration, not a transparent production measurement.
+
+Each independent query includes `clock_anchor`: steady-before, Unix wall and
+steady-after times in nanoseconds, plus query-completed steady time. Nanoseconds
+are JSON strings to preserve precision. A retained session also emits
+`socket_observer_before_cancel` from the IO worker before cancelling the original
+socket. Map a steady time `q` through anchor `(a,w,b)` to wall interval
+`[w+q-b, w+q-a]`, then include PCAP timestamp quantization. Use the query interval,
+not the older published IO snapshot time. Validate wall/steady offset stability
+across anchors; a clock step, large bracket or missing cancellation anchor makes
+precise cross-process timing inconclusive. Earlier output without these anchors
+cannot be precisely aligned to packet wall timestamps from its steady epoch alone.

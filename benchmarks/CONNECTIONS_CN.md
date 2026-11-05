@@ -364,3 +364,10 @@ Echo，完成 FIN 确认并正常退出。这项检查在不反复执行高连�
 不伪装为零。原始输出须同时保留 compiler/SDK 身份；采集器不校准内核计数语义，不能证明
 OS 缺陷。首次发布仍依赖 IO worker，发布前 worker 已阻塞时不会有独立会话历史。
 诊断开销与 fd 副本生存期属于本次观测配置，不能当作无扰动的生产测量。
+
+每次独立查询增加 `clock_anchor`：steady-before、Unix wall、steady-after纳秒值，
+以及query完成的steady时间，均用JSON字符串保留精度。IO worker还在取消原socket前输出
+`socket_observer_before_cancel`。由anchor `(a,w,b)`把steady时间`q`映射为wall区间
+`[w+q-b, w+q-a]`，再纳入PCAP时间戳量化误差。应使用query区间，不用较旧的IO状态快照时间。
+须检查anchor间wall/steady偏移稳定性；时钟跳变、过宽区间或缺取消anchor时，精确跨进程
+对齐不可判定。旧输出仅有steady epoch，无法精确对齐包的wall时间戳。

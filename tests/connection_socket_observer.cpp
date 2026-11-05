@@ -25,6 +25,16 @@ DOCTEST_TEST_CASE("socket observer distinguishes unavailable from a valid zero")
     DOCTEST_CHECK(out.str().empty());
 }
 
+DOCTEST_TEST_CASE("socket observation anchors bracket the wall query without losing JSON precision") {
+    const auto before = connection_load::observation_steady_ns();
+    const auto anchor = connection_load::observation_anchor();
+    const auto after = connection_load::observation_steady_ns();
+    DOCTEST_CHECK(before <= anchor.steady_before_ns);
+    DOCTEST_CHECK(anchor.steady_before_ns <= anchor.steady_after_ns);
+    DOCTEST_CHECK(anchor.steady_after_ns <= after);
+    DOCTEST_CHECK(anchor.unix_ns > 0);
+}
+
 #if !defined(_WIN32)
 DOCTEST_TEST_CASE("peek preserves bytes and reports EAGAIN before data arrives") {
     int pair[2];
@@ -74,6 +84,9 @@ DOCTEST_TEST_CASE("observer pins identities and retires duplicate before close")
     DOCTEST_CHECK((closed == 0 || (closed < 0 && errno == ECONNRESET)));
     std::ostringstream out;
     observer.write_json(out, "client");
+    DOCTEST_CHECK(out.str().find("\"event\":\"socket_observer_before_cancel\"") != std::string::npos);
+    DOCTEST_CHECK(out.str().find("\"clock_anchor\":{\"steady_before_ns\":\"") != std::string::npos);
+    DOCTEST_CHECK(out.str().find("\"query_completed_steady_ns\":\"") != std::string::npos);
     DOCTEST_CHECK(out.str().find("\"peek_hex\":\"6f6c64\"") != std::string::npos);
     DOCTEST_CHECK(out.str().find("\"strand_probe_completed_us\":1000001") != std::string::npos);
     ::close(pair[0]);

@@ -562,6 +562,12 @@ void progress_then_stall(const std::string& executable) {
     {
         throw std::runtime_error("independent controller observation missing: " + client.log);
     }
+    if (output.find("\"event\":\"socket_observer_before_cancel\"") == std::string::npos ||
+        output.find("\"clock_anchor\":{\"steady_before_ns\":\"", observation) == std::string::npos ||
+        output.find("\"query_completed_steady_ns\":\"", observation) == std::string::npos)
+    {
+        throw std::runtime_error("observer wall/steady anchors missing: " + client.log);
+    }
     bool strand_completed = false;
     for (auto position = observation; position != std::string::npos;
          position = output.find("\"event\":\"socket_observation\"", position + 1))

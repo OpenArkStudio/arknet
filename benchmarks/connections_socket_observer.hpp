@@ -85,6 +85,26 @@ inline socket_observation observe_socket(int descriptor) noexcept {
     return result;
 }
 
+struct observation_clock_anchor
+{
+    std::int64_t steady_before_ns{}, unix_ns{}, steady_after_ns{};
+};
+
+inline std::int64_t observation_steady_ns() noexcept {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch())
+        .count();
+}
+
+inline observation_clock_anchor observation_anchor() noexcept {
+    observation_clock_anchor value;
+    value.steady_before_ns = observation_steady_ns();
+    value.unix_ns =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    value.steady_after_ns = observation_steady_ns();
+    return value;
+}
+
 // Single IO worker publishes snapshots; the existing controller observes pinned
 // descriptors. The mutex also serializes dup retirement before socket.close().
 class socket_observer
@@ -182,8 +202,10 @@ public:
         if (data_)
         {
             std::lock_guard lock(mutex_);
-            if (auto* value = find(owner))
+            if (auto* value = find(owner); value && value->descriptor >= 0)
             {
+                // This runs before the caller cancels/closes the original socket.
+                value->before_cancel = observation_anchor();
                 retire(*value);
             }
         }
@@ -216,7 +238,9 @@ public:
                 entry.marker_completed = marker_completed;
                 entry.probe_completed = value.probe_completed;
                 entry.state = value.state;
+                entry.anchor = observation_anchor();
                 entry.query = observe_socket(value.descriptor);
+                entry.query_completed_steady_ns = observation_steady_ns();
             }
         }
     }
@@ -246,7 +270,9 @@ public:
                     << ",\"input_frame_ready\":" << (entry.state.frame_ready ? "true" : "false")
                     << ",\"global_marker_completed_us\":" << entry.marker_completed
                     << ",\"strand_probe_submitted_us\":" << value.probe_submitted
-                    << ",\"strand_probe_completed_us\":" << entry.probe_completed
+                    << ",\"strand_probe_completed_us\":" << entry.probe_completed << ",\"clock_anchor\":";
+                write_anchor(out, entry.anchor);
+                out << ",\"query_completed_steady_ns\":" << std::quoted(std::to_string(entry.query_completed_steady_ns))
                     << ",\"poll_result\":" << q.poll_result << ",\"poll_error\":" << q.poll_error
                     << ",\"poll_events\":" << q.events << ",\"readable_bytes\":" << q.readable_bytes
                     << ",\"readable_error\":" << q.readable_error << ",\"peek_bytes\":" << q.peek_bytes
@@ -274,6 +300,15 @@ public:
                 }
                 out << "}\n";
             }
+            if (value.before_cancel.unix_ns)
+            {
+                out << "{\"event\":\"socket_observer_before_cancel\",\"schema\":1,\"role\":" << std::quoted(role)
+                    << ",\"run_id\":" << value.state.owner.run << ",\"client_id\":" << value.state.owner.client
+                    << ",\"connection_id\":" << value.state.owner.connection << ",\"generation\":" << value.generation
+                    << ",\"clock_anchor\":";
+                write_anchor(out, value.before_cancel);
+                out << "}\n";
+            }
         }
         out << "{\"event\":\"socket_observer_summary\",\"role\":" << std::quoted(role)
             << ",\"clock_domain\":\"local_steady_clock\",\"clock_origin_us\":" << clock_origin_us
@@ -294,7 +329,8 @@ private:
     {
         snapshot state;
         socket_observation query;
-        std::int64_t time_us{}, marker_completed{}, probe_completed{};
+        std::int64_t time_us{}, marker_completed{}, probe_completed{}, query_completed_steady_ns{};
+        observation_clock_anchor anchor;
     };
 
     struct slot
@@ -303,6 +339,7 @@ private:
         std::uint64_t generation{};
         snapshot state;
         std::int64_t probe_submitted{}, probe_completed{};
+        observation_clock_anchor before_cancel;
         std::size_t count{};
         std::array<sample_entry, sample_capacity> samples{};
     };
@@ -333,6 +370,13 @@ private:
             value.descriptor = -1;
         }
 #endif
+    }
+
+    static void write_anchor(std::ostream& out, observation_clock_anchor value) {
+        // Strings preserve Unix nanoseconds in JSON readers with binary64 numbers.
+        out << "{\"steady_before_ns\":" << std::quoted(std::to_string(value.steady_before_ns))
+            << ",\"unix_ns\":" << std::quoted(std::to_string(value.unix_ns))
+            << ",\"steady_after_ns\":" << std::quoted(std::to_string(value.steady_after_ns)) << '}';
     }
 
     static void hex(std::ostream& out, const unsigned char* bytes, std::size_t count) {
