@@ -191,6 +191,25 @@ HELLO, START, DATA, FIN and acknowledgement identity/sequence rules match the
 original benchmark. Payload is limited to 1–4023 bytes, preserving the original
 conservative 4096-byte receive-cap validation.
 
+Two diagnostic isolation switches change one mechanism each; their defaults keep
+the behavior above, and the final `result` records both. `--session-strands off`
+binds every session handler to the context executor instead of a per-session
+strand; with a single IO worker this still serializes all handlers.
+`--write-buffers joined` copies the length prefix and protocol frame into one
+buffer per write instead of passing two buffers; the extra copy is not included in
+the declared buffer budget. Pair both peers with the same switches when isolating a
+mechanism, and compare against interleaved default runs.
+
+`--io-histogram on` wraps each socket in a counting stream and adds `io_histogram`
+to the `result`: per direction, successful `async_read_some`/`async_write_some`
+calls, bytes, short completions and log2 histograms of requested and completed
+bytes. `async_read_until` issues zero-byte reads when a frame is already buffered;
+these appear as requested 0 and do not call the kernel. Readiness waits and
+would-block results are not visible through Asio and are reported as 0. The option
+cannot be combined with `--socket-operation-trace`, and the wrapper itself is part
+of the measured configuration. The poll control always reports the same object,
+including `EAGAIN` counts, waits and returned events.
+
 The default active capacity is 5000, connect parallelism is 32, data inflight
 capacity is 20000 and the send/data byte limit is 64 MiB. These are declared limits,
 not measured capacity. `--max-inflight` adds an explicit global DATA count limit;
@@ -456,3 +475,96 @@ not the older published IO snapshot time. Validate wall/steady offset stability
 across anchors; a clock step, large bracket or missing cancellation anchor makes
 precise cross-process timing inconclusive. Earlier output without these anchors
 cannot be precisely aligned to packet wall timestamps from its steady epoch alone.
+
+## POSIX poll control without Asio
+
+`arknet_poll_connection_control` is a second diagnostic TCP peer, built with the
+benchmark option on POSIX systems. It uses neither Asio nor strands: by default one
+thread drives non-blocking IPv4 sockets with `poll(2)`. It speaks the same
+length-prefixed HELLO, START, DATA, FIN and acknowledgement protocol as
+`arknet_asio_connection_control`, so either role can be paired with the native
+Asio control. Use the four pairings to separate the event loop of each peer from
+the transport underneath.
+
+```sh
+cmake --build build --target arknet_poll_connection_control --parallel 2
+build/benchmarks/arknet_poll_connection_control --self-test
+build/benchmarks/arknet_poll_connection_control --role server --listen 127.0.0.1 \
+  --port 21002 --run-id 71 --expected-connections 8 --window 4 \
+  --hold-seconds 0.1 --deadline-seconds 5
+# Separate terminal/process; the server may also be arknet_asio_connection_control
+# with --scenario traffic:
+build/benchmarks/arknet_poll_connection_control --role client --target 127.0.0.1 \
+  --port 21002 --run-id 71 --client-id 91 --connections 8 --window 4 \
+  --hold-seconds 0.1 --deadline-seconds 5
+```
+
+The client paces connects with `--connect-rate` and `--connect-parallel`, sends
+HELLO with `TCP_NODELAY`, starts traffic after every connection is ready and keeps
+`--window` DATA requests outstanding until `--hold-seconds` elapses. Each peer tries
+`send` immediately and waits for `POLLOUT` only for the unsent remainder; input
+uses the same 4096-byte bound and canonical length rules. Payload is limited to
+1–4023 bytes. The traffic scenario is the only scenario.
+
+On Apple and BSD systems `--events kqueue` replaces `poll(2)` with a loop that
+registers events the way the Boost.Asio kqueue reactor does, leaving the protocol,
+socket calls and diagnostics unchanged. Sends, receives, accepts and connects are
+attempted first; only one that must wait registers its descriptor with
+`EV_ADD | EV_CLEAR`, `EVFILT_READ` for reads and `EVFILT_READ` plus `EVFILT_WRITE`
+once a write or connect must wait. A write event that arrives with nothing left to
+write deletes the `EVFILT_WRITE` registration, and one `kevent` call returns at
+most 128 events. Other platforms reject `kqueue`; the `result` event records
+`events`. Pair both peers in the same mode to compare the two notification models.
+
+`--write-pacing serial` reproduces the native control's write cadence in either
+event mode: each session writes one frame at a time, trying `send` immediately
+when nothing is outstanding. A fully written frame posts its completion to the
+next loop pass, which then starts the next queued frame; posted completions make
+that pass's wait non-blocking. The default `burst` appends each frame and sends
+at once, so a window of requests usually leaves in consecutive calls. The `result`
+event records `write_pacing`.
+
+`--read-pacing serial` reproduces `async_read_until` on the native control's
+4096-byte stream buffer. A frame already buffered completes through a posted step
+without `recv`. Otherwise one `recv` is attempted and its completion is posted to a
+later pass, where framing is checked again; a would-block result waits for one
+readiness event, which performs one `recv`. Each completion handles one frame and
+then starts the next read; readiness that arrives while no read waits is dropped.
+The default `drain` reads until `EAGAIN` and handles every buffered frame at once.
+The `result` event records `read_pacing`.
+
+`--socket-setup asio` prepares sockets the way Boost.Asio's `socket_ops` does on
+Apple and FreeBSD: `SO_NOSIGPIPE` on the listener and on every created and
+accepted socket, and non-blocking mode through `ioctl(FIONBIO)`. The default sets
+`O_NONBLOCK` with `fcntl` and relies on an ignored `SIGPIPE`. Single-buffer reads
+and writes already use `recv` and `send` in both programs. The `result` event
+records `socket_setup`.
+
+`--send-queue-watch on` makes either role query every open socket's kernel send
+queue every 250 ms. A queue that stays non-empty and unchanged for one second has
+made no delivery progress; the peer writes a `send_queue_stalled` event with
+`phase` `detected`, then `sample` once per further second (at most 20 per
+connection and 64 connections), and `progressed` once the queue changes. Each
+event carries ports, sequence state, application and kernel queue bytes and
+`tcp_info` from Apple `TCP_CONNECTION_INFO` (state, flags, RTO, congestion window,
+slow-start threshold, peer window, transmitted, retransmitted and out-of-order
+bytes); other platforms report `"status":"unsupported"`. `stalled_connection`
+events include the same `tcp_info`. The scan adds one `getsockopt` per socket per
+interval and is part of the measured configuration; the `result` event records
+`send_queue_watch`.
+
+The first request older than `--request-timeout-ms` fails the client. It writes one
+`stalled_connection` event per affected connection with `phase` `at_failure`,
+then stops admitting requests. `--observe-seconds` keeps reading for that interval
+and reports the same connections again with `phase` `after_observation`. The server
+reports, at the first premature EOF, deadline or signal, unfinished connections
+whose reads stopped at least `--request-timeout-ms` before its latest read on any
+connection. Each event contains the local and peer ports, sequence state, bytes
+handed to and read from the kernel, bytes still queued in the application, and the
+kernel readable and send-queue byte counts (`FIONREAD`; `SO_NWRITE` on macOS,
+`SIOCOUTQ` on Linux, otherwise -1). Match peers by reversed ports.
+
+Stdout ends with one `result` event (`success`, `failure_scope`, counters). Exit
+status 0 means success, 1 a failed run and 2 an argument or startup error. This
+control has no operation trace, kernel TCP samples or resource events; it does not
+replace the arknet benchmark or the native Asio control.

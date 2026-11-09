@@ -14,6 +14,7 @@
 
 #endif
 
+#include "connections_io_histogram.hpp"
 #include "connections_trace.hpp"
 
 namespace connection_load {
@@ -108,6 +109,54 @@ private:
     std::uint64_t read_sequence_{}, write_sequence_{};
 };
 
+template<class Handler>
+struct io_count_completion
+{
+    Handler handler;
+    io_histogram::direction* direction;
+    std::size_t requested;
+
+    void operator()(socket_trace_error error, std::size_t bytes) {
+        if (!error)
+        {
+            direction->record(requested, bytes);
+        }
+        handler(error, bytes);
+    }
+};
+
+// Native-control cadence diagnostics only: counts each successful stream call.
+template<class Stream>
+class io_count_stream
+{
+public:
+    using executor_type = typename Stream::executor_type;
+
+    io_count_stream(Stream& stream, io_histogram& histogram)
+        : stream_(stream)
+        , histogram_(histogram) {}
+
+    executor_type get_executor() noexcept {
+        return stream_.get_executor();
+    }
+
+    template<class Buffers, class Handler>
+    void async_read_some(const Buffers& buffers, Handler&& handler) {
+        stream_.async_read_some(buffers, io_count_completion<std::decay_t<Handler>>{std::forward<Handler>(handler),
+                                             &histogram_.read, socket_trace_asio::buffer_size(buffers)});
+    }
+
+    template<class Buffers, class Handler>
+    void async_write_some(const Buffers& buffers, Handler&& handler) {
+        stream_.async_write_some(buffers, io_count_completion<std::decay_t<Handler>>{std::forward<Handler>(handler),
+                                              &histogram_.write, socket_trace_asio::buffer_size(buffers)});
+    }
+
+private:
+    Stream& stream_;
+    io_histogram& histogram_;
+};
+
 } // namespace connection_load
 
 #if ARKNET_CONTROL_BOOST
@@ -131,6 +180,22 @@ struct associator<Associator, connection_load::socket_trace_completion<Handler>,
 
     static auto get(
         const connection_load::socket_trace_completion<Handler>& value, const DefaultCandidate& candidate) noexcept
+        -> decltype(Associator<Handler, DefaultCandidate>::get(value.handler, candidate)) {
+        return Associator<Handler, DefaultCandidate>::get(value.handler, candidate);
+    }
+};
+
+template<template<class, class> class Associator, class Handler, class DefaultCandidate>
+struct associator<Associator, connection_load::io_count_completion<Handler>, DefaultCandidate>
+    : Associator<Handler, DefaultCandidate>
+{
+    static typename Associator<Handler, DefaultCandidate>::type get(
+        const connection_load::io_count_completion<Handler>& value) noexcept {
+        return Associator<Handler, DefaultCandidate>::get(value.handler);
+    }
+
+    static auto get(
+        const connection_load::io_count_completion<Handler>& value, const DefaultCandidate& candidate) noexcept
         -> decltype(Associator<Handler, DefaultCandidate>::get(value.handler, candidate)) {
         return Associator<Handler, DefaultCandidate>::get(value.handler, candidate);
     }
