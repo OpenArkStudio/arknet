@@ -185,6 +185,19 @@ build/benchmarks/arknet_asio_connection_control --role client --target 127.0.0.1
 序号规则与原 benchmark 一致。payload 限制为 1–4023 字节，保持原程序对 4096 字节
 接收上限的保守校验。
 
+两个诊断隔离开关各只改变一种机制；默认值保持上述行为，最终 `result` 会记录两者。
+`--session-strands off` 把每个会话的回调绑定到 context executor，而不是每会话 strand；
+只有一个 IO 工作线程时，所有回调仍然串行执行。`--write-buffers joined` 在每次写入时
+把长度前缀和协议帧复制到同一个 buffer，而不是传入两个 buffer；这份额外副本不计入声明的
+buffer 预算。隔离某种机制时，两端应使用相同开关，并与交替运行的默认配置对比。
+
+`--io-histogram on` 用一个计数 stream 包装每个 socket，并在 `result` 中增加 `io_histogram`：
+按读写方向记录成功的 `async_read_some`/`async_write_some` 调用次数、字节数、未完成全部请求的
+次数，以及请求字节数和完成字节数的 log2 直方图。帧已在缓冲区中时，`async_read_until` 会发起
+零字节读取；它们记为请求 0 字节，不会调用内核。Asio 不暴露就绪等待和 would-block 结果，
+这两项报告为 0。该选项不能与 `--socket-operation-trace` 同时使用，包装层本身也属于被测配置。
+poll 对照总是输出同样的对象，并包含 `EAGAIN` 次数、等待次数和返回的事件数。
+
 默认活动连接容量为 5000，最多同时建连 32 个，DATA 在途容量为 20000，发送和 DATA
 字节限制为 64 MiB。这些是配置边界，不是已验证容量。`--max-inflight` 增加显式全局
 DATA 数量限制；声明的连接窗口必须同时满足数量和字节限制。控制帧也占用发送字节额度。
@@ -374,3 +387,73 @@ OS 缺陷。首次发布仍依赖 IO worker，发布前 worker 已阻塞时不�
 `[w+q-b, w+q-a]`，再纳入PCAP时间戳量化误差。应使用query区间，不用较旧的IO状态快照时间。
 须检查anchor间wall/steady偏移稳定性；时钟跳变、过宽区间或缺取消anchor时，精确跨进程
 对齐不可判定。旧输出仅有steady epoch，无法精确对齐包的wall时间戳。
+
+## 不使用 Asio 的 POSIX poll 对照
+
+`arknet_poll_connection_control` 是第二个诊断用 TCP 对端，在 POSIX 系统上随 benchmark
+选项构建。它不使用 Asio 或 strand：默认由一个线程用 `poll(2)` 驱动非阻塞
+IPv4 socket。它与 `arknet_asio_connection_control` 使用相同的长度前缀 HELLO、START、
+DATA、FIN 及确认协议，因此任一角色都可以与原生 Asio 对照配对。用四种配对区分两端各自的
+事件循环与其下的传输层。
+
+```sh
+cmake --build build --target arknet_poll_connection_control --parallel 2
+build/benchmarks/arknet_poll_connection_control --self-test
+build/benchmarks/arknet_poll_connection_control --role server --listen 127.0.0.1 \
+  --port 21002 --run-id 71 --expected-connections 8 --window 4 \
+  --hold-seconds 0.1 --deadline-seconds 5
+# 在另一个终端或进程中运行；服务端也可以换成带 --scenario traffic 的
+# arknet_asio_connection_control：
+build/benchmarks/arknet_poll_connection_control --role client --target 127.0.0.1 \
+  --port 21002 --run-id 71 --client-id 91 --connections 8 --window 4 \
+  --hold-seconds 0.1 --deadline-seconds 5
+```
+
+客户端按 `--connect-rate` 和 `--connect-parallel` 控制建连节奏，开启 `TCP_NODELAY` 后发送
+HELLO，所有连接就绪后开始流量，并在 `--hold-seconds` 内保持 `--window` 个 DATA 请求在途。
+两端都先立即调用 `send`，只对未发出的剩余部分等待 `POLLOUT`；输入使用相同的 4096 字节上限
+和规范长度规则。payload 限制为 1–4023 字节。只支持 traffic 场景。
+
+在 Apple 和 BSD 系统上，`--events kqueue` 用一个按 Boost.Asio kqueue reactor 方式注册事件
+的循环替换 `poll(2)`，协议、socket 调用和诊断输出保持不变。send、recv、accept 和 connect
+都先直接尝试；只有需要等待的操作才用 `EV_ADD | EV_CLEAR` 注册描述符：读取只注册
+`EVFILT_READ`，写入或建连需要等待时同时注册 `EVFILT_READ` 和 `EVFILT_WRITE`。写事件到达时
+若已无待写数据，就删除 `EVFILT_WRITE` 注册；每次 `kevent` 调用最多返回 128 个事件。其他
+平台会拒绝 `kqueue`；`result` 事件记录 `events`。比较两种通知模型时，两端应使用相同模式。
+
+`--write-pacing serial` 在两种事件模式下都能复现原生对照的写入节奏：每个会话同一时间只写一帧，
+没有在途写入时立即尝试 `send`。一帧完全写出后，把完成通知投递到下一轮循环，由那一轮再开始写
+队列中的下一帧；有待处理的完成时，那一轮的等待不会阻塞。默认的 `burst` 会追加每一帧并立即
+发送，因此同一窗口的请求通常在连续的调用中发出。`result` 事件记录 `write_pacing`。
+
+`--read-pacing serial` 复现原生对照在 4096 字节 stream buffer 上的 `async_read_until`：
+缓冲区里已有完整帧时，不调用 `recv`，通过投递的一步完成；否则尝试一次 `recv`，并把完成投递到
+下一轮，在那一轮重新检查帧边界；遇到 would-block 时等待一次就绪事件，由它执行一次 `recv`。
+每次完成只处理一帧，然后开始下一次读取；没有读取在等待时到达的就绪事件会被丢弃。默认的
+`drain` 一直读到 `EAGAIN`，并一次处理缓冲区里的全部帧。`result` 事件记录 `read_pacing`。
+
+`--socket-setup asio` 按 Boost.Asio 的 `socket_ops` 在 Apple 和 FreeBSD 上的做法准备 socket：
+监听 socket 以及每个创建和接受的 socket 都设置 `SO_NOSIGPIPE`，并用 `ioctl(FIONBIO)` 设置非阻塞。
+默认方式用 `fcntl` 设置 `O_NONBLOCK`，并依靠忽略 `SIGPIPE`。两个程序的单缓冲区读写本来就都使用
+`recv` 和 `send`。`result` 事件记录 `socket_setup`。
+
+`--send-queue-watch on` 让任一角色每 250 ms 查询一次每个打开 socket 的内核发送队列。发送队列
+连续一秒非空且没有变化，说明没有任何投递进展；此时输出 `phase` 为 `detected` 的
+`send_queue_stalled` 事件，之后每多一秒输出一次 `sample`（每个连接最多 20 次，最多跟踪 64 个
+连接），队列一旦变化就输出 `progressed`。每条事件包含端口、序号状态、应用层与内核队列字节数，
+以及来自 Apple `TCP_CONNECTION_INFO` 的 `tcp_info`（状态、标志、RTO、拥塞窗口、慢启动阈值、
+对端窗口、已发送、重传和乱序字节数）；其他平台报告 `"status":"unsupported"`。
+`stalled_connection` 事件也包含同样的 `tcp_info`。每个间隔对每个 socket 多一次 `getsockopt`，
+这属于被测配置的一部分；`result` 事件记录 `send_queue_watch`。
+
+第一个超过 `--request-timeout-ms` 的请求会使客户端失败。客户端为每个受影响的连接输出一条
+`phase` 为 `at_failure` 的 `stalled_connection` 事件，然后停止发出新请求。
+`--observe-seconds` 会在该时长内继续读取，并以 `phase` `after_observation` 再次报告同一批
+连接。服务端在第一次提前 EOF、到达截止时间或收到信号时，报告读取停止时间比任一连接最近一次
+读取早至少 `--request-timeout-ms` 的未完成连接。每条事件包含本端与对端端口、序号状态、交给
+内核及从内核读取的字节数、仍在应用层排队的字节数，以及内核可读字节数和发送队列字节数
+（`FIONREAD`；macOS 用 `SO_NWRITE`，Linux 用 `SIOCOUTQ`，其他平台为 -1）。按端口互换匹配两端。
+
+stdout 以一条 `result` 事件结束（`success`、`failure_scope` 及计数）。退出码 0 表示成功，
+1 表示运行失败，2 表示参数或启动错误。该对照不提供操作历史、内核 TCP 采样或资源事件，
+不能替代 arknet benchmark 或原生 Asio 对照。

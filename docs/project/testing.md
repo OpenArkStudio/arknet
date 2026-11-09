@@ -317,6 +317,7 @@ the unresolved 5,000-connection root cause or capacity. See the
 | Redis | RESP2/RESP3, authentication, TCP/TLS/mTLS, ordered pipelines, cancellation reply draining, bounded admission, unsupported replication commands and exclusive pool reset/authentication/database isolation |
 | Installed consumer | Provider/TLS configuration, installed public headers and optional C++ compiler launcher forwarding; empty launcher, paths with spaces, launcher argument lists and real compiler failure propagation |
 | Connection-load process | Raw TCP peers split the frame prefix/body and combine eight requests across a 4 KiB receive capacity against both arknet and native Asio servers; ordered byte-exact replies and FIN exchange, not a high-concurrency or TCP-loss test |
+| Poll connection control | `--self-test` checks the canonical length prefix, role-specific option rejection and eight-connection loopback traffic of the POSIX peer without Asio: default `poll(2)` pacing, and serial read/write pacing with Asio socket setup and send-queue watching that must report no stall; each also under `kqueue` on Apple/BSD; not a high-concurrency or TCP-loss test |
 
 Sustained stress validates content/sequence, completion counts, connection and
 server restarts, pending writes and queue cleanup. Each protocol splits

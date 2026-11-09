@@ -249,6 +249,7 @@ build/tests/arknet_tls_test --reporters=junit --out=build/tls.xml
 | Redis | RESP2/RESP3、认证、TCP/TLS/mTLS、有序流水线、取消后的回复排空、有界准入、拒绝复制命令，以及独占连接池的重置、认证与数据库隔离 |
 | 安装包消费项目 | 依赖方案／TLS、公开头文件和可选 C++ compiler launcher 转发；空 launcher、带空格路径、launcher 参数列表与真实编译错误传播 |
 | 连接负载进程 | 原始 TCP 对端拆分帧前缀／消息体，并跨 4 KiB 接收容量合并八个请求，分别对接 arknet 与原生 Asio 服务端；检查按序逐字节回复和 FIN，不代表高并发或 TCP 丢包验收 |
+| poll 连接对照 | `--self-test` 检查规范长度前缀、按角色拒绝不适用选项，以及不使用 Asio 的 POSIX 对端在八个连接上的 loopback 流量：默认 `poll(2)` 节奏，以及逐帧读写 + Asio 式 socket 设置 + 发送队列监视（必须不报告卡住）；在 Apple/BSD 上两者还各用 `kqueue` 跑一遍；不代表高并发或 TCP 丢包验收 |
 
 持续压力测试验证数据与序号、完成计数、连接／服务端重启、未完成写入和队列清理。
 每种协议将 `--seconds` 分配给四种配置：库内置调度器、单 context 单线程、

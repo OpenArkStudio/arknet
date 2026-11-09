@@ -75,6 +75,8 @@ struct options
     std::size_t inflight_bytes = 64 * 1024 * 1024, budget = 512 * 1024 * 1024;
     double hold = 1, deadline = 30, cleanup = 5;
     bool operation_trace{}, socket_operation_trace{}, tcp_kernel_samples{}, socket_observer{};
+    // Diagnostic isolation switches; the defaults preserve the original control.
+    bool session_strands = true, joined_writes{}, io_histogram{};
 };
 
 std::uint64_t integer(std::string_view text) {
@@ -115,6 +117,10 @@ void validate(const options& o) {
     if (o.socket_operation_trace && !o.operation_trace)
     {
         throw std::invalid_argument("socket-operation-trace requires operation-trace on");
+    }
+    if (o.io_histogram && o.socket_operation_trace)
+    {
+        throw std::invalid_argument("io-histogram and socket-operation-trace both wrap the socket");
     }
     if ((o.role != "server" && o.role != "client") || (o.scenario != "idle" && o.scenario != "traffic") || !o.run ||
         !o.client || o.host.empty() || o.port > 65535 || (o.role == "client" && !o.port))
@@ -165,8 +171,11 @@ void help() {
                  "  --socket-operation-trace off|on (default off; requires operation-trace on)\n"
                  "  --tcp-kernel-samples off|on (default off; requires operation-trace on; Apple TCP info)\n"
                  "  --socket-observer off|on (default off; Unix only; non-consuming controller observations)\n"
+                 "  --session-strands on|off (default on; off binds sessions to the single-worker context executor)\n"
+                 "  --write-buffers split|joined (default split; joined sends prefix and frame as one buffer)\n"
+                 "  --io-histogram off|on (default off; per-call read/write byte histograms in the result)\n"
                  "  --self-test (unit checks only; no sockets)\n"
-                 "One native Asio context/worker, session strands, TCP_NODELAY, 4096B read_until cap.\n"
+                 "One native Asio context/worker, session strands by default, TCP_NODELAY, 4096B read_until cap.\n"
                  "Defaults permit 5000 active connections, 32 connecting and 20000 data inflight.\n"
                  "Server port 0 reports its selected port; expected count must be nonzero.\n"
                  "Unsupported options (including sample-ms and multiple workers) are rejected.\n";
@@ -286,6 +295,18 @@ options arguments(int argc, char** argv) {
         else if (key == "--socket-observer" && (value == "on" || value == "off"))
         {
             o.socket_observer = value == "on";
+        }
+        else if (key == "--session-strands" && (value == "on" || value == "off"))
+        {
+            o.session_strands = value == "on";
+        }
+        else if (key == "--io-histogram" && (value == "on" || value == "off"))
+        {
+            o.io_histogram = value == "on";
+        }
+        else if (key == "--write-buffers" && (value == "split" || value == "joined"))
+        {
+            o.joined_writes = value == "joined";
         }
         else if (key == "--io-threads" && integer(value) == 1)
         {
@@ -448,6 +469,7 @@ struct wire_frame
     std::array<char, 9> prefix{};
     std::size_t prefix_size{};
     std::string body;
+    std::string joined; // Prefix and body copy for --write-buffers joined only.
 
     bool is_data() const {
         return connection_load::read_integer(body, 8) == static_cast<std::uint64_t>(frame_kind::data);
@@ -516,7 +538,9 @@ struct session : std::enable_shared_from_this<session>
     void trace(connection_load::operation_phase phase, std::uint64_t bytes, std::uint64_t sequence, int error = 0);
 
     application& app;
-    asio::strand<asio::io_context::executor_type> strand;
+    // A per-session strand, or the context executor when --session-strands off.
+    // Only one IO worker exists, so both serialize every session handler.
+    asio::any_io_executor strand;
     tcp::socket socket;
     asio::streambuf input{4096};
     protocol_state state;
@@ -529,6 +553,7 @@ struct session : std::enable_shared_from_this<session>
     bool read_pending{};
     connection_load::operation_ring* operations{};
     std::unique_ptr<connection_load::socket_trace_stream<tcp::socket>> socket_trace;
+    std::unique_ptr<connection_load::io_count_stream<tcp::socket>> io_count;
     std::uint64_t read_completions{}, write_completions{}, last_write_kind{}, last_write_sequence{};
     clock_type::time_point last_read_at{}, last_write_at{};
 };
@@ -566,6 +591,7 @@ struct application
     connection_load::operation_recorder operations;
     connection_load::tcp_kernel_samples kernel_samples;
     connection_load::socket_observer socket_observer;
+    connection_load::io_histogram histogram; // IO worker only.
     std::atomic<std::int64_t> marker_completed_us{};
     bool trace_emitted{};
     asio::io_context io{1};
@@ -596,7 +622,8 @@ struct application
 
 session::session(application& owner, asio::io_context& context)
     : app(owner)
-    , strand(asio::make_strand(context))
+    , strand(owner.o.session_strands ? asio::any_io_executor(asio::make_strand(context))
+                                     : asio::any_io_executor(context.get_executor()))
     , socket(strand) {
     // Match the arknet driver's initial receive reservation as well as its cap.
     input.prepare(4096);
@@ -737,8 +764,11 @@ void session::write() {
     writing = queued.front();
     queued.pop_front();
     const auto value = writing;
-    const std::array<asio::const_buffer, 2> buffers{
-        asio::buffer(value->prefix.data(), value->prefix_size), asio::buffer(value->body)};
+    if (app.o.joined_writes)
+    {
+        value->joined.assign(value->prefix.data(), value->prefix_size);
+        value->joined += value->body;
+    }
     ++app.callbacks;
     if (operations)
     {
@@ -796,14 +826,30 @@ void session::write() {
             }
             a.drained();
         });
-    if (socket_trace)
+    // Exactly one branch runs, so the completion is moved once.
+    const auto start = [&](const auto& buffers) {
+        if (socket_trace)
+        {
+            socket_trace->write_sequence(connection_load::read_integer(value->body, 40));
+            asio::async_write(*socket_trace, buffers, std::move(completion));
+        }
+        else if (io_count)
+        {
+            asio::async_write(*io_count, buffers, std::move(completion));
+        }
+        else
+        {
+            asio::async_write(socket, buffers, std::move(completion));
+        }
+    };
+    if (app.o.joined_writes)
     {
-        socket_trace->write_sequence(connection_load::read_integer(value->body, 40));
-        asio::async_write(*socket_trace, buffers, std::move(completion));
+        start(asio::buffer(value->joined));
     }
     else
     {
-        asio::async_write(socket, buffers, std::move(completion));
+        start(std::array<asio::const_buffer, 2>{
+            asio::buffer(value->prefix.data(), value->prefix_size), asio::buffer(value->body)});
     }
 }
 
@@ -866,6 +912,10 @@ void session::read() {
         socket_trace->read_sequence(state.next_receive);
         asio::async_read_until(*socket_trace, input, dgram_match{}, std::move(completion));
     }
+    else if (io_count)
+    {
+        asio::async_read_until(*io_count, input, dgram_match{}, std::move(completion));
+    }
     else
     {
         asio::async_read_until(socket, input, dgram_match{}, std::move(completion));
@@ -879,6 +929,10 @@ void session::enable_trace() {
     {
         socket_trace =
             std::make_unique<connection_load::socket_trace_stream<tcp::socket>>(socket, *socket_operations, app.began);
+    }
+    else if (app.o.io_histogram)
+    {
+        io_count = std::make_unique<connection_load::io_count_stream<tcp::socket>>(socket, app.histogram);
     }
 }
 
@@ -1508,7 +1562,14 @@ void application::result() const {
               << ",\"io_contexts\":1,\"io_workers\":1,\"controller_on_io_worker\":false,\"initial_buffer_bytes\":4096,"
                  "\"tcp_nodelay\":true,\"max_"
                  "buffer_bytes\":4096"
-              << ",\"role\":" << std::quoted(o.role)
+              << ",\"session_strands\":" << (o.session_strands ? "true" : "false")
+              << ",\"write_buffers\":" << (o.joined_writes ? "\"joined\"" : "\"split\"");
+    if (o.io_histogram)
+    {
+        std::cout << ",\"io_histogram\":";
+        histogram.write_json(std::cout);
+    }
+    std::cout << ",\"role\":" << std::quoted(o.role)
               << ",\"success\":" << (failure.empty() && clean && complete ? "true" : "false")
               << ",\"cleanup_complete\":" << (clean ? "true" : "false") << ",\"error\":" << std::quoted(failure)
               << ",\"attempted\":" << attempted << ",\"accepted\":" << accepted << ",\"established\":" << established
@@ -1586,6 +1647,26 @@ void self_test() {
     require(kernel_enabled.deadline == enabled.deadline && kernel_enabled.request_ms == enabled.request_ms &&
             kernel_enabled.connections == enabled.connections && kernel_enabled.window == enabled.window &&
             kernel_enabled.payload == enabled.payload);
+    const auto parse_values = [](std::vector<std::string> values) {
+        values.insert(
+            values.begin(), {"control", "--role", "client", "--target", "127.0.0.1", "--port", "1", "--run-id", "1"});
+        std::vector<char*> argv;
+        for (auto& value : values)
+        {
+            argv.push_back(value.data());
+        }
+        return arguments(static_cast<int>(argv.size()), argv.data());
+    };
+    const auto switched =
+        parse_values({"--session-strands", "off", "--write-buffers", "joined", "--io-histogram", "on"});
+    require(disabled.session_strands && !disabled.joined_writes && !disabled.io_histogram &&
+            !switched.session_strands && switched.joined_writes && switched.io_histogram);
+    bool double_wrap_rejected = false;
+    try
+    { parse_values({"--operation-trace", "on", "--socket-operation-trace", "on", "--io-histogram", "on"}); }
+    catch (const std::invalid_argument&)
+    { double_wrap_rejected = true; }
+    require(double_wrap_rejected);
     // Synthetic queries only: exercise retention/JSON without sockets or load.
     connection_load::tcp_kernel_samples retained(true);
     unsigned kernel_queries{};
