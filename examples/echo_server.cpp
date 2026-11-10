@@ -7,8 +7,7 @@ int main(int argc, char** argv) {
     const std::string port = argc > 2 ? argv[2] : "7000";
     arknet::tcp_server server;
     server.bind_recv([](auto& session, std::string_view data) { session->async_send(data); });
-    if (!server.start(host, port))
-    {
+    if (!server.start(host, port)) {
         std::cerr << arknet::get_last_error().message() << '\n';
         return 1;
     }

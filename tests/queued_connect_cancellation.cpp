@@ -10,8 +10,7 @@
 
 namespace {
 
-struct io_runner
-{
+struct io_runner {
     asio::io_context context;
     asio::executor_work_guard<asio::io_context::executor_type> work{context.get_executor()};
     std::thread worker{[this] { context.run(); }};
@@ -77,8 +76,7 @@ DOCTEST_TEST_CASE("TCP stop from init reports one aborted connect without reachi
     });
     client.bind_connect([&] {
         const auto error = arknet::get_last_error();
-        if (++connected == 1)
-        {
+        if (++connected == 1) {
             completion.set_value(error);
         }
     });
@@ -160,8 +158,7 @@ DOCTEST_TEST_CASE("TCP stop queued from TLS init aborts before beginning a silen
     client.bind_handshake([&] { ++handshakes; });
     client.bind_connect([&] {
         const auto error = arknet::get_last_error();
-        if (++connected == 1)
-        {
+        if (++connected == 1) {
             completion.set_value(error);
         }
     });
@@ -170,8 +167,7 @@ DOCTEST_TEST_CASE("TCP stop queued from TLS init aborts before beginning a silen
     // This bound detects waiting for the configured 30s handshake/stop timers.
     const bool cancelled = completed.wait_for(5s) == std::future_status::ready;
     DOCTEST_CHECK(cancelled);
-    if (!cancelled)
-    {
+    if (!cancelled) {
         // Bound the negative regression too: close the pending kernel peer
         // connection so old code leaves its intentionally silent TLS handshake.
         asio::ip::tcp::socket accepted(peer_context);

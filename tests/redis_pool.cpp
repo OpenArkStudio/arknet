@@ -43,17 +43,12 @@ result pipeline(Connection& connection, std::vector<command> commands) {
 } // namespace
 
 DOCTEST_TEST_CASE("Redis pool configured deadlines reject nonpositive and unrepresentable durations") {
-    for (const auto timeout : {0ms, -1ms, std::chrono::milliseconds::max()})
-    {
-        for (const bool acquire_timeout : {false, true})
-        {
+    for (const auto timeout : {0ms, -1ms, std::chrono::milliseconds::max()}) {
+        for (const bool acquire_timeout : {false, true}) {
             arknet::redis::pool_options options;
-            if (acquire_timeout)
-            {
+            if (acquire_timeout) {
                 options.acquire_timeout = timeout;
-            }
-            else
-            {
+            } else {
                 options.reset_timeout = timeout;
             }
             DOCTEST_CHECK_THROWS_AS(pool{options}, std::invalid_argument);
@@ -74,8 +69,7 @@ DOCTEST_TEST_CASE("Redis pool invalid acquire deadlines preserve waiter capacity
     options.connection.port = endpoint.port();
     pool connections(options);
     const auto caller = std::this_thread::get_id();
-    for (const auto timeout : {-1ms, std::chrono::milliseconds::min(), std::chrono::milliseconds::max()})
-    {
+    for (const auto timeout : {-1ms, std::chrono::milliseconds::min(), std::chrono::milliseconds::max()}) {
         std::promise<pool::acquire_result> completed;
         auto response = completed.get_future();
         const auto id = connections.async_acquire(
@@ -163,8 +157,7 @@ DOCTEST_TEST_CASE("Redis lease return drains pending responses before RESET and 
     server endpoint([&](peer& remote) {
         remote.hello();
         remote.expect({"GET", "slow"});
-        if (allowed.wait_for(5s) != std::future_status::ready)
-        {
+        if (allowed.wait_for(5s) != std::future_status::ready) {
             throw std::runtime_error("Missing response signal");
         }
         remote.send(":7\r\n");
@@ -300,14 +293,11 @@ DOCTEST_TEST_CASE("Redis pool discards unsupported RESET connections before admi
     server endpoint(
         [round = 0](peer& remote) mutable {
             remote.hello();
-            if (round++ == 0)
-            {
+            if (round++ == 0) {
                 remote.expect({"RESET"});
                 remote.send("-ERR unknown command RESET\r\n");
                 remote.wait_closed();
-            }
-            else
-            {
+            } else {
                 remote.expect({"PING"});
                 remote.send("+PONG\r\n");
                 remote.wait_closed();
@@ -333,14 +323,11 @@ DOCTEST_TEST_CASE("Redis pool reset deadline includes waiting for undrained sent
     server endpoint(
         [round = 0](peer& remote) mutable {
             remote.hello();
-            if (round++ == 0)
-            {
+            if (round++ == 0) {
                 remote.expect({"INCR", "slow"});
                 remote.expect({"RESET"});
                 remote.wait_closed();
-            }
-            else
-            {
+            } else {
                 remote.expect({"PING"});
                 remote.send("+PONG\r\n");
                 remote.wait_closed();

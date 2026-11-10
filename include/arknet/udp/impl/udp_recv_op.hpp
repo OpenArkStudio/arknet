@@ -9,14 +9,12 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class udp_recv_op
-{
+class udp_recv_op {
 protected:
     template<class Condition>
     void _udp_post_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition) {
         auto& owner = static_cast<Derived&>(*this);
-        if (!owner.is_started())
-        {
+        if (!owner.is_started()) {
             return;
         }
         ARKNET_ASSERT(owner.io_->running_in_this_thread());
@@ -37,19 +35,16 @@ protected:
         std::shared_ptr<ecs_t<Condition>> condition) {
         auto& owner = static_cast<Derived&>(*this);
         set_last_error(error);
-        if (!owner.is_started())
-        {
+        if (!owner.is_started()) {
             owner._stop_readend_timer(std::move(lifetime));
             return;
         }
-        if (error == asio::error::operation_aborted || error == asio::error::connection_refused)
-        {
+        if (error == asio::error::operation_aborted || error == asio::error::connection_refused) {
             owner._do_disconnect(error, lifetime);
             owner._stop_readend_timer(std::move(lifetime));
             return;
         }
-        if (!error)
-        {
+        if (!error) {
             owner.buffer().commit(count);
             owner.update_alive_time();
             auto bytes = owner.buffer().data();

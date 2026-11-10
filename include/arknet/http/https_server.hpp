@@ -12,8 +12,7 @@ template<class Derived, class Session>
 using https_server_impl_t = detail::http_server_impl_t<Derived, Session, detail::tcps_server_impl_t>;
 
 template<class Session>
-class https_server_t : public https_server_impl_t<https_server_t<Session>, Session>
-{
+class https_server_t : public https_server_impl_t<https_server_t<Session>, Session> {
 public:
     using https_server_impl_t<https_server_t<Session>, Session>::https_server_impl_t;
 };

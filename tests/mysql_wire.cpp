@@ -25,8 +25,7 @@ std::string encode(std::string_view payload, std::uint8_t sequence = 0) {
 
 DOCTEST_TEST_CASE("MySQL integers retain all unsigned bits and distinguish NULL") {
     for (const auto value : std::array<std::uint64_t, 12>{0, 1, 250, 251, 255, 256, 65535, 65536, 0xffffff, 0x1000000,
-             std::uint64_t(1) << 63, std::numeric_limits<std::uint64_t>::max()})
-    {
+             std::uint64_t(1) << 63, std::numeric_limits<std::uint64_t>::max()}) {
         std::string wire;
         append_length(wire, value);
         wire_reader reader(wire);
@@ -35,8 +34,7 @@ DOCTEST_TEST_CASE("MySQL integers retain all unsigned bits and distinguish NULL"
         REQUIRE(result.has_value());
         CHECK(*result == value);
         CHECK(reader.remaining() == 0);
-        for (std::size_t size = 0; size < wire.size(); ++size)
-        {
+        for (std::size_t size = 0; size < wire.size(); ++size) {
             wire_reader partial(std::string_view(wire).substr(0, size));
             result = 42;
             CHECK(partial.read_length(result) == read_status::incomplete);
@@ -60,8 +58,7 @@ DOCTEST_TEST_CASE("MySQL integers retain all unsigned bits and distinguish NULL"
 }
 
 DOCTEST_TEST_CASE("MySQL fixed integers reject invalid widths and preserve incomplete output") {
-    for (std::size_t width = 1; width <= 8; ++width)
-    {
+    for (std::size_t width = 1; width <= 8; ++width) {
         const auto maximum =
             width == 8 ? std::numeric_limits<std::uint64_t>::max() : (std::uint64_t(1) << (width * 8)) - 1;
         std::string wire;
@@ -103,8 +100,7 @@ DOCTEST_TEST_CASE("MySQL strings preserve binary data NULL empty and transaction
 
     wire.clear();
     append_string(wire, binary);
-    for (std::size_t size = 0; size < wire.size(); ++size)
-    {
+    for (std::size_t size = 0; size < wire.size(); ++size) {
         wire_reader partial(std::string_view(wire).substr(0, size));
         result = "previous";
         CHECK(partial.read_string(result) == read_status::incomplete);
@@ -131,8 +127,7 @@ DOCTEST_TEST_CASE("MySQL strings preserve binary data NULL empty and transaction
 DOCTEST_TEST_CASE("MySQL packet decoder accepts every stream split without exposing partial messages") {
     const std::string payload("binary\0payload\xff", 15);
     const auto wire = encode(payload, 7);
-    for (std::size_t split = 0; split < wire.size(); ++split)
-    {
+    for (std::size_t split = 0; split < wire.size(); ++split) {
         packet_decoder decoder(1024, 7);
         auto input = std::string_view(wire).substr(0, split);
         std::string result = "previous";
@@ -148,8 +143,7 @@ DOCTEST_TEST_CASE("MySQL packet decoder accepts every stream split without expos
     }
     packet_decoder decoder(1024, 7);
     std::string result;
-    for (std::size_t i = 0; i < wire.size(); ++i)
-    {
+    for (std::size_t i = 0; i < wire.size(); ++i) {
         auto input = std::string_view(wire).substr(i, 1);
         CHECK(decoder.consume(input, result) ==
               (i + 1 == wire.size() ? packet_status::complete : packet_status::incomplete));
@@ -161,8 +155,7 @@ DOCTEST_TEST_CASE("MySQL packet decoder accepts every stream split without expos
 DOCTEST_TEST_CASE("MySQL coalesced response packets retain sequence across wrap and reset per command") {
     std::string wire;
     std::uint8_t sequence = 250;
-    for (int i = 0; i < 300; ++i)
-    {
+    for (int i = 0; i < 300; ++i) {
         std::string part;
         REQUIRE(encode_message(std::to_string(i), sequence, part));
         wire += part;
@@ -170,8 +163,7 @@ DOCTEST_TEST_CASE("MySQL coalesced response packets retain sequence across wrap 
     auto input = std::string_view(wire);
     packet_decoder decoder(1024, 250);
     std::string result;
-    for (int i = 0; i < 300; ++i)
-    {
+    for (int i = 0; i < 300; ++i) {
         REQUIRE(decoder.consume(input, result) == packet_status::complete);
         CHECK(result == std::to_string(i));
     }
@@ -185,8 +177,7 @@ DOCTEST_TEST_CASE("MySQL coalesced response packets retain sequence across wrap 
 }
 
 DOCTEST_TEST_CASE("MySQL maximum physical payload requires a continuation packet including an empty terminator") {
-    for (const auto size : {max_packet_payload - 1, max_packet_payload, max_packet_payload + 1})
-    {
+    for (const auto size : {max_packet_payload - 1, max_packet_payload, max_packet_payload + 1}) {
         const std::string payload(size, 'x');
         auto sequence = std::uint8_t(255);
         std::string wire;
@@ -242,19 +233,16 @@ DOCTEST_TEST_CASE("MySQL random fragmented messages roundtrip with bounded retai
     std::mt19937 random(12345);
     packet_decoder decoder(2048);
     std::uint8_t sequence = 0;
-    for (int i = 0; i < 1000; ++i)
-    {
+    for (int i = 0; i < 1000; ++i) {
         std::string payload(random() % 2049, '\0');
-        for (auto& byte : payload)
-        {
+        for (auto& byte : payload) {
             byte = static_cast<char>(random());
         }
         std::string wire;
         REQUIRE(encode_message(payload, sequence, wire, 2048));
         std::size_t position = 0;
         std::string result = "previous";
-        while (position < wire.size())
-        {
+        while (position < wire.size()) {
             const auto size = std::min<std::size_t>(random() % 127 + 1, wire.size() - position);
             auto input = std::string_view(wire).substr(position, size);
             position += size;
@@ -262,8 +250,7 @@ DOCTEST_TEST_CASE("MySQL random fragmented messages roundtrip with bounded retai
             CHECK(status == (position == wire.size() ? packet_status::complete : packet_status::incomplete));
             CHECK(input.empty());
             CHECK(decoder.buffered_size() <= payload.size() + 4);
-            if (status == packet_status::incomplete)
-            {
+            if (status == packet_status::incomplete) {
                 CHECK(result == "previous");
             }
         }

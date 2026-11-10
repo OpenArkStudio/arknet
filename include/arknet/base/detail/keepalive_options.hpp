@@ -22,40 +22,32 @@ template<class Socket>
 bool set_keepalive_options(
     Socket& socket, bool enabled = true, unsigned idle = 60, unsigned interval = 3, unsigned count = 3) noexcept {
     clear_last_error();
-    if constexpr (!std::same_as<typename Socket::lowest_layer_type::protocol_type, asio::ip::tcp>)
-    {
+    if constexpr (!std::same_as<typename Socket::lowest_layer_type::protocol_type, asio::ip::tcp>) {
         return true;
-    }
-    else
-    {
-        if (!socket.is_open())
-        {
+    } else {
+        if (!socket.is_open()) {
             set_last_error(asio::error::not_connected);
             return false;
         }
         constexpr auto limit = static_cast<unsigned>((std::numeric_limits<int>::max)());
-        if (enabled && (!idle || !interval || !count || idle > limit || interval > limit || count > limit))
-        {
+        if (enabled && (!idle || !interval || !count || idle > limit || interval > limit || count > limit)) {
             set_last_error(asio::error::invalid_argument);
             return false;
         }
 #if defined(_WIN32)
         constexpr auto millisecond_limit = (std::numeric_limits<ULONG>::max)() / 1000;
-        if (enabled && (idle > millisecond_limit || interval > millisecond_limit))
-        {
+        if (enabled && (idle > millisecond_limit || interval > millisecond_limit)) {
             set_last_error(asio::error::invalid_argument);
             return false;
         }
 #endif
         error_code ec;
         socket.set_option(asio::socket_base::keep_alive(enabled), ec);
-        if (ec)
-        {
+        if (ec) {
             set_last_error(ec);
             return false;
         }
-        if (!enabled)
-        {
+        if (!enabled) {
             return true;
         }
         auto fd = socket.native_handle();
@@ -76,8 +68,8 @@ bool set_keepalive_options(
 #if defined(_WIN32)
         tcp_keepalive options{1, idle * 1000UL, interval * 1000UL};
         DWORD written = 0;
-        if (::WSAIoctl(fd, SIO_KEEPALIVE_VALS, &options, sizeof(options), nullptr, 0, &written, nullptr, nullptr) != 0)
-        {
+        if (::WSAIoctl(fd, SIO_KEEPALIVE_VALS, &options, sizeof(options), nullptr, 0, &written, nullptr, nullptr) !=
+            0) {
             set_last_error(::WSAGetLastError(), asio::error::get_system_category());
             return false;
         }

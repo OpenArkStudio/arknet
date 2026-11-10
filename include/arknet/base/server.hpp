@@ -23,8 +23,7 @@
 
 namespace arknet {
 
-class server
-{
+class server {
 public:
     static constexpr bool is_client() noexcept {
         return false;
@@ -53,8 +52,7 @@ class server_impl_t
     , public user_data_cp<Derived>
     , public user_timer_cp<Derived>
     , public post_cp<Derived>
-    , public condition_event_cp<Derived>
-{
+    , public condition_event_cp<Derived> {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
 
 public:
@@ -101,15 +99,13 @@ public:
     }
 
     void request_stop() {
-        if (!this->derived().is_stopped())
-        {
+        if (!this->derived().is_stopped()) {
             this->post([this] { this->derived().stop(); });
         }
     }
 
     bool wait_stopped() {
-        if (this->iopool().running_in_threads() || this->io_->context().get_executor().running_in_this_thread())
-        {
+        if (this->iopool().running_in_threads() || this->io_->context().get_executor().running_in_this_thread()) {
             set_last_error(asio::error::operation_not_supported);
             return false;
         }
@@ -126,8 +122,7 @@ public:
     template<class Character, class Count>
         requires std::is_integral_v<Count>
     Derived& async_send(Character* data, Count count) {
-        if (data)
-        {
+        if (data) {
             sessions_.for_each([&](auto& session) { session->async_send(data, count); });
         }
         return this->derived();
@@ -239,8 +234,7 @@ protected:
 #endif
 
 private:
-    struct listen_metadata
-    {
+    struct listen_metadata {
         asio::ip::address address;
         unsigned short port = 0;
         error_code error = asio::error::bad_descriptor;

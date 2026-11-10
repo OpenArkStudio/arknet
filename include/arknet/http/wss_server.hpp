@@ -8,8 +8,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Session>
-class wss_server_impl_t : public websocket_server_impl<Derived, tcps_server_impl_t<Derived, Session>, Session>
-{
+class wss_server_impl_t : public websocket_server_impl<Derived, tcps_server_impl_t<Derived, Session>, Session> {
 public:
     template<class... Construction>
     explicit wss_server_impl_t(Construction&&... construction)
@@ -24,8 +23,7 @@ template<class Derived, class Session>
 using wss_server_impl_t = detail::wss_server_impl_t<Derived, Session>;
 
 template<class Session>
-class wss_server_t : public detail::wss_server_impl_t<wss_server_t<Session>, Session>
-{
+class wss_server_t : public detail::wss_server_impl_t<wss_server_t<Session>, Session> {
 public:
     using detail::wss_server_impl_t<wss_server_t<Session>, Session>::wss_server_impl_t;
 };

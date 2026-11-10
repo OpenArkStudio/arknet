@@ -7,18 +7,15 @@
 #include "check.hpp"
 
 DOCTEST_TEST_CASE("Queued IO cancellation does not retain an unrun or stopped context") {
-    for (const bool serialized : {false, true})
-    {
-        for (const bool stopped : {false, true})
-        {
+    for (const bool serialized : {false, true}) {
+        for (const bool stopped : {false, true}) {
             DOCTEST_INFO("serialized=", serialized, ", stopped=", stopped);
             std::weak_ptr<asio::io_context> released;
             {
                 auto context = std::make_shared<asio::io_context>();
                 released = context;
                 arknet::io_t lane(context, serialized);
-                if (stopped)
-                {
+                if (stopped) {
                     context->stop();
                 }
                 lane.cancel();
@@ -32,13 +29,11 @@ DOCTEST_TEST_CASE("External IO lanes serialize handlers across multiple context 
     auto context = std::make_shared<asio::io_context>();
     arknet::io_t lane(context);
     std::atomic<unsigned> active{}, maximum{}, completed{};
-    for (unsigned index = 0; index < 100; ++index)
-    {
+    for (unsigned index = 0; index < 100; ++index) {
         asio::post(lane.executor(), [&] {
             const auto concurrent = active.fetch_add(1) + 1;
             auto previous = maximum.load();
-            while (previous < concurrent && !maximum.compare_exchange_weak(previous, concurrent))
-            {
+            while (previous < concurrent && !maximum.compare_exchange_weak(previous, concurrent)) {
             }
             std::this_thread::sleep_for(100us);
             --active;
@@ -46,12 +41,10 @@ DOCTEST_TEST_CASE("External IO lanes serialize handlers across multiple context 
         });
     }
     std::vector<std::thread> runners;
-    for (unsigned index = 0; index < 4; ++index)
-    {
+    for (unsigned index = 0; index < 4; ++index) {
         runners.emplace_back([&] { context->run(); });
     }
-    for (auto& runner : runners)
-    {
+    for (auto& runner : runners) {
         runner.join();
     }
     check(completed == 100 && maximum == 1, "one external lane never overlaps its handlers");
@@ -64,10 +57,11 @@ DOCTEST_TEST_CASE("IO pool returns task results and propagates exceptions withou
     check(await(result) == 7, "indexed post selects the requested worker");
     auto failed = pool.post([]() -> int { throw std::runtime_error("task failure"); });
     bool propagated = false;
-    try
-    { await(failed); }
-    catch (const std::runtime_error& error)
-    { propagated = std::string_view(error.what()) == "task failure"; }
+    try {
+        await(failed);
+    } catch (const std::runtime_error& error) {
+        propagated = std::string_view(error.what()) == "task failure";
+    }
     check(propagated, "future preserves the exception");
     auto continued = pool.post(1, [] { return 11; });
     check(await(continued) == 11, "worker remains available after a failed task");
@@ -95,8 +89,7 @@ DOCTEST_TEST_CASE("IO pool tolerates concurrent owner stops and rejects submissi
     check(pool.start(), "pool starts");
     std::atomic<unsigned> completed{};
     std::vector<std::future<void>> tasks;
-    for (unsigned index = 0; index < 100; ++index)
-    {
+    for (unsigned index = 0; index < 100; ++index) {
         tasks.push_back(pool.post([&] { ++completed; }));
     }
     std::latch start(1);
@@ -111,17 +104,17 @@ DOCTEST_TEST_CASE("IO pool tolerates concurrent owner stops and rejects submissi
     start.count_down();
     first.join();
     second.join();
-    for (auto& task : tasks)
-    {
+    for (auto& task : tasks) {
         await(task);
     }
     check(completed == 100 && pool.stopped(), "all admitted work completes exactly once");
     auto rejected = pool.post([] { return 1; });
     bool aborted = false;
-    try
-    { await(rejected); }
-    catch (const arknet::system_error& error)
-    { aborted = error.code() == asio::error::operation_aborted; }
+    try {
+        await(rejected);
+    } catch (const arknet::system_error& error) {
+        aborted = error.code() == asio::error::operation_aborted;
+    }
     check(aborted, "submission to a stopped pool completes with an error");
 }
 

@@ -14,8 +14,7 @@
 namespace arknet::detail {
 
 template<class Socket>
-class run_connect_op
-{
+class run_connect_op {
 public:
     using resolver_type = asio::ip::basic_resolver<typename std::remove_cvref_t<Socket>::protocol_type>;
     using endpoints_type = typename resolver_type::results_type;
@@ -28,34 +27,26 @@ public:
 
     template<class Operation>
     void operator()(Operation& operation, error_code error = {}, endpoints_type endpoints = {}) {
-        if (phase_ == phase::initial)
-        {
+        if (phase_ == phase::initial) {
             phase_ = phase::resolving;
             resolver_->async_resolve(host_, service_, std::move(operation));
             return;
         }
-        if (phase_ == phase::resolving)
-        {
-            if (error)
-            {
+        if (phase_ == phase::resolving) {
+            if (error) {
                 operation.complete(error);
                 return;
             }
             endpoints_ = std::move(endpoints);
             position_ = endpoints_.begin();
             phase_ = phase::connecting;
-        }
-        else if (!error || error == asio::error::operation_aborted)
-        {
+        } else if (!error || error == asio::error::operation_aborted) {
             operation.complete(error);
             return;
-        }
-        else
-        {
+        } else {
             ++position_;
         }
-        if (position_ == endpoints_.end())
-        {
+        if (position_ == endpoints_.end()) {
             operation.complete(error ? error : error_code(asio::error::host_unreachable));
             return;
         }
@@ -65,8 +56,7 @@ public:
     }
 
 private:
-    enum class phase
-    {
+    enum class phase {
         initial,
         resolving,
         connecting
@@ -92,13 +82,10 @@ auto async_connect(std::string host, std::string service, Socket& socket, Token&
 namespace arknet::detail {
 
 template<class Derived, class Args, bool Session>
-class connect_cp_member_variables
-{
-};
+class connect_cp_member_variables {};
 
 template<class Derived, class Args>
-class connect_cp_member_variables<Derived, Args, false>
-{
+class connect_cp_member_variables<Derived, Args, false> {
 public:
     template<class Host>
     Derived& set_host(Host&& host) {
@@ -125,8 +112,7 @@ protected:
 };
 
 template<class Derived, class Args>
-class connect_cp : public connect_cp_member_variables<Derived, Args, Args::is_session>
-{
+class connect_cp : public connect_cp_member_variables<Derived, Args, Args::is_session> {
 public:
     using socket_t = typename Args::socket_t;
     using decay_socket_t = std::remove_cvref_t<socket_t>;
@@ -147,8 +133,7 @@ protected:
         object.is_stop_connect_timeout_timer_called_ = false;
         object.is_disconnect_called_ = false;
 #endif
-        if (object.is_iopool_stop_requested() || object.state_.load() != state_t::starting)
-        {
+        if (object.is_iopool_stop_requested() || object.state_.load() != state_t::starting) {
             object._handle_connect(
                 asio::error::operation_aborted, std::move(owner), std::move(options), std::move(chain));
             return;
@@ -180,16 +165,12 @@ protected:
             object._track_async_operation(
                 [this, &object, owner = std::move(owner), options = std::move(options), chain = std::move(chain),
                     resolver = std::move(resolver)](error_code error, endpoints_type endpoints) mutable {
-                    if (!object.connect_timeout_timer_)
-                    {
+                    if (!object.connect_timeout_timer_) {
                         error = asio::error::timed_out;
                     }
-                    if (error)
-                    {
+                    if (error) {
                         object._handle_connect(error, std::move(owner), std::move(options), std::move(chain));
-                    }
-                    else
-                    {
+                    } else {
                         auto owned = std::make_unique<endpoints_type>(std::move(endpoints));
                         const auto first = owned->begin();
                         object._post_connect(
@@ -203,40 +184,33 @@ protected:
     void _post_connect(error_code error, std::unique_ptr<endpoints_type> endpoints, endpoints_iterator position,
         std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
-        if (object.is_iopool_stop_requested() || object.state_.load() != state_t::starting)
-        {
+        if (object.is_iopool_stop_requested() || object.state_.load() != state_t::starting) {
             object._handle_connect(
                 asio::error::operation_aborted, std::move(owner), std::move(options), std::move(chain));
             return;
         }
-        if (position == endpoints->end())
-        {
+        if (position == endpoints->end()) {
             object._handle_connect(error ? error : error_code(asio::error::host_unreachable), std::move(owner),
                 std::move(options), std::move(chain));
             return;
         }
         auto& socket = object.socket();
         error_code ignored;
-        if (socket.is_open())
-        {
+        if (socket.is_open()) {
             const auto local = socket.local_endpoint(ignored);
-            if (ignored || local.protocol() != position->endpoint().protocol())
-            {
+            if (ignored || local.protocol() != position->endpoint().protocol()) {
                 socket.cancel(ignored);
                 socket.close(ignored);
             }
         }
-        if (!socket.is_open())
-        {
+        if (!socket.is_open()) {
             socket.open(position->endpoint().protocol(), error);
-            if (error)
-            {
+            if (error) {
                 object._handle_connect(error, std::move(owner), std::move(options), std::move(chain));
                 return;
             }
             // UDP clients need exclusive source ports for unambiguous reply routing.
-            if constexpr (std::is_same_v<typename lowest_layer_t::protocol_type, asio::ip::tcp>)
-            {
+            if constexpr (std::is_same_v<typename lowest_layer_t::protocol_type, asio::ip::tcp>) {
                 socket.set_option(asio::socket_base::reuse_address(true), ignored);
             }
             detail::set_keepalive_options(socket);
@@ -244,8 +218,7 @@ protected:
             object._do_init(options);
             object._fire_init();
         }
-        if (object.is_iopool_stop_requested())
-        {
+        if (object.is_iopool_stop_requested()) {
             object._handle_connect(
                 asio::error::operation_aborted, std::move(owner), std::move(options), std::move(chain));
             return;
@@ -256,13 +229,10 @@ protected:
                 object._track_async_operation([&object, owner = std::move(owner), options = std::move(options),
                                                   chain = std::move(chain), endpoints = std::move(endpoints),
                                                   position](const error_code& failure) mutable {
-                    if (failure && failure != asio::error::operation_aborted)
-                    {
+                    if (failure && failure != asio::error::operation_aborted) {
                         object._post_connect(failure, std::move(endpoints), std::next(position), std::move(owner),
                             std::move(options), std::move(chain));
-                    }
-                    else
-                    {
+                    } else {
                         object._finish_socket_connect(failure, std::move(owner), std::move(options), std::move(chain));
                     }
                 })));
@@ -274,8 +244,7 @@ protected:
         auto& object = static_cast<Derived&>(*this);
         error_code ignored;
         const auto endpoint = object.socket().lowest_layer().remote_endpoint(ignored);
-        if (!ignored)
-        {
+        if (!ignored) {
             object.remote_endpoint_ = endpoint;
         }
         // A stop queued after init must fence protocol handshakes too.
@@ -296,12 +265,10 @@ protected:
     void _done_connect(
         error_code error, std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
-        if constexpr (Args::is_session)
-        {
+        if constexpr (Args::is_session) {
             object.dispatch([&object, error, owner = std::move(owner), options = std::move(options),
                                 chain = std::move(chain)]() mutable {
-                if (!object.socket().is_open())
-                {
+                if (!object.socket().is_open()) {
                     error = asio::error::timed_out;
                 }
                 object.sessions_.dispatch(object._track_async_operation(
@@ -310,15 +277,10 @@ protected:
                         object._complete_connect(error, std::move(owner), std::move(options), std::move(chain));
                     }));
             });
-        }
-        else
-        {
-            if (object.is_iopool_stop_requested())
-            {
+        } else {
+            if (object.is_iopool_stop_requested()) {
                 error = asio::error::operation_aborted;
-            }
-            else if (!object.connect_timeout_timer_)
-            {
+            } else if (!object.connect_timeout_timer_) {
                 error = asio::error::timed_out;
             }
             object._complete_connect(error, std::move(owner), std::move(options), std::move(chain));
@@ -329,51 +291,38 @@ protected:
     void _complete_connect(
         error_code error, std::shared_ptr<Derived> owner, std::shared_ptr<ecs_t<Match>> options, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
-        if constexpr (Args::is_session)
-        {
-            if (!error && object.stop_requested_)
-            {
+        if constexpr (Args::is_session) {
+            if (!error && object.stop_requested_) {
                 error = asio::error::operation_aborted;
             }
         }
-        if (!error)
-        {
-            if constexpr (!Args::is_session)
-            {
+        if (!error) {
+            if constexpr (!Args::is_session) {
                 object.reset_life_id();
             }
             auto expected = state_t::starting;
-            if (!object.state_.compare_exchange_strong(expected, state_t::started))
-            {
+            if (!object.state_.compare_exchange_strong(expected, state_t::started)) {
                 error = asio::error::operation_aborted;
             }
         }
         set_last_error(error);
-        if constexpr (Args::is_session)
-        {
-            if (!error && object.state_.load() == state_t::started)
-            {
+        if constexpr (Args::is_session) {
+            if (!error && object.state_.load() == state_t::started) {
                 object._fire_connect(owner, options);
             }
-        }
-        else if (object.state_.load() != state_t::stopped)
-        {
+        } else if (object.state_.load() != state_t::stopped) {
             object._fire_connect(owner, options);
         }
-        if (!error && object.state_.load() != state_t::started)
-        {
+        if (!error && object.state_.load() != state_t::started) {
             error = asio::error::operation_aborted;
         }
         object._stop_connect_timeout_timer();
         set_last_error(error);
-        if (error)
-        {
+        if (error) {
             // Publish the failed connect completion before disconnect can change last_error.
             { auto completion = chain.move_event(); }
             object._do_disconnect(error, std::move(owner), defer_event(chain.move_guard()));
-        }
-        else
-        {
+        } else {
             object._do_start(std::move(owner), std::move(options), std::move(chain));
         }
     }

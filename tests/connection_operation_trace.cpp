@@ -53,8 +53,7 @@ DOCTEST_TEST_CASE("Composed operation history pairs concurrent directions and fr
 
 DOCTEST_TEST_CASE("Ring wrap retains chronological tail and discloses missing history and invalid transitions") {
     operation_ring ring;
-    for (int index = 0; index < 12; ++index)
-    {
+    for (int index = 0; index < 12; ++index) {
         ring.record(operation_phase::write_start, 2 * index, 1091, index + 1);
         ring.record(operation_phase::write_complete, 2 * index + 1, 1091, index + 1, index == 11 ? 5 : 0);
     }
@@ -78,8 +77,7 @@ DOCTEST_TEST_CASE("Trace storage admission is capped independently of declared c
     DOCTEST_CHECK(recorder.slots() == operation_recorder::maximum_slots());
     DOCTEST_CHECK(recorder.storage_bytes() + trace_output::limit + operation_recorder::scratch_reservation <=
                   operation_recorder::memory_limit);
-    for (std::size_t index = 0; index < recorder.slots(); ++index)
-    {
+    for (std::size_t index = 0; index < recorder.slots(); ++index) {
         DOCTEST_REQUIRE(recorder.acquire() != nullptr);
     }
     DOCTEST_CHECK(recorder.acquire() == nullptr);
@@ -93,13 +91,11 @@ DOCTEST_TEST_CASE("Trace storage admission is capped independently of declared c
 DOCTEST_TEST_CASE("Worker marker admission bounds queued work and retains the frozen observation") {
     operation_recorder recorder(true, 1);
     DOCTEST_CHECK(recorder.request_marker());
-    for (int index = 0; index < 100; ++index)
-    {
+    for (int index = 0; index < 100; ++index) {
         DOCTEST_CHECK_FALSE(recorder.request_marker());
     }
     recorder.complete_marker(10, 5000);
-    for (int index = 0; index < 20; ++index)
-    {
+    for (int index = 0; index < 20; ++index) {
         DOCTEST_REQUIRE(recorder.request_marker());
         recorder.complete_marker(6000 + index, 7000 + index);
     }
@@ -154,8 +150,7 @@ DOCTEST_TEST_CASE("Trace output stays bounded, rejects partial records and reser
     trace_output output;
     const auto write = [](std::ostream& out) { out << "{\"fixed\":\"" << std::string(6000, 'x') << "\"}"; };
     unsigned retained{};
-    while (output.append(write))
-    {
+    while (output.append(write)) {
         ++retained;
     }
     DOCTEST_CHECK(retained > 16);
@@ -172,8 +167,7 @@ DOCTEST_TEST_CASE("Trace output stays bounded, rejects partial records and reser
 
 DOCTEST_TEST_CASE("Both full operation rings fit one complete failure record") {
     operation_ring composed, socket;
-    for (std::uint64_t index = 0; index < 8; ++index)
-    {
+    for (std::uint64_t index = 0; index < 8; ++index) {
         const auto sequence = (std::numeric_limits<std::uint64_t>::max)() - index;
         const auto time = (std::numeric_limits<std::int64_t>::max)() - 16 + 2 * index;
         composed.record(operation_phase::read_start, time, 0, sequence);

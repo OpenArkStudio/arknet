@@ -8,8 +8,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class udp_send_op
-{
+class udp_send_op {
 protected:
     template<class Data, class Completion>
     bool _udp_send(Data& data, Completion&& completion) {

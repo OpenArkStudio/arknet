@@ -17,8 +17,7 @@
 
 namespace arknet::detail {
 
-struct user_timer_handle
-{
+struct user_timer_handle {
     template<class T>
         requires(!std::is_same_v<std::remove_cvref_t<T>, user_timer_handle>)
     user_timer_handle(T&& value) {
@@ -40,31 +39,20 @@ struct user_timer_handle
     template<class T>
     void bind(T&& value) {
         using Type = std::remove_cvref_t<T>;
-        if constexpr (std::is_integral_v<Type>)
-        {
+        if constexpr (std::is_integral_v<Type>) {
             handle = std::to_string(value);
-        }
-        else if constexpr (std::is_floating_point_v<Type>)
-        {
+        } else if constexpr (std::is_floating_point_v<Type>) {
             handle.assign(reinterpret_cast<const char*>(std::addressof(value)), sizeof(Type));
-        }
-        else if constexpr (is_string_v<Type> || is_string_view_v<Type>)
-        {
+        } else if constexpr (is_string_v<Type> || is_string_view_v<Type>) {
             handle.assign(
                 reinterpret_cast<const char*>(value.data()), value.size() * sizeof(typename Type::value_type));
-        }
-        else if constexpr (is_char_pointer_v<Type> || is_char_array_v<Type>)
-        {
+        } else if constexpr (is_char_pointer_v<Type> || is_char_array_v<Type>) {
             using Character = typename char_type<T>::type;
             const auto count = value ? std::char_traits<Character>::length(value) : 0;
             handle.assign(reinterpret_cast<const char*>(value), count * sizeof(Character));
-        }
-        else if constexpr (std::is_pointer_v<Type>)
-        {
+        } else if constexpr (std::is_pointer_v<Type>) {
             handle = std::to_string(reinterpret_cast<std::uintptr_t>(value));
-        }
-        else
-        {
+        } else {
             static_assert(always_false_v<T>, "Timer keys require a scalar, pointer, string or string view");
         }
     }
@@ -72,22 +60,19 @@ struct user_timer_handle
     std::string handle;
 };
 
-struct user_timer_handle_hash
-{
+struct user_timer_handle_hash {
     std::size_t operator()(const user_timer_handle& key) const noexcept {
         return std::hash<std::string>{}(key.handle);
     }
 };
 
-struct user_timer_handle_equal
-{
+struct user_timer_handle_equal {
     bool operator()(const user_timer_handle& left, const user_timer_handle& right) const noexcept {
         return left == right;
     }
 };
 
-struct user_timer_obj
-{
+struct user_timer_obj {
     user_timer_obj(user_timer_handle key, asio::any_io_executor executor)
         : id(std::move(key))
         , timer(executor) {}
@@ -101,15 +86,13 @@ struct user_timer_obj
 };
 
 template<class Derived, class Args = void>
-class user_timer_cp
-{
+class user_timer_cp {
 public:
     using user_timer_map = std::unordered_map<user_timer_handle, std::shared_ptr<user_timer_obj>,
         user_timer_handle_hash, user_timer_handle_equal>;
 
 private:
-    struct operation_state
-    {
+    struct operation_state {
         std::atomic_bool alive{true};
         std::atomic_bool accepting{true};
         std::shared_ptr<std::atomic_size_t> pending = std::make_shared<std::atomic_size_t>(0);
@@ -164,14 +147,12 @@ public:
         requires(std::is_integral_v<Repeat> && is_callable_v<Function>)
     void start_timer(Key&& key, std::chrono::duration<R1, P1> interval, Repeat repeat,
         std::chrono::duration<R2, P2> first, Function&& function, Bound&&... bound) {
-        if (!repeat)
-        {
+        if (!repeat) {
             set_last_error(asio::error::invalid_argument);
             return;
         }
         auto& object = static_cast<Derived&>(*this);
-        if (!timers_->accepting.load(std::memory_order_acquire))
-        {
+        if (!timers_->accepting.load(std::memory_order_acquire)) {
             set_last_error(asio::error::operation_aborted);
             return;
         }
@@ -180,8 +161,7 @@ public:
                 key = user_timer_handle(std::forward<Key>(key)), period = to_steady_duration(interval),
                 first = to_steady_duration(first), count = std::size_t(repeat),
                 callback = std::bind_front(std::forward<Function>(function), std::forward<Bound>(bound)...)]() mutable {
-                if (!state->accepting.load(std::memory_order_acquire))
-                {
+                if (!state->accepting.load(std::memory_order_acquire)) {
                     return;
                 }
                 cancel(state, key);
@@ -225,8 +205,7 @@ public:
     void set_timer_interval(Key&& key, std::chrono::duration<Rep, Period> duration) {
         static_cast<Derived&>(*this).dispatch([state = timers_, key = user_timer_handle(std::forward<Key>(key)),
                                                   duration = to_steady_duration(duration)] {
-            if (auto found = state->timers.find(key); found != state->timers.end())
-            {
+            if (auto found = state->timers.find(key); found != state->timers.end()) {
                 found->second->interval = duration;
             }
         });
@@ -267,19 +246,15 @@ private:
     void cancel_all() {
         auto& object = static_cast<Derived&>(*this);
         auto handler = [state = timers_, owner = object.selfptr(), pending = pending_operation(timers_->pending)] {
-            for (auto& [key, timer] : state->timers)
-            {
+            for (auto& [key, timer] : state->timers) {
                 timer->exited = true;
                 cancel_timer(timer->timer);
             }
             state->timers.clear();
         };
-        if constexpr (Inline)
-        {
+        if constexpr (Inline) {
             asio::dispatch(object.io_->executor(), std::move(handler));
-        }
-        else
-        {
+        } else {
             asio::post(object.io_->executor(), std::move(handler));
         }
     }
@@ -290,13 +265,11 @@ private:
         auto* operation = &timer->timer;
         operation->async_wait([pending = pending_operation(state->pending), state, lane, owner = std::move(owner),
                                   timer = std::move(timer)](error_code error) mutable {
-            if (timer->exited || !state->alive.load(std::memory_order_acquire))
-            {
+            if (timer->exited || !state->alive.load(std::memory_order_acquire)) {
                 error = asio::error::operation_aborted;
             }
             set_last_error(error);
-            if (state->alive.load(std::memory_order_acquire))
-            {
+            if (state->alive.load(std::memory_order_acquire)) {
 #ifdef ARKNET_ENABLE_TIMER_CALLBACK_WHEN_ERROR
                 timer->callback();
 #else
@@ -306,22 +279,19 @@ private:
             }
             if (timer->repeat != std::size_t(-1))
                 --timer->repeat;
-            if (error || timer->exited || !timer->repeat || !state->alive.load(std::memory_order_acquire))
-            {
+            if (error || timer->exited || !timer->repeat || !state->alive.load(std::memory_order_acquire)) {
                 lane->timers().erase(&timer->timer);
                 const auto found = state->timers.find(timer->id);
                 if (found != state->timers.end() && found->second == timer)
                     state->timers.erase(found);
                 timer.reset();
-            }
-            else
+            } else
                 arm(state, lane, std::move(owner), timer, timer->interval);
         });
     }
 
     static void cancel(const std::shared_ptr<operation_state>& state, const user_timer_handle& key) {
-        if (auto found = state->timers.find(key); found != state->timers.end())
-        {
+        if (auto found = state->timers.find(key); found != state->timers.end()) {
             found->second->exited = true;
             cancel_timer(found->second->timer);
             state->timers.erase(found);
@@ -332,27 +302,21 @@ private:
     auto query(Function&& function) {
         auto& object = static_cast<Derived&>(*this);
         using Result = std::invoke_result_t<Function>;
-        if (object.io_->running_in_this_thread())
-        {
+        if (object.io_->running_in_this_thread()) {
             return function();
         }
-        if (object.io_->context().get_executor().running_in_this_thread())
-        {
+        if (object.io_->context().get_executor().running_in_this_thread()) {
             set_last_error(asio::error::operation_not_supported);
             return Result{};
         }
         const bool stopped = object.io_->context().stopped() || [&] {
-            if constexpr (requires { object.iopool(); })
-            {
+            if constexpr (requires { object.iopool(); }) {
                 return !object.iopool().started();
-            }
-            else
-            {
+            } else {
                 return false;
             }
         }();
-        if (stopped)
-        {
+        if (stopped) {
             set_last_error(asio::error::operation_aborted);
             return Result{};
         }

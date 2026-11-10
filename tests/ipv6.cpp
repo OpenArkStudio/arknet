@@ -34,16 +34,14 @@ void stream_echo() {
     Client client;
     client.set_auto_reconnect(false);
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
-    if constexpr (requires { client.ssl_stream(); })
-    {
+    if constexpr (requires { client.ssl_stream(); }) {
         configure_identity(server, client);
     }
 #endif
     server.bind_recv([&](auto& session, std::string_view data) {
         peer_addresses.push(session->get_remote_address());
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
-        if constexpr (requires { session->ssl_stream(); })
-        {
+        if constexpr (requires { session->ssl_stream(); }) {
             const char* name = SSL_get_servername(session->ssl_stream().native_handle(), TLSEXT_NAMETYPE_host_name);
             server_names.push(name ? name : "");
         }
@@ -63,8 +61,7 @@ void stream_echo() {
     check(received.wait(1).front() == payload, "IPv6 stream preserves binary data");
     check(peer_addresses.wait(1).front() == "::1", "IPv6 stream session preserves peer address");
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
-    if constexpr (requires { client.ssl_stream(); })
-    {
+    if constexpr (requires { client.ssl_stream(); }) {
         verified_ip(client);
         check(server_names.wait(1).front().empty(), "literal IPv6 address does not send DNS SNI");
     }
@@ -83,14 +80,12 @@ void websocket_echo(const char* host) {
     Client client;
     client.set_auto_reconnect(false);
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
-    if constexpr (requires { client.ssl_stream(); })
-    {
+    if constexpr (requires { client.ssl_stream(); }) {
         configure_identity(server, client);
     }
 #endif
     server.bind_upgrade([&](auto& session) {
-        if (!arknet::get_last_error())
-        {
+        if (!arknet::get_last_error()) {
             const auto& request = session->get_upgrade_request();
             hosts.push(request[arknet::http::field::host]);
             targets.push(request.target());
@@ -118,8 +113,7 @@ void websocket_echo(const char* host) {
     check(client.socket().remote_endpoint().address().is_v6() == (std::string_view(host) == "::1"),
         "WebSocket connects using the requested address family");
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
-    if constexpr (requires { client.ssl_stream(); })
-    {
+    if constexpr (requires { client.ssl_stream(); }) {
         verified_ip(client);
     }
 #endif
@@ -140,8 +134,7 @@ void http_echo() {
     Client client;
     client.set_auto_reconnect(false);
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
-    if constexpr (requires { client.ssl_stream(); })
-    {
+    if constexpr (requires { client.ssl_stream(); }) {
         configure_identity(server, client);
     }
 #endif
@@ -165,8 +158,7 @@ void http_echo() {
     check(client.socket().remote_endpoint().address().is_v6() && server.acceptor().local_endpoint().address().is_v6(),
         "HTTP transport uses IPv6");
 #if defined(ARKNET_ENABLE_SSL) || defined(ARKNET_USE_SSL)
-    if constexpr (requires { client.ssl_stream(); })
-    {
+    if constexpr (requires { client.ssl_stream(); }) {
         verified_ip(client);
     }
 #endif
@@ -208,8 +200,7 @@ DOCTEST_TEST_CASE("UDP sessions echo empty and binary IPv6 datagrams") {
     check(server.acceptor().local_endpoint().address().is_v6() && client.socket().remote_endpoint().address().is_v6(),
         "UDP sockets use IPv6");
     const std::vector<std::string> expected{"", payload};
-    for (std::size_t index = 0; index < expected.size(); ++index)
-    {
+    for (std::size_t index = 0; index < expected.size(); ++index) {
         auto sent = client.async_send(expected[index], asio::use_future);
         const auto completion = await(sent);
         check(!completion.first && completion.second == expected[index].size(), "IPv6 UDP send completes");

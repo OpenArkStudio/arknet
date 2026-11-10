@@ -88,8 +88,7 @@ DOCTEST_TEST_CASE("HTTP routing validates targets and decodes path segments exac
     });
     for (std::string_view target : {"", "http://localhost/x", "localhost:443", "*", "/%", "/%0", "/%GG", "/%00", "/%1f",
              "/%7f", "/a%2Fb", "/a%5cb", "/a\\b", "/a b", "/x#fragment", "/./x", "/x/..", "/%2e", "/%2E%2e", "/x?q=%",
-             "/x?q=%0d", "/x?q=a b", "/x?q=#fragment"})
-    {
+             "/x?q=%0d", "/x?q=a b", "/x?q=#fragment"}) {
         DOCTEST_INFO(target);
         check(router(incoming(verb::get, target)).result() == status::bad_request,
             "invalid request target rejects before route dispatch");
@@ -109,35 +108,31 @@ DOCTEST_TEST_CASE("HTTP routing validates targets and decodes path segments exac
 
 DOCTEST_TEST_CASE("HTTP routing rejects invalid configuration and duplicate resource methods") {
     for (std::string_view pattern : {"", "relative", "*", "/x?q=1", "/x#y", "/:", "/:9id", "/:id/:id", "/x/*tail/end",
-             "/x/*", "/%", "/%2f", "/../x"})
-    {
+             "/x/*", "/%", "/%2f", "/../x"}) {
         arknet::http_router router;
         bool rejected = false;
-        try
-        {
+        try {
             router.add(verb::get, pattern, [](const auto&, auto&) {});
+        } catch (const std::invalid_argument&) {
+            rejected = true;
         }
-        catch (const std::invalid_argument&)
-        { rejected = true; }
         check(rejected, "invalid route pattern");
     }
     arknet::http_router router;
     router.add(verb::get, "/:first", [](const auto&, auto&) {});
     bool duplicate = false;
-    try
-    {
+    try {
         router.add(verb::get, "/:second", [](const auto&, auto&) {});
+    } catch (const std::invalid_argument&) {
+        duplicate = true;
     }
-    catch (const std::invalid_argument&)
-    { duplicate = true; }
     check(duplicate, "renaming a parameter does not produce a new resource");
     bool unknown = false;
-    try
-    {
+    try {
         router.add(verb::unknown, "/x", [](const auto&, auto&) {});
+    } catch (const std::invalid_argument&) {
+        unknown = true;
     }
-    catch (const std::invalid_argument&)
-    { unknown = true; }
     check(unknown, "unknown HTTP method");
 }
 
@@ -189,8 +184,7 @@ DOCTEST_TEST_CASE("HTTP routing middleware runs in order and can short circuit a
     router.use([&](const auto& context, auto& reply) {
         order += 'a';
         reply.set("X-Path", context.path);
-        if (context.request[field::authorization].empty())
-        {
+        if (context.request[field::authorization].empty()) {
             reply.result(status::unauthorized);
             return false;
         }
@@ -224,12 +218,10 @@ DOCTEST_TEST_CASE("HTTP routing contains callback exceptions without exposing de
     arknet::http_router router;
     unsigned failures = 0;
     router.bind_error([&](std::exception_ptr error) {
-        try
-        { std::rethrow_exception(error); }
-        catch (const std::runtime_error& failure)
-        {
-            if (std::string_view(failure.what()) == "private detail")
-            {
+        try {
+            std::rethrow_exception(error);
+        } catch (const std::runtime_error& failure) {
+            if (std::string_view(failure.what()) == "private detail") {
                 ++failures;
             }
         }
@@ -266,13 +258,10 @@ DOCTEST_TEST_CASE("HTTP route responses own their data and support concurrent di
     check(owned.body() == "original", "response remains valid after the request changes");
     std::atomic<unsigned> invalid{};
     std::vector<std::jthread> threads;
-    for (unsigned worker = 0; worker < 4; ++worker)
-    {
+    for (unsigned worker = 0; worker < 4; ++worker) {
         threads.emplace_back([&] {
-            for (unsigned iteration = 0; iteration < 100; ++iteration)
-            {
-                if (router(incoming(verb::get, "/parallel")).body() != "parallel")
-                {
+            for (unsigned iteration = 0; iteration < 100; ++iteration) {
+                if (router(incoming(verb::get, "/parallel")).body() != "parallel") {
                     ++invalid;
                 }
             }

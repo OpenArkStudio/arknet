@@ -19,15 +19,13 @@ using namespace std::chrono_literals;
 using arknet::redis::client_errc;
 using arknet::redis::result;
 
-struct tracked_tls_transport : arknet::tcps_client
-{
+struct tracked_tls_transport : arknet::tcps_client {
     inline static std::atomic<unsigned> contexts_destroyed{};
     inline static std::atomic<unsigned> streams_destroyed{};
     inline static std::atomic<unsigned> transports_destroyed{};
 
     static void record_free(void*, void* pointer, CRYPTO_EX_DATA*, int, long, void*) {
-        if (pointer)
-        {
+        if (pointer) {
             ++*static_cast<std::atomic<unsigned>*>(pointer);
         }
     }
@@ -45,14 +43,12 @@ struct tracked_tls_transport : arknet::tcps_client
     template<class... construction>
     explicit tracked_tls_transport(construction&&... arguments)
         : arknet::tcps_client(std::forward<construction>(arguments)...) {
-        if (context_index() < 0 || SSL_CTX_set_ex_data(native_handle(), context_index(), &contexts_destroyed) != 1)
-        {
+        if (context_index() < 0 || SSL_CTX_set_ex_data(native_handle(), context_index(), &contexts_destroyed) != 1) {
             throw std::runtime_error("Could not register TLS context destruction probe");
         }
         bind_handshake([this] {
             if (stream_index() < 0 ||
-                SSL_set_ex_data(stream().native_handle(), stream_index(), &streams_destroyed) != 1)
-            {
+                SSL_set_ex_data(stream().native_handle(), stream_index(), &streams_destroyed) != 1) {
                 throw std::runtime_error("Could not register TLS stream destruction probe");
             }
         });
@@ -63,8 +59,7 @@ struct tracked_tls_transport : arknet::tcps_client
     }
 };
 
-class encrypted_peer
-{
+class encrypted_peer {
     asio::ssl::stream<asio::ip::tcp::socket>& stream_;
     arknet::redis::detail::resp_decoder decoder_;
 
@@ -76,18 +71,14 @@ public:
 
     arknet::redis::command read_command() {
         const auto deadline = std::chrono::steady_clock::now() + 5s;
-        while (std::chrono::steady_clock::now() < deadline)
-        {
+        while (std::chrono::steady_clock::now() < deadline) {
             arknet::redis::value reply;
-            if (decoder_.next(reply) == arknet::redis::detail::resp_status::ready)
-            {
-                if (reply.type != arknet::redis::value_type::array)
-                {
+            if (decoder_.next(reply) == arknet::redis::detail::resp_status::ready) {
+                if (reply.type != arknet::redis::value_type::array) {
                     throw std::runtime_error("TLS peer expected a RESP command array");
                 }
                 arknet::redis::command command;
-                for (auto& value : reply.elements)
-                {
+                for (auto& value : reply.elements) {
                     command.push_back(std::move(value.text));
                 }
                 return command;
@@ -95,17 +86,14 @@ public:
             std::array<char, 4096> bytes;
             arknet::error_code error;
             const auto count = stream_.read_some(asio::buffer(bytes), error);
-            if (error == asio::error::would_block || error == asio::error::try_again)
-            {
+            if (error == asio::error::would_block || error == asio::error::try_again) {
                 std::this_thread::sleep_for(1ms);
                 continue;
             }
-            if (error)
-            {
+            if (error) {
                 throw arknet::system_error(error);
             }
-            if (!decoder_.append(std::string_view(bytes.data(), count)))
-            {
+            if (!decoder_.append(std::string_view(bytes.data(), count))) {
                 throw std::runtime_error("TLS peer exceeded RESP decode limits");
             }
         }
@@ -114,35 +102,28 @@ public:
 
     void send(std::string_view bytes) {
         const auto deadline = std::chrono::steady_clock::now() + 5s;
-        while (!bytes.empty() && std::chrono::steady_clock::now() < deadline)
-        {
+        while (!bytes.empty() && std::chrono::steady_clock::now() < deadline) {
             arknet::error_code error;
             const auto count = stream_.write_some(asio::buffer(bytes), error);
             bytes.remove_prefix(count);
-            if (error == asio::error::would_block || error == asio::error::try_again)
-            {
+            if (error == asio::error::would_block || error == asio::error::try_again) {
                 std::this_thread::sleep_for(1ms);
-            }
-            else if (error)
-            {
+            } else if (error) {
                 throw arknet::system_error(error);
             }
         }
-        if (!bytes.empty())
-        {
+        if (!bytes.empty()) {
             throw std::runtime_error("TLS peer send timeout");
         }
     }
 
     void wait_closed() {
         const auto deadline = std::chrono::steady_clock::now() + 5s;
-        while (std::chrono::steady_clock::now() < deadline)
-        {
+        while (std::chrono::steady_clock::now() < deadline) {
             std::array<char, 128> bytes;
             arknet::error_code error;
             stream_.read_some(asio::buffer(bytes), error);
-            if (error && error != asio::error::would_block && error != asio::error::try_again)
-            {
+            if (error && error != asio::error::would_block && error != asio::error::try_again) {
                 return;
             }
             std::this_thread::sleep_for(1ms);
@@ -151,8 +132,7 @@ public:
     }
 };
 
-class encrypted_server
-{
+class encrypted_server {
     asio::io_context context_;
     asio::ssl::context tls_{asio::ssl::context::tls_server};
     asio::ip::tcp::acceptor acceptor_{context_, {asio::ip::address_v4::loopback(), 0}};
@@ -166,13 +146,11 @@ public:
         tls_.use_certificate_chain_file(std::string(ARKNET_TEST_CERT_DIR) + "/server.pem");
         tls_.use_private_key_file(std::string(ARKNET_TEST_CERT_DIR) + "/server-key.pem", asio::ssl::context::pem);
         worker_ = std::thread([this, script = std::move(script)]() mutable {
-            try
-            {
+            try {
                 asio::ssl::stream<asio::ip::tcp::socket> socket(context_, tls_);
                 asio::steady_timer deadline(context_, 5s);
                 deadline.async_wait([&](arknet::error_code error) {
-                    if (!error)
-                    {
+                    if (!error) {
                         arknet::error_code ignored;
                         acceptor_.cancel(ignored);
                         socket.next_layer().close(ignored);
@@ -189,19 +167,16 @@ public:
                     },
                     [&](std::exception_ptr error) {
                         deadline.cancel();
-                        if (error)
-                        {
+                        if (error) {
                             completion_.set_exception(error);
-                        }
-                        else
-                        {
+                        } else {
                             completion_.set_value();
                         }
                     });
                 context_.run();
+            } catch (...) {
+                completion_.set_exception(std::current_exception());
             }
-            catch (...)
-            { completion_.set_exception(std::current_exception()); }
         });
     }
 
@@ -243,8 +218,7 @@ DOCTEST_TEST_CASE(
     connection.async_connect(options, [&](result response) { connected.set_value(std::move(response)); });
     REQUIRE(bool(await(ready)));
 
-    struct capture_probe
-    {
+    struct capture_probe {
         std::atomic<unsigned>& destroyed;
 
         ~capture_probe() {

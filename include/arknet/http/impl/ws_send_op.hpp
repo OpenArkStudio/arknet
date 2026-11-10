@@ -9,8 +9,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class ws_send_op
-{
+class ws_send_op {
 protected:
     template<class Data, class Completion>
     bool _ws_send(Data& payload, Completion&& completion) {

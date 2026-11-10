@@ -6,8 +6,7 @@
 
 inline void benchmark_work(std::size_t iterations, std::string_view data) {
     std::uint64_t value = data.empty() ? 1 : static_cast<unsigned char>(data.back()) + 1;
-    for (std::size_t i = 0; i < iterations; ++i)
-    {
+    for (std::size_t i = 0; i < iterations; ++i) {
         value ^= value << 13;
         value ^= value >> 7;
         value ^= value << 17;

@@ -23,10 +23,8 @@ std::string quote_argument(std::string_view argument) {
     // quotes and trailing backslashes for the compiler's C runtime parser.
     std::string quoted = "\"";
     std::size_t backslashes = 0;
-    for (const char character : argument)
-    {
-        if (character == '\\')
-        {
+    for (const char character : argument) {
+        if (character == '\\') {
             ++backslashes;
             continue;
         }
@@ -41,53 +39,44 @@ std::string quote_argument(std::string_view argument) {
 
 int main(int argc, char** argv) {
     const auto* log = std::getenv("ARKNET_TEST_LAUNCHER_LOG");
-    if (!log)
-    {
+    if (!log) {
         return 2;
     }
     std::ostringstream record;
     int compiler = 1;
-    while (compiler < argc && std::string_view(argv[compiler]) == "--record-token")
-    {
-        if (++compiler == argc)
-        {
+    while (compiler < argc && std::string_view(argv[compiler]) == "--record-token") {
+        if (++compiler == argc) {
             return 2;
         }
         record << "token=" << argv[compiler++] << '\n';
     }
-    if (compiler == argc)
-    {
+    if (compiler == argc) {
         return 2;
     }
     record << "compiler=" << argv[compiler] << '\n';
-    for (int index = compiler + 1; index < argc; ++index)
-    {
+    for (int index = compiler + 1; index < argc; ++index) {
         record << "argument=" << argv[index] << '\n';
     }
     {
         std::ofstream output(log, std::ios::app);
         output << record.str();
         output.flush();
-        if (!output)
-        {
+        if (!output) {
             return 2;
         }
     }
 #ifdef _WIN32
     std::vector<std::string> quoted;
-    for (int index = compiler; index < argc; ++index)
-    {
+    for (int index = compiler; index < argc; ++index) {
         quoted.push_back(quote_argument(argv[index]));
     }
     std::vector<const char*> command;
-    for (const auto& argument : quoted)
-    {
+    for (const auto& argument : quoted) {
         command.push_back(argument.c_str());
     }
     command.push_back(nullptr);
     const auto result = _spawnv(_P_WAIT, argv[compiler], command.data());
-    if (result != -1)
-    {
+    if (result != -1) {
         return static_cast<int>(result);
     }
 #else

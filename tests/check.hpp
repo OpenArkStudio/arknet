@@ -17,8 +17,7 @@ using namespace std::chrono_literals;
 
 #define check(value, message) DOCTEST_REQUIRE_MESSAGE((value), (message))
 
-class messages
-{
+class messages {
 public:
     void push(std::string_view data) {
         std::lock_guard lock(mutex_);

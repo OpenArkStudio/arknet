@@ -150,12 +150,9 @@ void reject_missing_client_certificate() {
     trust(client);
     client.bind_disconnect([&] { refused.set_value(); });
     // TLS 1.3 may finish the client handshake before the server's certificate-required alert.
-    if (client.start("localhost", server.get_listen_port()))
-    {
+    if (client.start("localhost", server.get_listen_port())) {
         await(refused_result);
-    }
-    else
-    {
+    } else {
         const auto error = arknet::get_last_error();
         check(error != asio::error::timed_out && error != asio::error::operation_aborted,
             "mTLS rejection must not be a timeout or cancellation");
@@ -268,8 +265,7 @@ void secure_reconnect() {
     trust(client);
     client.set_auto_reconnect(true, 20ms);
     client.bind_connect([&] {
-        if (!arknet::get_last_error())
-        {
+        if (!arknet::get_last_error()) {
             connected.push("connected");
         }
     });

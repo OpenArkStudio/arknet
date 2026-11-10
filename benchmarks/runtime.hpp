@@ -7,25 +7,19 @@
 
 #include <arknet/external/asio.hpp>
 
-class benchmark_runtime
-{
+class benchmark_runtime {
 public:
     benchmark_runtime(std::string_view model, std::size_t threads) {
         const auto count = model == "shared" ? 1 : threads;
-        for (std::size_t i = 0; i < count; ++i)
-        {
+        for (std::size_t i = 0; i < count; ++i) {
             contexts_.push_back(std::make_shared<asio::io_context>());
             guards_.push_back(asio::make_work_guard(*contexts_.back()));
         }
-        try
-        {
-            for (std::size_t i = 0; i < threads; ++i)
-            {
+        try {
+            for (std::size_t i = 0; i < threads; ++i) {
                 workers_.emplace_back([context = contexts_[i % count]] { context->run(); });
             }
-        }
-        catch (...)
-        {
+        } catch (...) {
             stop();
             throw;
         }
@@ -44,8 +38,7 @@ public:
 
     std::vector<asio::io_context*> server_lanes(std::size_t clients) {
         std::vector<asio::io_context*> result;
-        for (std::size_t i = 0; i <= clients; ++i)
-        {
+        for (std::size_t i = 0; i <= clients; ++i) {
             result.push_back(&context_at(i));
         }
         return result;
@@ -53,14 +46,11 @@ public:
 
     void stop() {
         // Drain cross-context captures before any context can destroy its services.
-        for (auto& guard : guards_)
-        {
+        for (auto& guard : guards_) {
             guard.reset();
         }
-        for (auto& worker : workers_)
-        {
-            if (worker.joinable())
-            {
+        for (auto& worker : workers_) {
+            if (worker.joinable()) {
                 worker.join();
             }
         }

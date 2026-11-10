@@ -13,22 +13,18 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class tcp_send_op
-{
+class tcp_send_op {
 protected:
     template<class T, class = void>
-        struct has_member_dgram : std::bool_constant < requires(T& value)
-    {
+        struct has_member_dgram : std::bool_constant < requires(T& value) {
         value.dgram_;
     } > {};
 
     template<class Data, class Completion>
     bool _tcp_send(Data& data, Completion&& completion) {
         auto& owner = static_cast<Derived&>(*this);
-        if constexpr (requires { owner.dgram_; })
-        {
-            if (owner.dgram_)
-            {
+        if constexpr (requires { owner.dgram_; }) {
+            if (owner.dgram_) {
                 return owner._tcp_send_dgram(asio::buffer(data), std::forward<Completion>(completion));
             }
         }
@@ -41,8 +37,7 @@ protected:
         const auto size = payload.size();
         const std::size_t prefix = size < 254 ? 1 : size <= UINT16_MAX ? 3 : 9;
         (*header)[0] = prefix == 1 ? static_cast<std::uint8_t>(size) : prefix == 3 ? 254 : 255;
-        for (std::size_t index = 1; index < prefix; ++index)
-        {
+        for (std::size_t index = 1; index < prefix; ++index) {
             (*header)[index] = static_cast<std::uint8_t>(static_cast<std::uint64_t>(size) >> (8 * (index - 1)));
         }
         std::array<asio::const_buffer, 2> buffers{asio::buffer(header->data(), prefix), payload};

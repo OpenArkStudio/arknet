@@ -25,19 +25,15 @@ void check_sample(const connection_load::resource_snapshot& snapshot) {
     DOCTEST_CHECK(std::isfinite(snapshot.elapsed_seconds));
     DOCTEST_CHECK(snapshot.elapsed_seconds >= 0);
     DOCTEST_CHECK(snapshot.cpu_interval_seconds.has_value() == snapshot.metrics.cpu_percent.value.has_value());
-    if (snapshot.cpu_interval_seconds)
-    {
+    if (snapshot.cpu_interval_seconds) {
         DOCTEST_CHECK(std::isfinite(*snapshot.cpu_interval_seconds));
         DOCTEST_CHECK(*snapshot.cpu_interval_seconds > 0);
         DOCTEST_CHECK(*snapshot.cpu_interval_seconds <= snapshot.elapsed_seconds);
     }
-    if (snapshot.metrics.cpu_percent.value)
-    {
+    if (snapshot.metrics.cpu_percent.value) {
         DOCTEST_CHECK(std::isfinite(*snapshot.metrics.cpu_percent.value));
         DOCTEST_CHECK(*snapshot.metrics.cpu_percent.value >= 0);
-    }
-    else
-    {
+    } else {
         DOCTEST_CHECK_FALSE(snapshot.metrics.cpu_percent.unavailable_reason.empty());
     }
 }
@@ -50,22 +46,19 @@ DOCTEST_TEST_CASE("Port diagnostics validate OS ranges and namespace-wide TIME_W
     DOCTEST_REQUIRE(range.value);
     DOCTEST_CHECK(range.value->first == 49152);
     DOCTEST_CHECK(range.value->last == 65535);
-    for (const auto text : {"", "0 65535", "49152 65536", "60000 50000", "-1 20", "1", "1 2 3", "1 x"})
-    {
+    for (const auto text : {"", "0 65535", "49152 65536", "60000 50000", "-1 20", "1", "1 2 3", "1 x"}) {
         const auto invalid = parse_port_range(text);
         DOCTEST_CHECK_FALSE(invalid.value);
         DOCTEST_CHECK_FALSE(invalid.unavailable_reason.empty());
     }
-    for (const auto text : {"TCP: inuse 5 orphan 0 tw 0 alloc 7 mem 1\n", "UDP: inuse 4\nTCP: tw 0\n"})
-    {
+    for (const auto text : {"TCP: inuse 5 orphan 0 tw 0 alloc 7 mem 1\n", "UDP: inuse 4\nTCP: tw 0\n"}) {
         const auto zero = parse_time_wait(text);
         DOCTEST_REQUIRE(zero.value);
         DOCTEST_CHECK(*zero.value == 0);
     }
     DOCTEST_CHECK(parse_time_wait("TCP: inuse 1 tw 15000 mem 3\n").value == 15000);
     for (const auto text : {"", "TCP6: tw 10", "TCP: inuse 5", "TCP: tw", "TCP: tw -1", "TCP: tw 1x", "TCP: tw 1 tw 2",
-             "TCP: tw 1\nTCP: tw 2", "TCP: tw 18446744073709551616"})
-    {
+             "TCP: tw 1\nTCP: tw 2", "TCP: tw 18446744073709551616"}) {
         DOCTEST_CHECK_FALSE(parse_time_wait(text).value);
     }
     const auto missing = read_query_file("");
@@ -94,14 +87,11 @@ DOCTEST_TEST_CASE("Native port queries retain their source scope and explicit OS
     });
     DOCTEST_CHECK_FALSE(short_result.value);
     const auto actual = connection_load::read_port_resources();
-    if (actual.ephemeral_ports.value)
-    {
+    if (actual.ephemeral_ports.value) {
         DOCTEST_CHECK(actual.ephemeral_ports.value->first > 0);
         DOCTEST_CHECK(actual.ephemeral_ports.value->first <= actual.ephemeral_ports.value->last);
         DOCTEST_CHECK(actual.ephemeral_ports.value->last <= 65535);
-    }
-    else
-    {
+    } else {
         DOCTEST_CHECK_FALSE(actual.ephemeral_ports.unavailable_reason.empty());
     }
 #if defined(__linux__)
@@ -170,8 +160,7 @@ DOCTEST_TEST_CASE("Connection resource JSON preserves numbers, real zero and exp
     for (const auto field :
         {"\"cpu_percent\":175.25", "\"peak_rss_bytes\":8192", "\"current_rss_bytes\":0", "\"fd_count\":0",
             "\"thread_count\":4", "\"handle_count\":null", "\"resource_cpu_interval_s\":0.5", "\"nofile_soft\":0",
-            "\"nofile_hard\":\"unlimited\"", "\"resource_sample_elapsed_s\":2.5", "\"resource_phase\":\"running\""})
-    {
+            "\"nofile_hard\":\"unlimited\"", "\"resource_sample_elapsed_s\":2.5", "\"resource_phase\":\"running\""}) {
         DOCTEST_CHECK(text.find(field) != std::string::npos);
     }
     DOCTEST_CHECK(
@@ -191,19 +180,16 @@ DOCTEST_TEST_CASE("Connection resource JSON explains absent CPU intervals and es
     sample.metrics.thread_count = {std::nullopt, "Thread query unavailable"};
     const auto text = output(sample, true);
     for (const auto field : {"cpu_percent", "current_rss_bytes", "peak_rss_bytes", "fd_count", "handle_count",
-             "thread_count", "nofile_soft", "nofile_hard", "resource_cpu_interval_s"})
-    {
+             "thread_count", "nofile_soft", "nofile_hard", "resource_cpu_interval_s"}) {
         DOCTEST_CHECK(text.find('"' + std::string(field) + "\":null") != std::string::npos);
         DOCTEST_CHECK(text.find('"' + std::string(field) + "\":\"") != std::string::npos);
     }
     DOCTEST_CHECK(text.find("FD query \\\"failed\\\"\\\\line\\u000anext") != std::string::npos);
-    for (unsigned char character : text)
-    {
+    for (unsigned char character : text) {
         DOCTEST_CHECK(character >= 32);
     }
     std::string controls;
-    for (char character = 0; character < 32; ++character)
-    {
+    for (char character = 0; character < 32; ++character) {
         controls += character;
     }
     std::ostringstream escaped;
@@ -251,12 +237,10 @@ DOCTEST_TEST_CASE("Process resource limits report the calling process without mo
     DOCTEST_REQUIRE(sample.nofile_hard.value);
     DOCTEST_CHECK(sample.nofile_soft.value->unlimited == (actual.rlim_cur == RLIM_INFINITY));
     DOCTEST_CHECK(sample.nofile_hard.value->unlimited == (actual.rlim_max == RLIM_INFINITY));
-    if (actual.rlim_cur != RLIM_INFINITY)
-    {
+    if (actual.rlim_cur != RLIM_INFINITY) {
         DOCTEST_CHECK(sample.nofile_soft.value->descriptors == static_cast<std::uint64_t>(actual.rlim_cur));
     }
-    if (actual.rlim_max != RLIM_INFINITY)
-    {
+    if (actual.rlim_max != RLIM_INFINITY) {
         DOCTEST_CHECK(sample.nofile_hard.value->descriptors == static_cast<std::uint64_t>(actual.rlim_max));
     }
 #else
@@ -309,8 +293,7 @@ DOCTEST_TEST_CASE("Connection resource periodic and whole-run samplers retain in
     check_sample(whole);
     DOCTEST_CHECK(first.elapsed_seconds <= second.elapsed_seconds);
     DOCTEST_CHECK(second.elapsed_seconds <= whole.elapsed_seconds);
-    if (first.cpu_interval_seconds && second.cpu_interval_seconds && whole.cpu_interval_seconds)
-    {
+    if (first.cpu_interval_seconds && second.cpu_interval_seconds && whole.cpu_interval_seconds) {
         DOCTEST_CHECK(second.elapsed_seconds - *second.cpu_interval_seconds == doctest::Approx(first.elapsed_seconds));
         DOCTEST_CHECK(*whole.cpu_interval_seconds >= *first.cpu_interval_seconds + *second.cpu_interval_seconds);
         DOCTEST_CHECK(*whole.cpu_interval_seconds > *second.cpu_interval_seconds);

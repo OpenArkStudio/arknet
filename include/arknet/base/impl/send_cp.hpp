@@ -23,8 +23,7 @@ ARKNET_CLASS_FORWARD_DECLARE_BASE;
 template<class Derived, class Args>
 class send_cp
     : public data_persistence_cp<Derived, Args>
-    , public send_queue_cp<Derived, Args>
-{
+    , public send_queue_cp<Derived, Args> {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     using queue_type = send_queue_cp<Derived, Args>;
     using queue_type::_call_completion;
@@ -80,22 +79,17 @@ public:
         requires send_completion_handler<Callback>
     bool async_send(Element* data, Count count, Callback&& callback) {
         if (!data || (std::is_signed_v<Count> && count < 0) ||
-            static_cast<std::uintmax_t>(count) > std::numeric_limits<std::size_t>::max() / sizeof(Element))
-        {
+            static_cast<std::uintmax_t>(count) > std::numeric_limits<std::size_t>::max() / sizeof(Element)) {
             return reject(callback, asio::error::invalid_argument);
         }
         const auto bytes = static_cast<std::size_t>(count) * sizeof(Element);
-        if (!this->_can_send_buffer_size(bytes))
-        {
+        if (!this->_can_send_buffer_size(bytes)) {
             return reject(callback, asio::error::no_buffer_space);
         }
-        if constexpr (is_char_v<Element>)
-        {
+        if constexpr (is_char_v<Element>) {
             return async_send(std::basic_string_view<std::remove_cv_t<Element>>(data, static_cast<std::size_t>(count)),
                 std::forward<Callback>(callback));
-        }
-        else
-        {
+        } else {
             return async_send(asio::const_buffer(data, bytes), std::forward<Callback>(callback));
         }
     }
@@ -135,8 +129,7 @@ protected:
     }
 
 private:
-    struct ignore_completion
-    {
+    struct ignore_completion {
         void operator()(const error_code&, std::size_t) const noexcept {}
     };
 
@@ -173,16 +166,11 @@ private:
 
     template<class Data>
     std::size_t payload_size(const Data& data) {
-        if constexpr (requires { sender()._send_data_size(data); })
-        {
+        if constexpr (requires { sender()._send_data_size(data); }) {
             return sender()._send_data_size(data);
-        }
-        else if constexpr (is_span<std::remove_cvref_t<Data>>::value)
-        {
+        } else if constexpr (is_span<std::remove_cvref_t<Data>>::value) {
             return data.size_bytes();
-        }
-        else
-        {
+        } else {
             return asio::buffer_size(asio::buffer(data));
         }
     }
@@ -199,19 +187,16 @@ private:
             callback(std::move(owner), error, 0, std::move(guard));
             return false;
         };
-        if (object.state_ != state_t::started)
-        {
+        if (object.state_ != state_t::started) {
             return fail(asio::error::not_connected);
         }
         const auto input_bytes = payload_size(input);
-        if (!this->_reserve_send_buffer(input_bytes))
-        {
+        if (!this->_reserve_send_buffer(input_bytes)) {
             return fail(asio::error::no_buffer_space);
         }
         send_buffer_guard reservation(*this, input_bytes);
         auto data = object._data_persistence(std::forward<Data>(input));
-        if (!reservation.resize(asio::buffer_size(asio::buffer(data))))
-        {
+        if (!reservation.resize(asio::buffer_size(asio::buffer(data)))) {
             reservation.release();
             return fail(asio::error::no_buffer_space);
         }
@@ -221,16 +206,12 @@ private:
                 payload = std::move(payload),
                 reservation = std::move(reservation)](event_queue_guard<Derived> current) mutable {
                 error_code error;
-                if (!object.is_started())
-                {
+                if (!object.is_started()) {
                     error = asio::error::not_connected;
-                }
-                else if (generation != object.life_id())
-                {
+                } else if (generation != object.life_id()) {
                     error = asio::error::operation_aborted;
                 }
-                if (error)
-                {
+                if (error) {
                     set_last_error(error);
                     reservation.release();
                     callback(std::move(owner), error, 0, std::move(current));
@@ -253,8 +234,7 @@ private:
 
     std::size_t wait_send(std::future<result_type> future) {
         if (sender().io_->context().get_executor().running_in_this_thread() &&
-            future.wait_for(std::chrono::nanoseconds::zero()) != std::future_status::ready)
-        {
+            future.wait_for(std::chrono::nanoseconds::zero()) != std::future_status::ready) {
             set_last_error(asio::error::in_progress);
             return 0;
         }

@@ -35,8 +35,7 @@ std::string make_greeting(std::string_view auth_data, std::string_view plugin = 
     payload.push_back((capabilities & capability::plugin_auth) != 0 ? static_cast<char>(auth_data.size()) : 0);
     payload.append(10, '\0');
     payload.append(auth_data.substr(8));
-    if ((capabilities & capability::plugin_auth) != 0)
-    {
+    if ((capabilities & capability::plugin_auth) != 0) {
         payload.append(plugin);
         payload.push_back('\0');
     }
@@ -47,8 +46,7 @@ std::string make_scramble(bool terminator = true) {
     std::string scramble("0123\0"
                          "56789abcdefghij",
         20);
-    if (terminator)
-    {
+    if (terminator) {
         scramble.push_back('\0');
     }
     return scramble;
@@ -89,10 +87,8 @@ void check_ok_unchanged(const ok_packet& packet) {
 } // namespace
 
 DOCTEST_TEST_CASE("MySQL protocol 10 greeting keeps capabilities and opaque binary authentication data") {
-    for (const auto plugin : {"caching_sha2_password", "mysql_native_password", "sha256_password", "custom_plugin"})
-    {
-        for (const auto terminator : {false, true})
-        {
+    for (const auto plugin : {"caching_sha2_password", "mysql_native_password", "sha256_password", "custom_plugin"}) {
+        for (const auto terminator : {false, true}) {
             const auto scramble = make_scramble(terminator);
             auto payload = make_greeting(scramble, plugin);
             server_greeting result;
@@ -121,8 +117,7 @@ DOCTEST_TEST_CASE("MySQL protocol 10 greeting keeps capabilities and opaque bina
 
 DOCTEST_TEST_CASE("MySQL greetings reject every truncated prefix and preserve prior output") {
     const auto payload = make_greeting(make_scramble());
-    for (std::size_t size = 0; size < payload.size(); ++size)
-    {
+    for (std::size_t size = 0; size < payload.size(); ++size) {
         CAPTURE(size);
         auto result = old_greeting();
         CHECK(parse_greeting(std::string_view(payload).substr(0, size), result) == handshake_status::incomplete);
@@ -133,8 +128,7 @@ DOCTEST_TEST_CASE("MySQL greetings reject every truncated prefix and preserve pr
     check_greeting_unchanged(result);
     // Capability and length offsets are derived independently from the fixed fields.
     const auto lower_flags = 1 + std::string_view("9.7.2-test").size() + 1 + 4 + 8 + 1;
-    for (const auto offset : {lower_flags - 1, lower_flags + 9})
-    {
+    for (const auto offset : {lower_flags - 1, lower_flags + 9}) {
         auto malformed = payload;
         malformed[offset] = 1;
         CHECK(parse_greeting(malformed, result) == handshake_status::invalid);
@@ -156,18 +150,15 @@ DOCTEST_TEST_CASE("MySQL greetings reject every truncated prefix and preserve pr
 }
 
 DOCTEST_TEST_CASE("MySQL password scramble validation never truncates opaque plugins") {
-    for (const auto plugin : {"mysql_native_password", "caching_sha2_password", "sha256_password"})
-    {
-        for (const auto terminator : {false, true})
-        {
+    for (const auto plugin : {"mysql_native_password", "caching_sha2_password", "sha256_password"}) {
+        for (const auto terminator : {false, true}) {
             const auto data = make_scramble(terminator);
             std::string_view scramble = "old";
             REQUIRE(password_scramble(plugin, data, scramble) == handshake_status::complete);
             CHECK(scramble == std::string_view(data).substr(0, 20));
             CHECK(scramble.data() == data.data());
         }
-        for (const auto size : {0, 1, 19, 21, 22, 255})
-        {
+        for (const auto size : {0, 1, 19, 21, 22, 255}) {
             std::string_view scramble = "old";
             const std::string data(size, 'x');
             CHECK(password_scramble(plugin, data, scramble) == handshake_status::invalid);
@@ -181,16 +172,14 @@ DOCTEST_TEST_CASE("MySQL password scramble validation never truncates opaque plu
 
 DOCTEST_TEST_CASE("MySQL greetings bound authentication lengths without inspecting opaque plugin bytes") {
     const auto length_offset = 1 + std::string_view("9.7.2-test").size() + 1 + 4 + 8 + 1 + 7;
-    for (const auto size : {8, 9, 20, 21, 254, 255})
-    {
+    for (const auto size : {8, 9, 20, 21, 254, 255}) {
         const std::string data(size, '\xff');
         const auto payload = make_greeting(data, "opaque_plugin");
         server_greeting result;
         REQUIRE(parse_greeting(payload, result) == handshake_status::complete);
         CHECK(result.auth_plugin_data == data);
         CHECK(result.auth_plugin_name == "opaque_plugin");
-        for (std::size_t prefix = 0; prefix < payload.size(); ++prefix)
-        {
+        for (std::size_t prefix = 0; prefix < payload.size(); ++prefix) {
             result = old_greeting();
             CHECK(parse_greeting(std::string_view(payload).substr(0, prefix), result) == handshake_status::incomplete);
             check_greeting_unchanged(result);
@@ -201,8 +190,7 @@ DOCTEST_TEST_CASE("MySQL greetings bound authentication lengths without inspecti
     server_greeting result;
     CHECK(parse_greeting(payload, result) == handshake_status::complete);
     CHECK(result.auth_plugin_data == make_scramble());
-    for (unsigned size = 1; size < 8; ++size)
-    {
+    for (unsigned size = 1; size < 8; ++size) {
         payload[length_offset] = static_cast<char>(size);
         result = old_greeting();
         CHECK(parse_greeting(payload, result) == handshake_status::invalid);
@@ -274,22 +262,18 @@ DOCTEST_TEST_CASE("MySQL handshake response encodes binary auth schema plugin an
 }
 
 DOCTEST_TEST_CASE("MySQL auth response lengths cover one byte and length encoded boundaries") {
-    for (const auto size : {0, 1, 20, 250, 251, 255, 256, 65535, 65536})
-    {
+    for (const auto size : {0, 1, 20, 250, 251, 255, 256, 65535, 65536}) {
         const std::string auth(size, '\xff');
         handshake_response response;
         response.username = "u";
         response.auth_response = auth;
         std::string payload = "old";
-        if (size <= 255)
-        {
+        if (size <= 255) {
             REQUIRE(encode_handshake_response(response, payload) == handshake_status::complete);
             REQUIRE(payload.size() == 35 + auth.size());
             CHECK(static_cast<unsigned char>(payload[34]) == size);
             CHECK(std::string_view(payload).substr(35) == auth);
-        }
-        else
-        {
+        } else {
             CHECK(encode_handshake_response(response, payload) == handshake_status::invalid);
             CHECK(payload == "old");
         }
@@ -318,8 +302,7 @@ DOCTEST_TEST_CASE("MySQL response rejects contradictory flags NUL fields and uni
     response.capabilities = 0;
     check_invalid(response, handshake_status::unsupported);
     for (const auto flag : {capability::compress, capability::zstd_compression_algorithm, capability::local_files,
-             capability::query_attributes, capability::multi_factor_authentication, 1u << 29})
-    {
+             capability::query_attributes, capability::multi_factor_authentication, 1u << 29}) {
         response = {};
         response.capabilities |= flag;
         check_invalid(response, handshake_status::unsupported);
@@ -354,13 +337,10 @@ DOCTEST_TEST_CASE("MySQL response rejects contradictory flags NUL fields and uni
 }
 
 DOCTEST_TEST_CASE("MySQL OK parsing preserves unsigned counts and supports absent or encoded info") {
-    for (const auto flags : {capability::protocol_41, capability::protocol_41 | capability::session_track})
-    {
-        for (const auto& info : {std::string(), std::string("Rows matched: 5"), std::string("a\0b", 3)})
-        {
+    for (const auto flags : {capability::protocol_41, capability::protocol_41 | capability::session_track}) {
+        for (const auto& info : {std::string(), std::string("Rows matched: 5"), std::string("a\0b", 3)}) {
             auto payload = make_ok();
-            if (!info.empty())
-            {
+            if (!info.empty()) {
                 append_string(payload, info);
             }
             ok_packet result;
@@ -392,8 +372,7 @@ DOCTEST_TEST_CASE("MySQL OK session state rejects NULL truncation invalid marker
     REQUIRE(parse_ok(payload, flags, result) == handshake_status::complete);
     CHECK(result.info == "done");
     CHECK(result.session_state == state);
-    for (std::size_t size = 0; size < payload.size(); ++size)
-    {
+    for (std::size_t size = 0; size < payload.size(); ++size) {
         CAPTURE(size);
         result = {11, 12, 13, 14, "old info", "old state"};
         CHECK(parse_ok(std::string_view(payload).substr(0, size), flags, result) == handshake_status::incomplete);
@@ -422,8 +401,7 @@ DOCTEST_TEST_CASE("MySQL errors parse negotiated SQLSTATE and initial pre-negoti
     CHECK(result.code == 1045);
     CHECK(result.sql_state == "28000");
     CHECK(result.message == "Access denied");
-    for (std::size_t size = 0; size < 9; ++size)
-    {
+    for (std::size_t size = 0; size < 9; ++size) {
         result = {99, "old", "message"};
         CHECK(parse_error(std::string_view(payload).substr(0, size), capability::protocol_41, result) ==
               handshake_status::incomplete);
@@ -470,16 +448,14 @@ DOCTEST_TEST_CASE("MySQL auth switch preserves plugin bytes and explicitly rejec
 
 DOCTEST_TEST_CASE("MySQL handshake payloads are independent of packet sequence and fragmentation") {
     const auto payload = make_greeting(make_scramble());
-    for (const auto initial : std::array<std::uint8_t, 4>{0, 1, 254, 255})
-    {
+    for (const auto initial : std::array<std::uint8_t, 4>{0, 1, 254, 255}) {
         auto sequence = initial;
         std::string wire;
         REQUIRE(encode_message(payload, sequence, wire));
         CHECK(sequence == static_cast<std::uint8_t>(initial + 1));
         packet_decoder decoder(default_message_limit, initial);
         std::string decoded;
-        for (std::size_t index = 0; index < wire.size(); ++index)
-        {
+        for (std::size_t index = 0; index < wire.size(); ++index) {
             std::string_view input(wire.data() + index, 1);
             const auto status = decoder.consume(input, decoded);
             CHECK(status == (index + 1 == wire.size() ? packet_status::complete : packet_status::incomplete));
@@ -493,26 +469,21 @@ DOCTEST_TEST_CASE("MySQL handshake payloads are independent of packet sequence a
 
 DOCTEST_TEST_CASE("MySQL hostile handshake payloads retain outputs unless fully accepted") {
     std::mt19937 random(0x4d795351);
-    for (unsigned iteration = 0; iteration < 2000; ++iteration)
-    {
+    for (unsigned iteration = 0; iteration < 2000; ++iteration) {
         std::string payload(random() % 160, '\0');
-        for (auto& byte : payload)
-        {
+        for (auto& byte : payload) {
             byte = static_cast<char>(random() & 0xff);
         }
         auto greeting = old_greeting();
-        if (parse_greeting(payload, greeting) != handshake_status::complete)
-        {
+        if (parse_greeting(payload, greeting) != handshake_status::complete) {
             check_greeting_unchanged(greeting);
         }
         ok_packet ok = {11, 12, 13, 14, "old info", "old state"};
-        if (parse_ok(payload, modern_capabilities | capability::session_track, ok) != handshake_status::complete)
-        {
+        if (parse_ok(payload, modern_capabilities | capability::session_track, ok) != handshake_status::complete) {
             check_ok_unchanged(ok);
         }
         error_packet error = {99, "old", "message"};
-        if (parse_error(payload, capability::protocol_41, error) != handshake_status::complete)
-        {
+        if (parse_error(payload, capability::protocol_41, error) != handshake_status::complete) {
             CHECK(error.code == 99);
             CHECK(error.sql_state == "old");
             CHECK(error.message == "message");

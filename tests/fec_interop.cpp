@@ -20,8 +20,7 @@ using shards = std::vector<std::vector<std::uint8_t>>;
 
 std::vector<std::uint8_t> data(std::size_t k, std::size_t size) {
     std::vector<std::uint8_t> value(k * size);
-    for (std::size_t i = 0; i < value.size(); ++i)
-    {
+    for (std::size_t i = 0; i < value.size(); ++i) {
         value[i] = static_cast<std::uint8_t>((i * 131 + i / 7 + k * 17) & 255);
     }
     return value;
@@ -41,10 +40,8 @@ shards encode(const Code& code, const std::vector<std::uint8_t>& value) {
 template<class Code>
 shards decode(const Code& code, const shards& encoded, unsigned survivors) {
     std::map<std::size_t, const std::uint8_t*> selected;
-    for (std::size_t id = 0; id < encoded.size(); ++id)
-    {
-        if (survivors & (1U << id))
-        {
+    for (std::size_t id = 0; id < encoded.size(); ++id) {
+        if (survivors & (1U << id)) {
             selected.emplace(id, encoded[id].data());
         }
     }
@@ -59,12 +56,9 @@ shards decode(const Code& code, const shards& encoded, unsigned survivors) {
 } // namespace
 
 DOCTEST_TEST_CASE("Reed-Solomon parity and recovery match the independent pinned fecpp reference") {
-    for (unsigned k = 1; k <= 6; ++k)
-    {
-        for (unsigned p = 0; p <= 3; ++p)
-        {
-            for (std::size_t size : {std::size_t(1), std::size_t(31), std::size_t(128)})
-            {
+    for (unsigned k = 1; k <= 6; ++k) {
+        for (unsigned p = 0; p <= 3; ++p) {
+            for (std::size_t size : {std::size_t(1), std::size_t(31), std::size_t(128)}) {
                 DOCTEST_CAPTURE(k);
                 DOCTEST_CAPTURE(p);
                 DOCTEST_CAPTURE(size);
@@ -75,10 +69,8 @@ DOCTEST_TEST_CASE("Reed-Solomon parity and recovery match the independent pinned
                 const auto upstream = encode(reference, input);
                 check(ours == upstream, "all systematic and parity bytes match upstream");
                 const shards expected(upstream.begin(), upstream.begin() + k);
-                for (unsigned survivors = 0; survivors < (1U << (k + p)); ++survivors)
-                {
-                    if (std::popcount(survivors) < k)
-                    {
+                for (unsigned survivors = 0; survivors < (1U << (k + p)); ++survivors) {
+                    if (std::popcount(survivors) < k) {
                         continue;
                     }
                     DOCTEST_CAPTURE(survivors);
@@ -121,11 +113,9 @@ DOCTEST_TEST_CASE("Reed-Solomon maximum field size remains interoperable") {
 DOCTEST_TEST_CASE("Reed-Solomon instances can initialize and encode concurrently") {
     std::atomic<bool> valid = true;
     std::vector<std::thread> workers;
-    for (unsigned thread = 0; thread < 8; ++thread)
-    {
+    for (unsigned thread = 0; thread < 8; ++thread) {
         workers.emplace_back([&, thread] {
-            for (unsigned round = 0; round < 32; ++round)
-            {
+            for (unsigned round = 0; round < 32; ++round) {
                 arknet::detail::fecpp::fec_code code(4, 6);
                 const auto input = data(4, 16 + thread + round);
                 shards encoded(6);
@@ -137,16 +127,15 @@ DOCTEST_TEST_CASE("Reed-Solomon instances can initialize and encode concurrently
                     {1, encoded[1].data()}, {2, encoded[2].data()}, {4, encoded[4].data()}, {5, encoded[5].data()}};
                 code.decode(selected, input.size() / 4,
                     [&](std::size_t id, std::size_t, const std::uint8_t* bytes, std::size_t count) {
-                        if (!std::equal(bytes, bytes + count, input.begin() + static_cast<std::ptrdiff_t>(id * count)))
-                        {
+                        if (!std::equal(
+                                bytes, bytes + count, input.begin() + static_cast<std::ptrdiff_t>(id * count))) {
                             valid = false;
                         }
                     });
             }
         });
     }
-    for (auto& worker : workers)
-    {
+    for (auto& worker : workers) {
         worker.join();
     }
     check(valid.load(), "concurrent codecs recover exact original bytes");

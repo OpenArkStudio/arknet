@@ -5,16 +5,14 @@
 
 namespace arknet {
 
-class spin_lock
-{
+class spin_lock {
 public:
     bool try_lock() noexcept {
         return !v_.test_and_set(std::memory_order_acquire);
     }
 
     void lock() noexcept {
-        while (!try_lock())
-        {
+        while (!try_lock()) {
             v_.wait(true, std::memory_order_relaxed);
         }
     }

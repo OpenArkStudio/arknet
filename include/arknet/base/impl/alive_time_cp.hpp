@@ -6,8 +6,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class alive_time_cp
-{
+class alive_time_cp {
 public:
     auto last_alive_time() const noexcept {
         return get_last_alive_time();

@@ -15,8 +15,7 @@
 
 namespace arknet::detail {
 
-enum class event_type : std::int8_t
-{
+enum class event_type : std::int8_t {
     recv,
     send,
     connect,
@@ -38,14 +37,12 @@ constexpr std::string_view to_string(event_type event) {
     return index < names.size() ? names[index] : "none";
 }
 
-struct observer_base
-{
+struct observer_base {
     virtual ~observer_base() = default;
 };
 
 template<class... Args>
-class observer_t : public observer_base
-{
+class observer_t : public observer_base {
 public:
     using func_type = std::function<void(Args...)>;
     using args_type = std::tuple<Args...>;
@@ -85,8 +82,7 @@ public:
     void operator()(Args... args) {
         // Retain the same callback instance while it replaces or clears its listener.
         auto current = fn_;
-        if (current && *current)
-        {
+        if (current && *current) {
             (*current)(std::forward<Args>(args)...);
         }
     }
@@ -100,8 +96,7 @@ private:
     std::shared_ptr<func_type> fn_;
 };
 
-class listener_t
-{
+class listener_t {
 public:
     template<class Observer>
     void bind(event_type event, Observer&& observer) {
@@ -112,17 +107,13 @@ public:
     void notify(event_type event, Args&&... args) {
         using Observer = observer_t<
             std::conditional_t<std::is_same_v<std::remove_cvref_t<Args>, std::string_view>, std::string_view, Args>...>;
-        if (auto* observer = static_cast<Observer*>(find(event).get()))
-        {
-            try
-            { (*observer)(std::forward<Args>(args)...); }
-            catch (const std::exception& exception)
-            {
+        if (auto* observer = static_cast<Observer*>(find(event).get())) {
+            try {
+                (*observer)(std::forward<Args>(args)...);
+            } catch (const std::exception& exception) {
                 ARKNET_LOG_ERROR("Callback {} failed: {}", to_string(event), exception.what());
                 ARKNET_ASSERT(false);
-            }
-            catch (...)
-            {
+            } catch (...) {
                 ARKNET_LOG_ERROR("Callback {} failed", to_string(event));
                 ARKNET_ASSERT(false);
             }
@@ -138,8 +129,7 @@ public:
     }
 
     void clear() noexcept {
-        for (auto& observer : observers_)
-        {
+        for (auto& observer : observers_) {
             observer.reset();
         }
     }

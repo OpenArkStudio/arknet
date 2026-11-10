@@ -28,16 +28,14 @@ namespace {
 
 using namespace redis_test;
 
-struct observations
-{
+struct observations {
     std::atomic<unsigned> callbacks{}, captures{}, transports{}, constructed{}, stop_entries{}, stop_failures{};
 };
 
 observations observed;
 thread_local unsigned inject_on_stop{};
 
-class observed_transport : public arknet::tcp_client
-{
+class observed_transport : public arknet::tcp_client {
 public:
     template<class... Args>
     explicit observed_transport(Args&&... args)
@@ -57,8 +55,7 @@ public:
                 std::lock_guard lock(callbacks_mutex);
                 callback = std::exchange(before_connect, {});
             }
-            if (callback)
-            {
+            if (callback) {
                 callback();
             }
             arknet::set_last_error(error);
@@ -69,14 +66,12 @@ public:
 
     void stop() {
         ++observed.stop_entries;
-        if (inject_on_stop && !--inject_on_stop)
-        {
+        if (inject_on_stop && !--inject_on_stop) {
             scoped_allocation_failure::arm();
         }
-        try
-        { arknet::tcp_client::stop(); }
-        catch (...)
-        {
+        try {
+            arknet::tcp_client::stop();
+        } catch (...) {
             ++observed.stop_failures;
             throw;
         }
@@ -90,8 +85,7 @@ public:
 using observed_client = arknet::redis::basic_client<observed_transport>;
 using observed_pool = arknet::redis::basic_pool<observed_transport>;
 
-struct capture_probe
-{
+struct capture_probe {
     ~capture_probe() {
         ++observed.captures;
     }
@@ -111,15 +105,13 @@ void reset_observations() {
 template<class Endpoint>
 auto retirement_guard(Endpoint& endpoint) {
     auto retire = [](Endpoint* owner) noexcept {
-        try
-        {
-            if (!owner->close_and_wait())
-            {
+        try {
+            if (!owner->close_and_wait()) {
                 std::terminate();
             }
+        } catch (...) {
+            std::terminate();
         }
-        catch (...)
-        { std::terminate(); }
     };
     return std::unique_ptr<Endpoint, decltype(retire)>(&endpoint, retire);
 }
@@ -146,20 +138,19 @@ void close_concurrently(Endpoint& endpoint) {
     std::array<std::exception_ptr, 2> failures{};
     std::latch start{1};
     std::vector<std::jthread> owners;
-    for (std::size_t index{}; index != completed.size(); ++index)
-    {
+    for (std::size_t index{}; index != completed.size(); ++index) {
         owners.emplace_back([&, index] {
             start.wait();
-            try
-            { completed[index] = endpoint.close_and_wait(); }
-            catch (...)
-            { failures[index] = std::current_exception(); }
+            try {
+                completed[index] = endpoint.close_and_wait();
+            } catch (...) {
+                failures[index] = std::current_exception();
+            }
         });
     }
     start.count_down();
     owners.clear();
-    for (std::size_t index{}; index != completed.size(); ++index)
-    {
+    for (std::size_t index{}; index != completed.size(); ++index) {
         CHECK_FALSE(failures[index]);
         CHECK(completed[index]);
     }
@@ -205,14 +196,11 @@ void pending_connect(bool fault) {
     close_concurrently(connection);
     CHECK(connection.close_and_wait());
     check_retirement(fault, injections);
-    if (ready.wait_for(0ms) == std::future_status::ready)
-    {
+    if (ready.wait_for(0ms) == std::future_status::ready) {
         const auto response = ready.get();
         CHECK(response.error == client_errc::closed);
         CHECK_FALSE(response.command_may_have_run);
-    }
-    else
-    {
+    } else {
         FAIL_CHECK("Accepted connect callback was not terminalized before permanent close returned");
     }
     endpoint.finish();
@@ -266,21 +254,17 @@ void pending_command(bool fault) {
     CHECK(connections.close_and_wait());
     CHECK_FALSE(leased.connection);
     check_retirement(fault, injections);
-    if (ready.wait_for(0ms) == std::future_status::ready)
-    {
+    if (ready.wait_for(0ms) == std::future_status::ready) {
         const auto response = ready.get();
         CHECK(response.error == client_errc::closed);
         CHECK(response.command_may_have_run);
-    }
-    else
-    {
+    } else {
         FAIL_CHECK("Accepted command callback was not terminalized before permanent close returned");
     }
     endpoint.finish();
 }
 
-class paired_server
-{
+class paired_server {
     asio::io_context context_;
     asio::ip::tcp::acceptor acceptor_{context_, {asio::ip::address_v4::loopback(), 0}};
     std::promise<void> received_;
@@ -296,59 +280,45 @@ public:
             std::vector<std::jthread> peers;
             std::mutex failures_mutex;
             std::exception_ptr failure;
-            try
-            {
-                for (unsigned index{}; index != 2; ++index)
-                {
+            try {
+                for (unsigned index{}; index != 2; ++index) {
                     asio::ip::tcp::socket socket(context_);
                     const auto deadline = std::chrono::steady_clock::now() + 5s;
-                    for (;;)
-                    {
+                    for (;;) {
                         arknet::error_code error;
                         acceptor_.accept(socket, error);
-                        if (!error)
-                        {
+                        if (!error) {
                             break;
                         }
                         if ((error != asio::error::would_block && error != asio::error::try_again) ||
-                            std::chrono::steady_clock::now() >= deadline)
-                        {
+                            std::chrono::steady_clock::now() >= deadline) {
                             throw std::runtime_error("Two-child Redis peer accept failed");
                         }
                         std::this_thread::sleep_for(1ms);
                     }
                     peers.emplace_back([&, socket = std::move(socket)]() mutable {
-                        try
-                        {
+                        try {
                             peer remote(socket);
                             remote.hello();
                             remote.expect({"ECHO", "held"});
-                            if (++commands_ == 2)
-                            {
+                            if (++commands_ == 2) {
                                 received_.set_value();
                             }
                             remote.wait_closed();
-                        }
-                        catch (...)
-                        {
+                        } catch (...) {
                             std::lock_guard lock(failures_mutex);
                             failure = std::current_exception();
                         }
                     });
                 }
-            }
-            catch (...)
-            {
+            } catch (...) {
                 std::lock_guard lock(failures_mutex);
                 failure = std::current_exception();
             }
             peers.clear();
-            if (failure)
-            {
+            if (failure) {
                 completion_.set_exception(failure);
-            }
-            else
-            {
+            } else {
                 completion_.set_value();
             }
         });
@@ -388,15 +358,13 @@ void close_two_children(unsigned fault) {
     auto close_done = closed.get_future();
     auto retirement = retirement_guard(connections);
     std::array<observed_pool::acquire_result, 2> leased;
-    for (std::size_t index{}; index != initial.size(); ++index)
-    {
+    for (std::size_t index{}; index != initial.size(); ++index) {
         connections.async_acquire([&, index](auto response) { acquired[index].set_value(std::move(response)); });
         REQUIRE(initial[index].wait_for(5s) == std::future_status::ready);
         leased[index] = initial[index].get();
         REQUIRE(leased[index]);
     }
-    for (std::size_t index{}; index != ready.size(); ++index)
-    {
+    for (std::size_t index{}; index != ready.size(); ++index) {
         auto capture = std::make_shared<capture_probe>();
         leased[index].connection.async_execute(
             {"ECHO", "held"},
@@ -423,8 +391,7 @@ void close_two_children(unsigned fault) {
     close_concurrently(connections);
     CHECK(connections.close_and_wait());
     check_retirement(true, injections, 2);
-    for (std::size_t index{}; index != ready.size(); ++index)
-    {
+    for (std::size_t index{}; index != ready.size(); ++index) {
         CHECK_FALSE(leased[index].connection);
         REQUIRE(ready[index].wait_for(0ms) == std::future_status::ready);
         const auto response = ready[index].get();
@@ -454,15 +421,13 @@ void fail_native_stop_after_actor(observed_pool& connections, Submit submit) {
             inject_on_stop = 1;
         },
         -1ms);
-    if (ready.wait_for(5s) != std::future_status::ready)
-    {
+    if (ready.wait_for(5s) != std::future_status::ready) {
         published->count_down();
         FAIL("Pool actor did not reach native-stop arm barrier");
     }
-    try
-    { submit(); }
-    catch (...)
-    {
+    try {
+        submit();
+    } catch (...) {
         published->count_down();
         throw;
     }
@@ -508,17 +473,14 @@ void retained_retirement(bool failed_return) {
     actor_barrier(connections);
     CHECK(ready.wait_for(0ms) != std::future_status::ready);
     const auto injections = scoped_allocation_failure::injections.load();
-    if (failed_return)
-    {
+    if (failed_return) {
         {
             scoped_allocation_failure::scope failure;
             held.reset();
         }
         CHECK(scoped_allocation_failure::injections == injections + 1);
         fail_native_stop_after_actor(connections, [&] { connections.cancel(0); });
-    }
-    else
-    {
+    } else {
         fail_native_stop_after_actor(connections, [&] {
             held->connection.discard();
             held.reset();

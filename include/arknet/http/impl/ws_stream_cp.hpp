@@ -11,20 +11,17 @@
 namespace arknet::detail {
 
 template<class T, class = void>
-    struct is_websocket_client : std::bool_constant < requires(T& client)
-{
+    struct is_websocket_client : std::bool_constant < requires(T& client) {
     client.ws_stream();
 } > {};
 
 template<class T, class = void>
-    struct is_websocket_server : std::bool_constant < requires(typename T::session_type& session)
-{
+    struct is_websocket_server : std::bool_constant < requires(typename T::session_type& session) {
     session.ws_stream();
 } > {};
 
 template<class Derived, class Args>
-class ws_stream_cp : public ws_stream_tag
-{
+class ws_stream_cp : public ws_stream_tag {
 public:
     using ws_stream_type = typename Args::stream_t;
 
@@ -59,8 +56,7 @@ protected:
     void _ws_stop(std::shared_ptr<Derived> lifetime, Chain chain) {
         auto& owner = static_cast<Derived&>(*this);
         ARKNET_ASSERT(owner.io_->running_in_this_thread());
-        if (!ws_stream_)
-        {
+        if (!ws_stream_) {
             return;
         }
         owner.disp_event(
@@ -73,16 +69,14 @@ protected:
                 ws_stream_->set_option(limits);
                 ws_stream_->set_option(websocket::stream_base::decorator{[](websocket::request_type&) {}});
                 ws_stream_->set_option(websocket::stream_base::decorator{[](websocket::response_type&) {}});
-                if (!ws_stream_->is_open())
-                {
+                if (!ws_stream_->is_open()) {
                     ws_stream_->control_callback();
                     return;
                 }
                 auto timer = std::make_shared<asio::steady_timer>(owner.io_->executor());
                 timer->expires_after(owner.get_disconnect_timeout());
                 timer->async_wait(owner._track_async_operation([&owner, lifetime](error_code ec) {
-                    if (!ec)
-                    {
+                    if (!ec) {
                         error_code ignored;
                         owner.socket().cancel(ignored);
                         owner.socket().close(ignored);
@@ -113,10 +107,8 @@ protected:
     void _ws_post_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy) {
         auto& owner = static_cast<Derived&>(*this);
         ARKNET_ASSERT(owner.io_->running_in_this_thread());
-        if (!owner.is_started())
-        {
-            if (owner.state_ == state_t::started)
-            {
+        if (!owner.is_started()) {
+            if (owner.state_ == state_t::started) {
                 owner._do_disconnect(get_last_error(), std::move(lifetime));
             }
             return;
@@ -153,8 +145,7 @@ protected:
             ws_stream_->control_callback(
                 [&owner, weak, tracked, policy](websocket::frame_type type, beast::string_view payload) mutable {
                     auto locked = weak.lock();
-                    if (tracked && !locked)
-                    {
+                    if (tracked && !locked) {
                         return;
                     }
                     owner._handle_control_callback(type, payload, std::move(locked), policy);
@@ -167,8 +158,7 @@ protected:
         std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy) {
         auto& owner = static_cast<Derived&>(*this);
         owner.update_alive_time();
-        switch (type)
-        {
+        switch (type) {
         case websocket::frame_type::ping:
             owner._handle_control_ping(payload, std::move(lifetime), std::move(policy));
             break;
@@ -191,8 +181,7 @@ protected:
     void _handle_control_close(
         beast::string_view, std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>>) {
         auto& owner = static_cast<Derived&>(*this);
-        if (owner.state_ == state_t::started)
-        {
+        if (owner.state_ == state_t::started) {
             owner._do_disconnect(websocket::error::closed, std::move(lifetime));
         }
     }
@@ -224,12 +213,9 @@ protected:
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
         auto& owner = static_cast<Derived&>(*this);
         set_last_error(ec);
-        if (ec)
-        {
+        if (ec) {
             owner._handle_upgrade(ec, std::move(lifetime), std::move(policy), std::move(chain));
-        }
-        else
-        {
+        } else {
             owner.update_alive_time();
             owner._post_control_callback(lifetime, policy);
             owner._post_upgrade(std::move(lifetime), std::move(policy), owner.get_upgrade_request(), std::move(chain));
@@ -251,12 +237,9 @@ protected:
 #endif
                 owner._handle_upgrade(ec, std::move(lifetime), std::move(policy), std::move(chain));
             }));
-        if constexpr (Args::is_session)
-        {
+        if constexpr (Args::is_session) {
             ws_stream_->async_accept(message, std::move(completion));
-        }
-        else
-        {
+        } else {
             error_code parse_error;
             const auto address = asio::ip::make_address(owner.host_, parse_error);
             auto authority = !parse_error && address.is_v6() ? "[" + owner.host_ + "]" : owner.host_;
@@ -285,12 +268,9 @@ protected:
                                      chain = std::move(chain)]() mutable {
             set_last_error(ec);
             owner._fire_upgrade(lifetime);
-            if (ec)
-            {
+            if (ec) {
                 owner._do_disconnect(ec, std::move(lifetime), std::move(chain));
-            }
-            else
-            {
+            } else {
                 owner._done_connect(ec, std::move(lifetime), std::move(policy), std::move(chain));
             }
         });
@@ -308,13 +288,10 @@ protected:
     template<class Condition, class Chain>
     void _handle_upgrade(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
-        if constexpr (Args::is_session)
-        {
+        if constexpr (Args::is_session) {
             static_cast<Derived&>(*this)._session_handle_upgrade(
                 ec, std::move(lifetime), std::move(policy), std::move(chain));
-        }
-        else
-        {
+        } else {
             static_cast<Derived&>(*this)._client_handle_upgrade(
                 ec, std::move(lifetime), std::move(policy), std::move(chain));
         }

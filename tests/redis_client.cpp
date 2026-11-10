@@ -18,21 +18,14 @@
 using namespace redis_test;
 
 DOCTEST_TEST_CASE("Redis configured deadlines reject nonpositive and unrepresentable durations") {
-    for (const auto timeout : {0ms, -1ms, std::chrono::milliseconds::max()})
-    {
-        for (int setting = 0; setting < 3; ++setting)
-        {
+    for (const auto timeout : {0ms, -1ms, std::chrono::milliseconds::max()}) {
+        for (int setting = 0; setting < 3; ++setting) {
             arknet::redis::client_options options;
-            if (setting == 0)
-            {
+            if (setting == 0) {
                 options.connect_timeout = timeout;
-            }
-            else if (setting == 1)
-            {
+            } else if (setting == 1) {
                 options.command_timeout = timeout;
-            }
-            else
-            {
+            } else {
                 options.drain_timeout = timeout;
             }
             DOCTEST_CHECK_THROWS_AS(client{options}, std::invalid_argument);
@@ -52,8 +45,7 @@ DOCTEST_TEST_CASE("Redis invalid command deadlines reject on the IO lane without
     client connection(options);
     check(connect(connection, endpoint.port()), "connected");
     const auto caller = std::this_thread::get_id();
-    for (const auto timeout : {-1ms, std::chrono::milliseconds::min(), std::chrono::milliseconds::max()})
-    {
+    for (const auto timeout : {-1ms, std::chrono::milliseconds::min(), std::chrono::milliseconds::max()}) {
         std::promise<result> completed;
         auto response = completed.get_future();
         const auto id = connection.async_execute(
@@ -88,8 +80,7 @@ DOCTEST_TEST_CASE("Redis RESP3 handshake and fragmented binary pipeline keep pus
         remote.expect({"PING"});
         const std::string replies =
             ">2\r\n+invalidate\r\n*1\r\n+k\r\n$5\r\n" + binary + "\r\n-WRONGTYPE expected\r\n+PONG\r\n";
-        for (char byte : replies)
-        {
+        for (char byte : replies) {
             remote.send(std::string_view(&byte, 1));
         }
     });
@@ -152,8 +143,7 @@ DOCTEST_TEST_CASE("Redis cancelled sent commands drain their own slots and retai
         remote.expect({"INCR", "first"});
         remote.expect({"INCR", "second"});
         received.set_value();
-        if (allowed.wait_for(5s) != std::future_status::ready)
-        {
+        if (allowed.wait_for(5s) != std::future_status::ready) {
             throw std::runtime_error("Missing release signal");
         }
         remote.send(":11\r\n:22\r\n");
@@ -197,8 +187,7 @@ DOCTEST_TEST_CASE("Redis timeouts drain replies without shifting later response 
         remote.hello();
         remote.expect({"GET", "slow"});
         remote.expect({"GET", "following"});
-        if (allowed.wait_for(5s) != std::future_status::ready)
-        {
+        if (allowed.wait_for(5s) != std::future_status::ready) {
             throw std::runtime_error("Missing timeout signal");
         }
         remote.send(":10\r\n:20\r\n");
@@ -241,13 +230,11 @@ DOCTEST_TEST_CASE("Redis undrainable cancelled commands close the connection aft
 }
 
 DOCTEST_TEST_CASE("Redis disconnect and malformed replies fail outstanding commands exactly once") {
-    for (bool malformed : {false, true})
-    {
+    for (bool malformed : {false, true}) {
         server endpoint([&](peer& remote) {
             remote.hello();
             remote.expect({"SET", "key", "value"});
-            if (malformed)
-            {
+            if (malformed) {
                 remote.send("?invalid\r\n");
             }
         });
@@ -273,8 +260,7 @@ DOCTEST_TEST_CASE("Redis failed pipelines retain complete owning replies and ret
     const std::string binary("a\0\r\nb", 5);
     const std::vector<std::pair<std::string, client_errc>> failures{{",1.\r\n+VALID\r\n", client_errc::protocol_error},
         {"*1\r\n>1\r\n+invalid\r\n+VALID\r\n", client_errc::protocol_error}, {"$3\r\nab", client_errc::disconnected}};
-    for (const auto& [wire, error] : failures)
-    {
+    for (const auto& [wire, error] : failures) {
         server endpoint([&](peer& remote) {
             remote.hello();
             remote.expect({"ECHO", binary});
@@ -318,8 +304,7 @@ DOCTEST_TEST_CASE("Redis cancellation preserves an owning pipeline prefix while 
         remote.expect({"INCR", "cancelled"});
         remote.expect({"GET", "following"});
         remote.send("$5\r\n" + binary + "\r\n>1\r\n+prefix-ready\r\n");
-        if (allowed.wait_for(5s) != std::future_status::ready)
-        {
+        if (allowed.wait_for(5s) != std::future_status::ready) {
             throw std::runtime_error("Missing drain signal");
         }
         remote.send(":22\r\n:33\r\n");
@@ -404,19 +389,15 @@ DOCTEST_TEST_CASE("Redis handshake errors retain server diagnostics and never fa
 }
 
 DOCTEST_TEST_CASE("Redis rejects malformed non-HELLO handshake replies") {
-    for (auto protocol : {arknet::redis::protocol_version::resp2, arknet::redis::protocol_version::resp3})
-    {
+    for (auto protocol : {arknet::redis::protocol_version::resp2, arknet::redis::protocol_version::resp3}) {
         server endpoint([&](peer& remote) {
-            if (protocol == arknet::redis::protocol_version::resp2)
-            {
+            if (protocol == arknet::redis::protocol_version::resp2) {
                 remote.expect({"AUTH", "password"});
                 remote.expect({"CLIENT", "SETNAME", "test"});
                 remote.expect({"PING"});
                 remote.expect({"SELECT", "1"});
                 remote.send(":1\r\n+BOGUS\r\n+PONG\r\n+OK\r\n");
-            }
-            else
-            {
+            } else {
                 remote.expect({"HELLO", "3", "AUTH", "default", "password", "SETNAME", "test"});
                 remote.expect({"SELECT", "1"});
                 remote.send("%1\r\n+proto\r\n:3\r\n+BOGUS\r\n");
@@ -518,8 +499,7 @@ DOCTEST_TEST_CASE("Redis cancellation callback can release the last owner before
 DOCTEST_TEST_CASE("Redis single-node client interoperates with an independent authenticated server" *
                   doctest::skip(std::getenv("ARKNET_REDIS_TEST_PORT") == nullptr)) {
     const char* port = std::getenv("ARKNET_REDIS_TEST_PORT");
-    for (auto protocol : {arknet::redis::protocol_version::resp3, arknet::redis::protocol_version::resp2})
-    {
+    for (auto protocol : {arknet::redis::protocol_version::resp3, arknet::redis::protocol_version::resp2}) {
         client connection;
         arknet::redis::connect_options options;
         options.protocol = protocol;
@@ -559,8 +539,7 @@ DOCTEST_TEST_CASE("Redis ACL authentication accepts an explicitly named nopass u
     administrator.async_execute({"ACL", "SETUSER", "arknet-client-nopass", "on", "nopass", "~*", "+@all"},
         [&](result response) { created.set_value(std::move(response)); });
     check(await(created_future).replies[0].text == "OK", "create nopass test user");
-    for (auto protocol : {arknet::redis::protocol_version::resp3, arknet::redis::protocol_version::resp2})
-    {
+    for (auto protocol : {arknet::redis::protocol_version::resp3, arknet::redis::protocol_version::resp2}) {
         client named;
         arknet::redis::connect_options identity;
         identity.protocol = protocol;
@@ -630,8 +609,7 @@ DOCTEST_TEST_CASE("Redis rejects REPLCONF locally without consuming ordered resp
     check(connect(connection, endpoint.port()), "connected");
     const auto caller = std::this_thread::get_id();
     for (const auto& arguments :
-        std::vector<command>{{"REPLCONF", "ACK", "0"}, {"REPLCONF", "GETACK", "*"}, {"replconf", "capa", "psync2"}})
-    {
+        std::vector<command>{{"REPLCONF", "ACK", "0"}, {"REPLCONF", "GETACK", "*"}, {"replconf", "capa", "psync2"}}) {
         std::atomic<unsigned> callbacks{};
         std::promise<result> completed;
         auto response = completed.get_future();

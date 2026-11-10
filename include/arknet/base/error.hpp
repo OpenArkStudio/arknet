@@ -31,21 +31,16 @@ void set_last_error(int value, const Category& category) noexcept {
 
 template<class Error>
 void set_last_error(Error value) noexcept {
-    if constexpr (std::is_integral_v<Error>)
-    {
+    if constexpr (std::is_integral_v<Error>) {
         get_last_error().assign(static_cast<int>(value), asio::error::get_system_category());
-    }
-    else if constexpr (std::is_same_v<Error, std::errc> || std::is_same_v<Error, std::io_errc> ||
-                       std::is_same_v<Error, std::future_errc>)
-    {
+    } else if constexpr (std::is_same_v<Error, std::errc> || std::is_same_v<Error, std::io_errc> ||
+                         std::is_same_v<Error, std::future_errc>) {
 #ifdef ASIO_STANDALONE
         get_last_error() = std::make_error_code(value);
 #else
         get_last_error().assign(static_cast<int>(value), asio::error::get_system_category());
 #endif
-    }
-    else
-    {
+    } else {
         get_last_error() = value;
     }
 }

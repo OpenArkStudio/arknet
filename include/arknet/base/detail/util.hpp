@@ -52,8 +52,7 @@ Endpoint to_endpoint(Host&& host, Service&& service) {
     set_last_error(error ? error : results.empty() ? error_code(asio::error::host_not_found) : error_code{});
     return get_last_error() ? Endpoint{} : results.begin()->endpoint();
 }
-enum class net_protocol : std::uint8_t
-{
+enum class net_protocol : std::uint8_t {
     none,
     udp,
     tcp,
@@ -65,8 +64,7 @@ enum class net_protocol : std::uint8_t
 };
 
 template<class... Functions>
-struct variant_overloaded : Functions...
-{
+struct variant_overloaded : Functions... {
     using Functions::operator()...;
 };
 } // namespace arknet
@@ -77,31 +75,23 @@ using arknet::to_endpoint;
 using arknet::to_string;
 using arknet::to_string_view;
 
-struct tcp_tag
-{
+struct tcp_tag {
     using tl_tag_type = tcp_tag;
 };
 
-struct udp_tag
-{
+struct udp_tag {
     using tl_tag_type = udp_tag;
 };
 
-struct cast_tag
-{
+struct cast_tag {
     using tl_tag_type = cast_tag;
 };
 
-struct ssl_stream_tag
-{
-};
+struct ssl_stream_tag {};
 
-struct ws_stream_tag
-{
-};
+struct ws_stream_tag {};
 
-enum class state_t : std::int8_t
-{
+enum class state_t : std::int8_t {
     stopped,
     stopping,
     starting,
@@ -131,8 +121,7 @@ std::size_t default_concurrency() noexcept {
 template<class = void>
 std::size_t bkdr_hash(const unsigned char* bytes, std::size_t size) noexcept {
     std::size_t value = 0;
-    for (auto byte : std::span(bytes, size))
-    {
+    for (auto byte : std::span(bytes, size)) {
         value = value * 131 + byte;
     }
     return value;
@@ -141,8 +130,7 @@ std::size_t bkdr_hash(const unsigned char* bytes, std::size_t size) noexcept {
 template<class Integer>
 Integer fnv1a_hash(Integer value, const unsigned char* bytes, Integer count) noexcept {
     constexpr Integer multiplier = sizeof(Integer) == 4 ? Integer(16777619u) : Integer(1099511628211ull);
-    for (auto byte : std::span(bytes, std::size_t(count)))
-    {
+    for (auto byte : std::span(bytes, std::size_t(count))) {
         value = (value ^ byte) * multiplier;
     }
     return value;
@@ -155,8 +143,7 @@ Integer fnv1a_hash(const unsigned char* bytes, Integer count) noexcept {
 }
 
 template<class Value>
-class copyable_wrapper
-{
+class copyable_wrapper {
 public:
     using value_type = Value;
 
@@ -173,18 +160,16 @@ private:
 };
 
 template<class Value, class = void>
-struct is_copyable_wrapper : is_template_instance_of<copyable_wrapper, Value>
-{
-};
+struct is_copyable_wrapper : is_template_instance_of<copyable_wrapper, Value> {};
 
 template<class Value>
 inline constexpr bool is_copyable_wrapper_v = is_copyable_wrapper<Value>::value;
 
 inline void cancel_timer(asio::steady_timer& timer) noexcept {
-    try
-    { timer.cancel(); }
-    catch (const system_error&)
-    {}
+    try {
+        timer.cancel();
+    } catch (const system_error&) {
+    }
 }
 
 template<class Rep, class Period>
@@ -194,19 +179,16 @@ asio::steady_timer::duration to_steady_duration(std::chrono::duration<Rep, Perio
     const auto ticks = Wide(input).count();
     const auto maximum = Wide(Duration::max()).count();
     const auto minimum = Wide(Duration::min()).count();
-    if (ticks >= maximum)
-    {
+    if (ticks >= maximum) {
         return Duration::max();
     }
-    if (ticks <= minimum)
-    {
+    if (ticks <= minimum) {
         return Duration::min();
     }
     return Duration(static_cast<typename Duration::rep>(ticks));
 }
 
-struct safe_timer
-{
+struct safe_timer {
     explicit safe_timer(asio::io_context& context)
         : timer(context) {}
 
@@ -223,8 +205,7 @@ struct safe_timer
 };
 
 template<class Duration, class Function>
-struct repeating_timer_state : std::enable_shared_from_this<repeating_timer_state<Duration, Function>>
-{
+struct repeating_timer_state : std::enable_shared_from_this<repeating_timer_state<Duration, Function>> {
     std::shared_ptr<safe_timer> timer;
     Duration interval;
     Function callback;
@@ -237,8 +218,7 @@ struct repeating_timer_state : std::enable_shared_from_this<repeating_timer_stat
     void arm() {
         timer->timer.expires_after(interval);
         timer->timer.async_wait([self = this->shared_from_this()](const error_code& error) {
-            if (!self->timer->canceled.test(std::memory_order_acquire) && self->callback(error))
-            {
+            if (!self->timer->canceled.test(std::memory_order_acquire) && self->callback(error)) {
                 self->arm();
             }
         });
@@ -255,18 +235,15 @@ auto mktimer(asio::io_context& context, std::chrono::duration<Rep, Period> inter
 }
 
 template<class Integer, bool Integral = true, bool Unsigned = true, bool SkipZero = true>
-class id_maker
-{
+class id_maker {
 public:
     explicit id_maker(Integer first = 1) noexcept
         : next_(first) {}
 
     Integer mkid() noexcept {
         auto value = next_.fetch_add(1, std::memory_order_relaxed);
-        if constexpr (SkipZero)
-        {
-            while (value == 0)
-            {
+        if constexpr (SkipZero) {
+            while (value == 0) {
                 value = next_.fetch_add(1, std::memory_order_relaxed);
             }
         }
@@ -294,8 +271,7 @@ void swap_bytes(Value& value) noexcept {
 
 template<class Value>
 Value host_to_network(Value value) noexcept {
-    if constexpr (std::endian::native == std::endian::little)
-    {
+    if constexpr (std::endian::native == std::endian::little) {
         swap_bytes(value);
     }
     return value;
@@ -337,8 +313,7 @@ void disable_sso(String& value) {
 }
 
 template<class Integer>
-struct integer_add_sub_guard
-{
+struct integer_add_sub_guard {
     explicit integer_add_sub_guard(Integer& value) noexcept
         : value_(value) {
         ++value_;
@@ -354,10 +329,8 @@ struct integer_add_sub_guard
 template<class = void>
 bool is_subpath_of(const std::filesystem::path& base, const std::filesystem::path& path) noexcept {
     auto position = path.begin();
-    for (const auto& component : base)
-    {
-        if (position == path.end() || *position++ != component)
-        {
+    for (const auto& component : base) {
+        if (position == path.end() || *position++ != component) {
             return false;
         }
     }
@@ -368,8 +341,7 @@ template<class = void>
 std::filesystem::path make_filepath(const std::filesystem::path& base, const std::filesystem::path& path) noexcept {
     std::error_code error;
     const auto root = std::filesystem::canonical(base, error);
-    if (error)
-    {
+    if (error) {
         return {};
     }
     const auto result = std::filesystem::canonical(root / path.relative_path(), error);
@@ -377,31 +349,23 @@ std::filesystem::path make_filepath(const std::filesystem::path& base, const std
 }
 
 template<class Value>
-struct current_object_result_t : std::type_identity<Value&>
-{
-};
+struct current_object_result_t : std::type_identity<Value&> {};
 
 template<class Value>
-struct current_object_result_t<std::shared_ptr<Value>> : std::type_identity<std::weak_ptr<Value>&>
-{
-};
+struct current_object_result_t<std::shared_ptr<Value>> : std::type_identity<std::weak_ptr<Value>&> {};
 
 template<class Value>
 typename current_object_result_t<Value>::type get_current_object() noexcept {
-    if constexpr (is_template_instance_of_v<std::shared_ptr, Value>)
-    {
+    if constexpr (is_template_instance_of_v<std::shared_ptr, Value>) {
         thread_local std::weak_ptr<typename Value::element_type> current;
         return current;
-    }
-    else
-    {
+    } else {
         thread_local Value current{};
         return current;
     }
 }
 
-struct wait_timer_op
-{
+struct wait_timer_op {
     asio::steady_timer& timer_;
     bool waiting_ = false;
 
@@ -410,51 +374,39 @@ struct wait_timer_op
 
     template<class Operation>
     void operator()(Operation& operation, error_code = {}) {
-        if (std::exchange(waiting_, true))
-        {
+        if (std::exchange(waiting_, true)) {
             operation.complete(get_last_error());
-        }
-        else
-        {
+        } else {
             timer_.async_wait(std::move(operation));
         }
     }
 };
 
-struct data_filter_before_helper
-{
+struct data_filter_before_helper {
     template<class T, class = void>
-        struct has_member_data_filter_before_recv : std::bool_constant < requires(T& object, std::string_view bytes)
-    {
+        struct has_member_data_filter_before_recv : std::bool_constant < requires(T& object, std::string_view bytes) {
         object.data_filter_before_recv(bytes);
     } > {};
 
     template<class T, class = void>
-        struct has_member_data_filter_before_send : std::bool_constant < requires(T& object, std::string_view bytes)
-    {
+        struct has_member_data_filter_before_send : std::bool_constant < requires(T& object, std::string_view bytes) {
         object.data_filter_before_send(bytes);
     } > {};
 
     template<class Object>
     static std::string_view call_data_filter_before_recv(Object& object, std::string_view bytes) noexcept {
-        if constexpr (requires { object.data_filter_before_recv(bytes); })
-        {
+        if constexpr (requires { object.data_filter_before_recv(bytes); }) {
             return object.data_filter_before_recv(bytes);
-        }
-        else
-        {
+        } else {
             return bytes;
         }
     }
 
     template<class Object, class Data>
     static auto call_data_filter_before_send(Object& object, Data&& data) {
-        if constexpr (requires { object.data_filter_before_send(std::forward<Data>(data)); })
-        {
+        if constexpr (requires { object.data_filter_before_send(std::forward<Data>(data)); }) {
             return object.data_filter_before_send(std::forward<Data>(data));
-        }
-        else
-        {
+        } else {
             return std::forward<Data>(data);
         }
     }
@@ -471,8 +423,7 @@ auto call_data_filter_before_send(Object& object, Data&& data) {
 }
 
 template<class T, class = void>
-    struct has_member_insert : std::bool_constant < requires(T& container, std::string_view value)
-{
+    struct has_member_insert : std::bool_constant < requires(T& container, std::string_view value) {
     container.insert(container.begin(), value.begin(), value.end());
 } > {};
 } // namespace arknet::detail
@@ -481,16 +432,11 @@ namespace arknet {
 
 template<class T>
 T get_current_caller() noexcept {
-    if constexpr (detail::is_template_instance_of_v<std::shared_ptr, T>)
-    {
+    if constexpr (detail::is_template_instance_of_v<std::shared_ptr, T>) {
         return detail::get_current_object<T>().lock();
-    }
-    else if constexpr (std::is_reference_v<T>)
-    {
+    } else if constexpr (std::is_reference_v<T>) {
         return *detail::get_current_object<std::remove_reference_t<T>*>();
-    }
-    else
-    {
+    } else {
         return detail::get_current_object<T>();
     }
 }

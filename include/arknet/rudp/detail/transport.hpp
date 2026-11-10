@@ -22,8 +22,7 @@
 
 namespace arknet::rudp {
 
-struct statistics
-{
+struct statistics {
     std::uint64_t transmissions{}, retransmissions{}, wire_bytes_tx{}, wire_bytes_rx{};
     std::uint32_t smoothed_rtt_ms{};
     std::size_t arq_pending_bytes{}, raw_queued_bytes{};
@@ -42,24 +41,21 @@ inline std::uint32_t rudp_clock() noexcept {
 inline std::uint32_t rudp_next_id() noexcept {
     static std::atomic<std::uint32_t> next{rudp_clock() | 1U};
     auto value = next.fetch_add(1, std::memory_order_relaxed);
-    if (!value)
-    {
+    if (!value) {
         value = next.fetch_add(1, std::memory_order_relaxed);
     }
     return value;
 }
 
 inline void rudp_put_id(char* destination, std::uint32_t value) noexcept {
-    for (unsigned i = 0; i < 4; ++i)
-    {
+    for (unsigned i = 0; i < 4; ++i) {
         destination[i] = static_cast<char>(value >> (8 * i));
     }
 }
 
 inline std::uint32_t rudp_read_id(const char* source) noexcept {
     std::uint32_t value{};
-    for (unsigned i = 0; i < 4; ++i)
-    {
+    for (unsigned i = 0; i < 4; ++i) {
         value |= std::uint32_t(static_cast<unsigned char>(source[i])) << (8 * i);
     }
     return value;
@@ -70,8 +66,7 @@ inline std::string rudp_control(unsigned char type, std::uint32_t sync, std::uin
     std::string bytes(type == 1 ? 5 : 9, '\0');
     bytes[0] = static_cast<char>(type);
     rudp_put_id(bytes.data() + 1, sync);
-    if (bytes.size() == 9)
-    {
+    if (bytes.size() == 9) {
         rudp_put_id(bytes.data() + 5, conversation);
     }
     return bytes;
@@ -86,11 +81,9 @@ inline std::string rudp_fec_control(
     std::string bytes(type == 4 ? 8 : type == 5 ? 12 : 5, '\0');
     bytes[0] = static_cast<char>(type);
     rudp_put_id(bytes.data() + 1, sync);
-    if (type == 4 || type == 5)
-    {
+    if (type == 4 || type == 5) {
         const auto offset = type == 4 ? 5 : 9;
-        if (type == 5)
-        {
+        if (type == 5) {
             rudp_put_id(bytes.data() + 5, conversation);
         }
         bytes[offset] = 1;
@@ -114,10 +107,8 @@ inline std::size_t rudp_fec_mtu(std::string_view bytes, unsigned char type) noex
 }
 
 inline arq::options rudp_arq_options(arq::options options, const fec::options& fec_options) {
-    if (fec_options.mode != fec::policy::disabled)
-    {
-        if (options.mtu <= fec::transport::overhead + 24 || options.mtu > 65507)
-        {
+    if (fec_options.mode != fec::policy::disabled) {
+        if (options.mtu <= fec::transport::overhead + 24 || options.mtu > 65507) {
             throw std::invalid_argument("invalid FEC wire MTU");
         }
         options.mtu -= fec::transport::overhead;
@@ -126,15 +117,12 @@ inline arq::options rudp_arq_options(arq::options options, const fec::options& f
 }
 
 inline bool rudp_ack_only(std::string_view bytes) noexcept {
-    while (bytes.size() >= 24)
-    {
-        if (static_cast<unsigned char>(bytes[4]) == 81)
-        {
+    while (bytes.size() >= 24) {
+        if (static_cast<unsigned char>(bytes[4]) == 81) {
             return false;
         }
         const auto size = 24 + std::size_t(rudp_read_id(bytes.data() + 20));
-        if (size > bytes.size())
-        {
+        if (size > bytes.size()) {
             return false;
         }
         bytes.remove_prefix(size);
@@ -142,8 +130,7 @@ inline bool rudp_ack_only(std::string_view bytes) noexcept {
     return bytes.empty();
 }
 
-class rudp_channel : public std::enable_shared_from_this<rudp_channel>
-{
+class rudp_channel : public std::enable_shared_from_this<rudp_channel> {
 public:
     using delivery = std::function<void(std::string_view)>;
     using failure = std::function<void(error_code)>;
@@ -159,28 +146,21 @@ public:
         , options_(options)
         , deliver_(std::move(deliver))
         , fail_(std::move(fail)) {
-        if (fec_options.mode != fec::policy::disabled)
-        {
+        if (fec_options.mode != fec::policy::disabled) {
             fec_ = std::make_unique<fec::transport>(
                 conversation, options.mtu, fec_options, [this](std::string_view bytes) { raw_send(bytes); },
                 [this](std::string_view bytes) { return accept_arq(bytes); });
             tick_interval_ = std::min(options.interval, fec_options.group_wait_ms);
-        }
-        else
-        {
+        } else {
             tick_interval_ = options.interval;
         }
         core_.set_output([this](std::string_view bytes) {
-            if (stopped_)
-            {
+            if (stopped_) {
                 return;
             }
-            if (fec_)
-            {
+            if (fec_) {
                 fec_->send(bytes, rudp_clock(), rudp_ack_only(bytes));
-            }
-            else
-            {
+            } else {
                 raw_send(bytes);
             }
         });
@@ -192,14 +172,12 @@ public:
     }
 
     void stop() {
-        if (stopped_)
-        {
+        if (stopped_) {
             return;
         }
         stopped_ = true;
         timer_.cancel();
-        if (fec_)
-        {
+        if (fec_) {
             fec_->stop();
         }
         deliver_ = {};
@@ -221,21 +199,18 @@ public:
         value.wire_bytes_tx = wire_bytes_tx_;
         value.wire_bytes_rx = wire_bytes_rx_;
         value.raw_queued_bytes = queued_bytes_;
-        if (fec_)
-        {
+        if (fec_) {
             value.fec = fec_->snapshot();
         }
         return value;
     }
 
     int send(std::string_view bytes) {
-        if (stopped_)
-        {
+        if (stopped_) {
             return -3;
         }
         const auto result = core_.send(bytes);
-        if (!result)
-        {
+        if (!result) {
             core_.update(rudp_clock());
             core_.flush();
         }
@@ -243,8 +218,7 @@ public:
     }
 
     bool input(std::string_view bytes) {
-        if (stopped_)
-        {
+        if (stopped_) {
             return false;
         }
         wire_bytes_rx_ += bytes.size();
@@ -252,28 +226,23 @@ public:
     }
 
     bool accept_arq(std::string_view bytes) {
-        if (stopped_)
-        {
+        if (stopped_) {
             return false;
         }
         const auto result = core_.input(bytes);
-        if (result == -5)
-        {
+        if (result == -5) {
             fail(asio::error::no_buffer_space);
             return false;
         }
-        if (result != 0)
-        {
+        if (result != 0) {
             return false;
         }
         std::string message;
-        while (!stopped_ && core_.receive(message))
-        {
+        while (!stopped_ && core_.receive(message)) {
             const auto callback = deliver_;
             callback(message);
         }
-        if (!stopped_)
-        {
+        if (!stopped_) {
             core_.update(rudp_clock());
             core_.flush();
         }
@@ -281,28 +250,24 @@ public:
     }
 
     void raw_send(std::string_view bytes) {
-        if (stopped_)
-        {
+        if (stopped_) {
             return;
         }
-        if (bytes.size() > options_.max_pending_bytes || queued_bytes_ > options_.max_pending_bytes - bytes.size())
-        {
+        if (bytes.size() > options_.max_pending_bytes || queued_bytes_ > options_.max_pending_bytes - bytes.size()) {
             fail(asio::error::no_buffer_space);
             return;
         }
         queue_.push_back(std::make_shared<std::string>(bytes));
         queued_bytes_ += bytes.size();
         wire_bytes_tx_ += bytes.size();
-        if (!writing_)
-        {
+        if (!writing_) {
             write();
         }
     }
 
 private:
     void fail(error_code error) {
-        if (stopped_)
-        {
+        if (stopped_) {
             return;
         }
         const auto callback = fail_;
@@ -311,73 +276,56 @@ private:
     }
 
     void arm() {
-        if (stopped_)
-        {
+        if (stopped_) {
             return;
         }
         timer_.expires_after(std::chrono::milliseconds(tick_interval_));
         timer_.async_wait([self = shared_from_this()](error_code error) {
-            if (error || self->stopped_)
-            {
+            if (error || self->stopped_) {
                 return;
             }
             const auto now = rudp_clock();
             self->core_.update(now);
-            if (self->fec_ && !self->stopped_)
-            {
+            if (self->fec_ && !self->stopped_) {
                 self->fec_->adapt(now, self->core_.transmissions(), self->core_.retransmissions(),
                     self->core_.smoothed_rtt_ms(), std::max(self->queued_bytes_, self->core_.pending_bytes()),
                     self->options_.max_pending_bytes);
                 self->fec_->update(now);
             }
-            if (self->core_.failed())
-            {
+            if (self->core_.failed()) {
                 self->fail(asio::error::timed_out);
-            }
-            else
-            {
+            } else {
                 self->arm();
             }
         });
     }
 
     void write() {
-        if (stopped_ || queue_.empty())
-        {
+        if (stopped_ || queue_.empty()) {
             return;
         }
         writing_ = true;
         auto bytes = queue_.front();
         auto completion = [self = shared_from_this(), bytes](error_code error, std::size_t) {
             self->writing_ = false;
-            if (self->stopped_)
-            {
+            if (self->stopped_) {
                 return;
             }
             self->queued_bytes_ -= bytes->size();
             self->queue_.pop_front();
-            if (error)
-            {
+            if (error) {
                 self->fail(error);
-            }
-            else
-            {
+            } else {
                 self->write();
             }
         };
-        try
-        {
-            if (connected_)
-            {
+        try {
+            if (connected_) {
                 socket_->async_send(asio::buffer(*bytes), std::move(completion));
-            }
-            else
-            {
+            } else {
                 socket_->async_send_to(asio::buffer(*bytes), remote_, std::move(completion));
             }
-        }
-        catch (const std::bad_alloc&)
-        {
+        } catch (const std::bad_alloc&) {
             writing_ = false;
             fail(asio::error::no_memory);
             throw;

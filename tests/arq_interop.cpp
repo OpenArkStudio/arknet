@@ -19,16 +19,14 @@ constexpr std::uint32_t interop_conversation = 0x83a27104;
 
 std::uint32_t read_wire32(std::string_view data, std::size_t offset) {
     std::uint32_t value = 0;
-    for (std::size_t index = 0; index < 4; ++index)
-    {
+    for (std::size_t index = 0; index < 4; ++index) {
         value |= static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + index])) << (8 * index);
     }
     return value;
 }
 
 void write_wire32(std::string& data, std::size_t offset, std::uint32_t value) {
-    for (std::size_t index = 0; index < 4; ++index)
-    {
+    for (std::size_t index = 0; index < 4; ++index) {
         data[offset + index] = static_cast<char>((value >> (8 * index)) & 0xff);
     }
 }
@@ -46,10 +44,8 @@ std::string wire_packet(std::uint8_t command, std::string_view payload = {}, std
     return data;
 }
 
-struct reference_link
-{
-    struct delivery
-    {
+struct reference_link {
+    struct delivery {
         std::uint32_t due;
         bool to_modern;
         std::string data;
@@ -91,8 +87,7 @@ struct reference_link
     void transmit(bool to_modern, std::string_view data) {
         ++transmissions;
         bool contains_window = false;
-        for (std::size_t offset = 0; offset < data.size();)
-        {
+        for (std::size_t offset = 0; offset < data.size();) {
             check(data.size() - offset >= 24, "reference output contains complete KCP headers");
             const auto command = static_cast<unsigned char>(data[offset + 4]);
             check(command >= 81 && command <= 84, "reference output contains standard KCP commands");
@@ -103,46 +98,38 @@ struct reference_link
             offset += 24 + length;
         }
         auto& drop_window = to_modern ? drop_reference_window : drop_modern_window;
-        if (contains_window && drop_window)
-        {
+        if (contains_window && drop_window) {
             drop_window = false;
             ++losses;
             return;
         }
-        if (impair && transmissions % 7 == 0)
-        {
+        if (impair && transmissions % 7 == 0) {
             ++losses;
             return;
         }
         const auto delay = impair ? static_cast<std::uint32_t>(5 + (transmissions % 5) * 5) : 5;
         pending.push_back({now + delay, to_modern, std::string(data)});
-        if (impair && transmissions % 11 == 0)
-        {
+        if (impair && transmissions % 11 == 0) {
             ++duplicates;
             pending.push_back({now + delay + 15, to_modern, std::string(data)});
         }
     }
 
     void send(bool from_modern, std::string_view message) {
-        if (from_modern)
-        {
+        if (from_modern) {
             check(modern.send(message) == 0, "modern peer queues a message");
-        }
-        else
-        {
+        } else {
             check(ikcp_send(reference.get(), message.data(), static_cast<int>(message.size())) >= 0,
                 "canonical peer queues a message");
         }
     }
 
     bool receive(bool on_modern, std::string& message) {
-        if (on_modern)
-        {
+        if (on_modern) {
             return modern.receive(message);
         }
         const auto size = ikcp_peeksize(reference.get());
-        if (size < 0)
-        {
+        if (size < 0) {
             return false;
         }
         message.resize(static_cast<std::size_t>(size));
@@ -154,20 +141,15 @@ struct reference_link
         modern.update(now);
         ikcp_update(reference.get(), now);
         // Deliver due datagrams in reverse order to exercise reordered segments.
-        for (std::size_t index = pending.size(); index != 0; --index)
-        {
-            if (pending[index - 1].due > now)
-            {
+        for (std::size_t index = pending.size(); index != 0; --index) {
+            if (pending[index - 1].due > now) {
                 continue;
             }
             auto value = std::move(pending[index - 1]);
             pending.erase(pending.begin() + static_cast<std::ptrdiff_t>(index - 1));
-            if (value.to_modern)
-            {
+            if (value.to_modern) {
                 check(modern.input(value.data) == 0, "modern peer accepts canonical wire frames");
-            }
-            else
-            {
+            } else {
                 check(ikcp_input(reference.get(), value.data.data(), static_cast<long>(value.data.size())) == 0,
                     "canonical peer accepts modern wire frames");
             }
@@ -182,10 +164,8 @@ struct reference_link
 } // namespace
 
 DOCTEST_TEST_CASE("ARQ interoperates bidirectionally with the pinned canonical C implementation") {
-    for (const bool congestion : {false, true})
-    {
-        for (const auto [modern_mtu, reference_mtu] : {std::pair{600, 600}, std::pair{1200, 1400}})
-        {
+    for (const bool congestion : {false, true}) {
+        for (const auto [modern_mtu, reference_mtu] : {std::pair{600, 600}, std::pair{1200, 1400}}) {
             DOCTEST_INFO("congestion=", congestion, ", modern MTU=", modern_mtu, ", reference MTU=", reference_mtu);
             arknet::arq::options settings;
             settings.mtu = static_cast<std::size_t>(modern_mtu);
@@ -194,14 +174,11 @@ DOCTEST_TEST_CASE("ARQ interoperates bidirectionally with the pinned canonical C
             reference_link link(settings, reference_mtu, true);
             std::vector<std::string> expected_modern;
             std::vector<std::string> expected_reference;
-            for (int round = 0; round < 8; ++round)
-            {
-                for (const std::size_t size : {0, 1, 64, 4119, 16384})
-                {
+            for (int round = 0; round < 8; ++round) {
+                for (const std::size_t size : {0, 1, 64, 4119, 16384}) {
                     expected_modern.emplace_back(size, static_cast<char>('a' + round));
                     expected_reference.emplace_back(size, static_cast<char>('A' + round));
-                    if (size > 1)
-                    {
+                    if (size > 1) {
                         expected_modern.back()[size / 2] = '\0';
                         expected_reference.back()[size / 2] = '\0';
                     }
@@ -211,21 +188,17 @@ DOCTEST_TEST_CASE("ARQ interoperates bidirectionally with the pinned canonical C
             }
             std::vector<std::string> received_modern;
             std::vector<std::string> received_reference;
-            for (int step = 0; step < 30000; ++step)
-            {
+            for (int step = 0; step < 30000; ++step) {
                 link.step();
                 std::string message;
-                while (link.receive(true, message))
-                {
+                while (link.receive(true, message)) {
                     received_modern.push_back(message);
                 }
-                while (link.receive(false, message))
-                {
+                while (link.receive(false, message)) {
                     received_reference.push_back(message);
                 }
                 if (link.idle() && received_modern.size() == expected_modern.size() &&
-                    received_reference.size() == expected_reference.size())
-                {
+                    received_reference.size() == expected_reference.size()) {
                     break;
                 }
             }
@@ -239,46 +212,37 @@ DOCTEST_TEST_CASE("ARQ interoperates bidirectionally with the pinned canonical C
 }
 
 DOCTEST_TEST_CASE("ARQ canonical interoperability recovers zero windows and lost window announcements") {
-    for (const bool receiver_is_modern : {false, true})
-    {
+    for (const bool receiver_is_modern : {false, true}) {
         DOCTEST_INFO("receiver_is_modern=", receiver_is_modern);
         arknet::arq::options settings;
         settings.receive_window = 128;
         settings.congestion_control = false;
         reference_link link(settings, 1200, false);
         std::vector<std::string> expected;
-        for (int index = 0; index < 200; ++index)
-        {
+        for (int index = 0; index < 200; ++index) {
             expected.push_back(std::to_string(index));
             link.send(!receiver_is_modern, expected.back());
         }
-        while (link.now < 8000)
-        {
+        while (link.now < 8000) {
             link.step();
         }
         const auto sender_index = receiver_is_modern ? 1 : 0;
         const auto receiver_index = receiver_is_modern ? 0 : 1;
         check(!link.idle() && link.commands[sender_index][2] > 0 && link.commands[receiver_index][3] > 0,
             "sender probes the full peer and the receiver reports its zero window");
-        if (receiver_is_modern)
-        {
+        if (receiver_is_modern) {
             link.drop_modern_window = true;
-        }
-        else
-        {
+        } else {
             link.drop_reference_window = true;
         }
         std::vector<std::string> received;
-        while (link.now < 30000)
-        {
+        while (link.now < 30000) {
             std::string message;
-            while (link.receive(receiver_is_modern, message))
-            {
+            while (link.receive(receiver_is_modern, message)) {
                 received.push_back(message);
             }
             link.step();
-            if (received.size() == expected.size() && link.idle())
-            {
+            if (received.size() == expected.size() && link.idle()) {
                 break;
             }
         }

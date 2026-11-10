@@ -12,8 +12,7 @@
 namespace arknet {
 
 template<class Container>
-class basic_linear_buffer
-{
+class basic_linear_buffer {
 public:
     using allocator_type = typename Container::allocator_type;
     using size_type = typename Container::size_type;
@@ -42,12 +41,10 @@ public:
 
     mutable_buffers_type prepare(size_type count) {
         const auto available = size();
-        if (count > limit_ - available)
-        {
+        if (count > limit_ - available) {
             throw std::length_error("arknet buffer limit exceeded");
         }
-        if (consumed_ && count > bytes_.capacity() - committed_)
-        {
+        if (consumed_ && count > bytes_.capacity() - committed_) {
             std::memmove(bytes_.data(), bytes_.data() + consumed_, available);
             consumed_ = 0;
             committed_ = available;
@@ -62,8 +59,7 @@ public:
 
     void consume(size_type count) noexcept {
         consumed_ += std::min(count, size());
-        if (consumed_ == committed_)
-        {
+        if (consumed_ == committed_) {
             consumed_ = committed_ = 0;
             bytes_.clear();
         }
@@ -71,8 +67,7 @@ public:
 
     void shrink_to_fit() {
         const auto remaining = size();
-        if (consumed_)
-        {
+        if (consumed_) {
             std::memmove(bytes_.data(), bytes_.data() + consumed_, remaining);
         }
         consumed_ = 0;

@@ -17,8 +17,7 @@
 
 namespace arknet::detail {
 
-class pending_operation
-{
+class pending_operation {
 public:
     explicit pending_operation(std::shared_ptr<std::atomic_size_t> counter)
         : counter_(std::move(counter)) {
@@ -31,8 +30,7 @@ public:
     pending_operation(const pending_operation&) = delete;
 
     ~pending_operation() {
-        if (counter_)
-        {
+        if (counter_) {
             counter_->fetch_sub(1, std::memory_order_release);
             counter_->notify_all();
         }
@@ -43,15 +41,14 @@ private:
 };
 
 inline void wait_pending_operations(const std::shared_ptr<std::atomic_size_t>& counter) {
-    for (auto count = counter->load(std::memory_order_acquire); count; count = counter->load(std::memory_order_acquire))
-    {
+    for (auto count = counter->load(std::memory_order_acquire); count;
+         count = counter->load(std::memory_order_acquire)) {
         counter->wait(count, std::memory_order_acquire);
     }
 }
 
 template<class Handler>
-class pending_handler
-{
+class pending_handler {
     // Retire the callable and its captures before publishing completion. Asio
     // releases associated operation storage before invoking this handler.
     pending_operation pending_;
@@ -73,10 +70,8 @@ public:
 };
 
 template<class Derived, class Args = void>
-class post_cp
-{
-    struct operation_state
-    {
+class post_cp {
+    struct operation_state {
         std::atomic_bool alive{true};
         std::atomic_bool accepting{true};
         std::atomic_bool accepting_timed{true};
@@ -105,15 +100,13 @@ public:
     template<class Function, class Rep, class Period>
     Derived& post(Function&& callback, std::chrono::duration<Rep, Period> delay) {
         auto& object = static_cast<Derived&>(*this);
-        if (!tasks_->accepting_timed.load(std::memory_order_acquire))
-        {
+        if (!tasks_->accepting_timed.load(std::memory_order_acquire)) {
             set_last_error(asio::error::operation_aborted);
             return object;
         }
         post([state = tasks_, lane = object.io_, owner = object.selfptr(), callback = std::forward<Function>(callback),
                  delay]() mutable {
-            if (!state->accepting_timed.load(std::memory_order_acquire))
-            {
+            if (!state->accepting_timed.load(std::memory_order_acquire)) {
                 return;
             }
             auto timer = std::make_unique<asio::steady_timer>(lane->executor());
@@ -130,8 +123,7 @@ public:
                 set_last_error(error);
                 auto current = std::move(callback);
                 callback.reset();
-                if (!state->alive.load(std::memory_order_acquire))
-                {
+                if (!state->alive.load(std::memory_order_acquire)) {
                     return;
                 }
 #ifdef ARKNET_ENABLE_TIMER_CALLBACK_WHEN_ERROR
@@ -211,17 +203,13 @@ private:
         auto& object = static_cast<Derived&>(*this);
         auto handler = make_allocator(tasks_->allocator,
             [state = tasks_, owner = object.selfptr(), pending = pending_operation(tasks_->pending)] {
-                for (auto* timer : state->timers)
-                {
+                for (auto* timer : state->timers) {
                     cancel_timer(*timer);
                 }
             });
-        if constexpr (Inline)
-        {
+        if constexpr (Inline) {
             asio::dispatch(object.io_->executor(), std::move(handler));
-        }
-        else
-        {
+        } else {
             asio::post(object.io_->executor(), std::move(handler));
         }
         return object;
@@ -230,10 +218,8 @@ private:
     template<bool Inline, class Function>
     Derived& submit(Function&& callback) {
         auto& object = static_cast<Derived&>(*this);
-        if constexpr (requires { object._accepts_async_work(); })
-        {
-            if (!object._accepts_async_work())
-            {
+        if constexpr (requires { object._accepts_async_work(); }) {
+            if (!object._accepts_async_work()) {
                 set_last_error(asio::error::operation_aborted);
                 return object;
             }
@@ -244,17 +230,13 @@ private:
                     std::optional<std::decay_t<Function>>(std::in_place, std::forward<Function>(callback))]() mutable {
                 auto current = std::move(callback);
                 callback.reset();
-                if (state->alive.load(std::memory_order_acquire) && state->accepting.load(std::memory_order_acquire))
-                {
+                if (state->alive.load(std::memory_order_acquire) && state->accepting.load(std::memory_order_acquire)) {
                     (*current)();
                 }
             });
-        if constexpr (Inline)
-        {
+        if constexpr (Inline) {
             asio::dispatch(object.io_->executor(), std::move(handler));
-        }
-        else
-        {
+        } else {
             asio::post(object.io_->executor(), std::move(handler));
         }
         return object;
@@ -277,8 +259,7 @@ namespace asio
 {
 template<template<class, class> class Associator, class Handler, class DefaultCandidate>
 struct associator<Associator, arknet::detail::pending_handler<Handler>, DefaultCandidate>
-    : Associator<Handler, DefaultCandidate>
-{
+    : Associator<Handler, DefaultCandidate> {
     using base = Associator<Handler, DefaultCandidate>;
 
     static decltype(auto) get(const arknet::detail::pending_handler<Handler>& handler) noexcept

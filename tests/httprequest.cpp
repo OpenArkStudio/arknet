@@ -12,15 +12,13 @@ namespace {
 using request_type = arknet::http_request::request_type;
 using response_type = arknet::http_request::response_type;
 
-class io_runner
-{
+class io_runner {
 public:
     asio::io_context context;
 
     explicit io_runner(std::size_t count = 1)
         : guard_(asio::make_work_guard(context)) {
-        for (std::size_t i = 0; i < count; ++i)
-        {
+        for (std::size_t i = 0; i < count; ++i) {
             workers_.emplace_back([this] { context.run(); });
         }
     }
@@ -28,8 +26,7 @@ public:
     ~io_runner() {
         guard_.reset();
         context.stop();
-        for (auto& worker : workers_)
-        {
+        for (auto& worker : workers_) {
             worker.join();
         }
     }
@@ -45,19 +42,16 @@ request_type message(arknet::http::verb method = arknet::http::verb::get, std::s
     return request;
 }
 
-class wire_server
-{
+class wire_server {
 public:
     explicit wire_server(std::string response, bool close = false) {
         server_.bind_recv([response = std::move(response), close](auto& session, std::string_view) {
-            if (session->template get_user_data<bool>())
-            {
+            if (session->template get_user_data<bool>()) {
                 return;
             }
             session->set_user_data(true);
             session->async_send(response, [session, close](const arknet::error_code&, std::size_t) {
-                if (close)
-                {
+                if (close) {
                     session->stop();
                 }
             });
@@ -129,8 +123,7 @@ DOCTEST_TEST_CASE("HTTP host-only single requests preserve completion options an
     auto invalid_options = options_operation.async_request("localhost", message(), options, asio::use_future);
     check(await(invalid_options).first == asio::error::invalid_argument, "host-only future preserves options");
 
-    for (bool explicit_options : {false, true})
-    {
+    for (bool explicit_options : {false, true}) {
         arknet::http_request callback_operation(runtime.context);
         callback_operation.cancel();
         std::promise<arknet::error_code> completed;
@@ -139,13 +132,10 @@ DOCTEST_TEST_CASE("HTTP host-only single requests preserve completion options an
             check(*owned == 42, "host-only callback retains move-only captures");
             completed.set_value(ec);
         };
-        if (explicit_options)
-        {
+        if (explicit_options) {
             callback_operation.async_request(
                 "localhost", message(), arknet::http_request_options{}, std::move(callback));
-        }
-        else
-        {
+        } else {
             callback_operation.async_request("localhost", message(), std::move(callback));
         }
         check(await(future) == asio::error::operation_aborted, "host-only callback preserves cancellation");
@@ -167,8 +157,7 @@ DOCTEST_TEST_CASE("HTTP single requests parse informational chunked close-delimi
 DOCTEST_TEST_CASE("HTTP single requests reject malformed framing and enforce response limits") {
     for (const auto& response : {"HTTP/1.1 200 OK\r\nContent-Length: 1\r\nTransfer-Encoding: chunked\r\n\r\n",
              "HTTP/1.1 200 OK\r\nContent-Length: 1\r\nContent-Length: 1\r\n\r\nx",
-             "INVALID 200 OK\r\nContent-Length: 1\r\n\r\nx", "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhi"})
-    {
+             "INVALID 200 OK\r\nContent-Length: 1\r\n\r\nx", "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhi"}) {
         check(bool(fetch(response, true).first), response);
     }
     arknet::http_request_options limits;
@@ -195,8 +184,7 @@ DOCTEST_TEST_CASE("HTTP single request IO deadlines finish once and ignore late 
     const auto start = std::chrono::steady_clock::now();
     operation.async_request("127.0.0.1", peer.service(), message(), options,
         [&, owned = std::make_unique<int>(42)](arknet::error_code ec, response_type) {
-            if (++calls == 1)
-            {
+            if (++calls == 1) {
                 completion.set_value(ec);
             }
         });
@@ -214,10 +202,8 @@ DOCTEST_TEST_CASE("HTTP single request connect deadline covers DNS and "
     arknet::http_request_options options;
     options.connect_timeout = 1ns;
     options.io_timeout = 5s;
-    for (const auto* host : {"127.0.0.1", "localhost"})
-    {
-        for (int repeat = 0; repeat < 32; ++repeat)
-        {
+    for (const auto* host : {"127.0.0.1", "localhost"}) {
+        for (int repeat = 0; repeat < 32; ++repeat) {
             arknet::http_request operation(runtime.context);
             std::promise<arknet::error_code> completion;
             auto future = completion.get_future();
@@ -230,8 +216,7 @@ DOCTEST_TEST_CASE("HTTP single request connect deadline covers DNS and "
             DOCTEST_INFO("host=", host, ", repeat=", repeat, ", error=", ec.message());
             check(ec == asio::error::timed_out, "connect deadline applies before TCP connection");
             const auto limit = std::chrono::steady_clock::now() + 1s;
-            while (!released.expired() && std::chrono::steady_clock::now() < limit)
-            {
+            while (!released.expired() && std::chrono::steady_clock::now() < limit) {
                 std::this_thread::yield();
             }
             check(released.expired(), "completion releases callback captures while "
@@ -242,14 +227,12 @@ DOCTEST_TEST_CASE("HTTP single request connect deadline covers DNS and "
 
 DOCTEST_TEST_CASE("HTTP single request deadline wins over queued response "
                   "success and errors") {
-    for (bool truncated : {false, true})
-    {
+    for (bool truncated : {false, true}) {
         arknet::tcp_server server;
         std::promise<std::shared_ptr<arknet::tcp_session>> connected;
         auto peer = connected.get_future();
         server.bind_recv([&](auto& session, std::string_view) {
-            if (session->template get_user_data<bool>())
-            {
+            if (session->template get_user_data<bool>()) {
                 return;
             }
             session->set_user_data(true);
@@ -266,14 +249,12 @@ DOCTEST_TEST_CASE("HTTP single request deadline wins over queued response "
         auto result = completion.get_future();
         operation.async_request("127.0.0.1", std::to_string(server.get_listen_port()), message(), options,
             [&](arknet::error_code ec, response_type) {
-                if (++calls == 1)
-                {
+                if (++calls == 1) {
                     completion.set_value(ec);
                 }
             });
         const auto setup_limit = std::chrono::steady_clock::now() + 2s;
-        while (peer.wait_for(0ms) != std::future_status::ready && std::chrono::steady_clock::now() < setup_limit)
-        {
+        while (peer.wait_for(0ms) != std::future_status::ready && std::chrono::steady_clock::now() < setup_limit) {
             context.poll_one();
             std::this_thread::yield();
         }
@@ -285,8 +266,7 @@ DOCTEST_TEST_CASE("HTTP single request deadline wins over queued response "
                                       : "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello",
             [&, session, truncated](arknet::error_code ec, std::size_t) {
                 check(!ec, "peer response sends while request IO is paused");
-                if (truncated)
-                {
+                if (truncated) {
                     session->stop();
                 }
                 sent.set_value();
@@ -324,8 +304,7 @@ DOCTEST_TEST_CASE("HTTP single requests reject a TRACE body without throwing fro
     auto future =
         operation.async_request("127.0.0.1", "1", message(arknet::http::verb::trace, "body"), asio::use_future);
     DOCTEST_CHECK_NOTHROW(context.run());
-    if (future.wait_for(0ms) != std::future_status::ready)
-    {
+    if (future.wait_for(0ms) != std::future_status::ready) {
         operation.cancel();
         context.run();
     }
@@ -334,16 +313,14 @@ DOCTEST_TEST_CASE("HTTP single requests reject a TRACE body without throwing fro
 
 DOCTEST_TEST_CASE("HTTP single requests validate outgoing headers targets and timeout options") {
     io_runner runtime;
-    for (const auto& field : {arknet::http::field::cookie, arknet::http::field::content_type})
-    {
+    for (const auto& field : {arknet::http::field::cookie, arknet::http::field::content_type}) {
         arknet::http_request operation(runtime.context);
         auto request = message();
         request.set(field, "value\r\nInjected: yes");
         auto future = operation.async_request("127.0.0.1", "1", std::move(request), asio::use_future);
         check(await(future).first == asio::error::invalid_argument, "header injection fails before DNS");
     }
-    for (const auto& host : {"host\r\nInjected: yes", ""})
-    {
+    for (const auto& host : {"host\r\nInjected: yes", ""}) {
         arknet::http_request operation(runtime.context);
         auto future = operation.async_request(host, "1", message(), asio::use_future);
         check(await(future).first == asio::error::invalid_argument, "invalid hosts fail before DNS");

@@ -12,14 +12,12 @@ template<class Derived, class Args = tcp_session_args>
 using https_session_impl_t = detail::http_endpoint_impl_t<Derived, detail::tcps_session_impl_t, Args>;
 
 template<class Derived>
-class https_session_t : public https_session_impl_t<Derived>
-{
+class https_session_t : public https_session_impl_t<Derived> {
 public:
     using https_session_impl_t<Derived>::https_session_impl_t;
 };
 
-class https_session : public https_session_t<https_session>
-{
+class https_session : public https_session_t<https_session> {
 public:
     using https_session_t<https_session>::https_session_t;
 };

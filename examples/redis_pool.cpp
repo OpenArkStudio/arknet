@@ -19,15 +19,13 @@ int run(const arknet::redis::pool_options& options) {
     auto acquisition = acquired->get_future();
     pool.async_acquire(
         [acquired](typename Pool::acquire_result response) { acquired->set_value(std::move(response)); });
-    if (acquisition.wait_for(std::chrono::seconds(10)) != std::future_status::ready)
-    {
+    if (acquisition.wait_for(std::chrono::seconds(10)) != std::future_status::ready) {
         pool.close();
         std::cerr << "Redis pool acquisition deadline exceeded\n";
         return 1;
     }
     auto response = acquisition.get();
-    if (!response)
-    {
+    if (!response) {
         pool.close();
         std::cerr << "Redis pool acquisition failed\n";
         return 1;
@@ -37,8 +35,7 @@ int run(const arknet::redis::pool_options& options) {
     auto completion = completed->get_future();
     connection.async_execute(
         {"PING"}, [completed](arknet::redis::result reply) { completed->set_value(std::move(reply)); });
-    if (completion.wait_for(std::chrono::seconds(10)) != std::future_status::ready)
-    {
+    if (completion.wait_for(std::chrono::seconds(10)) != std::future_status::ready) {
         connection.discard();
         pool.close();
         std::cerr << "Redis pooled request deadline exceeded\n";
@@ -49,8 +46,7 @@ int run(const arknet::redis::pool_options& options) {
     connection.release();
     pool.close();
     if (!reply || reply.replies.size() != 1 || reply.replies.front().type != arknet::redis::value_type::simple_string ||
-        reply.replies.front().text != "PONG")
-    {
+        reply.replies.front().text != "PONG") {
         std::cerr << "Redis pooled PING failed; command_may_have_run=" << reply.command_may_have_run << '\n';
         return 1;
     }
@@ -61,10 +57,8 @@ int run(const arknet::redis::pool_options& options) {
 } // namespace
 
 int main(int argc, char** argv) {
-    try
-    {
-        if (argc < 3 || argc > 5 || (argc >= 4 && std::string_view(argv[3]) != "--tls"))
-        {
+    try {
+        if (argc < 3 || argc > 5 || (argc >= 4 && std::string_view(argv[3]) != "--tls")) {
             std::cerr << "Usage: arknet_redis_pool HOST PORT [--tls [CA_FILE]]\n"
                          "Optional environment: ARKNET_REDIS_USERNAME, ARKNET_REDIS_PASSWORD\n";
             return 1;
@@ -74,20 +68,16 @@ int main(int argc, char** argv) {
         options.max_waiters = 64;
         options.connection.host = argv[1];
         options.connection.port = argv[2];
-        if (const auto* username = std::getenv("ARKNET_REDIS_USERNAME"))
-        {
+        if (const auto* username = std::getenv("ARKNET_REDIS_USERNAME")) {
             options.connection.username = username;
         }
-        if (const auto* password = std::getenv("ARKNET_REDIS_PASSWORD"))
-        {
+        if (const auto* password = std::getenv("ARKNET_REDIS_PASSWORD")) {
             options.connection.password = password;
         }
-        if (argc == 5)
-        {
+        if (argc == 5) {
             options.certificate_authority = argv[4];
         }
-        if (argc >= 4)
-        {
+        if (argc >= 4) {
 #if defined(ARKNET_ENABLE_SSL)
             return run<arknet::redis::tls_pool>(options);
 #else
@@ -95,9 +85,7 @@ int main(int argc, char** argv) {
 #endif
         }
         return run<arknet::redis::pool>(options);
-    }
-    catch (const std::exception& error)
-    {
+    } catch (const std::exception& error) {
         std::cerr << "Redis pool example: " << error.what() << '\n';
         return 1;
     }

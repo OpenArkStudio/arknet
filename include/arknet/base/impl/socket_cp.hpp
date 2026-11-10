@@ -10,8 +10,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class socket_cp
-{
+class socket_cp {
 public:
     using socket_type = std::remove_cvref_t<typename Args::socket_t>;
 
@@ -141,8 +140,7 @@ protected:
 private:
     auto remote() const noexcept {
         auto endpoint = socket_->lowest_layer().remote_endpoint(get_last_error());
-        if (get_last_error() && !remote_endpoint_.address().is_unspecified())
-        {
+        if (get_last_error() && !remote_endpoint_.address().is_unspecified()) {
             clear_last_error();
             return remote_endpoint_;
         }

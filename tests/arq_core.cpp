@@ -14,16 +14,14 @@ namespace {
 constexpr std::uint32_t conversation = 0x12345678;
 
 void put32(std::string& data, std::size_t offset, std::uint32_t value) {
-    for (std::size_t index = 0; index < 4; ++index)
-    {
+    for (std::size_t index = 0; index < 4; ++index) {
         data[offset + index] = static_cast<char>((value >> (8 * index)) & 0xff);
     }
 }
 
 std::uint32_t get32(std::string_view data, std::size_t offset) {
     std::uint32_t value = 0;
-    for (std::size_t index = 0; index < 4; ++index)
-    {
+    for (std::size_t index = 0; index < 4; ++index) {
         value |= static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + index])) << (8 * index);
     }
     return value;
@@ -53,10 +51,8 @@ arknet::arq::options uncongested(std::size_t mtu = 1200) {
     return settings;
 }
 
-struct simulated_link
-{
-    struct delivery
-    {
+struct simulated_link {
+    struct delivery {
         std::uint32_t due;
         bool to_right;
         std::string data;
@@ -81,15 +77,13 @@ struct simulated_link
 
     void transmit(bool to_right, std::string_view data) {
         ++transmissions;
-        if (impair && transmissions % 7 == 0)
-        {
+        if (impair && transmissions % 7 == 0) {
             ++dropped;
             return;
         }
         const auto delay = impair ? static_cast<std::uint32_t>((transmissions % 5) * 5 + 5) : 5;
         pending.push_back({now + delay, to_right, std::string(data)});
-        if (impair && transmissions % 11 == 0)
-        {
+        if (impair && transmissions % 11 == 0) {
             ++duplicated;
             pending.push_back({now + delay + 15, to_right, std::string(data)});
         }
@@ -99,10 +93,8 @@ struct simulated_link
         left.update(now);
         right.update(now);
         // Reverse delivery order deliberately; delay values reorder adjacent frames as well.
-        for (std::size_t index = pending.size(); index != 0; --index)
-        {
-            if (pending[index - 1].due > now)
-            {
+        for (std::size_t index = pending.size(); index != 0; --index) {
+            if (pending[index - 1].due > now) {
                 continue;
             }
             auto delivery = std::move(pending[index - 1]);
@@ -118,13 +110,11 @@ DOCTEST_TEST_CASE("Duplicate ACK bursts cannot exhaust ARQ retries before a time
     auto settings = uncongested(60);
     arknet::arq::control_block sender(conversation, settings);
     sender.set_output([](std::string_view) {});
-    for (unsigned i = 0; i < 128; ++i)
-    {
+    for (unsigned i = 0; i < 128; ++i) {
         check(sender.send(std::string(16, 'x')) == 0, "message queues");
     }
     sender.update(0);
-    for (unsigned i = 0; i < 128 && !sender.failed(); ++i)
-    {
+    for (unsigned i = 0; i < 128 && !sender.failed(); ++i) {
         check(sender.input(packet(82, 127, {}, 512)) == 0, "late duplicate ACK is valid");
         sender.flush();
     }
@@ -153,32 +143,27 @@ DOCTEST_TEST_CASE("ARQ fragments and reassembles empty binary and maximum messag
     auto settings = uncongested(80);
     simulated_link link(settings);
     const std::vector<std::string> expected{"", std::string("a\0b", 3), std::string(56 * 256, 'z'), "last"};
-    for (const auto& message : expected)
-    {
+    for (const auto& message : expected) {
         check(link.left.send(message) == 0, "message queues");
     }
     std::vector<std::string> actual;
-    for (int step = 0; step < 2000 && (actual.size() < expected.size() || link.left.pending_segments() != 0); ++step)
-    {
+    for (int step = 0; step < 2000 && (actual.size() < expected.size() || link.left.pending_segments() != 0); ++step) {
         link.step();
         std::string message;
-        while (link.right.receive(message))
-        {
+        while (link.right.receive(message)) {
             actual.push_back(message);
         }
     }
     check(actual == expected, "fragment boundaries and message ordering survive");
     check(link.left.pending_segments() == 0 && !link.left.failed(), "all messages acknowledged");
-    for (const auto& delivery : link.pending)
-    {
+    for (const auto& delivery : link.pending) {
         check(delivery.data.size() <= settings.mtu, "encoded datagrams fit configured MTU");
     }
     check(link.left.send(std::string(56 * 256 + 1, 'x')) == -1, "fragment field overflow rejected");
 }
 
 DOCTEST_TEST_CASE("ARQ reliable delivery survives deterministic loss duplication and reordering") {
-    for (const bool congestion_control : {false, true})
-    {
+    for (const bool congestion_control : {false, true}) {
         DOCTEST_INFO("congestion_control=", congestion_control);
         auto settings = uncongested(300);
         settings.congestion_control = congestion_control;
@@ -186,8 +171,7 @@ DOCTEST_TEST_CASE("ARQ reliable delivery survives deterministic loss duplication
         simulated_link link(settings, true);
         std::vector<std::string> expected_left;
         std::vector<std::string> expected_right;
-        for (int index = 0; index < 80; ++index)
-        {
+        for (int index = 0; index < 80; ++index) {
             const auto message = std::to_string(index) + std::string(static_cast<std::size_t>(index * 17), 'x');
             expected_right.push_back(message);
             expected_left.push_back("reply:" + message);
@@ -196,21 +180,17 @@ DOCTEST_TEST_CASE("ARQ reliable delivery survives deterministic loss duplication
         }
         std::vector<std::string> received_left;
         std::vector<std::string> received_right;
-        for (int step = 0; step < 20000; ++step)
-        {
+        for (int step = 0; step < 20000; ++step) {
             link.step();
             std::string message;
-            while (link.left.receive(message))
-            {
+            while (link.left.receive(message)) {
                 received_left.push_back(message);
             }
-            while (link.right.receive(message))
-            {
+            while (link.right.receive(message)) {
                 received_right.push_back(message);
             }
             if (received_left.size() == expected_left.size() && received_right.size() == expected_right.size() &&
-                link.left.pending_segments() == 0 && link.right.pending_segments() == 0)
-            {
+                link.left.pending_segments() == 0 && link.right.pending_segments() == 0) {
                 break;
             }
         }
@@ -239,8 +219,7 @@ DOCTEST_TEST_CASE("ARQ rejects malformed datagrams before changing receive state
     invalid.push_back(valid + "trailing");
     invalid.push_back(valid + packet(90));
     invalid.push_back(std::string(65508, 'x'));
-    for (const auto& datagram : invalid)
-    {
+    for (const auto& datagram : invalid) {
         arknet::arq::control_block receiver(conversation);
         check(receiver.input(datagram) < 0, "malformed packet rejected");
         std::string message = "unchanged";
@@ -295,8 +274,7 @@ DOCTEST_TEST_CASE("ARQ duplicate acknowledgement backlog and receive buffers rem
     std::vector<std::string> output;
     receiver.set_output([&](auto data) { output.emplace_back(data); });
     check(receiver.input(packet(81, 0, "first")) == 0, "first message queues");
-    for (std::uint32_t index = 1; index < 5000; ++index)
-    {
+    for (std::uint32_t index = 1; index < 5000; ++index) {
         const auto old_sequence = std::numeric_limits<std::uint32_t>::max() - index;
         check(receiver.input(packet(81, old_sequence, "duplicate")) == 0, "old sequence is acknowledged as duplicate");
         check(receiver.input(packet(81, 4, "last in window")) == 0, "duplicate out of order sequence accepted once");
@@ -304,8 +282,7 @@ DOCTEST_TEST_CASE("ARQ duplicate acknowledgement backlog and receive buffers rem
     }
     receiver.update(10);
     std::size_t acknowledgement_bytes = 0;
-    for (const auto& data : output)
-    {
+    for (const auto& data : output) {
         acknowledgement_bytes += data.size();
     }
     check(acknowledgement_bytes <= settings.receive_window * 24, "ACK storage is bounded before a flush");
@@ -313,8 +290,7 @@ DOCTEST_TEST_CASE("ARQ duplicate acknowledgement backlog and receive buffers rem
         "missing in-window messages accepted");
     std::vector<std::string> actual;
     std::string message;
-    while (receiver.receive(message))
-    {
+    while (receiver.receive(message)) {
         actual.push_back(message);
     }
     check((actual == std::vector<std::string>{"first", "second", "third", "fourth", "last in window"}),
@@ -330,8 +306,7 @@ DOCTEST_TEST_CASE("ARQ bounds pending messages including empty payloads") {
     check(sender.send(std::string(56, 'x')) == 0, "bounded message accepted");
     check(sender.send("") == -2 && sender.pending_bytes() == 56, "empty message cannot bypass queue bound");
     arknet::arq::control_block empty_sender(conversation, settings);
-    for (int index = 0; index < 4; ++index)
-    {
+    for (int index = 0; index < 4; ++index) {
         check(empty_sender.send("") == 0, "bounded empty message accepted");
     }
     check(empty_sender.send("") == -2, "empty message count bounded");
@@ -385,8 +360,7 @@ DOCTEST_TEST_CASE("ARQ retries stop at the configured retransmission limit") {
     int transmissions = 0;
     sender.set_output([&](auto) { ++transmissions; });
     check(sender.send("unreachable") == 0, "message queued");
-    for (std::uint32_t now = 0; now < 3000; now += 10)
-    {
+    for (std::uint32_t now = 0; now < 3000; now += 10) {
         sender.update(now);
     }
     check(sender.failed() && transmissions == 3, "initial transmission plus two retries then failure");
@@ -438,26 +412,21 @@ DOCTEST_TEST_CASE("ARQ full receiver advertises zero window and reopens after re
     settings.receive_window = 2;
     simulated_link link(settings);
     check(link.left.input(packet(84, 0, {}, 2)) == 0, "peer advertises its initial receive window");
-    for (const auto* message : {"first", "second", "third", "fourth"})
-    {
+    for (const auto* message : {"first", "second", "third", "fourth"}) {
         check(link.left.send(message) == 0, "message queues");
     }
-    for (int index = 0; index < 100; ++index)
-    {
+    for (int index = 0; index < 100; ++index) {
         link.step();
     }
     check(link.left.pending_segments() == 2, "sender stops at receiver window");
     std::vector<std::string> actual;
-    for (int index = 0; index < 1000; ++index)
-    {
+    for (int index = 0; index < 1000; ++index) {
         std::string message;
-        while (link.right.receive(message))
-        {
+        while (link.right.receive(message)) {
             actual.push_back(message);
         }
         link.step();
-        if (actual.size() == 4 && link.left.pending_segments() == 0)
-        {
+        if (actual.size() == 4 && link.left.pending_segments() == 0) {
             break;
         }
     }
@@ -496,11 +465,9 @@ DOCTEST_TEST_CASE("ARQ absent output retains pending work until output is instal
 }
 
 DOCTEST_TEST_CASE("ARQ constructor rejects unusable configuration") {
-    for (int index = 0; index < 7; ++index)
-    {
+    for (int index = 0; index < 7; ++index) {
         arknet::arq::options settings;
-        switch (index)
-        {
+        switch (index) {
         case 0:
             settings.mtu = 24;
             break;

@@ -18,8 +18,7 @@
 
 namespace {
 
-class fec_relay
-{
+class fec_relay {
 public:
     explicit fec_relay(asio::ip::udp::endpoint server)
         : work_(asio::make_work_guard(context_))
@@ -55,12 +54,10 @@ private:
 
     void receive() {
         socket_.async_receive_from(asio::buffer(buffer_), sender_, [this](arknet::error_code error, std::size_t count) {
-            if (error)
-            {
+            if (error) {
                 return;
             }
-            if (sender_ != server_)
-            {
+            if (sender_ != server_) {
                 client_ = sender_;
             }
             const auto target = sender_ == server_ ? client_ : server_;
@@ -70,25 +67,19 @@ private:
             const auto kind = framed ? static_cast<unsigned char>((*bytes)[5]) : 255;
             const auto data_count = framed ? static_cast<unsigned char>((*bytes)[6]) : 0;
             const auto index = framed ? static_cast<unsigned char>((*bytes)[8]) : 0;
-            if (kind == 0 && data_count > 1 && index == 1)
-            {
+            if (kind == 0 && data_count > 1 && index == 1) {
                 ++dropped;
-            }
-            else if (kind == 1)
-            {
+            } else if (kind == 1) {
                 ++reordered;
                 auto timer = std::make_shared<asio::steady_timer>(context_, 5ms);
                 timer->async_wait([this, bytes, target, timer](arknet::error_code error) {
-                    if (!error)
-                    {
+                    if (!error) {
                         send(bytes, target);
                         send(bytes, target);
                         ++duplicated;
                     }
                 });
-            }
-            else
-            {
+            } else {
                 send(bytes, target);
             }
             receive();
@@ -105,10 +96,8 @@ private:
 } // namespace
 
 DOCTEST_TEST_CASE("RUDP negotiates fixed and adaptive FEC on IPv4 and IPv6") {
-    for (const auto* host : {"127.0.0.1", "::1"})
-    {
-        for (const auto mode : {arknet::fec::policy::fixed, arknet::fec::policy::adaptive})
-        {
+    for (const auto* host : {"127.0.0.1", "::1"}) {
+        for (const auto mode : {arknet::fec::policy::fixed, arknet::fec::policy::adaptive}) {
             DOCTEST_INFO(host);
             DOCTEST_INFO(static_cast<int>(mode));
             auto fec = arknet::fec::options::fixed();
@@ -136,8 +125,7 @@ DOCTEST_TEST_CASE("RUDP negotiates fixed and adaptive FEC on IPv4 and IPv6") {
             check(accepted->get_rudp_options().mtu == 1000, "negotiation selects the smaller wire MTU");
             check(accepted->get_fec_options().mode == mode, "session exposes negotiated FEC policy");
             const std::vector<std::string> expected{"", std::string("a\0b", 3), std::string(16384, 'f')};
-            for (const auto& bytes : expected)
-            {
+            for (const auto& bytes : expected) {
                 check(client.async_send(bytes), "FEC accepts complete binary messages");
             }
             check(received.wait(expected.size()) == expected, "FEC preserves message contents and order");
@@ -189,11 +177,9 @@ DOCTEST_TEST_CASE("RUDP rejects FEC mismatch and malformed negotiation without a
     asio::io_context context;
     asio::ip::udp::socket peer(context, asio::ip::udp::v4());
     peer.connect(server.acceptor().local_endpoint());
-    for (const auto invalid_version : {true, false})
-    {
+    for (const auto invalid_version : {true, false}) {
         auto request = arknet::detail::rudp_fec_control(4, 321, 0, invalid_version ? 1200 : 50);
-        if (invalid_version)
-        {
+        if (invalid_version) {
             request[5] = 2;
         }
         peer.send(asio::buffer(request));
@@ -224,20 +210,17 @@ DOCTEST_TEST_CASE("RUDP FEC refreshes liveness only for matching negotiated hand
     peer.send(asio::buffer(request));
     std::array<char, 64> storage{};
     const auto receive_ack = [&] {
-        for (unsigned i = 0; i < 8; ++i)
-        {
+        for (unsigned i = 0; i < 8; ++i) {
             const auto size = peer.receive(asio::buffer(storage));
             const std::string_view bytes(storage.data(), size);
-            if (arknet::detail::rudp_is_fec_control(bytes, 5))
-            {
+            if (arknet::detail::rudp_is_fec_control(bytes, 5)) {
                 return true;
             }
             check(bytes.starts_with("AFEC"), "only FEC feedback may precede repeated ACK");
         }
         return false;
     };
-    for (unsigned i = 0; i < 2; ++i)
-    {
+    for (unsigned i = 0; i < 2; ++i) {
         check(receive_ack(), "initial and repeated SYN return FEC ACK");
     }
     await(connection);
@@ -248,8 +231,7 @@ DOCTEST_TEST_CASE("RUDP FEC refreshes liveness only for matching negotiated hand
     const std::array<std::string, 4> invalid_requests{invalid_version,
         arknet::detail::rudp_fec_control(4, 124, 0, 1400), arknet::detail::rudp_fec_control(4, 123, 0, 1399),
         arknet::detail::rudp_control(1, 123)};
-    for (const auto& bytes : invalid_requests)
-    {
+    for (const auto& bytes : invalid_requests) {
         peer.send(asio::buffer(bytes));
     }
     auto rejected = accepted->post([&] { return accepted->last_alive_time(); }, 50ms, asio::use_future);
@@ -268,8 +250,7 @@ DOCTEST_TEST_CASE("RUDP FEC refreshes liveness only for matching negotiated hand
 }
 
 DOCTEST_TEST_CASE("RUDP rejects invalid FEC ACK version conversation and MTU") {
-    for (const unsigned invalid_field : {0U, 1U, 2U, 3U})
-    {
+    for (const unsigned invalid_field : {0U, 1U, 2U, 3U}) {
         DOCTEST_INFO(invalid_field);
         asio::io_context context;
         asio::ip::udp::socket peer(context, {asio::ip::make_address("127.0.0.1"), 0});
@@ -278,8 +259,7 @@ DOCTEST_TEST_CASE("RUDP rejects invalid FEC ACK version conversation and MTU") {
         std::shared_ptr<std::string> response;
         bool recognized{};
         peer.async_receive_from(asio::buffer(request), remote, [&](arknet::error_code error, std::size_t count) {
-            if (error || !arknet::detail::rudp_is_fec_control({request.data(), count}, 4))
-            {
+            if (error || !arknet::detail::rudp_is_fec_control({request.data(), count}, 4)) {
                 return;
             }
             recognized = true;
@@ -288,8 +268,7 @@ DOCTEST_TEST_CASE("RUDP rejects invalid FEC ACK version conversation and MTU") {
                 invalid_field == 2   ? 2000
                 : invalid_field == 3 ? 50
                                      : 1200));
-            if (invalid_field == 0)
-            {
+            if (invalid_field == 0) {
                 (*response)[9] = 2;
             }
             peer.async_send_to(asio::buffer(*response), remote, [](arknet::error_code, std::size_t) {});
@@ -326,23 +305,17 @@ DOCTEST_TEST_CASE("RUDP FEC configuration validates limits before start") {
 }
 
 DOCTEST_TEST_CASE("RUDP FEC safely stops built-in client session and server inside receive callbacks") {
-    for (const unsigned stop_target : {0U, 1U, 2U})
-    {
+    for (const unsigned stop_target : {0U, 1U, 2U}) {
         DOCTEST_INFO(stop_target);
         messages disconnected;
         arknet::rudp_server server;
         server.set_fec_options(arknet::fec::options::fixed());
         server.bind_recv([&](auto& session, std::string_view bytes) {
-            if (stop_target == 1)
-            {
+            if (stop_target == 1) {
                 session->stop();
-            }
-            else if (stop_target == 2)
-            {
+            } else if (stop_target == 2) {
                 server.stop();
-            }
-            else
-            {
+            } else {
                 session->async_send(bytes);
             }
         });
@@ -363,12 +336,9 @@ DOCTEST_TEST_CASE("RUDP FEC safely stops built-in client session and server insi
 }
 
 DOCTEST_TEST_CASE("RUDP FEC safely stops client session and server with pending sends and statistics") {
-    for (const auto* model : {"shared", "sharded"})
-    {
-        for (const auto mode : {arknet::fec::policy::fixed, arknet::fec::policy::adaptive})
-        {
-            for (const unsigned stop_target : {0U, 1U, 2U})
-            {
+    for (const auto* model : {"shared", "sharded"}) {
+        for (const auto mode : {arknet::fec::policy::fixed, arknet::fec::policy::adaptive}) {
+            for (const unsigned stop_target : {0U, 1U, 2U}) {
                 DOCTEST_INFO(std::string_view(model));
                 DOCTEST_INFO(static_cast<int>(mode));
                 DOCTEST_INFO(stop_target);
@@ -380,8 +350,7 @@ DOCTEST_TEST_CASE("RUDP FEC safely stops client session and server with pending 
                 auto client_fec = server_fec;
                 client_fec.mode = mode;
 
-                struct shutdown_result
-                {
+                struct shutdown_result {
                     arknet::error_code error;
                     std::size_t bytes;
                     std::future<arknet::rudp::statistics> snapshot;
@@ -394,20 +363,14 @@ DOCTEST_TEST_CASE("RUDP FEC safely stops client session and server with pending 
                 arknet::rudp_server server(runtime.server_lanes(4));
                 server.set_rudp_options(arq).set_fec_options(server_fec);
                 server.bind_recv([&](auto& session, std::string_view bytes) {
-                    if (stop_target == 0)
-                    {
+                    if (stop_target == 0) {
                         session->async_send(bytes);
-                    }
-                    else
-                    {
+                    } else {
                         session->async_send("partial group", [&, session](arknet::error_code error, std::size_t count) {
                             stopped.set_value({error, count, session->get_rudp_statistics()});
-                            if (stop_target == 1)
-                            {
+                            if (stop_target == 1) {
                                 session->stop();
-                            }
-                            else
-                            {
+                            } else {
                                 server.stop();
                             }
                         });
@@ -416,8 +379,7 @@ DOCTEST_TEST_CASE("RUDP FEC safely stops client session and server with pending 
                 arknet::rudp_client client(runtime.context_at(2));
                 client.set_rudp_options(arq).set_fec_options(client_fec).set_auto_reconnect(false);
                 client.bind_recv([&](std::string_view) {
-                    if (stop_target == 0)
-                    {
+                    if (stop_target == 0) {
                         client.async_send("partial group", [&](arknet::error_code error, std::size_t count) {
                             stopped.set_value({error, count, client.get_rudp_statistics()});
                             client.stop();
@@ -439,12 +401,12 @@ DOCTEST_TEST_CASE("RUDP FEC safely stops client session and server with pending 
                 server.stop();
                 check(result.snapshot.wait_for(5s) == std::future_status::ready,
                     "statistics requested before callback shutdown complete");
-                try
-                { result.snapshot.get(); }
-                catch (const std::future_error&)
-                { check(false, "statistics callback retains its promise through shutdown"); }
-                catch (const std::logic_error&)
-                {}
+                try {
+                    result.snapshot.get();
+                } catch (const std::future_error&) {
+                    check(false, "statistics callback retains its promise through shutdown");
+                } catch (const std::logic_error&) {
+                }
                 check(client.is_stopped() && server.is_stopped(), "receive callback shutdown finishes");
                 check(server.get_session_count() == 0 && disconnect_count == 1,
                     "callback shutdown releases sessions and disconnects once");
@@ -455,10 +417,8 @@ DOCTEST_TEST_CASE("RUDP FEC safely stops client session and server with pending 
 }
 
 DOCTEST_TEST_CASE("RUDP FEC serializes concurrent sends and statistics on shared and sharded IO") {
-    for (const auto* model : {"shared", "sharded"})
-    {
-        for (const auto mode : {arknet::fec::policy::fixed, arknet::fec::policy::adaptive})
-        {
+    for (const auto* model : {"shared", "sharded"}) {
+        for (const auto mode : {arknet::fec::policy::fixed, arknet::fec::policy::adaptive}) {
             DOCTEST_INFO(std::string_view(model));
             DOCTEST_INFO(static_cast<int>(mode));
             benchmark_runtime runtime(model, 4);
@@ -484,8 +444,7 @@ DOCTEST_TEST_CASE("RUDP FEC serializes concurrent sends and statistics on shared
             std::array<std::future<void>, 4> deliveries;
             std::array<std::unique_ptr<fec_relay>, 4> relays;
             std::array<std::unique_ptr<arknet::rudp_client>, 4> clients;
-            for (unsigned i = 0; i < clients.size(); ++i)
-            {
+            for (unsigned i = 0; i < clients.size(); ++i) {
                 relays[i] = std::make_unique<fec_relay>(server.acceptor().local_endpoint());
                 clients[i] = std::make_unique<arknet::rudp_client>(runtime.context_at(i + 1));
                 clients[i]->set_rudp_options(arq).set_fec_options(client_fec).set_auto_reconnect(false);
@@ -494,8 +453,7 @@ DOCTEST_TEST_CASE("RUDP FEC serializes concurrent sends and statistics on shared
                 deliveries[i] = delivered[i].get_future();
                 clients[i]->bind_recv([&, i](std::string_view bytes) {
                     received[i].push(bytes);
-                    if (++received_count[i] == 32)
-                    {
+                    if (++received_count[i] == 32) {
                         delivered[i].set_value();
                     }
                 });
@@ -507,12 +465,9 @@ DOCTEST_TEST_CASE("RUDP FEC serializes concurrent sends and statistics on shared
             std::array<std::vector<std::future<arknet::rudp::statistics>>, 4> snapshots;
             std::array<std::exception_ptr, 4> errors;
             std::array<std::array<std::vector<std::string>, 4>, 4> expected;
-            for (unsigned client = 0; client < clients.size(); ++client)
-            {
-                for (unsigned writer = 0; writer < sends.size(); ++writer)
-                {
-                    for (unsigned sequence = 0; sequence < 8; ++sequence)
-                    {
+            for (unsigned client = 0; client < clients.size(); ++client) {
+                for (unsigned writer = 0; writer < sends.size(); ++writer) {
+                    for (unsigned sequence = 0; sequence < 8; ++sequence) {
                         auto bytes = std::to_string(writer) + ':' + std::to_string(client) + ':' +
                                      std::to_string(sequence) + ':';
                         bytes.resize(sequence % 2 ? 2048 : 4119, static_cast<char>(writer));
@@ -522,35 +477,28 @@ DOCTEST_TEST_CASE("RUDP FEC serializes concurrent sends and statistics on shared
             }
             std::barrier start(4);
             std::array<std::thread, 4> writers;
-            for (unsigned writer = 0; writer < writers.size(); ++writer)
-            {
+            for (unsigned writer = 0; writer < writers.size(); ++writer) {
                 writers[writer] = std::thread([&, writer] {
                     start.arrive_and_wait();
-                    try
-                    {
-                        for (unsigned sequence = 0; sequence < 8; ++sequence)
-                        {
-                            for (unsigned client = 0; client < clients.size(); ++client)
-                            {
+                    try {
+                        for (unsigned sequence = 0; sequence < 8; ++sequence) {
+                            for (unsigned client = 0; client < clients.size(); ++client) {
                                 sends[writer].push_back(
                                     clients[client]->async_send(expected[client][writer][sequence], asio::use_future));
                                 snapshots[writer].push_back(clients[client]->get_rudp_statistics());
                             }
                         }
+                    } catch (...) {
+                        errors[writer] = std::current_exception();
                     }
-                    catch (...)
-                    { errors[writer] = std::current_exception(); }
                 });
             }
-            for (auto& writer : writers)
-            {
+            for (auto& writer : writers) {
                 writer.join();
             }
-            for (unsigned writer = 0; writer < writers.size(); ++writer)
-            {
+            for (unsigned writer = 0; writer < writers.size(); ++writer) {
                 check(!errors[writer], "concurrent endpoint admission and statistics queries do not throw");
-                for (unsigned i = 0; i < sends[writer].size(); ++i)
-                {
+                for (unsigned i = 0; i < sends[writer].size(); ++i) {
                     const auto result = await(sends[writer][i]);
                     check(!result.first && result.second == expected[i % 4][writer][i / 4].size(),
                         "every concurrent send completes with its exact message size");
@@ -559,24 +507,18 @@ DOCTEST_TEST_CASE("RUDP FEC serializes concurrent sends and statistics on shared
                         "concurrent snapshots respect the configured FEC memory bound");
                 }
             }
-            for (unsigned client = 0; client < clients.size(); ++client)
-            {
+            for (unsigned client = 0; client < clients.size(); ++client) {
                 const auto complete = deliveries[client].wait_for(5s) == std::future_status::ready;
-                if (!complete)
-                {
+                if (!complete) {
                     const auto snapshot = [](auto& endpoint) {
-                        if (endpoint.is_started())
-                        {
-                            try
-                            {
+                        if (endpoint.is_started()) {
+                            try {
                                 auto future = endpoint.get_rudp_statistics();
-                                if (future.wait_for(1s) == std::future_status::ready)
-                                {
+                                if (future.wait_for(1s) == std::future_status::ready) {
                                     return future.get();
                                 }
+                            } catch (const std::logic_error&) {
                             }
-                            catch (const std::logic_error&)
-                            {}
                         }
                         return arknet::rudp::statistics{};
                     };
@@ -608,14 +550,11 @@ DOCTEST_TEST_CASE("RUDP FEC serializes concurrent sends and statistics on shared
                 check(complete, "all concurrent messages arrive before the receive deadline");
                 const auto actual = received[client].wait(32);
                 check(actual.size() == 32, "concurrent senders deliver each complete message once");
-                for (unsigned writer = 0; writer < writers.size(); ++writer)
-                {
+                for (unsigned writer = 0; writer < writers.size(); ++writer) {
                     std::vector<std::string> ordered;
                     const auto prefix = std::to_string(writer) + ':';
-                    for (const auto& bytes : actual)
-                    {
-                        if (bytes.starts_with(prefix))
-                        {
+                    for (const auto& bytes : actual) {
+                        if (bytes.starts_with(prefix)) {
                             ordered.push_back(bytes);
                         }
                     }
@@ -627,8 +566,7 @@ DOCTEST_TEST_CASE("RUDP FEC serializes concurrent sends and statistics on shared
                     std::chrono::steady_clock::now() + std::chrono::milliseconds(server_fec.group_lifetime_ms);
                 auto snapshot = clients[client]->get_rudp_statistics();
                 auto stats = await(snapshot);
-                while (stats.fec.recovered_shards == 0 && std::chrono::steady_clock::now() < recovery_deadline)
-                {
+                while (stats.fec.recovered_shards == 0 && std::chrono::steady_clock::now() < recovery_deadline) {
                     std::this_thread::sleep_for(1ms);
                     snapshot = clients[client]->get_rudp_statistics();
                     stats = await(snapshot);
@@ -663,8 +601,7 @@ DOCTEST_TEST_CASE("RUDP fixed FEC recovers missing datagrams with duplicates and
     client.bind_disconnect([&] { failure.store(arknet::get_last_error().value()); });
     check(client.start("127.0.0.1", relay.port()), "FEC handshake passes relay");
     std::vector<std::string> expected;
-    for (unsigned i = 0; i < 24; ++i)
-    {
+    for (unsigned i = 0; i < 24; ++i) {
         auto bytes = std::to_string(i) + ':';
         bytes.resize(i % 2 ? 4119 : 16384, static_cast<char>(i));
         expected.push_back(bytes);
@@ -696,8 +633,7 @@ DOCTEST_TEST_CASE("RUDP FEC renegotiates after automatic reconnect") {
     arknet::rudp_client client;
     client.set_fec_options(arknet::fec::options::adaptive()).set_auto_reconnect(true, 50ms).set_connect_timeout(200ms);
     client.bind_connect([&] {
-        if (!arknet::get_last_error())
-        {
+        if (!arknet::get_last_error()) {
             connections.push("connected");
         }
     });

@@ -14,8 +14,7 @@
 
 namespace arknet::mysql::detail {
 
-enum class auth_status
-{
+enum class auth_status {
     complete,
     unsupported_plugin,
     invalid_challenge,
@@ -27,14 +26,11 @@ namespace auth_detail {
 inline bool digest(const EVP_MD* algorithm, std::initializer_list<std::string_view> parts, unsigned char* output,
     unsigned int expected_size) {
     const auto context = std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)>(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
-    if (!context || !algorithm || EVP_DigestInit_ex(context.get(), algorithm, nullptr) != 1)
-    {
+    if (!context || !algorithm || EVP_DigestInit_ex(context.get(), algorithm, nullptr) != 1) {
         return false;
     }
-    for (auto part : parts)
-    {
-        if (!part.empty() && EVP_DigestUpdate(context.get(), part.data(), part.size()) != 1)
-        {
+    for (auto part : parts) {
+        if (!part.empty() && EVP_DigestUpdate(context.get(), part.data(), part.size()) != 1) {
             return false;
         }
     }
@@ -42,8 +38,7 @@ inline bool digest(const EVP_MD* algorithm, std::initializer_list<std::string_vi
     return EVP_DigestFinal_ex(context.get(), output, &written) == 1 && written == expected_size;
 }
 
-struct hash_storage
-{
+struct hash_storage {
     std::array<unsigned char, 32> first{};
     std::array<unsigned char, 32> second{};
     std::array<unsigned char, 32> third{};
@@ -62,17 +57,14 @@ struct hash_storage
 inline auth_status make_auth_response(
     std::string_view plugin, std::string_view password, std::string_view challenge, std::string& output) {
     const bool native = plugin == "mysql_native_password";
-    if (!native && plugin != "caching_sha2_password")
-    {
+    if (!native && plugin != "caching_sha2_password") {
         return auth_status::unsupported_plugin;
     }
-    if (password.empty())
-    {
+    if (password.empty()) {
         output.clear();
         return auth_status::complete;
     }
-    if (challenge.size() != 20)
-    {
+    if (challenge.size() != 20) {
         return auth_status::invalid_challenge;
     }
     const EVP_MD* algorithm = native ? EVP_sha1() : EVP_sha256();
@@ -82,8 +74,7 @@ inline auth_status make_auth_response(
         return std::string_view(reinterpret_cast<const char*>(hash.data()), size);
     };
     if (!auth_detail::digest(algorithm, {password}, hashes.first.data(), size) ||
-        !auth_detail::digest(algorithm, {bytes(hashes.first)}, hashes.second.data(), size))
-    {
+        !auth_detail::digest(algorithm, {bytes(hashes.first)}, hashes.second.data(), size)) {
         return auth_status::crypto_error;
     }
     // Native: SHA1(challenge || SHA1(SHA1(password))).
@@ -91,13 +82,11 @@ inline auth_status make_auth_response(
     if (!auth_detail::digest(algorithm,
             native ? std::initializer_list<std::string_view>{challenge, bytes(hashes.second)}
                    : std::initializer_list<std::string_view>{bytes(hashes.second), challenge},
-            hashes.third.data(), size))
-    {
+            hashes.third.data(), size)) {
         return auth_status::crypto_error;
     }
     std::string response(size, '\0');
-    for (unsigned int i = 0; i < size; ++i)
-    {
+    for (unsigned int i = 0; i < size; ++i) {
         response[i] = static_cast<char>(hashes.first[i] ^ hashes.third[i]);
     }
     output = std::move(response);

@@ -27,10 +27,11 @@ DOCTEST_TEST_CASE("Redis close retries a real Asio dispatch allocation failure b
     const auto before = scoped_allocation_failure::injections.load();
     {
         scoped_allocation_failure::scope failure;
-        try
-        { connection.close(); }
-        catch (const std::bad_alloc&)
-        { threw = true; }
+        try {
+            connection.close();
+        } catch (const std::bad_alloc&) {
+            threw = true;
+        }
     }
     CHECK(threw);
     CHECK(scoped_allocation_failure::injections == before + 1);
@@ -41,8 +42,7 @@ DOCTEST_TEST_CASE("Redis close retries a real Asio dispatch allocation failure b
     auto response = await(future);
     CHECK(bool(response));
     CHECK(response.replies.size() == 1);
-    if (response.replies.size() == 1)
-    {
+    if (response.replies.size() == 1) {
         CHECK(response.replies.front().text == "PONG");
     }
     connection.close();

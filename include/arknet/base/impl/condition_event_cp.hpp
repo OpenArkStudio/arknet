@@ -19,12 +19,9 @@ class condition_event_cp;
 
 namespace arknet {
 
-class async_event : public detail::object_t<async_event>
-{
-};
+class async_event : public detail::object_t<async_event> {};
 
-class condition_event : public detail::object_t<condition_event>
-{
+class condition_event : public detail::object_t<condition_event> {
     template<class, class>
     friend class detail::condition_event_cp;
 
@@ -34,11 +31,9 @@ public:
 
     void notify() {
         notified_.store(true, std::memory_order_release);
-        if (auto lane = event_timer_io_.lock())
-        {
+        if (auto lane = event_timer_io_.lock()) {
             asio::dispatch(lane->executor(), [self = this->selfptr()] {
-                if (self && self->event_timer_)
-                {
+                if (self && self->event_timer_) {
                     detail::cancel_timer(*self->event_timer_);
                 }
             });
@@ -49,8 +44,7 @@ protected:
     template<class Handler>
     void async_wait(Handler&& callback) {
         auto lane = event_timer_io_.lock();
-        if (!lane)
-        {
+        if (!lane) {
             return;
         }
         event_timer_ = std::make_unique<asio::steady_timer>(lane->executor());
@@ -61,8 +55,7 @@ protected:
                 lane->timers().erase(self->event_timer_.get());
                 callback();
             });
-        if (notified_.load(std::memory_order_acquire))
-        {
+        if (notified_.load(std::memory_order_acquire)) {
             detail::cancel_timer(*event_timer_);
         }
     }
@@ -78,10 +71,8 @@ private:
 namespace arknet::detail {
 
 template<class Derived, class Args = void>
-class condition_event_cp
-{
-    struct operation_state
-    {
+class condition_event_cp {
+    struct operation_state {
         std::atomic_bool alive{true};
         std::atomic_bool accepting{true};
         std::shared_ptr<std::atomic_size_t> pending = std::make_shared<std::atomic_size_t>(0);
@@ -99,15 +90,12 @@ public:
     auto post_condition_event(Function&& callback) {
         auto& object = static_cast<Derived&>(*this);
         auto event = std::make_shared<condition_event>(object.io_);
-        if (!events_->accepting.load(std::memory_order_acquire))
-        {
+        if (!events_->accepting.load(std::memory_order_acquire)) {
             set_last_error(asio::error::operation_aborted);
             return event;
         }
-        if constexpr (requires { object._accepts_async_work(); })
-        {
-            if (!object._accepts_async_work())
-            {
+        if constexpr (requires { object._accepts_async_work(); }) {
+            if (!object._accepts_async_work()) {
                 set_last_error(asio::error::operation_aborted);
                 return event;
             }
@@ -115,8 +103,8 @@ public:
         asio::dispatch(object.io_->executor(),
             pending_handler(events_->pending, [state = events_, owner = object.selfptr(), event,
                                                   callback = std::forward<Function>(callback)]() mutable {
-                if (!state->alive.load(std::memory_order_acquire) || !state->accepting.load(std::memory_order_acquire))
-                {
+                if (!state->alive.load(std::memory_order_acquire) ||
+                    !state->accepting.load(std::memory_order_acquire)) {
                     return;
                 }
                 state->events.emplace(event.get(), event);
@@ -127,8 +115,7 @@ public:
                         state->events.erase(key);
                         auto current = std::move(callback);
                         callback.reset();
-                        if (state->alive.load(std::memory_order_acquire))
-                        {
+                        if (state->alive.load(std::memory_order_acquire)) {
                             (*current)();
                         }
                     });
@@ -140,8 +127,7 @@ public:
         auto& object = static_cast<Derived&>(*this);
         asio::dispatch(object.io_->executor(),
             [state = events_, owner = object.selfptr(), pending = pending_operation(events_->pending)] {
-                for (auto& [key, event] : state->events)
-                {
+                for (auto& [key, event] : state->events) {
                     event->notify();
                 }
             });

@@ -8,8 +8,7 @@
 
 namespace arknet::detail {
 
-struct template_args_udp_session : udp_tag
-{
+struct template_args_udp_session : udp_tag {
     static constexpr bool is_session = true;
     static constexpr bool is_client = false;
     static constexpr bool is_server = false;
@@ -29,8 +28,7 @@ template<class Derived, class Args = template_args_udp_session>
 class udp_session_impl_t
     : public session_impl_t<Derived, Args>
     , public udp_send_op<Derived, Args>
-    , public udp_tag
-{
+    , public udp_tag {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_UDP_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_UDP_SERVER;
@@ -56,8 +54,7 @@ public:
     }
 
     void stop() {
-        if (this->state_ == state_t::stopped || this->state_ == state_t::stopping)
-        {
+        if (this->state_ == state_t::stopped || this->state_ == state_t::stopping) {
             return;
         }
         stop_requested_ = true;
@@ -66,8 +63,7 @@ public:
         this->derived()._do_disconnect(asio::error::operation_aborted, this->selfptr(),
             defer_event{[promise](event_queue_guard<Derived>) { promise->set_value(); }, event_queue_guard<Derived>{}});
         if (!this->io_->context().get_executor().running_in_this_thread() &&
-            !this->sessions_.io_->context().get_executor().running_in_this_thread())
-        {
+            !this->sessions_.io_->context().get_executor().running_in_this_thread()) {
             completed.get();
         }
     }
@@ -77,14 +73,11 @@ public:
     }
 
     std::string get_remote_address() const noexcept {
-        try
-        {
+        try {
             auto address = this->remote_endpoint_.address().to_string();
             clear_last_error();
             return address;
-        }
-        catch (const system_error& error)
-        {
+        } catch (const system_error& error) {
             set_last_error(error.code());
             return {};
         }
@@ -129,15 +122,13 @@ protected:
 
     template<class Condition, class Chain>
     void _do_start(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition, Chain chain) {
-        if (!this->is_started() || stop_requested_)
-        {
+        if (!this->is_started() || stop_requested_) {
             return;
         }
         // Routing must be ready before the server posts its next receive.
         this->sessions_.emplace(
             lifetime, [this, lifetime, condition = std::move(condition), chain = std::move(chain)](bool added) mutable {
-                if (!added)
-                {
+                if (!added) {
                     this->derived()._do_disconnect(asio::error::address_in_use, std::move(lifetime));
                     return;
                 }
@@ -147,8 +138,7 @@ protected:
 
     template<class Condition, class Chain>
     void _start_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition, Chain) {
-        if (!this->is_started() || stop_requested_)
-        {
+        if (!this->is_started() || stop_requested_) {
             return;
         }
         this->derived()._post_silence_timer(this->silence_timeout_, lifetime);
@@ -159,8 +149,7 @@ protected:
     template<class Condition>
     void _receive_datagram(
         std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition, std::string_view bytes) {
-        if (!this->is_started() || stop_requested_)
-        {
+        if (!this->is_started() || stop_requested_) {
             return;
         }
         this->update_alive_time();
@@ -175,8 +164,7 @@ protected:
                 event_queue_guard<Derived> guard) mutable {
                 defer_event continuation{std::move(callback), std::move(guard)};
                 const auto previous = this->state_.exchange(state_t::stopping);
-                if (previous == state_t::stopped)
-                {
+                if (previous == state_t::stopped) {
                     this->state_ = state_t::stopped;
                     return;
                 }
@@ -184,8 +172,7 @@ protected:
                     [this, error, previous, lifetime, continuation = std::move(continuation)](bool erased) mutable {
                         this->state_ = state_t::stopped;
                         set_last_error(error);
-                        if (erased && previous == state_t::started)
-                        {
+                        if (erased && previous == state_t::started) {
                             this->derived()._fire_disconnect(lifetime);
                         }
                         this->derived()._do_stop(error, std::move(lifetime), std::move(continuation));
@@ -244,14 +231,12 @@ template<class Derived, class Args>
 using udp_session_impl_t = detail::udp_session_impl_t<Derived, Args>;
 
 template<class Derived>
-class udp_session_t : public detail::udp_session_impl_t<Derived>
-{
+class udp_session_t : public detail::udp_session_impl_t<Derived> {
 public:
     using detail::udp_session_impl_t<Derived>::udp_session_impl_t;
 };
 
-class udp_session : public udp_session_t<udp_session>
-{
+class udp_session : public udp_session_t<udp_session> {
 public:
     using udp_session_t<udp_session>::udp_session_t;
 };

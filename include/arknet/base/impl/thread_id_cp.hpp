@@ -6,8 +6,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args = void>
-class thread_id_cp
-{
+class thread_id_cp {
 public:
     bool running_in_this_thread() const noexcept {
         return static_cast<const Derived&>(*this).io_->running_in_this_thread();

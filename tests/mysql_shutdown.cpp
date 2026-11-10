@@ -14,8 +14,7 @@ using namespace mysql_test;
 
 namespace {
 
-struct destruction_probe
-{
+struct destruction_probe {
     std::atomic<unsigned>& calls;
 
     ~destruction_probe() {
@@ -23,13 +22,11 @@ struct destruction_probe
     }
 };
 
-struct worker_exit_probe
-{
+struct worker_exit_probe {
     std::shared_ptr<std::atomic<bool>> exited;
 
     ~worker_exit_probe() {
-        if (exited)
-        {
+        if (exited) {
             *exited = true;
         }
     }
@@ -81,14 +78,12 @@ DOCTEST_TEST_CASE("MySQL permanent shutdown works before connect and rejects fut
 }
 
 DOCTEST_TEST_CASE("MySQL permanent shutdown retires cancelled authentication captures and joins its worker") {
-    for (const bool encrypted : {false, true})
-    {
+    for (const bool encrypted : {false, true}) {
         std::promise<void> received;
         auto ready = received.get_future();
         mysql_peer peer([&](mysql_peer& server) -> asio::awaitable<void> {
             co_await server.send(greeting("mysql_native_password", encrypted));
-            if (encrypted)
-            {
+            if (encrypted) {
                 CHECK((co_await server.receive()).size() == 32);
                 co_await server.upgrade();
             }
@@ -180,20 +175,16 @@ DOCTEST_TEST_CASE("MySQL IO-thread permanent shutdown rejects without terminatin
 
 DOCTEST_TEST_CASE("MySQL ordinary close still permits reconnect before permanent shutdown") {
     connection client;
-    for (unsigned iteration = 0; iteration != 2; ++iteration)
-    {
+    for (unsigned iteration = 0; iteration != 2; ++iteration) {
         mysql_peer peer([](mysql_peer& server) -> asio::awaitable<void> {
             co_await authenticate(server);
             co_await server.wait_for_eof();
         });
         REQUIRE(bool(connect(client, options_for(peer))));
         CHECK(client.is_open());
-        if (!iteration)
-        {
+        if (!iteration) {
             client.close();
-        }
-        else
-        {
+        } else {
             CHECK(client.close_and_wait());
         }
         peer.finish();
@@ -268,12 +259,10 @@ DOCTEST_TEST_CASE("MySQL concurrent submit and permanent shutdown completes each
     std::atomic<unsigned> completions{};
     std::latch start(1);
     std::vector<std::thread> submitters;
-    for (unsigned producer = 0; producer != 2; ++producer)
-    {
+    for (unsigned producer = 0; producer != 2; ++producer) {
         submitters.emplace_back([&] {
             start.wait();
-            for (unsigned request = 0; request != 128; ++request)
-            {
+            for (unsigned request = 0; request != 128; ++request) {
                 client.async_query("not connected", [&](query_result response) {
                     CHECK(response.status.code == connection_errc::not_connected);
                     ++completions;
@@ -284,8 +273,7 @@ DOCTEST_TEST_CASE("MySQL concurrent submit and permanent shutdown completes each
     }
     start.count_down();
     CHECK(client.close_and_wait());
-    for (auto& submitter : submitters)
-    {
+    for (auto& submitter : submitters) {
         submitter.join();
     }
     CHECK(completions == 256);
@@ -302,12 +290,10 @@ DOCTEST_TEST_CASE("MySQL concurrent permanent shutdown waiters observe complete 
     std::latch start(1);
     std::atomic<unsigned> closed{};
     std::vector<std::thread> waiters;
-    for (unsigned index = 0; index != 3; ++index)
-    {
+    for (unsigned index = 0; index != 3; ++index) {
         waiters.emplace_back([&] {
             start.wait();
-            if (client.close_and_wait())
-            {
+            if (client.close_and_wait()) {
                 CHECK(destroyed == 1);
                 CHECK(completions == 1);
                 ++closed;
@@ -315,8 +301,7 @@ DOCTEST_TEST_CASE("MySQL concurrent permanent shutdown waiters observe complete 
         });
     }
     start.count_down();
-    for (auto& waiter : waiters)
-    {
+    for (auto& waiter : waiters) {
         waiter.join();
     }
     CHECK(closed == 3);

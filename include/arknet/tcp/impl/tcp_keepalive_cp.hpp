@@ -6,8 +6,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class tcp_keepalive_cp
-{
+class tcp_keepalive_cp {
 public:
     bool set_keep_alive_options(
         bool enabled = true, unsigned idle = 60, unsigned interval = 3, unsigned probes = 3) noexcept {

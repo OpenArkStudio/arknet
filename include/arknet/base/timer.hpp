@@ -14,8 +14,7 @@
 
 namespace arknet::detail {
 
-struct template_args_timer
-{
+struct template_args_timer {
     static constexpr std::size_t allocator_storage_size = 256;
 };
 
@@ -26,8 +25,7 @@ class timer_impl_t
     , public thread_id_cp<Derived, Args>
     , public user_timer_cp<Derived, Args>
     , public post_cp<Derived, Args>
-    , public condition_event_cp<Derived, Args>
-{
+    , public condition_event_cp<Derived, Args> {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
 
 public:
@@ -55,8 +53,7 @@ public:
     }
 
     bool start() {
-        if (!this->start_iopool())
-        {
+        if (!this->start_iopool()) {
             return false;
         }
         accepting_.store(true, std::memory_order_release);
@@ -68,23 +65,20 @@ public:
     }
 
     void stop() {
-        if (!io_)
-        {
+        if (!io_) {
             return;
         }
         accepting_.store(false, std::memory_order_release);
         this->_set_post_acceptance(false);
         this->_set_condition_acceptance(false);
-        if (!this->is_iopool_stopped())
-        {
+        if (!this->is_iopool_stopped()) {
             io_->unregobj(&this->derived());
             this->_dispatch_stop_all_timers();
             this->_dispatch_stop_all_timed_events();
             this->notify_all_condition_events();
             this->stop_iopool();
         }
-        if (io_->context().get_executor().running_in_this_thread() || io_->context().stopped())
-        {
+        if (io_->context().get_executor().running_in_this_thread() || io_->context().stopped()) {
             return;
         }
         // A strand barrier can run before canceled waits; drain their actual completions.
@@ -130,8 +124,7 @@ protected:
 
 namespace arknet {
 
-class timer : public detail::timer_impl_t<timer>
-{
+class timer : public detail::timer_impl_t<timer> {
 public:
     using detail::timer_impl_t<timer>::timer_impl_t;
 };

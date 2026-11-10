@@ -16,8 +16,7 @@
 namespace arknet::detail {
 
 template<class Derived>
-class rudp_session_impl_t : public udp_session_impl_t<Derived>
-{
+class rudp_session_impl_t : public udp_session_impl_t<Derived> {
     template<class, class>
     friend class rudp_server_impl_t;
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
@@ -39,8 +38,7 @@ public:
         , conversation_(conversation) {}
 
     ~rudp_session_impl_t() {
-        if (channel_)
-        {
+        if (channel_) {
             channel_->stop();
         }
     }
@@ -58,14 +56,12 @@ public:
     }
 
     std::future<rudp::statistics> get_rudp_statistics() {
-        if (!this->is_started())
-        {
+        if (!this->is_started()) {
             throw std::logic_error("Read RUDP statistics while started");
         }
         return this->post(
             [this] {
-                if (!channel_)
-                {
+                if (!channel_) {
                     throw std::logic_error("RUDP disconnected before statistics snapshot");
                 }
                 return channel_->statistics();
@@ -80,15 +76,13 @@ protected:
         channel_ = std::make_shared<detail::rudp_channel>(
             this->socket_, this->remote_endpoint_, false, conversation_, options_,
             [this, weak](std::string_view message) {
-                if (auto owner = weak.lock(); owner && this->is_started())
-                {
+                if (auto owner = weak.lock(); owner && this->is_started()) {
                     this->listener_.notify(detail::event_type::recv, owner,
                         detail::call_data_filter_before_recv(this->derived(), message));
                 }
             },
             [this, weak](error_code error) {
-                if (auto owner = weak.lock())
-                {
+                if (auto owner = weak.lock()) {
                     this->derived()._do_disconnect(error, std::move(owner));
                 }
             },
@@ -97,8 +91,7 @@ protected:
         channel_->start();
         clear_last_error();
         this->listener_.notify(detail::event_type::handshake, lifetime, error_code{});
-        if (!this->is_started() || this->stop_requested_)
-        {
+        if (!this->is_started() || this->stop_requested_) {
             return;
         }
         base::_fire_connect(lifetime, condition);
@@ -107,8 +100,7 @@ protected:
     template<class Condition>
     void _receive_datagram(std::shared_ptr<Derived> lifetime, std::shared_ptr<detail::ecs_t<Condition>> condition,
         std::string_view bytes) {
-        if (this->is_started() && !this->stop_requested_)
-        {
+        if (this->is_started() && !this->stop_requested_) {
             this->derived()._fire_recv(lifetime, condition, bytes);
         }
     }
@@ -117,35 +109,25 @@ protected:
     void _fire_recv(
         std::shared_ptr<Derived>& lifetime, std::shared_ptr<detail::ecs_t<Condition>>&, std::string_view bytes) {
         auto channel = channel_;
-        if (!channel)
-        {
+        if (!channel) {
             return;
         }
-        if (fec_options_.mode == fec::policy::disabled && detail::rudp_is_control(bytes, 1))
-        {
-            if (detail::rudp_read_id(bytes.data() + 1) == sync_)
-            {
+        if (fec_options_.mode == fec::policy::disabled && detail::rudp_is_control(bytes, 1)) {
+            if (detail::rudp_read_id(bytes.data() + 1) == sync_) {
                 this->update_alive_time();
                 channel->raw_send(acknowledgement());
             }
-        }
-        else if (fec_options_.mode != fec::policy::disabled && detail::rudp_is_fec_control(bytes, 4))
-        {
+        } else if (fec_options_.mode != fec::policy::disabled && detail::rudp_is_fec_control(bytes, 4)) {
             if (detail::rudp_read_id(bytes.data() + 1) == sync_ && static_cast<unsigned char>(bytes[5]) == 1 &&
-                detail::rudp_fec_mtu(bytes, 4) == requested_mtu_)
-            {
+                detail::rudp_fec_mtu(bytes, 4) == requested_mtu_) {
                 this->update_alive_time();
                 channel->raw_send(acknowledgement());
             }
-        }
-        else if (detail::rudp_is_control(bytes, 3) && detail::rudp_read_id(bytes.data() + 1) == sync_ &&
-                 detail::rudp_read_id(bytes.data() + 5) == conversation_)
-        {
+        } else if (detail::rudp_is_control(bytes, 3) && detail::rudp_read_id(bytes.data() + 1) == sync_ &&
+                   detail::rudp_read_id(bytes.data() + 5) == conversation_) {
             this->update_alive_time();
             this->derived()._do_disconnect(asio::error::eof, lifetime);
-        }
-        else if (channel->input(bytes))
-        {
+        } else if (channel->input(bytes)) {
             this->update_alive_time();
         }
     }
@@ -156,8 +138,7 @@ protected:
         auto channel = channel_;
         const auto result = channel ? channel->send({static_cast<const char*>(buffer.data()), buffer.size()}) : -3;
         error_code error;
-        if (result)
-        {
+        if (result) {
             error = result == -2   ? asio::error::no_buffer_space
                     : result == -3 ? asio::error::not_connected
                                    : asio::error::message_size;
@@ -186,13 +167,11 @@ private:
     }
 
     void close_channel() {
-        if (!channel_)
-        {
+        if (!channel_) {
             return;
         }
         auto finish = std::make_shared<std::string>(detail::rudp_control(3, sync_, conversation_));
-        if (this->socket().is_open())
-        {
+        if (this->socket().is_open()) {
             this->socket().async_send_to(
                 asio::buffer(*finish), this->remote_endpoint_, [finish](error_code, std::size_t) {});
         }
@@ -214,8 +193,7 @@ namespace arknet {
 template<class Derived>
 using rudp_session_t = detail::rudp_session_impl_t<Derived>;
 
-class rudp_session : public rudp_session_t<rudp_session>
-{
+class rudp_session : public rudp_session_t<rudp_session> {
 public:
     using rudp_session_t<rudp_session>::rudp_session_t;
 };

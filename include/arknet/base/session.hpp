@@ -32,8 +32,7 @@
 
 namespace arknet {
 
-class session
-{
+class session {
 public:
     static constexpr bool is_client() noexcept {
         return false;
@@ -71,8 +70,7 @@ class session_impl_t
     , public send_cp<Derived, Args>
     , public post_cp<Derived, Args>
     , public condition_event_cp<Derived, Args>
-    , public silence_timer_cp<Derived, Args>
-{
+    , public silence_timer_cp<Derived, Args> {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
 
 public:

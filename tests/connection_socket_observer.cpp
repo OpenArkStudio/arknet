@@ -44,8 +44,7 @@ DOCTEST_TEST_CASE("peek preserves bytes and reports EAGAIN before data arrives")
     DOCTEST_CHECK(empty.peek_bytes == -1);
     DOCTEST_CHECK((empty.peek_error == EAGAIN || empty.peek_error == EWOULDBLOCK));
     DOCTEST_REQUIRE(::send(pair[0], "abc", 3, 0) == 3);
-    for (unsigned index = 0; index < 2; ++index)
-    {
+    for (unsigned index = 0; index < 2; ++index) {
         const auto observed = connection_load::observe_socket(pair[1]);
         DOCTEST_CHECK(observed.poll_result == 1);
         DOCTEST_CHECK((observed.events & POLLIN) != 0);
@@ -105,8 +104,7 @@ DOCTEST_TEST_CASE("recovered slots reject stale generation markers and bound obs
     const auto current = observer.publish(pair[1], state);
     DOCTEST_CHECK(current.generation > old.generation);
     observer.complete(old, 999);
-    for (unsigned index = 0; index < 20; ++index)
-    {
+    for (unsigned index = 0; index < 20; ++index) {
         observer.sample(index * socket_observer::interval_us, 1);
     }
     observer.close(state.owner);

@@ -27,6 +27,134 @@ printf '%s\n' '#include <winsock2.h>' '#include <windows.h>' '#include <cstdint>
     '#include <sys/socket.h>' '#include <vector>' '' '#include "vendor/doctest/doctest.h"' \
     '#include <asio.hpp>' '#include <boost/beast.hpp>' '#include <openssl/ssl.h>' \
     '#include <zlib.h>' '' '#include <arknet/probe.hpp>' '#include "check.hpp"' > expected-includes.cpp
+cat > examples/braces.cpp <<'EOF'
+class probe
+{
+public:
+    void clear()
+    {
+        value = 0;
+    }
+
+private:
+    int value = 1;
+};
+
+class inherited_probe : public probe
+{
+public:
+    using probe::clear;
+};
+
+struct record_probe
+{
+    int value;
+};
+
+enum class enum_probe
+{
+    first,
+    second
+};
+
+union union_probe
+{
+    int integer;
+    double floating;
+};
+
+void control_probe(int count)
+{
+    if (count > 0)
+        --count;
+    else
+        ++count;
+    for (int index = 0; index < count; ++index)
+        --count;
+    while (count > 0)
+        --count;
+    do
+    {
+        --count;
+    }
+    while (count > 0);
+    switch (count)
+    {
+    case 0:
+        break;
+    default:
+        ++count;
+        break;
+    }
+    try
+    {
+        ++count;
+    }
+    catch (...)
+    {
+        throw;
+    }
+}
+EOF
+cat > expected-braces.cpp <<'EOF'
+class probe {
+public:
+    void clear() {
+        value = 0;
+    }
+
+private:
+    int value = 1;
+};
+
+class inherited_probe : public probe {
+public:
+    using probe::clear;
+};
+
+struct record_probe {
+    int value;
+};
+
+enum class enum_probe {
+    first,
+    second
+};
+
+union union_probe {
+    int integer;
+    double floating;
+};
+
+void control_probe(int count) {
+    if (count > 0) {
+        --count;
+    } else {
+        ++count;
+    }
+    for (int index = 0; index < count; ++index) {
+        --count;
+    }
+    while (count > 0) {
+        --count;
+    }
+    do {
+        --count;
+    } while (count > 0);
+    switch (count) {
+    case 0:
+        break;
+    default:
+        ++count;
+        break;
+    }
+    try {
+        ++count;
+    } catch (...) {
+        throw;
+    }
+}
+EOF
 
 expect_failure() {
     local expected=$1
@@ -46,6 +174,7 @@ expect_failure 2 env CLANG_FORMAT=true bash scripts/format.sh --check
 bash scripts/format.sh --fix
 bash scripts/format.sh --check
 cmp expected-includes.cpp examples/probe.cpp
+cmp expected-braces.cpp examples/braces.cpp
 for directory in include/arknet/thirdparty tests/vendor tests/results benchmarks/results; do
     cmp original.hpp "$directory/ignored.hpp"
     "${CLANG_FORMAT:-clang-format}" --dry-run --Werror "$directory/ignored.hpp"

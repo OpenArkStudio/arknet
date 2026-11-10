@@ -27,25 +27,19 @@ resp_value decode(std::string_view wire) {
 bool equal(const resp_value& left, const resp_value& right) {
     if (left.type != right.type || left.text != right.text || left.integer != right.integer ||
         left.boolean != right.boolean || left.elements.size() != right.elements.size() ||
-        left.attributes.size() != right.attributes.size())
-    {
+        left.attributes.size() != right.attributes.size()) {
         return false;
     }
-    if (left.real != right.real && !(std::isnan(left.real) && std::isnan(right.real)))
-    {
+    if (left.real != right.real && !(std::isnan(left.real) && std::isnan(right.real))) {
         return false;
     }
-    for (std::size_t i = 0; i < left.elements.size(); ++i)
-    {
-        if (!equal(left.elements[i], right.elements[i]))
-        {
+    for (std::size_t i = 0; i < left.elements.size(); ++i) {
+        if (!equal(left.elements[i], right.elements[i])) {
             return false;
         }
     }
-    for (std::size_t i = 0; i < left.attributes.size(); ++i)
-    {
-        if (!equal(left.attributes[i], right.attributes[i]))
-        {
+    for (std::size_t i = 0; i < left.attributes.size(); ++i) {
+        if (!equal(left.attributes[i], right.attributes[i])) {
             return false;
         }
     }
@@ -94,8 +88,7 @@ DOCTEST_TEST_CASE("RESP3 doubles require digits after a decimal point") {
     check(decode(",1.0\r\n").real == 1.0, "fractional digits");
     check(decode(",-1.25e+2\r\n").real == -125.0, "fraction and exponent");
     check(decode(",+1e-2\r\n").real == 0.01, "exponent without a fraction");
-    for (const std::string wire : {",1.\r\n", ",-1.e+2\r\n", ",+0.E-1\r\n"})
-    {
+    for (const std::string wire : {",1.\r\n", ",-1.e+2\r\n", ",+0.E-1\r\n"}) {
         DOCTEST_INFO(wire);
         resp_decoder decoder;
         resp_value value;
@@ -108,19 +101,16 @@ DOCTEST_TEST_CASE("RESP3 doubles require digits after a decimal point") {
 }
 
 DOCTEST_TEST_CASE("RESP3 pushes cannot be nested inside another value") {
-    for (const std::string aggregate : {"*1", "%1", "~1", "|1", ">2\r\n+outer", "*?", "%?", "~?"})
-    {
+    for (const std::string aggregate : {"*1", "%1", "~1", "|1", ">2\r\n+outer", "*?", "%?", "~?"}) {
         DOCTEST_INFO(aggregate);
         const auto wire = aggregate + "\r\n>1\r\n+invalid\r\n:1\r\n+VALID\r\n";
-        for (std::size_t split = 0; split < wire.size(); ++split)
-        {
+        for (std::size_t split = 0; split < wire.size(); ++split) {
             resp_decoder decoder;
             resp_value value;
             value.text = "unchanged";
             check(decoder.append(std::string_view(wire).substr(0, split)), "append prefix");
             auto status = decoder.next(value);
-            if (status == resp_status::need_more)
-            {
+            if (status == resp_status::need_more) {
                 check(decoder.append(std::string_view(wire).substr(split)), "append suffix");
                 status = decoder.next(value);
             }
@@ -151,11 +141,9 @@ DOCTEST_TEST_CASE("Every split position and one-byte input preserve nested RESP 
     const std::vector<std::string> messages{"+OK\r\n", ":-123\r\n", "$5\r\nhello\r\n", "=7\r\ntxt:hey\r\n", ",nan\r\n",
         "|1\r\n+k\r\n:1\r\n*2\r\n%1\r\n+x\r\n~2\r\n#t\r\n_\r\n$?\r\n;2\r\nab\r\n;0\r\n",
         "*?\r\n:1\r\n%?\r\n+a\r\n$3\r\nxyz\r\n.\r\n.\r\n"};
-    for (const auto& wire : messages)
-    {
+    for (const auto& wire : messages) {
         const auto expected = decode(wire);
-        for (std::size_t split = 0; split < wire.size(); ++split)
-        {
+        for (std::size_t split = 0; split < wire.size(); ++split) {
             resp_decoder decoder;
             resp_value value;
             value.text = "unchanged";
@@ -167,8 +155,7 @@ DOCTEST_TEST_CASE("Every split position and one-byte input preserve nested RESP 
         }
         resp_decoder decoder;
         resp_value value;
-        for (std::size_t i = 0; i < wire.size(); ++i)
-        {
+        for (std::size_t i = 0; i < wire.size(); ++i) {
             check(decoder.append(std::string_view(wire).substr(i, 1)), "append byte");
             const auto status = decoder.next(value);
             check(
@@ -182,23 +169,20 @@ DOCTEST_TEST_CASE("Pipelined replies retain order across errors, attributes and 
     resp_decoder decoder;
     check(decoder.append("+OK\r\n-ERR bad\r\n>2\r\n+invalidate\r\n*0\r\n|1\r\n+k\r\n:3\r\n:4\r\n"), "append pipeline");
     resp_value value;
-    for (const auto type : {resp_type::simple_string, resp_type::error, resp_type::push, resp_type::integer})
-    {
+    for (const auto type : {resp_type::simple_string, resp_type::error, resp_type::push, resp_type::integer}) {
         check(decoder.next(value) == resp_status::ready && value.type == type, "ordered typed reply");
     }
     check(value.integer == 4 && value.attributes.size() == 2, "attributes do not form an extra reply");
     check(decoder.next(value) == resp_status::need_more, "pipeline fully consumed");
     const std::string many = [] {
         std::string result;
-        for (int i = 0; i < 10000; ++i)
-        {
+        for (int i = 0; i < 10000; ++i) {
             result += ':' + std::to_string(i) + "\r\n";
         }
         return result;
     }();
     check(decoder.append(many), "append large pipeline");
-    for (int i = 0; i < 10000; ++i)
-    {
+    for (int i = 0; i < 10000; ++i) {
         check(decoder.next(value) == resp_status::ready && value.integer == i, "large pipeline ordering");
     }
 }
@@ -209,8 +193,7 @@ DOCTEST_TEST_CASE("Malformed RESP is sticky until reset and cannot desynchronize
         "*x\r\n", "%1x\r\n", "~-1\r\n", "!0\r\nxx", "_x\r\n", "#1\r\n", "(1x\r\n", ",.1\r\n", ",NaN\r\n", ",1x\r\n",
         ",1e999\r\n", "=3\r\ntxt\r\n", "=4\r\ntxtx\r\n", ".\r\n", "*1\r\n.\r\n", "%?\r\n+k\r\n.\r\n",
         "*?\r\n|1\r\n+k\r\n:1\r\n.\r\n", "$?\r\n:1\r\n", "$?\r\n;-1\r\n", "$?\r\n;1\r\nxXX", "*?\r\n.x\r\n"};
-    for (const auto& wire : invalid)
-    {
+    for (const auto& wire : invalid) {
         resp_decoder decoder;
         resp_value value;
         check(decoder.append(wire + "+VALID\r\n"), "append invalid wire");
@@ -232,17 +215,14 @@ DOCTEST_TEST_CASE("RESP resource limits apply across fragments, nested values an
     limits.max_depth = 2;
     const std::vector<std::string> excessive{"$9\r\n", "*4\r\n", "%2\r\n", "$999999999999999999999999999\r\n",
         "+123456789\r\n", "*1\r\n*1\r\n:1\r\n", "$?\r\n;5\r\nhello\r\n;4\r\n", "~?\r\n_\r\n_\r\n_\r\n_\r\n"};
-    for (const auto& wire : excessive)
-    {
+    for (const auto& wire : excessive) {
         resp_decoder decoder(limits);
         resp_value value;
         resp_status status = resp_status::need_more;
-        for (char c : wire)
-        {
+        for (char c : wire) {
             check(decoder.append(std::string_view(&c, 1)), "bounded fragment append");
             status = decoder.next(value);
-            if (status != resp_status::need_more)
-            {
+            if (status != resp_status::need_more) {
                 break;
             }
         }
@@ -254,8 +234,7 @@ DOCTEST_TEST_CASE("RESP resource limits apply across fragments, nested values an
     check(buffered.next(value) == resp_status::limit_exceeded, "buffer failure is sticky");
     resp_decoder exact(limits);
     check(exact.append("$8\r\n12345678\r\n") && exact.next(value) == resp_status::ready, "exact bulk bound");
-    for (int i = 0; i < 50; ++i)
-    {
+    for (int i = 0; i < 50; ++i) {
         check(
             exact.append(":1\r\n") && exact.next(value) == resp_status::ready, "limits reset between complete replies");
     }
@@ -279,20 +258,16 @@ DOCTEST_TEST_CASE("Redis command encoding is binary-safe and bounded") {
 DOCTEST_TEST_CASE("Deterministic arbitrary input stays within decoder limits") {
     std::mt19937 random(73612);
     resp_limits limits{256, 256, 128, 32, 16, 8};
-    for (int round = 0; round < 5000; ++round)
-    {
+    for (int round = 0; round < 5000; ++round) {
         resp_decoder decoder(limits);
         resp_value value;
         std::string wire(random() % 128, '\0');
-        for (char& c : wire)
-        {
+        for (char& c : wire) {
             c = static_cast<char>(random() % 256);
         }
         check(decoder.append(wire), "append bounded random input");
-        for (std::size_t replies = 0; replies <= wire.size(); ++replies)
-        {
-            if (decoder.next(value) != resp_status::ready)
-            {
+        for (std::size_t replies = 0; replies <= wire.size(); ++replies) {
+            if (decoder.next(value) != resp_status::ready) {
                 break;
             }
             check(replies < wire.size(), "each reply consumes input");

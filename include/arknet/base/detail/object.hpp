@@ -8,9 +8,7 @@
 
 namespace arknet {
 
-class object
-{
-};
+class object {};
 } // namespace arknet
 
 namespace arknet::detail {
@@ -18,8 +16,7 @@ namespace arknet::detail {
 template<class Derived, bool Shared = true>
 class object_t
     : public arknet::object
-    , public std::conditional_t<Shared, std::enable_shared_from_this<Derived>, std::type_identity<Derived>>
-{
+    , public std::conditional_t<Shared, std::enable_shared_from_this<Derived>, std::type_identity<Derived>> {
 protected:
     Derived& derived() noexcept {
         return static_cast<Derived&>(*this);
@@ -30,12 +27,9 @@ protected:
     }
 
     std::shared_ptr<Derived> selfptr() noexcept {
-        if constexpr (Shared)
-        {
+        if constexpr (Shared) {
             return this->weak_from_this().lock();
-        }
-        else
-        {
+        } else {
             return {};
         }
     }

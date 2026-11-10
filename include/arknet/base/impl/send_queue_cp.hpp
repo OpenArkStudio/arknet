@@ -16,8 +16,7 @@ concept send_completion_handler = std::invocable<Callback&, const error_code&, s
                                   std::invocable<Callback&, std::size_t> || std::invocable<Callback&>;
 
 template<class Derived, class Args>
-class send_queue_cp
-{
+class send_queue_cp {
 public:
     Derived& set_max_send_buffer_size(std::size_t bytes) noexcept {
         limit_.store(bytes, std::memory_order_relaxed);
@@ -33,8 +32,7 @@ public:
     }
 
 protected:
-    class send_buffer_guard
-    {
+    class send_buffer_guard {
     public:
         send_buffer_guard(send_queue_cp& queue, std::size_t bytes) noexcept
             : queue_(&queue)
@@ -51,8 +49,7 @@ protected:
         }
 
         bool resize(std::size_t bytes) noexcept {
-            if (!queue_ || !queue_->adjust(bytes_, bytes))
-            {
+            if (!queue_ || !queue_->adjust(bytes_, bytes)) {
                 return false;
             }
             bytes_ = bytes;
@@ -60,8 +57,7 @@ protected:
         }
 
         void release() noexcept {
-            if (auto* queue = std::exchange(queue_, nullptr))
-            {
+            if (auto* queue = std::exchange(queue_, nullptr)) {
                 queue->reserved_.fetch_sub(bytes_, std::memory_order_relaxed);
                 queue->operations_.fetch_sub(1, std::memory_order_relaxed);
             }
@@ -74,16 +70,11 @@ protected:
 
     template<class Callback>
     static void _call_completion(Callback& callback, const error_code& error, std::size_t bytes) {
-        if constexpr (std::invocable<Callback&, const error_code&, std::size_t>)
-        {
+        if constexpr (std::invocable<Callback&, const error_code&, std::size_t>) {
             std::invoke(callback, error, bytes);
-        }
-        else if constexpr (std::invocable<Callback&, std::size_t>)
-        {
+        } else if constexpr (std::invocable<Callback&, std::size_t>) {
             std::invoke(callback, bytes);
-        }
-        else
-        {
+        } else {
             std::invoke(callback);
         }
     }
@@ -96,8 +87,7 @@ protected:
     bool _reserve_send_buffer(std::size_t bytes) noexcept {
         // Empty payloads still consume operation storage and must be bounded.
         const auto previous = operations_.fetch_add(1, std::memory_order_relaxed);
-        if (previous < operation_limit && adjust(0, bytes))
-        {
+        if (previous < operation_limit && adjust(0, bytes)) {
             return true;
         }
         operations_.fetch_sub(1, std::memory_order_relaxed);
@@ -113,17 +103,14 @@ private:
     }
 
     bool adjust(std::size_t previous, std::size_t next) noexcept {
-        if (next <= previous)
-        {
+        if (next <= previous) {
             reserved_.fetch_sub(previous - next, std::memory_order_relaxed);
             return true;
         }
         const auto additional = next - previous;
         auto used = reserved_.load(std::memory_order_relaxed);
-        do
-        {
-            if (!fits(used, additional))
-            {
+        do {
+            if (!fits(used, additional)) {
                 return false;
             }
         } while (!reserved_.compare_exchange_weak(used, used + additional, std::memory_order_relaxed));

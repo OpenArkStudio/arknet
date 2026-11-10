@@ -21,10 +21,11 @@ DOCTEST_TEST_CASE("Allocation failure is one-shot and normal aligned allocation 
     bool threw = false, disarmed = false, recovered = false;
     {
         scoped_allocation_failure::scope failure;
-        try
-        { ::operator delete(::operator new(128)); }
-        catch (const std::bad_alloc&)
-        { threw = true; }
+        try {
+            ::operator delete(::operator new(128));
+        } catch (const std::bad_alloc&) {
+            threw = true;
+        }
         disarmed = !scoped_allocation_failure::armed;
         auto* pointer = ::operator new(128, std::nothrow);
         recovered = pointer != nullptr;
@@ -49,12 +50,11 @@ DOCTEST_TEST_CASE("Asio post allocation failure leaves no handler and permits no
     bool threw = false;
     {
         scoped_allocation_failure::scope failure;
-        try
-        {
+        try {
             asio::post(context, [&] { ++invoked; });
+        } catch (const std::bad_alloc&) {
+            threw = true;
         }
-        catch (const std::bad_alloc&)
-        { threw = true; }
     }
     CHECK(threw);
     CHECK(scoped_allocation_failure::injections == before + 1);
@@ -83,10 +83,11 @@ DOCTEST_TEST_CASE("RUDP failed packet allocation preserves byte accounting and s
     bool threw = false;
     {
         scoped_allocation_failure::scope failure;
-        try
-        { channel->raw_send(payload); }
-        catch (const std::bad_alloc&)
-        { threw = true; }
+        try {
+            channel->raw_send(payload);
+        } catch (const std::bad_alloc&) {
+            threw = true;
+        }
     }
     CHECK(threw);
     CHECK(scoped_allocation_failure::injections == before + 1);
@@ -107,11 +108,9 @@ DOCTEST_TEST_CASE("RUDP failed packet allocation preserves byte accounting and s
     std::size_t count = 0;
     const auto deadline = std::chrono::steady_clock::now() + 5s;
     // Local send completion can precede receive readiness, even on loopback.
-    do
-    {
+    do {
         count = receiver.receive_from(asio::buffer(received), sender, 0, error);
-        if (error != asio::error::would_block && error != asio::error::try_again)
-        {
+        if (error != asio::error::would_block && error != asio::error::try_again) {
             break;
         }
         std::this_thread::sleep_for(1ms);
@@ -123,14 +122,12 @@ DOCTEST_TEST_CASE("RUDP failed packet allocation preserves byte accounting and s
 }
 
 DOCTEST_TEST_CASE("RUDP send initiation allocation failure stops the channel and propagates") {
-    for (const bool connected : {false, true})
-    {
+    for (const bool connected : {false, true}) {
         DOCTEST_CAPTURE(connected);
         asio::io_context context;
         asio::ip::udp::socket receiver(context, {asio::ip::make_address("127.0.0.1"), 0});
         auto socket = std::make_shared<asio::ip::udp::socket>(context, asio::ip::udp::v4());
-        if (connected)
-        {
+        if (connected) {
             socket->connect(receiver.local_endpoint());
         }
         arknet::arq::options options;
@@ -155,10 +152,11 @@ DOCTEST_TEST_CASE("RUDP send initiation allocation failure stops the channel and
         bool threw = false;
         {
             scoped_allocation_failure::scope failure;
-            try
-            { context.run_one(); }
-            catch (const std::bad_alloc&)
-            { threw = true; }
+            try {
+                context.run_one();
+            } catch (const std::bad_alloc&) {
+                threw = true;
+            }
         }
         CHECK(threw);
         CHECK(scoped_allocation_failure::injections == before + 1);
@@ -186,10 +184,11 @@ DOCTEST_TEST_CASE("MSVC Asio CRT allocation preserves alignment and throws throu
     bool threw = false;
     {
         scoped_allocation_failure::scope failure;
-        try
-        { asio::aligned_delete(asio::aligned_new(64, 257)); }
-        catch (const std::bad_alloc&)
-        { threw = true; }
+        try {
+            asio::aligned_delete(asio::aligned_new(64, 257));
+        } catch (const std::bad_alloc&) {
+            threw = true;
+        }
     }
     CHECK(threw);
     CHECK(scoped_allocation_failure::injections == before + 1);

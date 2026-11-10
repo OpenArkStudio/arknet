@@ -46,8 +46,7 @@ prepare_result prepare(mysql_pool::lease& lease, std::string sql) {
     return ready.get();
 }
 
-struct destruction_probe
-{
+struct destruction_probe {
     std::atomic<unsigned>& calls;
 
     ~destruction_probe() {
@@ -55,13 +54,11 @@ struct destruction_probe
     }
 };
 
-struct worker_exit_probe
-{
+struct worker_exit_probe {
     std::shared_ptr<std::atomic<bool>> exited;
 
     ~worker_exit_probe() {
-        if (exited)
-        {
+        if (exited) {
             *exited = true;
         }
     }
@@ -81,8 +78,7 @@ std::string prepare_ok(std::uint32_t id) {
 
 // Two simultaneous physical children share one pool runtime. The minimal peer
 // accepts the usual native-password handshake and acknowledges text commands.
-class paired_peer
-{
+class paired_peer {
     asio::io_context context_;
     asio::ip::tcp::acceptor acceptor_{context_, {asio::ip::address_v4::loopback(), 0}};
     asio::steady_timer deadline_{context_};
@@ -112,25 +108,22 @@ class paired_peer
         co_await send(socket, greeting("mysql_native_password", false), 0);
         co_await receive(socket, 1);
         co_await send(socket, ok_packet, 2);
-        try
-        {
-            for (;;)
-            {
+        try {
+            for (;;) {
                 const auto command = co_await receive(socket, 0);
                 CHECK(command == std::string("\3other lease", 12));
                 co_await send(socket, ok_packet, 1);
             }
+        } catch (const arknet::system_error& exception) {
+            CHECK((exception.code() == asio::error::eof || exception.code() == asio::error::connection_reset));
         }
-        catch (const arknet::system_error& exception)
-        { CHECK((exception.code() == asio::error::eof || exception.code() == asio::error::connection_reset)); }
     }
 
 public:
     paired_peer() {
         deadline_.expires_after(5s);
         deadline_.async_wait([this](error_code error) {
-            if (!error)
-            {
+            if (!error) {
                 completion_.set_exception(std::make_exception_ptr(std::runtime_error("paired peer deadline")));
                 context_.stop();
             }
@@ -138,17 +131,13 @@ public:
         asio::co_spawn(
             context_,
             [this]() -> asio::awaitable<void> {
-                for (unsigned index = 0; index != 2; ++index)
-                {
+                for (unsigned index = 0; index != 2; ++index) {
                     auto socket = co_await acceptor_.async_accept(asio::use_awaitable);
                     asio::co_spawn(context_, serve(std::move(socket)), [this](std::exception_ptr error) {
-                        if (error)
-                        {
+                        if (error) {
                             completion_.set_exception(error);
                             context_.stop();
-                        }
-                        else if (++finished_ == 2)
-                        {
+                        } else if (++finished_ == 2) {
                             deadline_.cancel();
                             completion_.set_value();
                         }
@@ -196,14 +185,12 @@ DOCTEST_TEST_CASE("MySQL pool permanent shutdown rejects future acquisition sync
 }
 
 DOCTEST_TEST_CASE("MySQL pool permanent shutdown cancels authentication and queued waiters before joining") {
-    for (const bool encrypted : {false, true})
-    {
+    for (const bool encrypted : {false, true}) {
         std::promise<void> received;
         auto ready = received.get_future();
         mysql_peer peer([&](mysql_peer& server) -> asio::awaitable<void> {
             co_await server.send(greeting("mysql_native_password", encrypted));
-            if (encrypted)
-            {
+            if (encrypted) {
                 CHECK((co_await server.receive()).size() == 32);
                 co_await server.upgrade();
             }
@@ -215,8 +202,7 @@ DOCTEST_TEST_CASE("MySQL pool permanent shutdown cancels authentication and queu
         std::atomic<unsigned> calls{}, destroyed{};
         auto capture = std::make_shared<destruction_probe>(destroyed);
         auto exited = std::make_shared<std::atomic<bool>>(false);
-        for (unsigned index = 0; index != 2; ++index)
-        {
+        for (unsigned index = 0; index != 2; ++index) {
             pool.async_acquire([&, capture, exited](auto result) {
                 record_worker_exit(exited);
                 CHECK(result.status.code == connection_errc::cancelled);
@@ -303,8 +289,7 @@ DOCTEST_TEST_CASE("MySQL pool IO callback cannot wait for its own runtime") {
 }
 
 DOCTEST_TEST_CASE("MySQL retained discarded leases and statement-only handles become inert") {
-    for (const bool retain_lease : {false, true})
-    {
+    for (const bool retain_lease : {false, true}) {
         mysql_peer peer([](mysql_peer& server) -> asio::awaitable<void> {
             co_await authenticate(server);
             CHECK(co_await receive_command(server) == std::string("\x16"
@@ -322,8 +307,7 @@ DOCTEST_TEST_CASE("MySQL retained discarded leases and statement-only handles be
         // The returned entry is removed before the barrier; only the old lease
         // (or statement metadata alone) may still retain its child resources.
         peer.finish();
-        if (!retain_lease)
-        {
+        if (!retain_lease) {
             acquired.connection = {};
         }
         CHECK(pool->close_and_wait());
@@ -389,28 +373,24 @@ DOCTEST_TEST_CASE("MySQL ordinary pool close retires queued waiters before their
     std::promise<void> queued;
     auto fenced = queued.get_future();
     auto retire = [](mysql_pool* owner) noexcept {
-        try
-        {
-            if (!owner->close_and_wait())
-            {
+        try {
+            if (!owner->close_and_wait()) {
                 std::terminate();
             }
+        } catch (...) {
+            std::terminate();
         }
-        catch (...)
-        { std::terminate(); }
     };
     std::unique_ptr<mysql_pool, decltype(retire)> retirement(&pool, retire);
     pool.async_acquire([&](auto response) { initial_completion.set_value(std::move(response)); });
     REQUIRE(initial.wait_for(5s) == std::future_status::ready);
     auto acquired = initial.get();
     REQUIRE(bool(acquired));
-    for (std::size_t index = 0; index != ids.size(); ++index)
-    {
+    for (std::size_t index = 0; index != ids.size(); ++index) {
         ids[index] = pool.async_acquire([&, capture, index](auto result) {
             CHECK_FALSE(result.connection);
             ++calls[index];
-            if (index == 0)
-            {
+            if (index == 0) {
                 pool.close();
                 pool.cancel(ids[1]);
                 pool.async_acquire([&, capture](auto rejected) {
@@ -433,14 +413,12 @@ DOCTEST_TEST_CASE("MySQL ordinary pool close retires queued waiters before their
     CHECK(ready[1].wait_for(0ms) == std::future_status::timeout);
     capture.reset();
     pool.close();
-    for (auto& completion : ready)
-    {
+    for (auto& completion : ready) {
         REQUIRE(completion.wait_for(5s) == std::future_status::ready);
         CHECK(completion.get() == connection_errc::cancelled);
     }
     CHECK(pool.close_and_wait());
-    for (const auto& count : calls)
-    {
+    for (const auto& count : calls) {
         CHECK(count == 1);
     }
     CHECK(destroyed == 1);
@@ -476,8 +454,7 @@ DOCTEST_TEST_CASE("MySQL pool shutdown waiters observe complete captures and cal
     // Only one facade access is allowed to overlap its destruction. Other
     // concurrent-waiter coverage uses a facade kept alive by the test below.
     std::thread waiter([&] {
-        if (caller->close_and_wait())
-        {
+        if (caller->close_and_wait()) {
             ++closed;
         }
     });
@@ -496,12 +473,10 @@ DOCTEST_TEST_CASE("MySQL concurrent pool publication and permanent waiters compl
     std::atomic<unsigned> calls{}, closed{};
     std::latch start(1);
     std::vector<std::thread> threads;
-    for (unsigned producer = 0; producer != 2; ++producer)
-    {
+    for (unsigned producer = 0; producer != 2; ++producer) {
         threads.emplace_back([&] {
             start.wait();
-            for (unsigned index = 0; index != 128; ++index)
-            {
+            for (unsigned index = 0; index != 128; ++index) {
                 const auto id = pool.async_acquire(
                     [&](auto result) {
                         CHECK_FALSE(result.connection);
@@ -512,19 +487,16 @@ DOCTEST_TEST_CASE("MySQL concurrent pool publication and permanent waiters compl
             }
         });
     }
-    for (unsigned index = 0; index != 3; ++index)
-    {
+    for (unsigned index = 0; index != 3; ++index) {
         threads.emplace_back([&] {
             start.wait();
-            if (pool.close_and_wait())
-            {
+            if (pool.close_and_wait()) {
                 ++closed;
             }
         });
     }
     start.count_down();
-    for (auto& thread : threads)
-    {
+    for (auto& thread : threads) {
         thread.join();
     }
     CHECK(calls == 256);
@@ -619,8 +591,7 @@ DOCTEST_TEST_CASE("MySQL pool waits for an executing callback and rejects work a
     auto complete_ready = completed.get_future();
     std::thread waiter([&] { completed.set_value(pool.close_and_wait()); });
     arknet::mysql::request_id id = 1;
-    while (id)
-    {
+    while (id) {
         id = pool.async_acquire(
             [&](auto result) {
                 CHECK((result.status.code == connection_errc::not_connected ||
@@ -628,8 +599,7 @@ DOCTEST_TEST_CASE("MySQL pool waits for an executing callback and rejects work a
                        result.status.code == connection_errc::invalid_options));
             },
             -1ms);
-        if (id)
-        {
+        if (id) {
             std::this_thread::sleep_for(1ms);
         }
     }
@@ -661,12 +631,10 @@ DOCTEST_TEST_CASE("MySQL retained lease producers race safely with permanent poo
     REQUIRE(ready.wait_for(5s) == std::future_status::ready);
     std::latch start(1);
     std::vector<std::thread> producers;
-    for (unsigned producer = 0; producer != 2; ++producer)
-    {
+    for (unsigned producer = 0; producer != 2; ++producer) {
         producers.emplace_back([&] {
             start.wait();
-            for (unsigned index = 0; index != 128; ++index)
-            {
+            for (unsigned index = 0; index != 128; ++index) {
                 const auto id = acquired.connection.async_query("queued", [&](auto result) {
                     CHECK((result.status.code == connection_errc::cancelled ||
                            result.status.code == connection_errc::not_connected));
@@ -679,8 +647,7 @@ DOCTEST_TEST_CASE("MySQL retained lease producers race safely with permanent poo
     }
     start.count_down();
     CHECK(pool.close_and_wait());
-    for (auto& producer : producers)
-    {
+    for (auto& producer : producers) {
         producer.join();
     }
     CHECK(calls == 257);
@@ -707,11 +674,9 @@ DOCTEST_TEST_CASE("MySQL concurrent pool waiters observe callback destruction an
     capture.reset();
     REQUIRE(entered_ready.wait_for(5s) == std::future_status::ready);
     std::vector<std::thread> waiters;
-    for (unsigned index = 0; index != 3; ++index)
-    {
+    for (unsigned index = 0; index != 3; ++index) {
         waiters.emplace_back([&] {
-            if (pool.close_and_wait())
-            {
+            if (pool.close_and_wait()) {
                 CHECK(calls == 1);
                 CHECK(destroyed == 1);
                 CHECK(exited->load());
@@ -721,14 +686,12 @@ DOCTEST_TEST_CASE("MySQL concurrent pool waiters observe callback destruction an
     }
     // Observe the closed publication gate while the callback still owns its
     // capture. The finalizer and its concurrent waiters must all remain pending.
-    while (pool.async_acquire([](auto) {}, -1ms))
-    {
+    while (pool.async_acquire([](auto) {}, -1ms)) {
         std::this_thread::sleep_for(1ms);
     }
     CHECK(closed == 0);
     resume.set_value();
-    for (auto& waiter : waiters)
-    {
+    for (auto& waiter : waiters) {
         waiter.join();
     }
     CHECK(closed == 3);

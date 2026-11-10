@@ -8,8 +8,7 @@
 
 namespace arknet::detail {
 
-struct template_args_tcp_session : tcp_tag
-{
+struct template_args_tcp_session : tcp_tag {
     static constexpr bool is_session = true, is_client = false, is_server = false;
     using socket_t = asio::ip::tcp::socket;
     using buffer_t = asio::streambuf;
@@ -28,8 +27,7 @@ class tcp_session_impl_t
     , public tcp_keepalive_cp<Derived, Args>
     , public tcp_send_op<Derived, Args>
     , public tcp_recv_op<Derived, Args>
-    , public tcp_tag
-{
+    , public tcp_tag {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_SERVER;
@@ -58,8 +56,7 @@ public:
     void stop() {
         this->_set_async_wait_acceptance(false);
         const auto state = this->state_.load();
-        if (state == state_t::stopped || state == state_t::stopping)
-        {
+        if (state == state_t::stopped || state == state_t::stopping) {
             return;
         }
         stop_requested_ = true;
@@ -72,8 +69,7 @@ public:
             owner.dispatch([&owner, lifetime] {
                 // A handshake holds the event queue guard, so cancellation
                 // must run before the disconnect event queued behind it.
-                if (owner.state_.load() == state_t::starting)
-                {
+                if (owner.state_.load() == state_t::starting) {
                     owner.set_linger(true, 0);
                     error_code ignored;
                     owner.socket().cancel(ignored);
@@ -89,16 +85,13 @@ public:
         }));
         // Different strands can share one worker, so check context membership before waiting.
         while (!owner.io_->context().get_executor().running_in_this_thread() &&
-               !owner.sessions_.io_->context().get_executor().running_in_this_thread())
-        {
-            if (result.wait_for(std::chrono::milliseconds(100)) == std::future_status::ready)
-            {
+               !owner.sessions_.io_->context().get_executor().running_in_this_thread()) {
+            if (result.wait_for(std::chrono::milliseconds(100)) == std::future_status::ready) {
                 result.get();
                 break;
             }
             if (owner.io_->context().stopped() || owner.get_thread_id() == std::thread::id{} ||
-                owner.sessions_.io_->get_thread_id() == std::thread::id{})
-            {
+                owner.sessions_.io_->get_thread_id() == std::thread::id{}) {
                 break;
             }
         }
@@ -113,14 +106,12 @@ protected:
         auto lifetime = owner.selfptr();
         error_code endpoint_error;
         auto peer = owner.socket().lowest_layer().remote_endpoint(endpoint_error);
-        if (!endpoint_error)
-        {
+        if (!endpoint_error) {
             this->remote_endpoint_ = peer;
         }
         auto expected = state_t::stopped;
         stop_requested_ = false;
-        if (!this->state_.compare_exchange_strong(expected, state_t::starting))
-        {
+        if (!this->state_.compare_exchange_strong(expected, state_t::starting)) {
             owner._do_disconnect(asio::error::already_started, std::move(lifetime));
             return;
         }
@@ -133,8 +124,7 @@ protected:
         owner._do_init(lifetime, policy);
         set_last_error(accept_error);
         owner._fire_accept(lifetime);
-        if (accept_error || stop_requested_ || this->state_ != state_t::starting || !owner.socket().is_open())
-        {
+        if (accept_error || stop_requested_ || this->state_ != state_t::starting || !owner.socket().is_open()) {
             owner._do_disconnect(
                 accept_error ? accept_error : error_code(asio::error::operation_aborted), std::move(lifetime));
             return;
@@ -155,8 +145,7 @@ protected:
         this->derived().reset_connect_time();
         this->derived().update_alive_time();
         dgram_ = std::is_same_v<typename ecs_t<Condition>::condition_lowest_type, use_dgram_t>;
-        if constexpr (requires { policy->get_condition().lowest().init(lifetime); })
-        {
+        if constexpr (requires { policy->get_condition().lowest().init(lifetime); }) {
             policy->get_condition().lowest().init(lifetime);
         }
         this->derived().set_keep_alive_options();
@@ -169,12 +158,9 @@ protected:
                 event_queue_guard<Derived> guard) mutable {
                 auto& owner = this->derived();
                 defer_event next{std::move(event), std::move(guard)};
-                if (stop_requested_ || !owner.is_started())
-                {
+                if (stop_requested_ || !owner.is_started()) {
                     owner._do_disconnect(asio::error::operation_aborted, std::move(lifetime), std::move(next));
-                }
-                else
-                {
+                } else {
                     owner._join_session(std::move(lifetime), std::move(policy), std::move(next));
                 }
             },
@@ -185,12 +171,9 @@ protected:
     void _join_session(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
         this->sessions_.emplace(
             lifetime, [this, lifetime, policy = std::move(policy), chain = std::move(chain)](bool inserted) mutable {
-                if (inserted)
-                {
+                if (inserted) {
                     this->derived()._start_recv(std::move(lifetime), std::move(policy), std::move(chain));
-                }
-                else
-                {
+                } else {
                     this->derived()._do_disconnect(asio::error::address_in_use, std::move(lifetime), std::move(chain));
                 }
             });
@@ -200,12 +183,10 @@ protected:
     void _handle_disconnect(const error_code& ec, std::shared_ptr<Derived> lifetime, Chain chain) {
         error_code ignored, option_error;
         auto& socket = this->socket();
-        if (socket.is_open())
-        {
+        if (socket.is_open()) {
             asio::socket_base::linger linger;
             socket.lowest_layer().get_option(linger, option_error);
-            if (!option_error && !(linger.enabled() && linger.timeout() == 0))
-            {
+            if (!option_error && !(linger.enabled() && linger.timeout() == 0)) {
                 socket.shutdown(asio::socket_base::shutdown_both, ignored);
             }
             socket.cancel(ignored);
@@ -234,8 +215,7 @@ protected:
     void _start_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
         this->derived().dispatch(
             [this, lifetime = std::move(lifetime), policy = std::move(policy), chain = std::move(chain)]() mutable {
-                if constexpr (!std::is_same_v<typename ecs_t<Condition>::condition_lowest_type, hook_buffer_t>)
-                {
+                if constexpr (!std::is_same_v<typename ecs_t<Condition>::condition_lowest_type, hook_buffer_t>) {
                     this->buffer().consume(this->buffer().size());
                 }
                 this->derived()._post_silence_timer(this->silence_timeout_, lifetime);
@@ -311,14 +291,12 @@ template<class Derived, class Args>
 using tcp_session_impl_t = detail::tcp_session_impl_t<Derived, Args>;
 
 template<class Derived>
-class tcp_session_t : public detail::tcp_session_impl_t<Derived>
-{
+class tcp_session_t : public detail::tcp_session_impl_t<Derived> {
 public:
     using detail::tcp_session_impl_t<Derived>::tcp_session_impl_t;
 };
 
-class tcp_session : public tcp_session_t<tcp_session>
-{
+class tcp_session : public tcp_session_t<tcp_session> {
 public:
     using tcp_session_t::tcp_session_t;
 };
@@ -328,20 +306,17 @@ public:
 
 namespace arknet {
 
-struct tcp_rate_session_args : tcp_session_args
-{
+struct tcp_rate_session_args : tcp_session_args {
     using socket_t = tcp_stream<simple_rate_policy>;
 };
 
 template<class Derived>
-class tcp_rate_session_t : public tcp_session_impl_t<Derived, tcp_rate_session_args>
-{
+class tcp_rate_session_t : public tcp_session_impl_t<Derived, tcp_rate_session_args> {
 public:
     using tcp_session_impl_t<Derived, tcp_rate_session_args>::tcp_session_impl_t;
 };
 
-class tcp_rate_session : public tcp_rate_session_t<tcp_rate_session>
-{
+class tcp_rate_session : public tcp_rate_session_t<tcp_rate_session> {
 public:
     using tcp_rate_session_t::tcp_rate_session_t;
 };

@@ -65,8 +65,7 @@ void lifecycle() {
         const auto result = arknet::get_last_error();
         check_native_snapshot(server);
         const auto port = server.get_listen_port();
-        if (!result)
-        {
+        if (!result) {
             CHECK(port != 0);
             CHECK(server.get_listen_address() == "127.0.0.1");
         }
@@ -76,16 +75,12 @@ void lifecycle() {
     });
     server.bind_stop([&] {
         ++stopped;
-        if constexpr (std::is_same_v<Server, arknet::tcp_server>)
-        {
-            if (bound_port)
-            {
+        if constexpr (std::is_same_v<Server, arknet::tcp_server>) {
+            if (bound_port) {
                 CHECK(server.get_listen_port() == bound_port);
                 CHECK(server.get_listen_address() == "127.0.0.1");
             }
-        }
-        else
-        {
+        } else {
             check_closed(server);
         }
     });
@@ -131,23 +126,20 @@ void lifecycle() {
     check_closed(server);
 }
 
-struct external_runtime
-{
+struct external_runtime {
     asio::io_context context;
     asio::executor_work_guard<asio::io_context::executor_type> work{context.get_executor()};
     std::array<std::thread, 2> workers;
 
     external_runtime() {
-        for (auto& worker : workers)
-        {
+        for (auto& worker : workers) {
             worker = std::thread([this] { context.run(); });
         }
     }
 
     ~external_runtime() {
         context.stop();
-        for (auto& worker : workers)
-        {
+        for (auto& worker : workers) {
             worker.join();
         }
     }
@@ -172,13 +164,10 @@ void callback_metadata() {
         server.stop();
     });
     server.bind_stop([&] {
-        if constexpr (std::is_same_v<Server, arknet::tcp_server>)
-        {
+        if constexpr (std::is_same_v<Server, arknet::tcp_server>) {
             CHECK(server.get_listen_port() == port);
             CHECK(server.get_listen_address() == "127.0.0.1");
-        }
-        else
-        {
+        } else {
             check_closed(server);
         }
         stopped.set_value();
@@ -201,18 +190,15 @@ void concurrent_stop() {
     std::atomic<unsigned> invalid{};
     std::atomic<unsigned> reads{};
     std::array<std::thread, 4> readers;
-    for (auto& reader : readers)
-    {
+    for (auto& reader : readers) {
         reader = std::thread([&] {
             ready.arrive_and_wait();
-            while (!finished.load())
-            {
+            while (!finished.load()) {
                 const auto observed_port = server.get_listen_port();
                 const auto port_error = arknet::get_last_error();
                 if ((port_error && port_error != asio::error::bad_descriptor &&
                         port_error != asio::error::invalid_argument) ||
-                    (port_error && observed_port != 0) || (observed_port != 0 && observed_port != port))
-                {
+                    (port_error && observed_port != 0) || (observed_port != 0 && observed_port != port)) {
                     ++invalid;
                 }
                 const auto address = server.get_listen_address();
@@ -220,8 +206,7 @@ void concurrent_stop() {
                 if ((address_error && address_error != asio::error::bad_descriptor &&
                         address_error != asio::error::invalid_argument) ||
                     (address_error && !address.empty()) ||
-                    (!address_error && address != "127.0.0.1" && address != "0.0.0.0"))
-                {
+                    (!address_error && address != "127.0.0.1" && address != "0.0.0.0")) {
                     ++invalid;
                 }
                 ++reads;
@@ -230,18 +215,15 @@ void concurrent_stop() {
     }
     ready.arrive_and_wait();
     unsigned successful_restarts = 0;
-    for (unsigned iteration = 0; iteration < 8; ++iteration)
-    {
+    for (unsigned iteration = 0; iteration < 8; ++iteration) {
         server.stop();
-        if (server.start("127.0.0.1", port))
-        {
+        if (server.start("127.0.0.1", port)) {
             ++successful_restarts;
         }
     }
     server.stop();
     finished = true;
-    for (auto& reader : readers)
-    {
+    for (auto& reader : readers) {
         reader.join();
     }
     CHECK(successful_restarts == 8);

@@ -32,18 +32,12 @@ using clock_type = std::chrono::steady_clock;
 void json_string(std::string_view value) {
     constexpr char hex[] = "0123456789abcdef";
     std::cout << '"';
-    for (const unsigned char character : value)
-    {
-        if (character == '"' || character == '\\')
-        {
+    for (const unsigned char character : value) {
+        if (character == '"' || character == '\\') {
             std::cout << '\\' << static_cast<char>(character);
-        }
-        else if (character < 0x20)
-        {
+        } else if (character < 0x20) {
             std::cout << "\\u00" << hex[character >> 4] << hex[character & 15];
-        }
-        else
-        {
+        } else {
             std::cout << static_cast<char>(character);
         }
     }
@@ -55,12 +49,9 @@ void write_metric(std::string_view name, const resource_metric<value_type>& metr
     std::cout << ',';
     json_string(name);
     std::cout << ":{\"value\":";
-    if (metric.value)
-    {
+    if (metric.value) {
         std::cout << *metric.value;
-    }
-    else
-    {
+    } else {
         std::cout << "null";
     }
     std::cout << ",\"unavailable_reason\":";
@@ -83,8 +74,7 @@ void write_sample(const process_resources& sample, clock_type::time_point first,
 }
 
 void require(bool condition, std::string_view description, unsigned& checks) {
-    if (!condition)
-    {
+    if (!condition) {
         throw std::runtime_error(std::string(description));
     }
     ++checks;
@@ -105,15 +95,13 @@ void check_shape(const process_resources& sample, unsigned& checks) {
     check_metric(sample.nofile_hard, checks);
     check_metric(sample.handle_count, checks);
     check_metric(sample.thread_count, checks);
-    if (sample.cpu_percent.value)
-    {
+    if (sample.cpu_percent.value) {
         require(std::isfinite(*sample.cpu_percent.value) && *sample.cpu_percent.value >= 0,
             "CPU percentage must be finite and nonnegative", checks);
     }
 }
 
-class resident_allocation
-{
+class resident_allocation {
 public:
     static constexpr std::size_t size = 32 * 1024 * 1024;
 
@@ -122,16 +110,13 @@ public:
         address_ = VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 #elif defined(__APPLE__) || defined(__linux__)
         address_ = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        if (address_ == MAP_FAILED)
-        {
+        if (address_ == MAP_FAILED) {
             address_ = nullptr;
         }
 #endif
-        if (address_)
-        {
+        if (address_) {
             auto* bytes = static_cast<volatile unsigned char*>(address_);
-            for (std::size_t offset = 0; offset < size; offset += 4096)
-            {
+            for (std::size_t offset = 0; offset < size; offset += 4096) {
                 bytes[offset] = 1;
             }
         }
@@ -141,8 +126,7 @@ public:
     resident_allocation& operator=(const resident_allocation&) = delete;
 
     ~resident_allocation() {
-        if (address_)
-        {
+        if (address_) {
 #ifdef _WIN32
             VirtualFree(address_, 0, MEM_RELEASE);
 #elif defined(__APPLE__) || defined(__linux__)
@@ -167,8 +151,7 @@ void self_check() {
     require(interval_cpu_percent(2, 2, 1).value == 0.0, "Idle CPU interval must remain a real zero", checks);
     for (const auto& value :
         {interval_cpu_percent(1, 2, 0), interval_cpu_percent(1, 2, -1), interval_cpu_percent(2, 1, 1),
-            interval_cpu_percent(-1, 2, 1), interval_cpu_percent(1, (std::numeric_limits<double>::infinity)(), 1)})
-    {
+            interval_cpu_percent(-1, 2, 1), interval_cpu_percent(1, (std::numeric_limits<double>::infinity)(), 1)}) {
         require(!value.value && !value.unavailable_reason.empty(), "Invalid CPU interval needs a reason", checks);
     }
 
@@ -176,13 +159,11 @@ void self_check() {
     const auto first = sampler.sample();
     check_shape(first, checks);
     require(!first.cpu_percent.value, "First CPU sample must not invent a percentage", checks);
-    for (int round = 0; round < 16; ++round)
-    {
+    for (int round = 0; round < 16; ++round) {
         const auto next = sampler.sample();
         check_shape(next, checks);
         require(next.monotonic_time >= first.monotonic_time, "Monotonic time moved backwards", checks);
-        if (first.fd_count.value && next.fd_count.value)
-        {
+        if (first.fd_count.value && next.fd_count.value) {
             require(*next.fd_count.value == *first.fd_count.value, "Repeated sampling leaked or counted a temporary FD",
                 checks);
         }
@@ -192,32 +173,27 @@ void self_check() {
     process_resources open_files;
     {
         std::vector<std::unique_ptr<std::FILE, decltype(&std::fclose)>> files;
-        for (int index = 0; index < 8; ++index)
-        {
+        for (int index = 0; index < 8; ++index) {
             files.emplace_back(std::tmpfile(), &std::fclose);
             require(files.back() != nullptr, "Could not create an owned temporary file", checks);
         }
         open_files = sampler.sample();
         check_shape(open_files, checks);
-        if (before_files.fd_count.value && open_files.fd_count.value)
-        {
+        if (before_files.fd_count.value && open_files.fd_count.value) {
             require(*open_files.fd_count.value >= *before_files.fd_count.value + files.size(),
                 "Owned files were not reflected in the FD count", checks);
         }
-        if (before_files.handle_count.value && open_files.handle_count.value)
-        {
+        if (before_files.handle_count.value && open_files.handle_count.value) {
             require(*open_files.handle_count.value >= *before_files.handle_count.value + files.size(),
                 "Owned files were not reflected in the Windows handle count", checks);
         }
     }
     const auto closed_files = sampler.sample();
     check_shape(closed_files, checks);
-    if (open_files.fd_count.value && closed_files.fd_count.value)
-    {
+    if (open_files.fd_count.value && closed_files.fd_count.value) {
         require(*open_files.fd_count.value >= *closed_files.fd_count.value + 8, "Owned FDs did not close", checks);
     }
-    if (open_files.handle_count.value && closed_files.handle_count.value)
-    {
+    if (open_files.handle_count.value && closed_files.handle_count.value) {
         require(*open_files.handle_count.value >= *closed_files.handle_count.value + 8, "Owned handles did not close",
             checks);
     }
@@ -227,8 +203,7 @@ void self_check() {
         std::latch started(2);
         const auto work = [&started](std::stop_token stop) {
             started.count_down();
-            while (!stop.stop_requested())
-            {
+            while (!stop.stop_requested()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         };
@@ -237,8 +212,7 @@ void self_check() {
         started.wait();
         const auto running = sampler.sample();
         check_shape(running, checks);
-        if (before_threads.thread_count.value && running.thread_count.value)
-        {
+        if (before_threads.thread_count.value && running.thread_count.value) {
             require(*running.thread_count.value >= *before_threads.thread_count.value + 2,
                 "Owned workers were not reflected in the thread count", checks);
         }
@@ -254,23 +228,18 @@ void self_check() {
     }
     const auto released = sampler.sample();
     check_shape(released, checks);
-    if (rss_release_checked && released.current_rss_bytes.value)
-    {
+    if (rss_release_checked && released.current_rss_bytes.value) {
         require(*resident.current_rss_bytes.value >= *released.current_rss_bytes.value + resident_allocation::size / 2,
             "Current RSS did not distinguish released memory from peak RSS", checks);
-    }
-    else
-    {
+    } else {
         rss_release_checked = false;
     }
 
     sampler.sample();
     std::uint64_t work = 1;
     const auto until = clock_type::now() + std::chrono::milliseconds(150);
-    while (clock_type::now() < until)
-    {
-        for (int index = 0; index < 1024; ++index)
-        {
+    while (clock_type::now() < until) {
+        for (int index = 0; index < 1024; ++index) {
             work = work * 6364136223846793005ULL + 1;
         }
     }
@@ -278,8 +247,7 @@ void self_check() {
     sink.store(work, std::memory_order_relaxed);
     const auto busy = sampler.sample();
     check_shape(busy, checks);
-    if (busy.cpu_percent.value)
-    {
+    if (busy.cpu_percent.value) {
         require(*busy.cpu_percent.value > 0, "Owned CPU work was not reflected in interval CPU", checks);
     }
     std::cout << "{\"event\":\"process_resources_self_check\",\"checks\":" << checks
@@ -291,8 +259,7 @@ void self_check() {
 unsigned parse_number(std::string_view text, unsigned minimum, unsigned maximum) {
     unsigned value = 0;
     const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
-    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || value < minimum || value > maximum)
-    {
+    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || value < minimum || value > maximum) {
         throw std::invalid_argument("Numeric argument is outside its allowed range");
     }
     return value;
@@ -302,58 +269,43 @@ unsigned parse_number(std::string_view text, unsigned minimum, unsigned maximum)
 
 int main(int argc, char** argv) {
     std::cout << std::setprecision(9);
-    try
-    {
+    try {
         unsigned samples = 5, interval_ms = 1000;
         bool check = false;
-        for (int index = 1; index < argc; ++index)
-        {
+        for (int index = 1; index < argc; ++index) {
             const std::string_view argument(argv[index]);
-            if (argument == "--help")
-            {
+            if (argument == "--help") {
                 std::cout << "Usage: arknet_process_resources_probe [--samples 1..3600] [--interval-ms 100..60000]\n"
                              "       arknet_process_resources_probe --self-check\n"
                              "Samples only this process; JSON Lines output. CPU 100% means one logical core.\n";
                 return 0;
             }
-            if (argument == "--self-check")
-            {
+            if (argument == "--self-check") {
                 check = true;
-            }
-            else if ((argument == "--samples" || argument == "--interval-ms") && index + 1 < argc)
-            {
+            } else if ((argument == "--samples" || argument == "--interval-ms") && index + 1 < argc) {
                 const auto value = std::string_view(argv[++index]);
-                if (argument == "--samples")
-                {
+                if (argument == "--samples") {
                     samples = parse_number(value, 1, 3600);
-                }
-                else
-                {
+                } else {
                     interval_ms = parse_number(value, 100, 60000);
                 }
-            }
-            else
-            {
+            } else {
                 throw std::invalid_argument("Unknown argument or missing value; use --help");
             }
         }
-        if (check)
-        {
+        if (check) {
             self_check();
             return 0;
         }
         process_resource_sampler sampler;
         const auto first = sampler.sample();
         write_sample(first, first.monotonic_time, 0);
-        for (unsigned index = 1; index < samples; ++index)
-        {
+        for (unsigned index = 1; index < samples; ++index) {
             std::this_thread::sleep_for(std::chrono::milliseconds(interval_ms));
             write_sample(sampler.sample(), first.monotonic_time, index);
         }
         return 0;
-    }
-    catch (const std::exception& error)
-    {
+    } catch (const std::exception& error) {
         std::cerr << "process resources probe: " << error.what() << '\n';
         return 1;
     }

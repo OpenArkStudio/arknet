@@ -33,8 +33,7 @@ using arknet::mysql::connection_result;
 using arknet::mysql::tls_mode;
 namespace wire = arknet::mysql::detail;
 
-class mysql_peer
-{
+class mysql_peer {
     asio::io_context context_;
     asio::ip::tcp::acceptor acceptor_{context_, {asio::ip::address_v4::loopback(), 0}};
     asio::ssl::context tls_context_{asio::ssl::context::tls_server};
@@ -60,8 +59,7 @@ public:
                     stream_.native_handle(), (directory + "/server-key.pem").c_str(), SSL_FILETYPE_PEM) == 1);
         deadline_.expires_after(5s);
         deadline_.async_wait([this](error_code error) {
-            if (!error)
-            {
+            if (!error) {
                 error_code ignored;
                 acceptor_.close(ignored);
                 stream_.next_layer().close(ignored);
@@ -75,12 +73,9 @@ public:
             },
             [this](std::exception_ptr exception) {
                 deadline_.cancel();
-                if (exception)
-                {
+                if (exception) {
                     completion_.set_exception(exception);
-                }
-                else
-                {
+                } else {
                     completion_.set_value();
                 }
             });
@@ -98,15 +93,11 @@ public:
 
     asio::awaitable<void> write_raw(std::string bytes, bool fragment = false) {
         const auto stride = fragment ? 1u : bytes.size();
-        for (std::size_t offset = 0; offset < bytes.size(); offset += stride)
-        {
+        for (std::size_t offset = 0; offset < bytes.size(); offset += stride) {
             const auto buffer = asio::buffer(bytes.data() + offset, (std::min)(stride, bytes.size() - offset));
-            if (encrypted_)
-            {
+            if (encrypted_) {
                 co_await asio::async_write(stream_, buffer, asio::use_awaitable);
-            }
-            else
-            {
+            } else {
                 co_await asio::async_write(stream_.next_layer(), buffer, asio::use_awaitable);
             }
         }
@@ -120,24 +111,18 @@ public:
 
     asio::awaitable<std::string> receive(std::size_t maximum_size = 4096) {
         std::array<unsigned char, 4> header{};
-        if (encrypted_)
-        {
+        if (encrypted_) {
             co_await asio::async_read(stream_, asio::buffer(header), asio::use_awaitable);
-        }
-        else
-        {
+        } else {
             co_await asio::async_read(stream_.next_layer(), asio::buffer(header), asio::use_awaitable);
         }
         REQUIRE(header[3] == sequence++);
         const std::size_t size = header[0] | (std::size_t(header[1]) << 8) | (std::size_t(header[2]) << 16);
         REQUIRE(size <= maximum_size);
         std::string payload(size, '\0');
-        if (encrypted_)
-        {
+        if (encrypted_) {
             co_await asio::async_read(stream_, asio::buffer(payload), asio::use_awaitable);
-        }
-        else
-        {
+        } else {
             co_await asio::async_read(stream_.next_layer(), asio::buffer(payload), asio::use_awaitable);
         }
         co_return payload;
@@ -153,16 +138,12 @@ public:
     asio::awaitable<void> wait_for_eof() {
         std::array<char, 4096> bytes{};
         error_code error;
-        do
-        {
-            if (encrypted_)
-            {
+        do {
+            if (encrypted_) {
                 const auto size = co_await stream_.async_read_some(
                     asio::buffer(bytes), asio::redirect_error(asio::use_awaitable, error));
                 CHECK(size == 0);
-            }
-            else
-            {
+            } else {
                 co_await stream_.next_layer().async_read_some(
                     asio::buffer(bytes), asio::redirect_error(asio::use_awaitable, error));
             }
@@ -328,9 +309,8 @@ inline asio::awaitable<std::string> receive_command(mysql_peer& server) {
 
 inline std::string column_packet(std::string_view name, wire::field_type type = wire::field_type::longlong) {
     std::string payload;
-    for (const auto value :
-        {std::string_view("def"), std::string_view("test-db"), std::string_view(""), std::string_view(""), name, name})
-    {
+    for (const auto value : {std::string_view("def"), std::string_view("test-db"), std::string_view(""),
+             std::string_view(""), name, name}) {
         wire::append_string(payload, value);
     }
     payload.push_back('\x0c');

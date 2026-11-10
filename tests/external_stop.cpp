@@ -10,8 +10,7 @@
 
 namespace {
 
-struct io_runner
-{
+struct io_runner {
     asio::io_context context;
     asio::executor_work_guard<asio::io_context::executor_type> work{context.get_executor()};
     std::thread worker{[this] { context.run(); }};
@@ -25,8 +24,7 @@ struct io_runner
     }
 };
 
-struct retirement
-{
+struct retirement {
     std::atomic<unsigned> created{}, destroyed{}, canceled_accepts{}, callbacks{};
     std::atomic<bool> destructor_on_lane{};
     std::promise<void> entered;
@@ -38,8 +36,7 @@ struct retirement
     std::shared_future<void> released{release.get_future().share()};
 };
 
-struct observed_session : arknet::tcp_session_t<observed_session>
-{
+struct observed_session : arknet::tcp_session_t<observed_session> {
     using base = arknet::tcp_session_t<observed_session>;
     using base::base;
     std::shared_ptr<retirement> observed;
@@ -50,14 +47,11 @@ struct observed_session : arknet::tcp_session_t<observed_session>
     std::function<void()> destructor_check;
 
     ~observed_session() {
-        if (observed)
-        {
-            if (pause_in_destructor)
-            {
+        if (observed) {
+            if (pause_in_destructor) {
                 observed->destructor_on_lane = running_in_this_thread();
                 observed->entered.set_value();
-                if (destructor_check)
-                {
+                if (destructor_check) {
                     destructor_check();
                 }
                 observed->released.wait();
@@ -73,8 +67,7 @@ struct observed_session : arknet::tcp_session_t<observed_session>
 
     void _wait_async_operations() {
         base::_wait_async_operations();
-        if (pause_waiter)
-        {
+        if (pause_waiter) {
             observed->pin_acquired.set_value();
             observed->pin_released.wait();
         }
@@ -83,8 +76,7 @@ struct observed_session : arknet::tcp_session_t<observed_session>
     template<class Condition, class Chain>
     void _complete_connect(arknet::error_code error, std::shared_ptr<observed_session> owner,
         std::shared_ptr<arknet::detail::ecs_t<Condition>> policy, Chain chain) {
-        if (stop_before_complete)
-        {
+        if (stop_before_complete) {
             stop();
             observed->entered.set_value();
         }
@@ -94,12 +86,10 @@ struct observed_session : arknet::tcp_session_t<observed_session>
     template<class Chain>
     void _handle_stop(const arknet::error_code& error, std::shared_ptr<observed_session> owner, Chain chain) {
         base::_handle_stop(error, std::move(owner), std::move(chain));
-        if (pause_in_destructor)
-        {
+        if (pause_in_destructor) {
             observed->stopped.set_value();
         }
-        if (pause_after_stop)
-        {
+        if (pause_after_stop) {
             // The session counter has already retired on this lane. Its queued
             // continuation must still keep the parent listener alive.
             post([state = observed] {
@@ -111,8 +101,7 @@ struct observed_session : arknet::tcp_session_t<observed_session>
     }
 };
 
-struct observed_server : arknet::tcp_server_impl_t<observed_server, observed_session>
-{
+struct observed_server : arknet::tcp_server_impl_t<observed_server, observed_session> {
     using base = arknet::tcp_server_impl_t<observed_server, observed_session>;
     using base::base;
     std::shared_ptr<retirement> observed;
@@ -127,23 +116,20 @@ struct observed_server : arknet::tcp_server_impl_t<observed_server, observed_ses
     template<class Condition>
     void _handle_accept(const arknet::error_code& error, std::shared_ptr<observed_session> session,
         std::shared_ptr<observed_server> owner, std::shared_ptr<arknet::detail::ecs_t<Condition>> policy) {
-        if (error == asio::error::operation_aborted)
-        {
+        if (error == asio::error::operation_aborted) {
             ++observed->canceled_accepts;
         }
         base::_handle_accept(error, std::move(session), std::move(owner), std::move(policy));
     }
 };
 
-struct allocator_probe
-{
+struct allocator_probe {
     bool fail = false;
     unsigned allocations = 0;
 };
 
 template<class T>
-struct tagged_allocator
-{
+struct tagged_allocator {
     using value_type = T;
     allocator_probe* state;
 
@@ -156,8 +142,7 @@ struct tagged_allocator
 
     T* allocate(std::size_t count) {
         ++state->allocations;
-        if (state->fail)
-        {
+        if (state->fail) {
             throw std::bad_alloc();
         }
         return std::allocator<T>{}.allocate(count);
@@ -180,8 +165,7 @@ DOCTEST_TEST_CASE("External TCP owner stop retires canceled native accepts befor
     auto observed = std::make_shared<retirement>();
     observed_server server(runner.context);
     server.observed = observed;
-    for (unsigned generation = 1; generation <= 32; ++generation)
-    {
+    for (unsigned generation = 1; generation <= 32; ++generation) {
         check(server.start("127.0.0.1", 0), "listener starts with a pending native accept");
         auto armed = server.post([] {}, asio::use_future);
         await(armed);
@@ -241,8 +225,7 @@ DOCTEST_TEST_CASE("External TCP stop retires user timer, delayed post and condit
     auto captured = std::make_shared<int>(7);
     std::weak_ptr<int> released = captured;
     std::vector<std::future<void>> posts;
-    for (unsigned index = 0; index < 32; ++index)
-    {
+    for (unsigned index = 0; index < 32; ++index) {
         server.start_timer(index, 1h, [captured] {});
         client.start_timer(index, 1h, [captured] {});
         posts.push_back(server.post([captured] {}, 1h, asio::use_future));
@@ -259,8 +242,7 @@ DOCTEST_TEST_CASE("External TCP stop retires user timer, delayed post and condit
     server.stop();
     DOCTEST_CHECK(released.expired());
     DOCTEST_CHECK(conditions == 64);
-    for (auto& post : posts)
-    {
+    for (auto& post : posts) {
         DOCTEST_CHECK(post.wait_for(0s) == std::future_status::ready);
     }
 }
@@ -438,8 +420,7 @@ DOCTEST_TEST_CASE("Concurrent external TCP owner stops each wait for the final s
     DOCTEST_CHECK(observed->destructor_on_lane);
     auto first = std::async(std::launch::async, [&] { server.stop(); });
     const auto deadline = std::chrono::steady_clock::now() + 5s;
-    while (server.iopool().started() && std::chrono::steady_clock::now() < deadline)
-    {
+    while (server.iopool().started() && std::chrono::steady_clock::now() < deadline) {
         std::this_thread::yield();
     }
     const bool pool_closing = !server.iopool().started();
@@ -542,8 +523,7 @@ DOCTEST_TEST_CASE("Ordinary TCP reconnect keeps user timers available") {
     arknet::tcp_client client(runner.context);
     client.set_auto_reconnect(true, 1ms);
     client.bind_connect([&] {
-        if (!arknet::get_last_error() && ++connects == 2)
-        {
+        if (!arknet::get_last_error() && ++connects == 2) {
             reconnected.set_value();
         }
     });
@@ -586,8 +566,7 @@ DOCTEST_TEST_CASE("Native retirement wrapper preserves explicit associations and
 }
 
 DOCTEST_TEST_CASE("Native retirement token outlives captures and rolls back failed initiation") {
-    struct capture_probe
-    {
+    struct capture_probe {
         std::shared_ptr<std::atomic_size_t> pending;
         std::atomic_size_t& observed;
 
@@ -617,13 +596,12 @@ DOCTEST_TEST_CASE("Native retirement token outlives captures and rolls back fail
     timer.expires_after(1h);
     allocator_probe failure{true};
     bool threw = false;
-    try
-    {
+    try {
         timer.async_wait(asio::bind_allocator(
             tagged_allocator<int>(failure), arknet::detail::pending_handler(pending, [](arknet::error_code) {})));
+    } catch (const std::bad_alloc&) {
+        threw = true;
     }
-    catch (const std::bad_alloc&)
-    { threw = true; }
     DOCTEST_CHECK(threw);
     DOCTEST_CHECK(failure.allocations == 1);
     DOCTEST_CHECK(pending->load() == 0);
@@ -632,16 +610,14 @@ DOCTEST_TEST_CASE("Native retirement token outlives captures and rolls back fail
 #if defined(ARKNET_ENABLE_SSL)
 namespace {
 
-struct silent_tls_session : arknet::tcps_session_t<silent_tls_session>
-{
+struct silent_tls_session : arknet::tcps_session_t<silent_tls_session> {
     using base = arknet::tcps_session_t<silent_tls_session>;
     using base::base;
     std::function<void()> handshake_started;
     std::function<void(bool)> starting_canceled;
 
     silent_tls_session& set_linger(bool enabled, int seconds) noexcept {
-        if (starting_canceled)
-        {
+        if (starting_canceled) {
             starting_canceled(running_in_this_thread());
         }
         return base::set_linger(enabled, seconds);
