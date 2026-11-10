@@ -25,8 +25,7 @@
 
 namespace connection_load {
 
-struct socket_observation
-{
+struct socket_observation {
     int poll_result{-1}, poll_error{}, readable_bytes{-1}, readable_error{}, peek_bytes{-1}, peek_error{};
     short events{};
     std::array<unsigned char, 67> peek{};
@@ -39,8 +38,7 @@ struct socket_observation
 inline socket_observation observe_socket(int descriptor) noexcept {
     socket_observation result;
 #if !defined(_WIN32)
-    if (descriptor < 0)
-    {
+    if (descriptor < 0) {
         result.poll_error = result.readable_error = result.peek_error = EBADF;
         result.tcp = query_tcp_kernel_info(-1);
         return result;
@@ -50,12 +48,9 @@ inline socket_observation observe_socket(int descriptor) noexcept {
     result.poll_error = result.poll_result < 0 ? errno : 0;
     result.events = item.revents;
     int available{};
-    if (::ioctl(descriptor, FIONREAD, &available) == 0)
-    {
+    if (::ioctl(descriptor, FIONREAD, &available) == 0) {
         result.readable_bytes = available;
-    }
-    else
-    {
+    } else {
         result.readable_error = errno;
     }
     const auto bytes = ::recv(descriptor, result.peek.data(), result.peek.size(), MSG_PEEK | MSG_DONTWAIT);
@@ -66,15 +61,12 @@ inline socket_observation observe_socket(int descriptor) noexcept {
     static_assert(sizeof(raw) <= result.tcp_raw.size());
     socklen_t length = sizeof(raw);
     result.tcp_requested = sizeof(raw);
-    if (::getsockopt(descriptor, IPPROTO_TCP, TCP_CONNECTION_INFO, &raw, &length) == 0)
-    {
+    if (::getsockopt(descriptor, IPPROTO_TCP, TCP_CONNECTION_INFO, &raw, &length) == 0) {
         result.tcp_returned = length;
         result.tcp = decode_tcp_kernel_info(raw, length);
         const auto* begin = reinterpret_cast<const unsigned char*>(&raw);
         std::copy_n(begin, (std::min)(std::size_t(length), sizeof(raw)), result.tcp_raw.begin());
-    }
-    else
-    {
+    } else {
         result.tcp.result = tcp_kernel_info::status::query_failed;
         result.tcp.error = errno;
     }
@@ -85,8 +77,7 @@ inline socket_observation observe_socket(int descriptor) noexcept {
     return result;
 }
 
-struct observation_clock_anchor
-{
+struct observation_clock_anchor {
     std::int64_t steady_before_ns{}, unix_ns{}, steady_after_ns{};
 };
 
@@ -107,14 +98,12 @@ inline observation_clock_anchor observation_anchor() noexcept {
 
 // Single IO worker publishes snapshots; the existing controller observes pinned
 // descriptors. The mutex also serializes dup retirement before socket.close().
-class socket_observer
-{
+class socket_observer {
 public:
     static constexpr std::size_t session_capacity = 16, sample_capacity = 8;
     static constexpr std::int64_t interval_us = 100000;
 
-    struct snapshot
-    {
+    struct snapshot {
         identity owner{};
         std::int64_t time_us{}, idle_us{};
         std::uint64_t completions{}, next_receive{}, next_send{}, input_bytes{};
@@ -122,8 +111,7 @@ public:
         std::string local, remote;
     };
 
-    struct token
-    {
+    struct token {
         identity owner{};
         std::uint64_t generation{};
     };
@@ -132,42 +120,34 @@ public:
         : data_(enabled ? std::make_unique<storage>() : nullptr) {}
 
     ~socket_observer() {
-        if (data_)
-        {
-            for (auto& value : data_->slots)
-            {
+        if (data_) {
+            for (auto& value : data_->slots) {
                 retire(value);
             }
         }
     }
 
     token publish(int descriptor, snapshot state) {
-        if (!data_)
-        {
+        if (!data_) {
             return {};
         }
         std::lock_guard lock(mutex_);
         auto* value = find(state.owner);
         const bool created = !value;
-        if (!value)
-        {
-            for (auto& candidate : data_->slots)
-            {
-                if (!candidate.generation)
-                {
+        if (!value) {
+            for (auto& candidate : data_->slots) {
+                if (!candidate.generation) {
                     value = &candidate;
                     break;
                 }
             }
-            if (!value)
-            {
+            if (!value) {
                 ++omitted_;
                 return {};
             }
 #if !defined(_WIN32)
             value->descriptor = ::dup(descriptor);
-            if (value->descriptor < 0)
-            {
+            if (value->descriptor < 0) {
                 ++pin_failures_;
                 return {};
             }
@@ -184,14 +164,12 @@ public:
     // Recovered sessions free capacity; histories for still-stalled/closed peers
     // survive final cleanup. Never confuse a recycled fd/slot with its predecessor.
     void prune(identity owner, bool eligible, std::uint64_t completions) {
-        if (!data_)
-        {
+        if (!data_) {
             return;
         }
         std::lock_guard lock(mutex_);
         if (auto* value = find(owner);
-            value && value->descriptor >= 0 && (!eligible || value->state.completions != completions))
-        {
+            value && value->descriptor >= 0 && (!eligible || value->state.completions != completions)) {
             retire(*value);
             *value = {};
             ++released_;
@@ -199,11 +177,9 @@ public:
     }
 
     void close(identity owner) {
-        if (data_)
-        {
+        if (data_) {
             std::lock_guard lock(mutex_);
-            if (auto* value = find(owner); value && value->descriptor >= 0)
-            {
+            if (auto* value = find(owner); value && value->descriptor >= 0) {
                 // This runs before the caller cancels/closes the original socket.
                 value->before_cancel = observation_anchor();
                 retire(*value);
@@ -212,27 +188,22 @@ public:
     }
 
     void complete(token expected, std::int64_t time_us) {
-        if (data_)
-        {
+        if (data_) {
             std::lock_guard lock(mutex_);
-            if (auto* value = find(expected.owner); value && value->generation == expected.generation)
-            {
+            if (auto* value = find(expected.owner); value && value->generation == expected.generation) {
                 value->probe_completed = time_us;
             }
         }
     }
 
     void sample(std::int64_t time_us, std::int64_t marker_completed) {
-        if (!data_)
-        {
+        if (!data_) {
             return;
         }
         std::lock_guard lock(mutex_);
-        for (auto& value : data_->slots)
-        {
+        for (auto& value : data_->slots) {
             if (value.descriptor >= 0 && value.count < sample_capacity &&
-                (!value.count || time_us - value.samples[value.count - 1].time_us >= interval_us))
-            {
+                (!value.count || time_us - value.samples[value.count - 1].time_us >= interval_us)) {
                 auto& entry = value.samples[value.count++];
                 entry.time_us = time_us;
                 entry.marker_completed = marker_completed;
@@ -246,14 +217,11 @@ public:
     }
 
     void write_json(std::ostream& out, const std::string& role, std::int64_t clock_origin_us = 0) const {
-        if (!data_)
-        {
+        if (!data_) {
             return;
         }
-        for (const auto& value : data_->slots)
-        {
-            for (std::size_t index = 0; index < value.count; ++index)
-            {
+        for (const auto& value : data_->slots) {
+            for (std::size_t index = 0; index < value.count; ++index) {
                 const auto& entry = value.samples[index];
                 const auto& q = entry.query;
                 out << "{\"event\":\"socket_observation\",\"schema\":1,\"role\":" << std::quoted(role)
@@ -283,8 +251,7 @@ public:
                     << ",\"tcp_raw_hex\":\"";
                 hex(out, q.tcp_raw.data(), (std::min)(std::size_t(q.tcp_returned), q.tcp_raw.size()));
                 out << "\",\"tcp_info\":";
-                if (q.tcp.result == tcp_kernel_info::status::available)
-                {
+                if (q.tcp.result == tcp_kernel_info::status::available) {
                     out << "{\"state\":" << q.tcp.state << ",\"flags\":" << q.tcp.flags
                         << ",\"rto_ms\":" << q.tcp.rto_ms
                         << ",\"congestion_window_bytes\":" << q.tcp.congestion_window_bytes
@@ -293,15 +260,12 @@ public:
                         << ",\"receive_window_bytes\":" << q.tcp.receive_window_bytes
                         << ",\"tx_bytes\":" << q.tcp.tx_bytes << ",\"rx_bytes\":" << q.tcp.rx_bytes
                         << ",\"retransmit_bytes\":" << q.tcp.retransmit_bytes << '}';
-                }
-                else
-                {
+                } else {
                     out << "null";
                 }
                 out << "}\n";
             }
-            if (value.before_cancel.unix_ns)
-            {
+            if (value.before_cancel.unix_ns) {
                 out << "{\"event\":\"socket_observer_before_cancel\",\"schema\":1,\"role\":" << std::quoted(role)
                     << ",\"run_id\":" << value.state.owner.run << ",\"client_id\":" << value.state.owner.client
                     << ",\"connection_id\":" << value.state.owner.connection << ",\"generation\":" << value.generation
@@ -325,16 +289,14 @@ public:
     }
 
 private:
-    struct sample_entry
-    {
+    struct sample_entry {
         snapshot state;
         socket_observation query;
         std::int64_t time_us{}, marker_completed{}, probe_completed{}, query_completed_steady_ns{};
         observation_clock_anchor anchor;
     };
 
-    struct slot
-    {
+    struct slot {
         int descriptor{-1};
         std::uint64_t generation{};
         snapshot state;
@@ -344,18 +306,15 @@ private:
         std::array<sample_entry, sample_capacity> samples{};
     };
 
-    struct storage
-    {
+    struct storage {
         std::array<slot, session_capacity> slots{};
     };
 
     static_assert(sizeof(storage) < 128 * 1024);
 
     slot* find(identity owner) {
-        for (auto& value : data_->slots)
-        {
-            if (value.generation && value.state.owner == owner)
-            {
+        for (auto& value : data_->slots) {
+            if (value.generation && value.state.owner == owner) {
                 return &value;
             }
         }
@@ -364,8 +323,7 @@ private:
 
     static void retire(slot& value) {
 #if !defined(_WIN32)
-        if (value.descriptor >= 0)
-        {
+        if (value.descriptor >= 0) {
             ::close(value.descriptor);
             value.descriptor = -1;
         }
@@ -381,8 +339,7 @@ private:
 
     static void hex(std::ostream& out, const unsigned char* bytes, std::size_t count) {
         constexpr char digits[] = "0123456789abcdef";
-        for (std::size_t index = 0; index < count; ++index)
-        {
+        for (std::size_t index = 0; index < count; ++index) {
             out << digits[bytes[index] >> 4] << digits[bytes[index] & 15];
         }
     }

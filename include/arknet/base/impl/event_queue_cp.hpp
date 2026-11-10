@@ -20,8 +20,7 @@ template<class...>
 class defer_event;
 
 template<class Derived>
-class event_queue_guard
-{
+class event_queue_guard {
     template<class, class>
     friend class event_queue_cp;
     template<class...>
@@ -41,8 +40,7 @@ public:
     event_queue_guard& operator=(const event_queue_guard&) = delete;
 
     ~event_queue_guard() noexcept {
-        if (valid_)
-        {
+        if (valid_) {
             derive->next_event(std::move(*this));
         }
     }
@@ -67,8 +65,7 @@ private:
 };
 
 template<class Function>
-class defer_event<Function>
-{
+class defer_event<Function> {
 public:
     template<class Callable>
     explicit defer_event(Callable&& callable)
@@ -81,8 +78,7 @@ public:
     defer_event(const defer_event&) = delete;
 
     ~defer_event() {
-        if (armed_)
-        {
+        if (armed_) {
             function_();
         }
     }
@@ -105,8 +101,7 @@ private:
 };
 
 template<>
-class defer_event<void>
-{
+class defer_event<void> {
 public:
     defer_event() = default;
 
@@ -126,14 +121,12 @@ public:
 };
 
 template<class Derived>
-struct defer_eqg_dummy
-{
+struct defer_eqg_dummy {
     void operator()(event_queue_guard<Derived>) {}
 };
 
 template<class Function, class Derived>
-class defer_event<Function, Derived, std::false_type>
-{
+class defer_event<Function, Derived, std::false_type> {
     template<class...>
     friend class defer_event;
 
@@ -149,8 +142,7 @@ public:
     defer_event(const defer_event&) = delete;
 
     ~defer_event() {
-        if (armed_)
-        {
+        if (armed_) {
             function_(event_queue_guard<Derived>{});
         }
     }
@@ -181,8 +173,7 @@ private:
 };
 
 template<class Function, class Derived>
-class defer_event<Function, Derived, std::true_type>
-{
+class defer_event<Function, Derived, std::true_type> {
 public:
     template<class Callable>
     defer_event(Callable&& callable, event_queue_guard<Derived> guard)
@@ -202,8 +193,7 @@ public:
     defer_event(const defer_event&) = delete;
 
     ~defer_event() {
-        if (armed_)
-        {
+        if (armed_) {
             function_(std::move(guard_));
         }
     }
@@ -237,8 +227,7 @@ private:
 };
 
 template<class Derived>
-class defer_event<void, Derived>
-{
+class defer_event<void, Derived> {
 public:
     defer_event() = default;
 
@@ -285,12 +274,10 @@ template<class Derived>
 defer_event(event_queue_guard<Derived>) -> defer_event<void, Derived>;
 
 template<class Derived, class Args = void>
-class event_queue_cp
-{
+class event_queue_cp {
 public:
     std::size_t get_pending_event_count() const noexcept {
-        if (!static_cast<const Derived&>(*this).io_->running_in_this_thread())
-        {
+        if (!static_cast<const Derived&>(*this).io_->running_in_this_thread()) {
             set_last_error(asio::error::operation_not_supported);
             return 0;
         }
@@ -315,8 +302,7 @@ protected:
     Derived& push_event(Callable&& callable) {
         auto& object = static_cast<Derived&>(*this);
 #ifndef ARKNET_STRONG_EVENT_ORDER
-        if (object.io_->running_in_this_thread())
-        {
+        if (object.io_->running_in_this_thread()) {
             enqueue(object._track_async_operation(std::forward<Callable>(callable)));
             return object;
         }
@@ -338,8 +324,7 @@ protected:
     template<class Callable>
     Derived& disp_event(Callable&& callable, event_queue_guard<Derived> guard) {
         auto& object = static_cast<Derived&>(*this);
-        if (guard.empty())
-        {
+        if (guard.empty()) {
             return push_event(std::forward<Callable>(callable));
         }
         asio::dispatch(
@@ -356,8 +341,7 @@ protected:
         // Popping the event may release its last token while pump still uses
         // the endpoint, including when an external guard returns on this lane.
         auto pending = object._track_async_operation([] {});
-        if (!object.io_->running_in_this_thread())
-        {
+        if (!object.io_->running_in_this_thread()) {
             asio::post(object.io_->executor(),
                 object._track_async_operation(
                     [this, guard = std::move(guard)]() mutable { next_event(std::move(guard)); }));
@@ -378,24 +362,21 @@ private:
     void enqueue(Callable&& callable) {
         const bool first = events_.empty();
         events_.emplace(std::forward<Callable>(callable));
-        if (first)
-        {
+        if (first) {
             advance_pending_ = true;
             pump();
         }
     }
 
     void pump() {
-        if (pumping_)
-        {
+        if (pumping_) {
             return;
         }
         // A synchronous completion can release the event's final session owner.
         auto lifetime = static_cast<Derived&>(*this).selfptr();
         pumping_ = true;
         // A synchronous completion requests another iteration rather than recursing.
-        while (std::exchange(advance_pending_, false) && !events_.empty())
-        {
+        while (std::exchange(advance_pending_, false) && !events_.empty()) {
             events_.front()(event_queue_guard<Derived>(static_cast<Derived&>(*this)));
         }
         pumping_ = false;

@@ -14,22 +14,19 @@
 
 namespace {
 
-struct clock_probe : arknet::detail::alive_time_cp<clock_probe, void>
-{
+struct clock_probe : arknet::detail::alive_time_cp<clock_probe, void> {
     void move_wall_clock(std::chrono::system_clock::duration change) {
         last_alive_time_ += change;
     }
 };
 
 template<class Server>
-struct polled_server_t
-{
+struct polled_server_t {
     asio::io_context context;
     Server server{context};
 
     ~polled_server_t() {
-        if (context.stopped())
-        {
+        if (context.stopped()) {
             context.restart();
         }
         asio::post(context, [this] { server.stop(); });
@@ -45,14 +42,11 @@ struct polled_server_t
     template<class Predicate>
     void until(Predicate done) {
         const auto deadline = std::chrono::steady_clock::now() + 5s;
-        while (std::chrono::steady_clock::now() < deadline)
-        {
-            if (done())
-            {
+        while (std::chrono::steady_clock::now() < deadline) {
+            if (done()) {
                 return;
             }
-            if (context.stopped())
-            {
+            if (context.stopped()) {
                 context.restart();
             }
             context.run_one_for(5ms);
@@ -63,8 +57,7 @@ struct polled_server_t
 
 using polled_server = polled_server_t<arknet::rudp_server>;
 
-class raw_peer
-{
+class raw_peer {
 public:
     explicit raw_peer(asio::ip::udp::endpoint destination)
         : socket_(context_, asio::ip::udp::v4()) {
@@ -84,17 +77,14 @@ public:
         std::optional<std::uint32_t> conversation;
         std::array<char, 65536> bytes{};
         arknet::error_code error;
-        for (;;)
-        {
+        for (;;) {
             const auto count = socket_.receive(asio::buffer(bytes), 0, error);
-            if (error == asio::error::would_block || error == asio::error::try_again)
-            {
+            if (error == asio::error::would_block || error == asio::error::try_again) {
                 return conversation;
             }
             check(!error, "raw UDP peer receives without a transport error");
             const std::string_view packet(bytes.data(), count);
-            if (arknet::detail::rudp_is_control(packet, 2) && arknet::detail::rudp_read_id(packet.data() + 1) == sync)
-            {
+            if (arknet::detail::rudp_is_control(packet, 2) && arknet::detail::rudp_read_id(packet.data() + 1) == sync) {
                 conversation = arknet::detail::rudp_read_id(packet.data() + 5);
             }
         }
@@ -105,8 +95,7 @@ private:
     asio::ip::udp::socket socket_;
 };
 
-struct observed_rudp_server : arknet::rudp_server_impl_t<observed_rudp_server>
-{
+struct observed_rudp_server : arknet::rudp_server_impl_t<observed_rudp_server> {
     using base = arknet::rudp_server_impl_t<observed_rudp_server>;
     using base::base;
 
@@ -183,8 +172,7 @@ DOCTEST_TEST_CASE("RUDP admission is bounded and freed sessions admit new peers"
     DOCTEST_CHECK_THROWS_AS(runtime.server.set_max_sessions(3), std::logic_error);
     DOCTEST_CHECK(runtime.server.get_max_sessions() == 2);
     std::vector<std::unique_ptr<raw_peer>> peers;
-    for (unsigned i = 0; i < 8; ++i)
-    {
+    for (unsigned i = 0; i < 8; ++i) {
         peers.push_back(std::make_unique<raw_peer>(runtime.server.acceptor().local_endpoint()));
     }
     // Queue both handshakes before polling, then observe their ACKs rather than
@@ -201,16 +189,14 @@ DOCTEST_TEST_CASE("RUDP admission is bounded and freed sessions admit new peers"
     check(first_session && second_session, "both peer endpoints have admitted sessions");
     DOCTEST_CHECK(first_session->conversation() == first);
     DOCTEST_CHECK(second_session->conversation() == second);
-    for (unsigned i = 2; i < peers.size(); ++i)
-    {
+    for (unsigned i = 2; i < peers.size(); ++i) {
         peers[i]->send(arknet::detail::rudp_control(1, i + 1));
     }
     // A missing ACK proves rejection only after every excess SYN was handled.
     runtime.until([&] { return runtime.server.received_datagrams == peers.size(); });
     DOCTEST_CHECK(runtime.server.get_session_count() == 2);
     DOCTEST_CHECK(handshakes == 2);
-    for (unsigned i = 2; i < peers.size(); ++i)
-    {
+    for (unsigned i = 2; i < peers.size(); ++i) {
         DOCTEST_CHECK_FALSE(peers[i]->acknowledged(i + 1).has_value());
     }
     peers[1]->send(arknet::detail::rudp_control(1, 2));
@@ -250,8 +236,7 @@ DOCTEST_TEST_CASE("RUDP invalid datagrams cannot refresh session liveness") {
     const std::vector<std::string> invalid{"junk", arq_message(conversation + 1), bad_length, bad_command,
         arknet::detail::rudp_control(1, 122), arknet::detail::rudp_control(3, 123, conversation + 1),
         arknet::detail::rudp_control(3, 122, conversation)};
-    for (const auto& packet : invalid)
-    {
+    for (const auto& packet : invalid) {
         const auto received = runtime.server.received_datagrams;
         peer.send(packet);
         runtime.until([&] { return runtime.server.received_datagrams == received + 1; });
@@ -272,8 +257,7 @@ DOCTEST_TEST_CASE("RUDP invalid datagrams cannot refresh session liveness") {
 }
 
 DOCTEST_TEST_CASE("RUDP invalid traffic cannot postpone the silence timeout") {
-    for (unsigned mode = 0; mode < 4; ++mode)
-    {
+    for (unsigned mode = 0; mode < 4; ++mode) {
         DOCTEST_INFO(mode);
         unsigned disconnected{};
         arknet::rudp_session* original{};
@@ -283,8 +267,7 @@ DOCTEST_TEST_CASE("RUDP invalid traffic cannot postpone the silence timeout") {
         polled_server runtime;
         runtime.server.bind_connect([](auto& session) { session->set_silence_timeout(60ms); });
         runtime.server.bind_disconnect([&](auto& session) {
-            if (session.get() == original)
-            {
+            if (session.get() == original) {
                 ++disconnected;
                 disconnect_error = arknet::get_last_error();
             }
@@ -297,8 +280,7 @@ DOCTEST_TEST_CASE("RUDP invalid traffic cannot postpone the silence timeout") {
         check(session, "timeout test retains its original session");
         original = session.get();
         std::string invalid;
-        switch (mode)
-        {
+        switch (mode) {
         case 0:
             invalid = "junk";
             break;
@@ -313,8 +295,7 @@ DOCTEST_TEST_CASE("RUDP invalid traffic cannot postpone the silence timeout") {
             break;
         }
         const auto deadline = std::chrono::steady_clock::now() + 5s;
-        while (!session->is_stopped() && std::chrono::steady_clock::now() < deadline)
-        {
+        while (!session->is_stopped() && std::chrono::steady_clock::now() < deadline) {
             peer.send(invalid);
             runtime.context.run_one_for(5ms);
         }

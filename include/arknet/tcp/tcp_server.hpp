@@ -13,8 +13,7 @@ ARKNET_CLASS_FORWARD_DECLARE_TCP_SERVER;
 template<class Derived, class Session>
 class tcp_server_impl_t
     : public server_impl_t<Derived, Session>
-    , public tcp_tag
-{
+    , public tcp_tag {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_SERVER;
@@ -59,32 +58,25 @@ public:
     void stop() {
         const bool worker = this->iopool().running_in_threads();
         std::unique_lock owner_lock(owner_stop_mutex_, std::defer_lock);
-        if (!worker)
-        {
+        if (!worker) {
             owner_lock.lock();
-            if (owner_stop_active_)
-            {
+            if (owner_stop_active_) {
                 set_last_error(asio::error::operation_not_supported);
                 return;
             }
         }
         defer_event release_owner{[this, worker] {
-            if (!worker)
-            {
+            if (!worker) {
                 owner_stop_active_ = false;
             }
         }};
-        if (!worker)
-        {
+        if (!worker) {
             owner_stop_active_ = true;
         }
         this->_set_async_wait_acceptance(false);
-        if (this->is_iopool_stopped())
-        {
-            if (!worker)
-            {
-                if (!this->io_->context().stopped())
-                {
+        if (this->is_iopool_stopped()) {
+            if (!worker) {
+                if (!this->io_->context().stopped()) {
                     _wait_stop_operations();
                 }
                 // Another external owner may still be completing lane fences.
@@ -92,8 +84,7 @@ public:
             }
             return;
         }
-        if (this->io_->context().stopped() && is_stopped())
-        {
+        if (this->io_->context().stopped() && is_stopped()) {
             this->stop_iopool();
             return;
         }
@@ -102,18 +93,14 @@ public:
         auto completion = std::make_shared<std::promise<void>>();
         auto result = completion->get_future();
         owner.post([&owner, lifetime = owner.selfptr(), completion] {
-            if (owner.is_stopped())
-            {
+            if (owner.is_stopped()) {
                 completion->set_value();
-            }
-            else
-            {
+            } else {
                 owner.stop_waiters_.push_back(completion);
                 owner._do_stop(asio::error::operation_aborted, owner.selfptr());
             }
         });
-        if (!worker)
-        {
+        if (!worker) {
             result.get();
             _wait_stop_operations();
         }
@@ -121,14 +108,12 @@ public:
     }
 
     bool wait_stopped() {
-        if (this->iopool().running_in_threads() || this->io_->context().get_executor().running_in_this_thread())
-        {
+        if (this->iopool().running_in_threads() || this->io_->context().get_executor().running_in_this_thread()) {
             set_last_error(asio::error::operation_not_supported);
             return false;
         }
         std::lock_guard owner_lock(owner_stop_mutex_);
-        if (owner_stop_active_)
-        {
+        if (owner_stop_active_) {
             set_last_error(asio::error::operation_not_supported);
             return false;
         }
@@ -205,8 +190,7 @@ protected:
         const auto hostname = detail::to_string(std::forward<Host>(host));
         const auto service = detail::to_string(std::forward<Port>(port));
         this->start_iopool();
-        if (!this->is_iopool_started())
-        {
+        if (!this->is_iopool_started()) {
             set_last_error(asio::error::operation_aborted);
             return false;
         }
@@ -218,8 +202,7 @@ protected:
                 auto& owner = this->derived();
                 defer_event finish{[completion] { completion->set_value(get_last_error()); }};
                 auto expected = state_t::stopped;
-                if (!this->state_.compare_exchange_strong(expected, state_t::starting))
-                {
+                if (!this->state_.compare_exchange_strong(expected, state_t::starting)) {
                     set_last_error(asio::error::already_started);
                     return;
                 }
@@ -235,8 +218,7 @@ protected:
                     [&owner](void*) { owner._exec_stop(asio::error::operation_aborted, owner.selfptr()); });
                 owner._handle_start(open_listener(hostname, service), std::move(lifetime), std::move(policy));
             });
-        if (!this->iopool().running_in_threads())
-        {
+        if (!this->iopool().running_in_threads()) {
             set_last_error(result.get());
             return !get_last_error();
         }
@@ -248,22 +230,17 @@ protected:
     void _handle_start(error_code ec, std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy) {
         ARKNET_ASSERT(this->io_->running_in_this_thread());
         auto expected = state_t::starting;
-        if (!ec && !this->state_.compare_exchange_strong(expected, state_t::started))
-        {
+        if (!ec && !this->state_.compare_exchange_strong(expected, state_t::started)) {
             ec = asio::error::operation_aborted;
         }
         set_last_error(ec);
         this->derived()._fire_start();
-        if (!ec && this->state_ != state_t::started)
-        {
+        if (!ec && this->state_ != state_t::started) {
             ec = asio::error::operation_aborted;
         }
-        if (ec)
-        {
+        if (ec) {
             this->derived()._do_stop(ec, std::move(lifetime));
-        }
-        else
-        {
+        } else {
             this->derived()._post_accept(std::move(lifetime), std::move(policy));
         }
     }
@@ -271,10 +248,8 @@ protected:
     void _do_stop(const error_code& ec, std::shared_ptr<Derived> lifetime) {
         ARKNET_ASSERT(this->io_->running_in_this_thread());
         auto previous = this->state_.load();
-        while (previous == state_t::starting || previous == state_t::started)
-        {
-            if (this->state_.compare_exchange_weak(previous, state_t::stopping))
-            {
+        while (previous == state_t::starting || previous == state_t::started) {
+            if (this->state_.compare_exchange_weak(previous, state_t::stopping)) {
                 this->derived()._post_stop(ec, std::move(lifetime), previous);
                 return;
             }
@@ -290,10 +265,8 @@ protected:
             this->sessions_.quick_for_each([](std::shared_ptr<Session>& session) { session->stop(); });
             // TLS and protocol-upgrade sessions can still be starting before
             // they join sessions_. Stop those accepted children as well.
-            for (auto& pending : _session_operations_snapshot())
-            {
-                if (auto session = pending.lock(); session && session->state_.load() == state_t::starting)
-                {
+            for (auto& pending : _session_operations_snapshot()) {
+                if (auto session = pending.lock(); session && session->state_.load() == state_t::starting) {
                     session->stop();
                 }
             }
@@ -313,8 +286,7 @@ protected:
             auto expected = state_t::stopping;
             const bool changed = this->state_.compare_exchange_strong(expected, state_t::stopped);
             ARKNET_ASSERT(changed);
-            if (changed)
-            {
+            if (changed) {
                 this->derived()._handle_stop(ec, std::move(lifetime));
             }
         });
@@ -328,8 +300,7 @@ protected:
         super::stop();
         close_listener();
         ARKNET_ASSERT(this->state_ == state_t::stopped);
-        for (auto& completion : stop_waiters_)
-        {
+        for (auto& completion : stop_waiters_) {
             completion->set_value();
         }
         stop_waiters_.clear();
@@ -338,8 +309,7 @@ protected:
     template<class... Construction>
     std::shared_ptr<Session> _make_session(Construction&&... construction) {
         auto lane = this->_get_io();
-        if (this->iots_.size() > 1 && lane == this->_get_io(0))
-        {
+        if (this->iots_.size() > 1 && lane == this->_get_io(0)) {
             lane = this->_get_io();
         }
         return std::make_shared<Session>(std::forward<Construction>(construction)..., this->sessions_, this->listener_,
@@ -349,15 +319,13 @@ protected:
     template<class Condition>
     void _post_accept(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy) {
         ARKNET_ASSERT(this->io_->running_in_this_thread());
-        if (!this->derived().is_started())
-        {
+        if (!this->derived().is_started()) {
             return;
         }
         auto session = this->derived()._make_session();
         {
             std::lock_guard lock(session_operations_mutex_);
-            if (session_operations_.size() >= session_operations_prune_at_)
-            {
+            if (session_operations_.size() >= session_operations_prune_at_) {
                 std::erase_if(session_operations_, [](const auto& session) { return session.expired(); });
                 session_operations_prune_at_ = (std::max)(std::size_t{64}, session_operations_.size() * 2);
             }
@@ -384,22 +352,19 @@ protected:
     void _handle_accept(const error_code& ec, std::shared_ptr<Session> session, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy) {
         set_last_error(ec);
-        if (ec == asio::error::operation_aborted || !this->derived().is_started())
-        {
+        if (ec == asio::error::operation_aborted || !this->derived().is_started()) {
             return;
         }
         session->counter_ptr_ = this->counter_ptr_;
         session->start(detail::to_shared_ptr(policy->clone()));
-        if (!ec)
-        {
+        if (!ec) {
             this->derived()._post_accept(std::move(lifetime), std::move(policy));
             return;
         }
         acceptor_timer_->expires_after(std::chrono::seconds(1));
         acceptor_timer_->async_wait(this->derived()._track_async_operation(
             [this, lifetime = std::move(lifetime), policy = std::move(policy)](error_code retry_error) mutable {
-                if (!retry_error)
-                {
+                if (!retry_error) {
                     this->derived().post([this, lifetime = std::move(lifetime), policy = std::move(policy)]() mutable {
                         this->derived()._post_accept(std::move(lifetime), std::move(policy));
                     });
@@ -444,10 +409,8 @@ private:
         auto pending_sessions = _session_operations_snapshot();
         // Stopped sessions may still own canceled native callbacks. They borrow
         // the listener and manager even when a user retains the session itself.
-        for (auto& pending : pending_sessions)
-        {
-            if (auto session = pending.lock())
-            {
+        for (auto& pending : pending_sessions) {
+            if (auto session = pending.lock()) {
                 session->_wait_async_operations();
             }
         }
@@ -484,32 +447,27 @@ private:
         asio::ip::tcp::resolver resolver(this->io_->executor());
         const auto candidates = resolver.resolve(
             host, service, asio::ip::resolver_base::passive | asio::ip::resolver_base::address_configured, ec);
-        if (ec)
-        {
+        if (ec) {
             return ec;
         }
-        if (candidates.empty())
-        {
+        if (candidates.empty()) {
             return asio::error::host_not_found;
         }
         const asio::ip::tcp::endpoint endpoint = *candidates.begin();
         acceptor_->open(endpoint.protocol(), ec);
         this->update_listen_endpoint();
-        if (ec)
-        {
+        if (ec) {
             return ec;
         }
         acceptor_->set_option(asio::socket_base::reuse_address{true}, ec);
-        if (ec)
-        {
+        if (ec) {
             return ec;
         }
         clear_last_error();
         this->derived()._fire_init();
         acceptor_->bind(endpoint, ec);
         this->update_listen_endpoint();
-        if (!ec)
-        {
+        if (!ec) {
             acceptor_->listen(asio::socket_base::max_listen_connections, ec);
         }
         return ec;
@@ -529,8 +487,7 @@ template<class Derived, class Session>
 using tcp_server_impl_t = detail::tcp_server_impl_t<Derived, Session>;
 
 template<class Session>
-class tcp_server_t : public detail::tcp_server_impl_t<tcp_server_t<Session>, Session>
-{
+class tcp_server_t : public detail::tcp_server_impl_t<tcp_server_t<Session>, Session> {
 public:
     using detail::tcp_server_impl_t<tcp_server_t<Session>, Session>::tcp_server_impl_t;
 };
@@ -543,8 +500,7 @@ using tcp_server = tcp_server_t<tcp_session>;
 namespace arknet {
 
 template<class Session>
-class tcp_rate_server_t : public tcp_server_impl_t<tcp_rate_server_t<Session>, Session>
-{
+class tcp_rate_server_t : public tcp_server_impl_t<tcp_rate_server_t<Session>, Session> {
 public:
     using tcp_server_impl_t<tcp_rate_server_t<Session>, Session>::tcp_server_impl_t;
 };

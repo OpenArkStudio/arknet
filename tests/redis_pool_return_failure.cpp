@@ -46,8 +46,7 @@ void actor_barrier(pool& connections) {
 void check_diagnostics(
     const pool& connections, std::uint64_t expected, arknet::redis::pool_diagnostics* retained = nullptr) {
     const auto info = connections.diagnostics();
-    if (retained)
-    {
+    if (retained) {
         *retained = info;
     }
     DOCTEST_CHECK(info.return_submission_failures == expected);
@@ -85,15 +84,13 @@ void arm_on_actor_before(pool& connections, Submit submit) {
             scoped_allocation_failure::arm();
         },
         -1ms);
-    if (ready.wait_for(5s) != std::future_status::ready)
-    {
+    if (ready.wait_for(5s) != std::future_status::ready) {
         posted->count_down();
         DOCTEST_FAIL("pool actor did not reach allocation arm barrier");
     }
-    try
-    { submit(); }
-    catch (...)
-    {
+    try {
+        submit();
+    } catch (...) {
         posted->count_down();
         throw;
     }
@@ -186,12 +183,10 @@ DOCTEST_TEST_CASE("Redis pool retains repeated close-publication failures "
     std::jthread observer([&](std::stop_token stop) {
         std::uint64_t previous{};
         reader_started.count_down();
-        while (!stop.stop_requested())
-        {
+        while (!stop.stop_requested()) {
             const auto info = connections.diagnostics();
             if (info.return_submission_failures < previous ||
-                bool(info.last_return_submission_exception) != (info.return_submission_failures != 0))
-            {
+                bool(info.last_return_submission_exception) != (info.return_submission_failures != 0)) {
                 coherent = false;
             }
             previous = info.return_submission_failures;
@@ -219,8 +214,7 @@ DOCTEST_TEST_CASE("Redis pool retains repeated close-publication failures "
     DOCTEST_CHECK(scoped_allocation_failure::injections == before + 2);
     check_diagnostics(connections, 2, &retained[1]);
     DOCTEST_CHECK(future.wait_for(0ms) != std::future_status::ready);
-    for (unsigned attempt = 0; attempt != 2; ++attempt)
-    {
+    for (unsigned attempt = 0; attempt != 2; ++attempt) {
         arm_on_actor_before(connections, [&] { connections.cancel(0); });
         actor_barrier(connections);
         DOCTEST_CHECK(scoped_allocation_failure::injections == before + 3 + attempt);

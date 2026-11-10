@@ -36,8 +36,7 @@ constexpr std::size_t sample_limit = 8192;
 constexpr auto drain_time = std::chrono::seconds(10);
 constexpr int receive_buffer = 4 * 1024 * 1024;
 
-struct options
-{
+struct options {
     std::size_t payload = 1024;
     std::size_t clients = 1;
     std::size_t window = 1;
@@ -53,8 +52,7 @@ struct options
 std::size_t integer(std::string_view text) {
     std::size_t result{};
     const auto parsed = std::from_chars(text.data(), text.data() + text.size(), result);
-    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size())
-    {
+    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size()) {
         throw std::invalid_argument("invalid integer argument");
     }
     return result;
@@ -63,8 +61,7 @@ std::size_t integer(std::string_view text) {
 double duration(const std::string& text) {
     char* end{};
     const auto result = std::strtod(text.c_str(), &end);
-    if (text.empty() || end != text.c_str() + text.size() || !std::isfinite(result))
-    {
+    if (text.empty() || end != text.c_str() + text.size() || !std::isfinite(result)) {
         throw std::invalid_argument("invalid duration argument");
     }
     return result;
@@ -73,11 +70,9 @@ double duration(const std::string& text) {
 options arguments(int argc, char** argv) {
     options result;
     bool explicit_profile = false, explicit_loss = false, explicit_burst = false;
-    for (int i = 1; i < argc; ++i)
-    {
+    for (int i = 1; i < argc; ++i) {
         const std::string key = argv[i];
-        if (key == "--help")
-        {
+        if (key == "--help") {
             std::cout << "arknet_rudp_benchmark --payload BYTES --clients COUNT --window COUNT "
                          "--seconds SECONDS --warmup SECONDS --rounds COUNT "
                          "--io-model shared|sharded --io-threads COUNT "
@@ -87,133 +82,86 @@ options arguments(int argc, char** argv) {
                          "--seed INTEGER\n";
             std::exit(0);
         }
-        if (++i == argc)
-        {
+        if (++i == argc) {
             throw std::invalid_argument("missing value for " + key);
         }
         const std::string value = argv[i];
-        if (key == "--payload")
-        {
+        if (key == "--payload") {
             result.payload = integer(value);
-        }
-        else if (key == "--clients")
-        {
+        } else if (key == "--clients") {
             result.clients = integer(value);
-        }
-        else if (key == "--window")
-        {
+        } else if (key == "--window") {
             result.window = integer(value);
-        }
-        else if (key == "--io-threads")
-        {
+        } else if (key == "--io-threads") {
             result.io_threads = integer(value);
-        }
-        else if (key == "--rounds")
-        {
+        } else if (key == "--rounds") {
             result.rounds = integer(value);
-        }
-        else if (key == "--seconds")
-        {
+        } else if (key == "--seconds") {
             result.seconds = duration(value);
-        }
-        else if (key == "--warmup")
-        {
+        } else if (key == "--warmup") {
             result.warmup = duration(value);
-        }
-        else if (key == "--io-model")
-        {
+        } else if (key == "--io-model") {
             result.io_model = value;
-        }
-        else if (key == "--fec")
-        {
+        } else if (key == "--fec") {
             result.fec = value;
-        }
-        else if (key == "--profile")
-        {
+        } else if (key == "--profile") {
             result.profile = value;
             explicit_profile = true;
-        }
-        else if (key == "--seed")
-        {
+        } else if (key == "--seed") {
             result.impairment.seed = integer(value);
-        }
-        else if (key == "--loss-percent" || key == "--duplicate-percent" || key == "--reorder-percent" ||
-                 key == "--delay-ms" || key == "--burst-count" || key == "--burst-period")
-        {
+        } else if (key == "--loss-percent" || key == "--duplicate-percent" || key == "--reorder-percent" ||
+                   key == "--delay-ms" || key == "--burst-count" || key == "--burst-period") {
             const auto number = integer(value);
-            if (number > 1000000)
-            {
+            if (number > 1000000) {
                 throw std::invalid_argument("impairment argument out of range");
             }
-            if (key == "--loss-percent")
-            {
+            if (key == "--loss-percent") {
                 result.impairment.loss_percent = static_cast<unsigned>(number);
                 explicit_loss = true;
-            }
-            else if (key == "--duplicate-percent")
-            {
+            } else if (key == "--duplicate-percent") {
                 result.impairment.duplicate_percent = static_cast<unsigned>(number);
-            }
-            else if (key == "--reorder-percent")
-            {
+            } else if (key == "--reorder-percent") {
                 result.impairment.reorder_percent = static_cast<unsigned>(number);
-            }
-            else if (key == "--delay-ms")
-            {
+            } else if (key == "--delay-ms") {
                 result.impairment.delay_ms = static_cast<unsigned>(number);
-            }
-            else if (key == "--burst-count")
-            {
+            } else if (key == "--burst-count") {
                 result.impairment.burst_count = static_cast<unsigned>(number);
                 explicit_burst = true;
-            }
-            else
-            {
+            } else {
                 result.impairment.burst_period = static_cast<unsigned>(number);
             }
-        }
-        else
-        {
+        } else {
             throw std::invalid_argument("unknown argument: " + key);
         }
     }
     if (result.payload < 16 || result.payload > 16384 || result.clients < 1 || result.clients > 1024 ||
         result.window < 1 || result.window > 1024 || result.io_threads < 1 || result.io_threads > 64 ||
         result.rounds < 1 || result.rounds > 100 || result.seconds <= 0 || result.seconds > 3600 || result.warmup < 0 ||
-        result.warmup > 3600)
-    {
+        result.warmup > 3600) {
         throw std::invalid_argument("argument out of range");
     }
-    if (std::uint64_t(result.clients) * result.window * result.payload > 256 * 1024 * 1024)
-    {
+    if (std::uint64_t(result.clients) * result.window * result.payload > 256 * 1024 * 1024) {
         throw std::invalid_argument("requested outstanding payloads exceed 256 MiB");
     }
-    if (result.io_model != "shared" && result.io_model != "sharded")
-    {
+    if (result.io_model != "shared" && result.io_model != "sharded") {
         throw std::invalid_argument("unsupported IO model");
     }
-    if (result.fec != "off" && result.fec != "fixed" && result.fec != "adaptive")
-    {
+    if (result.fec != "off" && result.fec != "fixed" && result.fec != "adaptive") {
         throw std::invalid_argument("unsupported FEC policy");
     }
-    if (!explicit_profile)
-    {
+    if (!explicit_profile) {
         result.profile = result.impairment.burst_count ? "burst" : result.impairment.loss_percent ? "random" : "clean";
     }
-    if (result.profile != "clean" && result.profile != "random" && result.profile != "burst")
-    {
+    if (result.profile != "clean" && result.profile != "random" && result.profile != "burst") {
         throw std::invalid_argument("unsupported impairment profile");
     }
-    if (result.profile == "random" && !explicit_loss)
-    {
+    if (result.profile == "random" && !explicit_loss) {
         result.impairment.loss_percent = 3;
     }
-    if (result.profile == "burst" && !explicit_burst)
-    {
+    if (result.profile == "burst" && !explicit_burst) {
         result.impairment.burst_count = 3;
     }
-    if (result.profile == "clean" && (result.impairment.loss_percent || result.impairment.burst_count))
-    {
+    if (result.profile == "clean" && (result.impairment.loss_percent || result.impairment.burst_count)) {
         throw std::invalid_argument("clean profile cannot include packet loss");
     }
     result.impairment.validate();
@@ -226,8 +174,7 @@ arknet::fec::options fec_options(const options& settings) {
                                         : arknet::fec::options{};
 }
 
-struct transport_totals
-{
+struct transport_totals {
     arknet::rudp::statistics value;
     unsigned endpoints{}, parity_min = 16, parity_max{};
 };
@@ -264,29 +211,23 @@ transport_totals snapshot(arknet::rudp_server& server, const std::vector<std::un
     std::vector<std::shared_ptr<arknet::rudp_session>> sessions;
     server.foreach_session([&](auto& session) { sessions.push_back(session); });
     std::vector<std::future<arknet::rudp::statistics>> futures;
-    for (const auto& client : clients)
-    {
+    for (const auto& client : clients) {
         futures.push_back(client->get_rudp_statistics());
     }
-    for (const auto& session : sessions)
-    {
+    for (const auto& session : sessions) {
         futures.push_back(session->get_rudp_statistics());
     }
     transport_totals totals;
-    for (auto& future : futures)
-    {
-        if (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready)
-        {
+    for (auto& future : futures) {
+        if (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
             throw std::runtime_error("RUDP statistics snapshot timed out");
         }
         const auto value = future.get();
-        if (value.fec.retained_bytes > settings.max_buffer_bytes || value.fec.retained_groups > settings.max_groups)
-        {
+        if (value.fec.retained_bytes > settings.max_buffer_bytes || value.fec.retained_groups > settings.max_groups) {
             throw std::runtime_error("FEC retention limit exceeded");
         }
         if (value.arq_pending_bytes > arknet::arq::options{}.max_pending_bytes ||
-            value.raw_queued_bytes > arknet::arq::options{}.max_pending_bytes)
-        {
+            value.raw_queued_bytes > arknet::arq::options{}.max_pending_bytes) {
             throw std::runtime_error("RUDP queue limit exceeded");
         }
         add(totals, value);
@@ -294,8 +235,7 @@ transport_totals snapshot(arknet::rudp_server& server, const std::vector<std::un
     return totals;
 }
 
-struct metrics
-{
+struct metrics {
     explicit metrics(unsigned tag)
         : tag(tag) {
         samples.reserve(sample_limit);
@@ -323,15 +263,11 @@ struct metrics
     void observe(double microseconds) {
         std::lock_guard lock(samples_mutex);
         ++observations;
-        if (samples.size() < sample_limit)
-        {
+        if (samples.size() < sample_limit) {
             samples.push_back(microseconds);
-        }
-        else
-        {
+        } else {
             const auto index = std::uniform_int_distribution<std::uint64_t>(0, observations - 1)(random);
-            if (index < sample_limit)
-            {
+            if (index < sample_limit) {
                 samples[static_cast<std::size_t>(index)] = microseconds;
             }
         }
@@ -343,8 +279,7 @@ struct metrics
     }
 };
 
-struct round_state
-{
+struct round_state {
     std::array<std::shared_ptr<metrics>, 2> phases{std::make_shared<metrics>(0), std::make_shared<metrics>(1)};
     std::atomic<bool> closing{};
     int server_receive_buffer{};
@@ -362,31 +297,24 @@ bool send(Sender& sender, std::string message, const std::shared_ptr<metrics>& s
     auto completed = std::make_shared<std::atomic<bool>>(false);
     ++state->pending_completions;
     const auto completion = [state, completed, size](const arknet::error_code& error, std::size_t bytes) noexcept {
-        if (completed->exchange(true))
-        {
+        if (completed->exchange(true)) {
             ++state->duplicate_completions;
             return;
         }
-        if (error || bytes != size)
-        {
+        if (error || bytes != size) {
             ++state->send_errors;
         }
-        if (state->pending_completions.fetch_sub(1) == 1)
-        {
+        if (state->pending_completions.fetch_sub(1) == 1) {
             state->notify();
         }
     };
-    try
-    {
+    try {
         const bool accepted = sender.async_send(std::move(message), completion);
-        if (!accepted)
-        {
+        if (!accepted) {
             ++state->rejected;
         }
         return accepted;
-    }
-    catch (...)
-    {
+    } catch (...) {
         ++state->callback_exceptions;
         completion(asio::error::operation_aborted, 0);
         return false;
@@ -394,25 +322,21 @@ bool send(Sender& sender, std::string message, const std::shared_ptr<metrics>& s
 }
 
 void put_integer(std::string& message, std::size_t offset, std::uint64_t value, std::size_t bytes) {
-    for (std::size_t i = 0; i < bytes; ++i)
-    {
+    for (std::size_t i = 0; i < bytes; ++i) {
         message[offset + i] = static_cast<char>((value >> ((bytes - 1 - i) * 8)) & 255);
     }
 }
 
 std::uint64_t get_integer(std::string_view message, std::size_t offset, std::size_t bytes) {
     std::uint64_t value{};
-    for (std::size_t i = 0; i < bytes; ++i)
-    {
+    for (std::size_t i = 0; i < bytes; ++i) {
         value = (value << 8) | static_cast<unsigned char>(message[offset + i]);
     }
     return value;
 }
 
-struct client_state
-{
-    struct pending
-    {
+struct client_state {
+    struct pending {
         std::string message;
         clock_type::time_point sent;
         std::uint64_t sequence{};
@@ -437,33 +361,27 @@ struct client_state
     bool stopped{}, finished{};
 
     void finish(bool force = false) noexcept {
-        if (!phase || finished)
-        {
+        if (!phase || finished) {
             return;
         }
-        if (force)
-        {
+        if (force) {
             phase->unfinished += inflight;
-            for (auto& slot : slots)
-            {
+            for (auto& slot : slots) {
                 slot.message.clear();
             }
             inflight = 0;
         }
-        if (inflight)
-        {
+        if (inflight) {
             return;
         }
         finished = true;
-        if (phase->remaining.fetch_sub(1) == 1)
-        {
+        if (phase->remaining.fetch_sub(1) == 1) {
             phase->notify();
         }
     }
 
     void transmit(std::size_t index) {
-        if (stopped || clock_type::now() >= phase->deadline)
-        {
+        if (stopped || clock_type::now() >= phase->deadline) {
             return;
         }
         auto& slot = slots[index];
@@ -473,18 +391,14 @@ struct client_state
         slot.sequence = next_sequence++;
         put_integer(slot.message, 4, id, 4);
         put_integer(slot.message, 8, slot.sequence, 8);
-        for (std::size_t i = 16; i < slot.message.size(); ++i)
-        {
+        for (std::size_t i = 16; i < slot.message.size(); ++i) {
             slot.message[i] = static_cast<char>((slot.sequence + i * 17 + std::uint64_t(id) * 31) & 255);
         }
         slot.sent = clock_type::now();
         ++inflight;
-        if (send(client, slot.message, phase))
-        {
+        if (send(client, slot.message, phase)) {
             ++phase->sent;
-        }
-        else
-        {
+        } else {
             slot.message.clear();
             --inflight;
             stopped = true;
@@ -495,26 +409,20 @@ struct client_state
         phase = current;
         stopped = finished = false;
         expected_sequence = next_sequence;
-        try
-        {
-            if (!client.is_started())
-            {
+        try {
+            if (!client.is_started()) {
                 ++phase->disconnects;
                 stopped = true;
                 finish(true);
                 return;
             }
-            for (std::size_t i = 0; i < slots.size(); ++i)
-            {
+            for (std::size_t i = 0; i < slots.size(); ++i) {
                 transmit(i);
             }
-            if (stopped)
-            {
+            if (stopped) {
                 finish();
             }
-        }
-        catch (...)
-        {
+        } catch (...) {
             ++phase->callback_exceptions;
             stopped = true;
             finish(true);
@@ -522,31 +430,24 @@ struct client_state
     }
 
     void receive(std::string_view message) noexcept {
-        try
-        {
+        try {
             if (!phase || message.size() != settings.payload || message.substr(0, 3) != "ANR" ||
-                static_cast<unsigned char>(message[3]) != phase->tag || get_integer(message, 4, 4) != id)
-            {
+                static_cast<unsigned char>(message[3]) != phase->tag || get_integer(message, 4, 4) != id) {
                 ++(phase ? phase : owner->phases[0])->content_errors;
                 return;
             }
             const auto sequence = get_integer(message, 8, 8);
             auto found = std::find_if(slots.begin(), slots.end(),
                 [sequence](const pending& slot) { return !slot.message.empty() && slot.sequence == sequence; });
-            if (finished || found == slots.end())
-            {
+            if (finished || found == slots.end()) {
                 ++phase->unexpected;
                 return;
             }
             const auto now = clock_type::now();
-            if (message != found->message)
-            {
+            if (message != found->message) {
                 ++phase->content_errors;
-            }
-            else
-            {
-                if (sequence != expected_sequence)
-                {
+            } else {
+                if (sequence != expected_sequence) {
                     ++phase->order_errors;
                 }
                 expected_sequence = sequence + 1;
@@ -556,22 +457,18 @@ struct client_state
             const auto index = static_cast<std::size_t>(found - slots.begin());
             found->message.clear();
             --inflight;
-            if (now < phase->deadline)
-            {
+            if (now < phase->deadline) {
                 transmit(index);
             }
             finish();
-        }
-        catch (...)
-        {
+        } catch (...) {
             ++(phase ? phase : owner->phases[0])->callback_exceptions;
             stopped = true;
         }
     }
 
     void disconnect() noexcept {
-        if (!owner->closing && phase)
-        {
+        if (!owner->closing && phase) {
             ++phase->disconnects;
             stopped = true;
             finish(true);
@@ -581,8 +478,7 @@ struct client_state
 
 void run_phase(const std::vector<std::shared_ptr<client_state>>& clients, const std::shared_ptr<metrics>& phase,
     double seconds, const std::function<void()>& sample = {}) {
-    if (seconds == 0)
-    {
+    if (seconds == 0) {
         return;
     }
     phase->remaining = clients.size();
@@ -590,20 +486,16 @@ void run_phase(const std::vector<std::shared_ptr<client_state>>& clients, const 
     phase->deadline =
         phase->started + std::chrono::duration_cast<clock_type::duration>(std::chrono::duration<double>(seconds));
     const auto cpu_start = process_cpu();
-    for (const auto& state : clients)
-    {
+    for (const auto& state : clients) {
         state->client.post([state, phase] { state->begin(phase); });
     }
-    while (clock_type::now() < phase->deadline)
-    {
+    while (clock_type::now() < phase->deadline) {
         std::this_thread::sleep_until(std::min(phase->deadline, clock_type::now() + std::chrono::milliseconds(100)));
-        if (sample)
-        {
+        if (sample) {
             sample();
         }
     }
-    for (const auto& state : clients)
-    {
+    for (const auto& state : clients) {
         state->client.post([state] {
             state->stopped = true;
             state->finish();
@@ -612,14 +504,12 @@ void run_phase(const std::vector<std::shared_ptr<client_state>>& clients, const 
     {
         std::unique_lock lock(phase->done_mutex);
         if (!phase->done.wait_until(lock, phase->deadline + drain_time,
-                [&] { return phase->remaining == 0 && phase->pending_completions == 0; }))
-        {
+                [&] { return phase->remaining == 0 && phase->pending_completions == 0; })) {
             ++phase->drain_timeouts;
         }
     }
     std::vector<std::future<void>> barriers;
-    for (const auto& state : clients)
-    {
+    for (const auto& state : clients) {
         barriers.push_back(state->client.post(
             [state] {
                 state->stopped = true;
@@ -627,18 +517,15 @@ void run_phase(const std::vector<std::shared_ptr<client_state>>& clients, const 
             },
             asio::use_future));
     }
-    for (auto& barrier : barriers)
-    {
-        if (barrier.wait_for(std::chrono::seconds(5)) != std::future_status::ready)
-        {
+    for (auto& barrier : barriers) {
+        if (barrier.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
             throw std::runtime_error("client IO barrier timed out");
         }
         barrier.get();
     }
     phase->elapsed = std::chrono::duration<double>(clock_type::now() - phase->started).count();
     const auto cpu_end = process_cpu();
-    if (cpu_start && cpu_end && phase->elapsed > 0)
-    {
+    if (cpu_start && cpu_end && phase->elapsed > 0) {
         phase->cpu_percent = (*cpu_end - *cpu_start) / phase->elapsed * 100;
     }
 }
@@ -646,15 +533,13 @@ void run_phase(const std::vector<std::shared_ptr<client_state>>& clients, const 
 int configure(asio::ip::udp::socket& socket, const std::shared_ptr<round_state>& owner) noexcept {
     arknet::error_code error;
     socket.set_option(asio::socket_base::receive_buffer_size(receive_buffer), error);
-    if (error)
-    {
+    if (error) {
         ++owner->phases[0]->callback_exceptions;
         return 0;
     }
     asio::socket_base::receive_buffer_size effective;
     socket.get_option(effective, error);
-    if (error)
-    {
+    if (error) {
         ++owner->phases[0]->callback_exceptions;
         return 0;
     }
@@ -673,40 +558,34 @@ std::shared_ptr<round_state> benchmark(const options& settings, std::size_t roun
     std::vector<std::shared_ptr<client_state>> states;
     const auto stop = [&] {
         owner->closing = true;
-        for (auto& client : clients)
-        {
+        for (auto& client : clients) {
             client->stop();
         }
         server.stop();
         relay.stop();
     };
-    try
-    {
+    try {
         server.set_rudp_options(arknet::arq::options{});
         server.set_fec_options(fec_options(settings));
         server.bind_init([&server, owner] { owner->server_receive_buffer = configure(server.acceptor(), owner); });
         server.bind_recv([owner](auto& session, std::string_view message) noexcept {
-            try
-            {
+            try {
                 const auto tag = message.size() >= 16 ? static_cast<unsigned char>(message[3]) : 2;
                 const auto state = owner->phases[tag < 2 ? tag : 0];
-                if (tag > 1 || message.substr(0, 3) != "ANR")
-                {
+                if (tag > 1 || message.substr(0, 3) != "ANR") {
                     ++state->content_errors;
                     return;
                 }
                 ++state->server_received;
                 send(*session, std::string(message), state);
+            } catch (...) {
+                ++owner->phases[0]->callback_exceptions;
             }
-            catch (...)
-            { ++owner->phases[0]->callback_exceptions; }
         });
-        if (!server.start("127.0.0.1", 0))
-        {
+        if (!server.start("127.0.0.1", 0)) {
             throw std::runtime_error("server start failed: " + arknet::get_last_error().message());
         }
-        for (std::size_t i = 0; i < settings.clients; ++i)
-        {
+        for (std::size_t i = 0; i < settings.clients; ++i) {
             auto client = std::make_unique<arknet::rudp_client>(1024, 128 * 1024, runtime.context_at(i));
             auto state = std::make_shared<client_state>(*client, owner, settings, static_cast<std::uint32_t>(i));
             client->set_rudp_options(arknet::arq::options{});
@@ -721,8 +600,7 @@ std::shared_ptr<round_state> benchmark(const options& settings, std::size_t roun
             clients.push_back(std::move(client));
             states.push_back(std::move(state));
             const auto port = relay.add({asio::ip::make_address("127.0.0.1"), server.get_listen_port()});
-            if (!clients.back()->start("127.0.0.1", port))
-            {
+            if (!clients.back()->start("127.0.0.1", port)) {
                 throw std::runtime_error("client start failed: " + arknet::get_last_error().message());
             }
         }
@@ -741,18 +619,17 @@ std::shared_ptr<round_state> benchmark(const options& settings, std::size_t roun
         run_phase(states, owner->phases[1], settings.seconds, sample);
         sample();
         owner->relay_after = relay.snapshot();
+    } catch (const std::exception& error) {
+        owner->error = error.what();
+    } catch (...) {
+        owner->error = "unknown benchmark failure";
     }
-    catch (const std::exception& error)
-    { owner->error = error.what(); }
-    catch (...)
-    { owner->error = "unknown benchmark failure"; }
     stop();
     return owner;
 }
 
 double percentile(std::vector<double> values, double fraction) {
-    if (values.empty())
-    {
+    if (values.empty()) {
         return 0;
     }
     std::sort(values.begin(), values.end());
@@ -760,8 +637,7 @@ double percentile(std::vector<double> values, double fraction) {
 }
 
 double median(std::vector<double> values) {
-    if (values.empty())
-    {
+    if (values.empty()) {
         return 0;
     }
     std::sort(values.begin(), values.end());
@@ -771,18 +647,12 @@ double median(std::vector<double> values) {
 
 void write_quoted(std::string_view value) {
     std::cout << '"';
-    for (const unsigned char c : value)
-    {
-        if (c == '"' || c == '\\')
-        {
+    for (const unsigned char c : value) {
+        if (c == '"' || c == '\\') {
             std::cout << '\\' << static_cast<char>(c);
-        }
-        else if (c < 32)
-        {
+        } else if (c < 32) {
             std::cout << "\\u00" << std::hex << std::setw(2) << std::setfill('0') << unsigned(c) << std::dec;
-        }
-        else
-        {
+        } else {
             std::cout << static_cast<char>(c);
         }
     }
@@ -790,12 +660,9 @@ void write_quoted(std::string_view value) {
 }
 
 void optional_number(const std::optional<double>& value) {
-    if (value)
-    {
+    if (value) {
         std::cout << *value;
-    }
-    else
-    {
+    } else {
         std::cout << "null";
     }
 }
@@ -854,10 +721,8 @@ bool output(const options& settings, const std::vector<std::shared_ptr<round_sta
               << ",\"fec_group_wait_ms\":" << fec.group_wait_ms
               << ",\"fec_retention_limit_bytes_per_endpoint\":" << fec.max_buffer_bytes
               << ",\"cpu_percent_per_logical_core\":100,\"rounds\":[";
-    for (std::size_t i = 0; i < rounds.size(); ++i)
-    {
-        if (i)
-        {
+    for (std::size_t i = 0; i < rounds.size(); ++i) {
+        if (i) {
             std::cout << ',';
         }
         const auto& round = rounds[i];
@@ -886,13 +751,11 @@ bool output(const options& settings, const std::vector<std::shared_ptr<round_sta
         const auto round_failures = errors != 0 ? errors : (passed ? 0 : 1);
         failures += round_failures;
         ok = ok && passed;
-        if (passed)
-        {
+        if (passed) {
             rates.push_back(rate);
             p50s.push_back(p50);
             p99s.push_back(p99);
-            if (state->cpu_percent)
-            {
+            if (state->cpu_percent) {
                 cpu.push_back(*state->cpu_percent);
             }
             wire_rates.push_back(wire_rate);
@@ -957,12 +820,9 @@ bool output(const options& settings, const std::vector<std::shared_ptr<round_sta
                   << ",\"pending_completions\":" << state->pending_completions
                   << ",\"warmup_failures\":" << round->phases[0]->failures()
                   << ",\"ok\":" << (passed ? "true" : "false") << ",\"error\":";
-        if (round->error.empty())
-        {
+        if (round->error.empty()) {
             std::cout << (passed ? "null" : "\"benchmark validation failed\"");
-        }
-        else
-        {
+        } else {
             write_quoted(round->error);
         }
         std::cout << '}';
@@ -980,12 +840,9 @@ bool output(const options& settings, const std::vector<std::shared_ptr<round_sta
     std::cout << ",\"wire_tx_mbit_per_second_median\":" << median(wire_rates)
               << ",\"wire_payload_overhead_percent_median\":" << median(overheads);
     std::cout << ",\"failures\":" << failures << "},\"peak_rss_bytes\":";
-    if (const auto rss = peak_rss())
-    {
+    if (const auto rss = peak_rss()) {
         std::cout << *rss;
-    }
-    else
-    {
+    } else {
         std::cout << "null";
     }
     std::cout << ",\"ok\":" << (ok ? "true" : "false") << "}\n";
@@ -994,18 +851,14 @@ bool output(const options& settings, const std::vector<std::shared_ptr<round_sta
 } // namespace
 
 int main(int argc, char** argv) {
-    try
-    {
+    try {
         const auto settings = arguments(argc, argv);
         std::vector<std::shared_ptr<round_state>> rounds;
-        for (std::size_t i = 0; i < settings.rounds; ++i)
-        {
+        for (std::size_t i = 0; i < settings.rounds; ++i) {
             rounds.push_back(benchmark(settings, i));
         }
         return output(settings, rounds) ? 0 : 1;
-    }
-    catch (const std::exception& error)
-    {
+    } catch (const std::exception& error) {
         std::cerr << "RUDP benchmark: " << error.what() << '\n';
         return 1;
     }

@@ -19,14 +19,12 @@ namespace {
 using namespace redis_test;
 using namespace std::chrono_literals;
 
-struct publication_probe
-{
+struct publication_probe {
     std::latch entered{1};
     std::latch release{1};
 };
 
-struct tracked_transport : arknet::tcp_client
-{
+struct tracked_transport : arknet::tcp_client {
     template<class... Args>
     explicit tracked_transport(Args&&... args)
         : arknet::tcp_client(std::forward<Args>(args)...) {
@@ -53,12 +51,10 @@ struct tracked_transport : arknet::tcp_client
                 std::lock_guard lock(callbacks_mutex);
                 callback = std::exchange(before_connect, {});
             }
-            if (callback)
-            {
+            if (callback) {
                 callback(error);
             }
-            if (stop_requested && error)
-            {
+            if (stop_requested && error) {
                 ++late_connect_errors;
             }
             arknet::set_last_error(error);
@@ -70,8 +66,7 @@ struct tracked_transport : arknet::tcp_client
     template<class Host, class Port>
     bool async_start(Host&& host, Port&& port) {
         const auto started = arknet::tcp_client::async_start(std::forward<Host>(host), std::forward<Port>(port));
-        if (auto* current = connect_probe.exchange(nullptr))
-        {
+        if (auto* current = connect_probe.exchange(nullptr)) {
             current->entered.count_down();
             current->release.wait();
         }
@@ -84,8 +79,7 @@ struct tracked_transport : arknet::tcp_client
     }
 
     auto& io() {
-        if (auto* current = probe.exchange(nullptr))
-        {
+        if (auto* current = probe.exchange(nullptr)) {
             current->entered.count_down();
             current->release.wait();
         }
@@ -94,8 +88,7 @@ struct tracked_transport : arknet::tcp_client
             std::lock_guard lock(callbacks_mutex);
             callback = std::exchange(reenter, {});
         }
-        if (callback)
-        {
+        if (callback) {
             callback();
         }
         return arknet::tcp_client::io();
@@ -107,8 +100,7 @@ struct tracked_transport : arknet::tcp_client
             std::lock_guard lock(callbacks_mutex);
             callback = std::exchange(on_destroy, {});
         }
-        if (callback)
-        {
+        if (callback) {
             callback();
         }
         ++destroyed;
@@ -134,8 +126,7 @@ result execute(Lease& connection, command arguments) {
     return await(future);
 }
 
-struct capture_probe
-{
+struct capture_probe {
     std::atomic<unsigned>& destroyed;
 
     ~capture_probe() {
@@ -143,13 +134,11 @@ struct capture_probe
     }
 };
 
-struct worker_exit_probe
-{
+struct worker_exit_probe {
     std::shared_ptr<std::atomic<bool>> exited;
 
     ~worker_exit_probe() {
-        if (exited)
-        {
+        if (exited) {
             *exited = true;
         }
     }
@@ -160,8 +149,7 @@ void record_worker_exit(std::shared_ptr<std::atomic<bool>> exited) {
     probe.exited = std::move(exited);
 }
 
-class paired_server
-{
+class paired_server {
     asio::io_context context_;
     asio::ip::tcp::acceptor acceptor_{context_, {asio::ip::address_v4::loopback(), 0}};
     std::thread worker_;
@@ -175,59 +163,45 @@ public:
             std::vector<std::thread> peers;
             std::mutex failures_mutex;
             std::exception_ptr failure;
-            try
-            {
-                for (unsigned index = 0; index < 2; ++index)
-                {
+            try {
+                for (unsigned index = 0; index < 2; ++index) {
                     asio::ip::tcp::socket socket(context_);
                     const auto deadline = std::chrono::steady_clock::now() + 5s;
-                    for (;;)
-                    {
+                    for (;;) {
                         arknet::error_code error;
                         acceptor_.accept(socket, error);
-                        if (!error)
-                        {
+                        if (!error) {
                             break;
                         }
                         if ((error != asio::error::would_block && error != asio::error::try_again) ||
-                            std::chrono::steady_clock::now() >= deadline)
-                        {
+                            std::chrono::steady_clock::now() >= deadline) {
                             throw std::runtime_error("Two-child Redis peer accept failed");
                         }
                         std::this_thread::sleep_for(1ms);
                     }
                     peers.emplace_back([&, socket = std::move(socket)]() mutable {
-                        try
-                        {
+                        try {
                             peer remote(socket);
                             remote.hello();
                             remote.expect({"PING"});
                             remote.send("+PONG\r\n");
                             remote.wait_closed();
-                        }
-                        catch (...)
-                        {
+                        } catch (...) {
                             std::lock_guard lock(failures_mutex);
                             failure = std::current_exception();
                         }
                     });
                 }
-            }
-            catch (...)
-            {
+            } catch (...) {
                 std::lock_guard lock(failures_mutex);
                 failure = std::current_exception();
             }
-            for (auto& remote : peers)
-            {
+            for (auto& remote : peers) {
                 remote.join();
             }
-            if (failure)
-            {
+            if (failure) {
                 completion_.set_exception(failure);
-            }
-            else
-            {
+            } else {
                 completion_.set_value();
             }
         });
@@ -398,8 +372,7 @@ DOCTEST_TEST_CASE("Redis pool retires a discarded retained child without stoppin
         [&](peer& remote) {
             ++accepted;
             remote.hello();
-            if (accepted == 2)
-            {
+            if (accepted == 2) {
                 remote.expect({"PING"});
                 remote.send("+PONG\r\n");
             }
@@ -583,28 +556,24 @@ DOCTEST_TEST_CASE("Redis pool ordinary close retires queued waiters before their
     std::promise<void> queued;
     auto fenced = queued.get_future();
     auto retire = [](pool* owner) noexcept {
-        try
-        {
-            if (!owner->close_and_wait())
-            {
+        try {
+            if (!owner->close_and_wait()) {
                 std::terminate();
             }
+        } catch (...) {
+            std::terminate();
         }
-        catch (...)
-        { std::terminate(); }
     };
     std::unique_ptr<pool, decltype(retire)> retirement(&connections, retire);
     connections.async_acquire([&](auto response) { initial_completion.set_value(std::move(response)); });
     REQUIRE(initial.wait_for(5s) == std::future_status::ready);
     auto leased = initial.get();
     REQUIRE(leased);
-    for (std::size_t index = 0; index != ids.size(); ++index)
-    {
+    for (std::size_t index = 0; index != ids.size(); ++index) {
         ids[index] = connections.async_acquire([&, capture, index](auto response) {
             CHECK_FALSE(response.connection);
             ++calls[index];
-            if (index == 0)
-            {
+            if (index == 0) {
                 connections.close();
                 connections.cancel(ids[1]);
                 connections.async_acquire([&, capture](auto rejected) {
@@ -627,14 +596,12 @@ DOCTEST_TEST_CASE("Redis pool ordinary close retires queued waiters before their
     CHECK(ready[1].wait_for(0ms) == std::future_status::timeout);
     capture.reset();
     connections.close();
-    for (auto& completion : ready)
-    {
+    for (auto& completion : ready) {
         REQUIRE(completion.wait_for(5s) == std::future_status::ready);
         CHECK(completion.get() == client_errc::closed);
     }
     CHECK(connections.close_and_wait());
-    for (const auto& count : calls)
-    {
+    for (const auto& count : calls) {
         CHECK(count == 1);
     }
     CHECK(destroyed == 1);
@@ -668,12 +635,10 @@ DOCTEST_TEST_CASE("Redis pool concurrent finalizers wait for a running callback 
     capture.reset();
     entered.wait();
     std::vector<std::thread> finalizers;
-    for (unsigned index = 0; index < 3; ++index)
-    {
+    for (unsigned index = 0; index < 3; ++index) {
         finalizers.emplace_back([&] {
             started.count_down();
-            if (connections.close_and_wait())
-            {
+            if (connections.close_and_wait()) {
                 CHECK(completed == 1);
                 CHECK(destroyed == 1);
                 CHECK(*exited);
@@ -685,8 +650,7 @@ DOCTEST_TEST_CASE("Redis pool concurrent finalizers wait for a running callback 
     CHECK(finalized == 0);
     CHECK(destroyed == 0);
     release.count_down();
-    for (auto& finalizer : finalizers)
-    {
+    for (auto& finalizer : finalizers) {
         finalizer.join();
     }
     CHECK(finalized == 3);
@@ -719,14 +683,12 @@ DOCTEST_TEST_CASE("Redis pool shutdown waits for an accepted lease publication p
     bool gate_seen{};
     std::atomic<unsigned> acquisitions{}, acquired{};
     const auto deadline = std::chrono::steady_clock::now() + 5s;
-    while (std::chrono::steady_clock::now() < deadline)
-    {
+    while (std::chrono::steady_clock::now() < deadline) {
         ++acquisitions;
         if (connections.async_acquire([&](auto response) {
                 CHECK((response.error == client_errc::closed || response.error == client_errc::queue_full));
                 ++acquired;
-            }) == 0)
-        {
+            }) == 0) {
             gate_seen = true;
             break;
         }
@@ -762,8 +724,7 @@ DOCTEST_TEST_CASE("Redis pool retires a late failed transport connect without du
     std::promise<void> terminal;
     auto closed = terminal.get_future();
 
-    struct reset_connect_observer
-    {
+    struct reset_connect_observer {
         ~reset_connect_observer() {
             std::lock_guard lock(tracked_transport::callbacks_mutex);
             tracked_transport::before_connect = {};
@@ -818,10 +779,8 @@ DOCTEST_TEST_CASE("Redis pool shutdown cancels a blackholed connect after a queu
     std::thread finalizer([&] { closed.set_value(connections.close_and_wait()); });
     bool gate_seen{};
     const auto deadline = std::chrono::steady_clock::now() + 5s;
-    while (std::chrono::steady_clock::now() < deadline)
-    {
-        if (connections.async_acquire({}) == 0)
-        {
+    while (std::chrono::steady_clock::now() < deadline) {
+        if (connections.async_acquire({}) == 0) {
             gate_seen = true;
             break;
         }
@@ -874,12 +833,10 @@ DOCTEST_TEST_CASE("Redis pool gates concurrent lease and acquire publishers befo
     std::latch start(1);
     std::atomic<unsigned> completed{}, calls{};
     std::vector<std::thread> publishers;
-    for (unsigned index = 0; index < 3; ++index)
-    {
+    for (unsigned index = 0; index < 3; ++index) {
         publishers.emplace_back([&] {
             start.wait();
-            for (unsigned attempt = 0; attempt < 64; ++attempt)
-            {
+            for (unsigned attempt = 0; attempt < 64; ++attempt) {
                 ++calls;
                 leased.connection.async_execute({"PING"}, [&](result response) {
                     CHECK((response.error == client_errc::closed || response.error == client_errc::not_connected ||
@@ -898,8 +855,7 @@ DOCTEST_TEST_CASE("Redis pool gates concurrent lease and acquire publishers befo
     }
     start.count_down();
     CHECK(connections.close_and_wait());
-    for (auto& publisher : publishers)
-    {
+    for (auto& publisher : publishers) {
         publisher.join();
     }
     CHECK(completed == calls);

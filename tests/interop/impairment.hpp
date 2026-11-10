@@ -16,29 +16,25 @@
 
 namespace arknet_interop {
 
-class data_impairment
-{
+class data_impairment {
     using udp = asio::ip::udp;
     using clock = std::chrono::steady_clock;
 
-    struct pending_packet
-    {
+    struct pending_packet {
         std::string bytes;
         udp::endpoint destination;
         clock::time_point deadline;
     };
 
 public:
-    struct statistics
-    {
+    struct statistics {
         std::uint64_t dropped{}, reordered{}, errors{}, fin_forwarded{};
     };
 
     explicit data_impairment(unsigned short server_port)
         : sockets_{udp::socket(context_), udp::socket(context_)}
         , server_(asio::ip::make_address("127.0.0.1"), server_port) {
-        for (auto& socket : sockets_)
-        {
+        for (auto& socket : sockets_) {
             socket.open(udp::v4());
             socket.set_option(asio::socket_base::receive_buffer_size(1024 * 1024));
             socket.bind({asio::ip::make_address("127.0.0.1"), 0});
@@ -70,8 +66,7 @@ public:
 
     void stop() noexcept {
         stopped_ = true;
-        if (worker_.joinable())
-        {
+        if (worker_.joinable()) {
             worker_.join();
         }
     }
@@ -80,12 +75,9 @@ private:
     void forward(unsigned direction, const std::string& bytes, const udp::endpoint& destination) {
         arknet::error_code error;
         const auto written = sockets_[1 - direction].send_to(asio::buffer(bytes), destination, 0, error);
-        if (error || written != bytes.size())
-        {
+        if (error || written != bytes.size()) {
             ++errors_;
-        }
-        else if (bytes.size() == 9 && bytes[0] == 3)
-        {
+        } else if (bytes.size() == 9 && bytes[0] == 3) {
             std::lock_guard lock(fin_mutex_);
             ++fin_forwarded_;
             fin_ready_.notify_all();
@@ -99,52 +91,43 @@ private:
     }
 
     void receive(unsigned direction) {
-        while (!stopped_)
-        {
+        while (!stopped_) {
             udp::endpoint sender;
             arknet::error_code error;
             const auto size = sockets_[direction].receive_from(asio::buffer(buffer_), sender, 0, error);
-            if (error == asio::error::would_block || error == asio::error::try_again)
-            {
+            if (error == asio::error::would_block || error == asio::error::try_again) {
                 return;
             }
-            if (error)
-            {
+            if (error) {
                 ++errors_;
                 return;
             }
-            if (direction == 0 && !client_)
-            {
+            if (direction == 0 && !client_) {
                 client_ = sender;
             }
-            if ((direction == 0 && sender != *client_) || (direction == 1 && (sender != server_ || !client_)))
-            {
+            if ((direction == 0 && sender != *client_) || (direction == 1 && (sender != server_ || !client_))) {
                 ++errors_;
                 continue;
             }
             const auto destination = direction == 0 ? server_ : *client_;
             std::string bytes(buffer_.data(), size);
             // SYN/ACK/FIN are 5 or 9 bytes; preserve them because FIN has no retry/ACK.
-            if (size < 24)
-            {
+            if (size < 24) {
                 forward(direction, bytes, destination);
                 continue;
             }
             const auto sequence = ++sequences_[direction];
-            if (sequence % 9 == 0)
-            {
+            if (sequence % 9 == 0) {
                 ++dropped_;
                 continue;
             }
-            if (sequence % 7 == 0 && !pending_[direction])
-            {
+            if (sequence % 7 == 0 && !pending_[direction]) {
                 pending_[direction] =
                     pending_packet{std::move(bytes), destination, clock::now() + std::chrono::milliseconds(6)};
                 continue;
             }
             forward(direction, bytes, destination);
-            if (pending_[direction])
-            {
+            if (pending_[direction]) {
                 ++reordered_;
                 release(direction);
             }
@@ -152,23 +135,19 @@ private:
     }
 
     void run() noexcept {
-        try
-        {
-            while (!stopped_)
-            {
-                for (unsigned direction = 0; direction < 2; ++direction)
-                {
+        try {
+            while (!stopped_) {
+                for (unsigned direction = 0; direction < 2; ++direction) {
                     receive(direction);
-                    if (pending_[direction] && pending_[direction]->deadline <= clock::now())
-                    {
+                    if (pending_[direction] && pending_[direction]->deadline <= clock::now()) {
                         release(direction);
                     }
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
+        } catch (...) {
+            ++errors_;
         }
-        catch (...)
-        { ++errors_; }
     }
 
     asio::io_context context_;

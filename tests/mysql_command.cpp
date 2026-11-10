@@ -29,8 +29,7 @@ column_definition column(field_type type, bool is_unsigned = false) {
 
 std::string metadata(field_type type = field_type::longlong, std::uint16_t flags = unsigned_column_flag) {
     std::string payload;
-    for (const auto text : {"def", "schema", "alias_table", "real_table", "alias_name", "real_name"})
-    {
+    for (const auto text : {"def", "schema", "alias_table", "real_table", "alias_name", "real_name"}) {
         append_string(payload, text);
     }
     payload.push_back(12);
@@ -45,8 +44,7 @@ std::string metadata(field_type type = field_type::longlong, std::uint16_t flags
 
 std::string text_row(std::initializer_list<std::optional<std::string_view>> values) {
     std::string payload;
-    for (const auto& value : values)
-    {
+    for (const auto& value : values) {
         append_string(payload, value);
     }
     return payload;
@@ -73,13 +71,11 @@ std::string binary_from_execute(std::span<const field_value> values, std::vector
     const auto row_bitmap_size = (values.size() + 9) / 8;
     std::string payload(1 + row_bitmap_size, '\0');
     columns.clear();
-    for (std::size_t index = 0; index < values.size(); ++index)
-    {
+    for (std::size_t index = 0; index < values.size(); ++index) {
         const auto type_offset = 10 + parameter_bitmap_size + 1 + index * 2;
         const auto type = static_cast<field_type>(static_cast<unsigned char>(execute[type_offset]));
         columns.push_back(column(type, static_cast<unsigned char>(execute[type_offset + 1]) == 0x80));
-        if ((static_cast<unsigned char>(execute[10 + index / 8]) & (1u << (index % 8))) != 0)
-        {
+        if ((static_cast<unsigned char>(execute[10 + index / 8]) & (1u << (index % 8))) != 0) {
             const auto bit = index + 2;
             payload[1 + bit / 8] =
                 static_cast<char>(static_cast<unsigned char>(payload[1 + bit / 8]) | (1u << (bit % 8)));
@@ -121,8 +117,7 @@ DOCTEST_TEST_CASE("MySQL prepare OK decodes the documented twelve byte fixture a
     CHECK(result.column_count == 1);
     CHECK(result.parameter_count == 2);
     CHECK(result.warnings == 0);
-    for (std::size_t size = 0; size < payload.size(); ++size)
-    {
+    for (std::size_t size = 0; size < payload.size(); ++size) {
         result = {99, 98, 97, 96};
         CHECK(parse_prepare_ok(std::string_view(payload).substr(0, size), result) == command_status::incomplete);
         CHECK(result.statement_id == 99);
@@ -130,8 +125,7 @@ DOCTEST_TEST_CASE("MySQL prepare OK decodes the documented twelve byte fixture a
         CHECK(result.parameter_count == 97);
         CHECK(result.warnings == 96);
     }
-    for (const auto offset : {0, 9})
-    {
+    for (const auto offset : {0, 9}) {
         auto malformed = payload;
         malformed[offset] = 1;
         CHECK(parse_prepare_ok(malformed, result) == command_status::invalid);
@@ -152,22 +146,19 @@ DOCTEST_TEST_CASE("MySQL prepare OK decodes the documented twelve byte fixture a
 
 DOCTEST_TEST_CASE("MySQL column count rejects NULL zero overflow unsupported metadata and trailing bytes") {
     std::size_t count = 42;
-    for (const auto expected : {1, 250, 251, 4096})
-    {
+    for (const auto expected : {1, 250, 251, 4096}) {
         std::string payload;
         append_length(payload, expected);
         REQUIRE(parse_column_count(payload, count) == command_status::complete);
         CHECK(count == static_cast<std::size_t>(expected));
-        for (std::size_t size = 0; size < payload.size(); ++size)
-        {
+        for (std::size_t size = 0; size < payload.size(); ++size) {
             count = 42;
             CHECK(parse_column_count(std::string_view(payload).substr(0, size), count) == command_status::incomplete);
             CHECK(count == 42);
         }
     }
     count = 42;
-    for (const auto byte : {'\0', '\xfb', '\xff'})
-    {
+    for (const auto byte : {'\0', '\xfb', '\xff'}) {
         CHECK(parse_column_count(std::string(1, byte), count) == command_status::invalid);
         CHECK(count == 42);
     }
@@ -198,8 +189,7 @@ DOCTEST_TEST_CASE("MySQL ColumnDefinition41 owns six names and reads fixed metad
     payload.assign(payload.size(), 'x');
     CHECK(result.name == "alias_name");
     payload = metadata();
-    for (std::size_t size = 0; size < payload.size(); ++size)
-    {
+    for (std::size_t size = 0; size < payload.size(); ++size) {
         result.name = "old";
         CHECK(parse_column(std::string_view(payload).substr(0, size), result) == command_status::incomplete);
         CHECK(result.name == "old");
@@ -232,8 +222,7 @@ DOCTEST_TEST_CASE("MySQL classic EOF distinguishes its warning and status order 
     CHECK(result.status_flags == 0x000a);
     CHECK(result.affected_rows == 0);
     CHECK(result.last_insert_id == 0);
-    for (std::size_t size = 0; size < payload.size(); ++size)
-    {
+    for (std::size_t size = 0; size < payload.size(); ++size) {
         result = {42, 43, 44, 45, "old", "state"};
         CHECK(parse_eof(std::string_view(payload).substr(0, size), result) == command_status::incomplete);
         CHECK(result.affected_rows == 42);
@@ -274,12 +263,10 @@ DOCTEST_TEST_CASE("MySQL text numeric conversion rejects overflow incomplete num
         CHECK(parse_text_row(text_row({text}), columns, row) == command_status::invalid);
         check_old_row(row);
     };
-    for (const auto text : {"", "1x", " 1", "+1", "9223372036854775808", "-9223372036854775809"})
-    {
+    for (const auto text : {"", "1x", " 1", "+1", "9223372036854775808", "-9223372036854775809"}) {
         check_invalid(field_type::longlong, false, text);
     }
-    for (const auto text : {"-1", "18446744073709551616"})
-    {
+    for (const auto text : {"-1", "18446744073709551616"}) {
         check_invalid(field_type::longlong, true, text);
     }
     check_invalid(field_type::tiny, false, "128");
@@ -289,8 +276,7 @@ DOCTEST_TEST_CASE("MySQL text numeric conversion rejects overflow incomplete num
     check_invalid(field_type::short_integer, true, "65536");
     check_invalid(field_type::int24, false, "8388608");
     check_invalid(field_type::long_integer, true, "4294967296");
-    for (const auto text : {"", "1x", "nan", "inf", "-inf", "1e999", "1e-999"})
-    {
+    for (const auto text : {"", "1x", "nan", "inf", "-inf", "1e999", "1e-999"}) {
         check_invalid(field_type::double_number, false, text);
     }
     check_invalid(field_type::float_number, false, "1e100");
@@ -307,24 +293,21 @@ DOCTEST_TEST_CASE("MySQL text temporal values preserve zero dates fractional pre
     CHECK(std::get<datetime_value>(row[1]) == datetime_value{{2026, 2, 31}, 12, 34, 56, 123456});
     CHECK(std::get<datetime_value>(row[2]) == datetime_value{{2026, 10, 15}, 0, 0, 0, 100000});
     CHECK(std::get<time_value>(row[3]) == time_value{true, 34, 22, 59, 59, 999999});
-    for (const auto text : {"2026-13-01", "2026-01-32", "2026-1-01", "xxxx-01-01"})
-    {
+    for (const auto text : {"2026-13-01", "2026-01-32", "2026-1-01", "xxxx-01-01"}) {
         const std::array one_column = {column(field_type::date)};
         row = old_row();
         CHECK(parse_text_row(text_row({text}), one_column, row) == command_status::invalid);
         check_old_row(row);
     }
     for (const auto text : {"2026-01-01 24:00:00", "2026-01-01 00:60:00", "2026-01-01 00:00:00.",
-             "2026-01-01 00:00:00.1234567", "2026-01-01 00:00:00x"})
-    {
+             "2026-01-01 00:00:00.1234567", "2026-01-01 00:00:00x"}) {
         const std::array one_column = {column(field_type::datetime)};
         row = old_row();
         CHECK(parse_text_row(text_row({text}), one_column, row) == command_status::invalid);
         check_old_row(row);
     }
     for (const auto text :
-        {"1:00:00", "00:60:00", "00:00:60", "00:00:00.", "18446744073709551616:00:00", "103079215104:00:00"})
-    {
+        {"1:00:00", "00:60:00", "00:00:60", "00:00:00.", "18446744073709551616:00:00", "103079215104:00:00"}) {
         const std::array one_column = {column(field_type::time)};
         row = old_row();
         CHECK(parse_text_row(text_row({text}), one_column, row) == command_status::invalid);
@@ -392,8 +375,7 @@ DOCTEST_TEST_CASE("MySQL result NULL bitmap uses offset two across byte boundari
     payload.append(6, '\1');
     row_values row;
     REQUIRE(parse_binary_row(payload, columns, row) == command_status::complete);
-    for (std::size_t index = 0; index < row.size(); ++index)
-    {
+    for (std::size_t index = 0; index < row.size(); ++index) {
         CHECK(std::holds_alternative<std::monostate>(row[index]) == (index == 0 || index == 6 || index == 8));
     }
     auto malformed = payload;
@@ -433,10 +415,8 @@ DOCTEST_TEST_CASE("MySQL row decoders preserve output on mandatory truncation ma
     std::string binary("\0\0", 2);
     append_integer(binary, 42, 8);
     append_string(binary, "binary");
-    for (const auto& [payload, is_binary] : std::array{std::pair{text, false}, std::pair{binary, true}})
-    {
-        for (std::size_t size = 0; size < payload.size(); ++size)
-        {
+    for (const auto& [payload, is_binary] : std::array{std::pair{text, false}, std::pair{binary, true}}) {
+        for (std::size_t size = 0; size < payload.size(); ++size) {
             auto row = old_row();
             const auto prefix = std::string_view(payload).substr(0, size);
             CHECK((is_binary ? parse_binary_row(prefix, columns, row) : parse_text_row(prefix, columns, row)) ==
@@ -450,8 +430,7 @@ DOCTEST_TEST_CASE("MySQL row decoders preserve output on mandatory truncation ma
     }
     for (const auto type : {field_type::tiny, field_type::short_integer, field_type::long_integer, field_type::longlong,
              field_type::double_number, field_type::float_number, field_type::var_string, field_type::date,
-             field_type::datetime, field_type::time})
-    {
+             field_type::datetime, field_type::time}) {
         const std::array one_column = {column(type)};
         auto row = old_row();
         CHECK(parse_text_row(std::string(1, '\xff'), one_column, row) == command_status::invalid);
@@ -462,8 +441,7 @@ DOCTEST_TEST_CASE("MySQL row decoders preserve output on mandatory truncation ma
     CHECK(parse_binary_row(std::string("\0\0\xfb", 3), string_column, row) == command_status::invalid);
     CHECK(parse_binary_row(std::string("\1\0", 2), string_column, row) == command_status::invalid);
     check_old_row(row);
-    for (const auto type : {14, 17, 18, 19, 20, 242, 243, 244})
-    {
+    for (const auto type : {14, 17, 18, 19, 20, 242, 243, 244}) {
         const std::array unknown = {column(static_cast<field_type>(type))};
         CHECK(parse_binary_row(std::string("\0\4", 2), unknown, row) == command_status::unsupported);
         CHECK(parse_text_row(std::string(1, '\xfb'), unknown, row) == command_status::unsupported);
@@ -489,8 +467,7 @@ DOCTEST_TEST_CASE("MySQL malformed binary temporal numeric and float fields neve
     append_integer(datetime, 1000000, 4);
     invalid(field_type::datetime, datetime);
     invalid(field_type::int24, std::string("\0\0\x80\0", 4));
-    for (const auto number : {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()})
-    {
+    for (const auto number : {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()}) {
         std::string bytes;
         append_integer(bytes, std::bit_cast<std::uint64_t>(number), 8);
         invalid(field_type::double_number, bytes);
@@ -502,13 +479,11 @@ DOCTEST_TEST_CASE("MySQL binary temporal payloads reject every missing mandatory
         datetime_value{{2026, 10, 15}}, datetime_value{{2026, 10, 15}, 1, 2, 3},
         datetime_value{{2026, 10, 15}, 1, 2, 3, 4}, time_value{}, time_value{false, 2, 1, 2, 3},
         time_value{true, std::numeric_limits<std::uint32_t>::max(), 23, 59, 59, 999999}};
-    for (const auto& value : values)
-    {
+    for (const auto& value : values) {
         const std::array one_value = {value};
         std::vector<column_definition> columns;
         const auto payload = binary_from_execute(one_value, columns);
-        for (std::size_t size = 0; size < payload.size(); ++size)
-        {
+        for (std::size_t size = 0; size < payload.size(); ++size) {
             auto row = old_row();
             CHECK(parse_binary_row(std::string_view(payload).substr(0, size), columns, row) ==
                   command_status::incomplete);
@@ -519,11 +494,10 @@ DOCTEST_TEST_CASE("MySQL binary temporal payloads reject every missing mandatory
 
 DOCTEST_TEST_CASE("MySQL byte string protocol types preserve arbitrary bytes in both row encodings") {
     const std::string bytes("\xff\0\xfe\xfb", 4);
-    for (const auto type :
-        {field_type::decimal, field_type::varchar, field_type::bit, field_type::json, field_type::newdecimal,
-            field_type::enumeration, field_type::set, field_type::tiny_blob, field_type::medium_blob,
-            field_type::long_blob, field_type::blob, field_type::var_string, field_type::string, field_type::geometry})
-    {
+    for (const auto type : {field_type::decimal, field_type::varchar, field_type::bit, field_type::json,
+             field_type::newdecimal, field_type::enumeration, field_type::set, field_type::tiny_blob,
+             field_type::medium_blob, field_type::long_blob, field_type::blob, field_type::var_string,
+             field_type::string, field_type::geometry}) {
         const std::array columns = {column(type)};
         auto text = text_row({bytes});
         row_values row;
@@ -566,11 +540,9 @@ DOCTEST_TEST_CASE("MySQL byte and count limits apply before publishing rows or e
 
 DOCTEST_TEST_CASE("MySQL large binary values cross all length encoding boundaries without changing data") {
     const std::array columns = {column(field_type::long_blob)};
-    for (const auto size : {0, 250, 251, 255, 256, 65535, 65536, 1024 * 1024})
-    {
+    for (const auto size : {0, 250, 251, 255, 256, 65535, 65536, 1024 * 1024}) {
         std::string value(size, '\0');
-        for (std::size_t index = 0; index < value.size(); ++index)
-        {
+        for (std::size_t index = 0; index < value.size(); ++index) {
             value[index] = static_cast<char>(index & 255);
         }
         const auto text = text_row({value});
@@ -596,20 +568,18 @@ DOCTEST_TEST_CASE("MySQL execute rejects invalid numeric and temporal parameters
     for (const field_value& value : {field_value(std::numeric_limits<double>::infinity()),
              field_value(std::numeric_limits<double>::quiet_NaN()), field_value(date_value{10000, 1, 1}),
              field_value(date_value{2026, 13, 1}), field_value(datetime_value{{2026, 1, 1}, 24}),
-             field_value(time_value{false, 0, 0, 60}), field_value(time_value{false, 0, 0, 0, 0, 1000000})})
-    {
+             field_value(time_value{false, 0, 0, 60}), field_value(time_value{false, 0, 0, 0, 0, 1000000})}) {
         std::string output = "old";
         const std::array values = {value};
         CHECK(encode_execute(1, values, output) == command_status::invalid);
         CHECK(output == "old");
     }
     field_value value = std::int64_t(1);
-    try
-    { value.emplace<std::string>(std::string::npos, 'x'); }
-    catch (const std::length_error&)
-    {}
-    if (value.valueless_by_exception())
-    {
+    try {
+        value.emplace<std::string>(std::string::npos, 'x');
+    } catch (const std::length_error&) {
+    }
+    if (value.valueless_by_exception()) {
         const std::array values = {value};
         std::string output = "old";
         CHECK(encode_execute(1, values, output) == command_status::invalid);
@@ -619,13 +589,10 @@ DOCTEST_TEST_CASE("MySQL execute rejects invalid numeric and temporal parameters
 
 DOCTEST_TEST_CASE("MySQL prepared typed values roundtrip with independently shifted result NULL bitmap") {
     std::mt19937_64 random(0x436f6d6d616e64);
-    for (unsigned iteration = 0; iteration < 400; ++iteration)
-    {
+    for (unsigned iteration = 0; iteration < 400; ++iteration) {
         std::vector<field_value> expected;
-        for (unsigned index = 0; index < 17; ++index)
-        {
-            switch (random() % 6)
-            {
+        for (unsigned index = 0; index < 17; ++index) {
+            switch (random() % 6) {
             case 0:
                 expected.emplace_back(std::monostate{});
                 break;
@@ -673,27 +640,22 @@ DOCTEST_TEST_CASE("MySQL maximum prepared parameter count stays bounded and emit
 DOCTEST_TEST_CASE("MySQL hostile command result payloads never partially overwrite rows or column metadata") {
     std::mt19937 random(0x726f7773);
     const std::vector columns = {column(field_type::longlong), column(field_type::blob), column(field_type::datetime)};
-    for (unsigned iteration = 0; iteration < 2000; ++iteration)
-    {
+    for (unsigned iteration = 0; iteration < 2000; ++iteration) {
         std::string payload(random() % 96, '\0');
-        for (auto& byte : payload)
-        {
+        for (auto& byte : payload) {
             byte = static_cast<char>(random() & 255);
         }
         auto row = old_row();
-        if (parse_text_row(payload, columns, row) != command_status::complete)
-        {
+        if (parse_text_row(payload, columns, row) != command_status::complete) {
             check_old_row(row);
         }
         row = old_row();
-        if (parse_binary_row(payload, columns, row) != command_status::complete)
-        {
+        if (parse_binary_row(payload, columns, row) != command_status::complete) {
             check_old_row(row);
         }
         column_definition definition;
         definition.name = "old";
-        if (parse_column(payload, definition) != command_status::complete)
-        {
+        if (parse_column(payload, definition) != command_status::complete) {
             CHECK(definition.name == "old");
         }
     }

@@ -29,8 +29,7 @@ using arknet::mysql::pool_options;
 // A discarded first session must reach EOF. A different physical connection
 // then authenticates and acknowledges exactly one fresh command; neither RESET
 // nor replaying the original SQL is accepted on either session.
-class replacement_peer
-{
+class replacement_peer {
     asio::io_context context_;
     asio::ip::tcp::acceptor acceptor_{context_, {asio::ip::address_v4::loopback(), 0}};
     asio::steady_timer deadline_{context_};
@@ -64,19 +63,15 @@ class replacement_peer
         co_await send(socket, ok_packet, 2);
         const auto command = co_await receive(socket, 0);
         CHECK(command == (index ? std::string("\3fresh", 6) : std::string("\3written", 8)));
-        if (!index)
-        {
+        if (!index) {
             ++original_writes;
             query_received_.set_value();
             asio::steady_timer pause(context_);
-            while (reply_.wait_for(0ms) != std::future_status::ready)
-            {
+            while (reply_.wait_for(0ms) != std::future_status::ready) {
                 pause.expires_after(1ms);
                 co_await pause.async_wait(asio::use_awaitable);
             }
-        }
-        else
-        {
+        } else {
             ++fresh_writes;
         }
         co_await send(socket, ok_packet, 1);
@@ -86,12 +81,9 @@ class replacement_peer
             co_await socket.async_read_some(asio::buffer(bytes), asio::redirect_error(asio::use_awaitable, error));
         CHECK(size == 0);
         CHECK((error == asio::error::eof || error == asio::error::connection_reset));
-        if (!index)
-        {
+        if (!index) {
             old_closed = true;
-        }
-        else
-        {
+        } else {
             fresh_closed = true;
         }
     }
@@ -103,8 +95,7 @@ public:
     replacement_peer() {
         deadline_.expires_after(5s);
         deadline_.async_wait([this](error_code error) {
-            if (!error)
-            {
+            if (!error) {
                 completion_.set_exception(std::make_exception_ptr(std::runtime_error("replacement peer deadline")));
                 context_.stop();
             }
@@ -112,18 +103,14 @@ public:
         asio::co_spawn(
             context_,
             [this]() -> asio::awaitable<void> {
-                for (unsigned index = 0; index != 2; ++index)
-                {
+                for (unsigned index = 0; index != 2; ++index) {
                     auto socket = co_await acceptor_.async_accept(asio::use_awaitable);
                     ++accepted;
                     asio::co_spawn(context_, serve(std::move(socket), index), [this](std::exception_ptr error) {
-                        if (error)
-                        {
+                        if (error) {
                             completion_.set_exception(error);
                             context_.stop();
-                        }
-                        else if (++finished_ == 2)
-                        {
+                        } else if (++finished_ == 2) {
                             deadline_.cancel();
                             completion_.set_value();
                         }
@@ -190,8 +177,7 @@ bool query(mysql_pool::lease& lease, const char* sql) {
 
 void wait_for_diagnostic(mysql_pool& pool, std::uint64_t count) {
     const auto deadline = std::chrono::steady_clock::now() + 2s;
-    while (pool.diagnostics().return_submission_failures < count && std::chrono::steady_clock::now() < deadline)
-    {
+    while (pool.diagnostics().return_submission_failures < count && std::chrono::steady_clock::now() < deadline) {
         std::this_thread::sleep_for(1ms);
     }
     const auto diagnostic = pool.diagnostics();
@@ -339,8 +325,7 @@ DOCTEST_TEST_CASE("MySQL ordinary pool shutdown retains a failed child and close
     wait_for_diagnostic(pool, 1);
     CHECK(scoped_allocation_failure::injections == before + 1);
     const auto deadline = std::chrono::steady_clock::now() + 2s;
-    while (!peer.fresh_closed && std::chrono::steady_clock::now() < deadline)
-    {
+    while (!peer.fresh_closed && std::chrono::steady_clock::now() < deadline) {
         std::this_thread::sleep_for(1ms);
     }
     CHECK(peer.fresh_closed);

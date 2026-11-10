@@ -19,12 +19,10 @@ int installed_fec_selfcheck() {
             return true;
         });
     const std::string first(24, 'a'), second(24, 'b');
-    if (!sender.send(first, 0) || !sender.send(second, 0) || wire.size() != 3)
-    {
+    if (!sender.send(first, 0) || !sender.send(second, 0) || wire.size() != 3) {
         return 1;
     }
-    if (!receiver.input(wire[1], 0) || !receiver.input(wire[2], 0))
-    {
+    if (!receiver.input(wire[1], 0) || !receiver.input(wire[2], 0)) {
         return 2;
     }
     return received == std::vector<std::string>{second, first} ? 0 : 3;

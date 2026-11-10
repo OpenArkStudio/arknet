@@ -32,8 +32,7 @@ using socket_trace_clock = std::chrono::steady_clock;
 inline constexpr std::size_t socket_handler_reservation = 256;
 
 template<class Handler>
-struct socket_trace_completion
-{
+struct socket_trace_completion {
     Handler handler;
     operation_ring* ring;
     socket_trace_clock::time_point began;
@@ -50,8 +49,7 @@ struct socket_trace_completion
 
 // Native-control diagnostics only. The unobserved path uses the socket directly.
 template<class Stream>
-class socket_trace_stream
-{
+class socket_trace_stream {
 public:
     using executor_type = typename Stream::executor_type;
 
@@ -122,8 +120,7 @@ namespace asio {
 // other association supported by the original Asio composed-operation handler.
 template<template<class, class> class Associator, class Handler, class DefaultCandidate>
 struct associator<Associator, connection_load::socket_trace_completion<Handler>, DefaultCandidate>
-    : Associator<Handler, DefaultCandidate>
-{
+    : Associator<Handler, DefaultCandidate> {
     static typename Associator<Handler, DefaultCandidate>::type get(
         const connection_load::socket_trace_completion<Handler>& value) noexcept {
         return Associator<Handler, DefaultCandidate>::get(value.handler);

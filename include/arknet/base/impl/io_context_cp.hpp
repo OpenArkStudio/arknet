@@ -6,8 +6,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args = void>
-class io_context_cp
-{
+class io_context_cp {
 public:
     explicit io_context_cp(std::shared_ptr<io_t> context)
         : io_(std::move(context)) {}

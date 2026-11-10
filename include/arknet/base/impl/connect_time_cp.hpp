@@ -6,8 +6,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class connect_time_cp
-{
+class connect_time_cp {
 public:
     auto get_connect_time() const noexcept {
         return connect_time_;

@@ -14,8 +14,7 @@ int main(int argc, char** argv) {
         response.prepare_payload();
         session->async_send(std::move(response));
     });
-    if (!server.start(host, port))
-    {
+    if (!server.start(host, port)) {
         std::cerr << arknet::get_last_error().message() << '\n';
         return 1;
     }

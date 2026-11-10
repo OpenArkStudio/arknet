@@ -11,8 +11,7 @@
 namespace arknet::detail {
 
 template<class Args>
-struct function_size_traits
-{
+struct function_size_traits {
     static constexpr std::size_t value = 0;
 };
 
@@ -21,8 +20,7 @@ class function;
 
 // C++20 std::function owns a copyable handle to a potentially move-only handler.
 template<class R, class... Args, std::size_t StorageSize>
-class function<R(Args...), StorageSize>
-{
+class function<R(Args...), StorageSize> {
 public:
     using signature = R(Args...);
 

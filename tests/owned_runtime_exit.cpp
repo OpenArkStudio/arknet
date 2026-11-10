@@ -29,17 +29,14 @@ void fail(const char* message, int status) {
 void verify_exit() {
     // Other translation units may initialize cleanup before this sentinel.
     // Their global-owner test is validated by ordinary, bounded process exit.
-    if (multi_tu_exit.load())
-    {
+    if (multi_tu_exit.load()) {
         return;
     }
     const auto expected = expected_callbacks.load();
-    if (finished_callbacks.load() != expected || destroyed_resources.load() != expected)
-    {
+    if (finished_callbacks.load() != expected || destroyed_resources.load() != expected) {
         fail("owned runtime exited before callbacks and resources were released", 41);
     }
-    if (check_late_construction.load() && late_constructions_rejected.load() != 2)
-    {
+    if (check_late_construction.load() && late_constructions_rejected.load() != 2) {
         fail("owned runtime accepted construction after process cleanup", 42);
     }
 }
@@ -48,11 +45,9 @@ void try_late_construction();
 
 // These callbacks are registered before the global pool is constructed. They
 // therefore run after both the pool destructor and the runtime cleanup.
-struct exit_checks
-{
+struct exit_checks {
     exit_checks() {
-        if (std::atexit(verify_exit) || std::atexit(try_late_construction))
-        {
+        if (std::atexit(verify_exit) || std::atexit(try_late_construction)) {
             fail("could not register process-exit checks", 43);
         }
     }
@@ -68,26 +63,26 @@ namespace {
 using arknet::detail::io_pool;
 using namespace std::chrono_literals;
 
-class owned_endpoint : public arknet::detail::iopool_cp<owned_endpoint>
-{
+class owned_endpoint : public arknet::detail::iopool_cp<owned_endpoint> {
 public:
     owned_endpoint()
         : iopool_cp(1) {}
 };
 
 void try_late_construction() {
-    if (!check_late_construction.load())
-    {
+    if (!check_late_construction.load()) {
         return;
     }
-    try
-    { io_pool late(1); }
-    catch (const std::logic_error&)
-    { ++late_constructions_rejected; }
-    try
-    { owned_endpoint late; }
-    catch (const std::logic_error&)
-    { ++late_constructions_rejected; }
+    try {
+        io_pool late(1);
+    } catch (const std::logic_error&) {
+        ++late_constructions_rejected;
+    }
+    try {
+        owned_endpoint late;
+    } catch (const std::logic_error&) {
+        ++late_constructions_rejected;
+    }
 }
 
 // Its destructor registration predates direct global_pool construction. This
@@ -95,8 +90,7 @@ void try_late_construction() {
 std::shared_ptr<io_pool> indirect_owner;
 io_pool global_pool(1);
 
-struct callback_resource
-{
+struct callback_resource {
 #if defined(ARKNET_ENABLE_SSL)
     // Constructed in main, after runtime cleanup has already been registered.
     std::unique_ptr<asio::ssl::context> tls = std::make_unique<asio::ssl::context>(asio::ssl::context::tls_client);
@@ -114,8 +108,7 @@ using owned_pool = std::shared_ptr<io_pool>;
 
 owned_pool make_pool() {
     owned_pool pool(new io_pool(1), arknet::detail::iopool_deleter{});
-    if (!pool->start())
-    {
+    if (!pool->start()) {
         fail("could not start owned IO pool", 44);
     }
     return pool;
@@ -126,12 +119,10 @@ void schedule_owned(owned_pool pool, bool nested, std::chrono::milliseconds dela
     auto resource = std::make_shared<callback_resource>();
     ++expected_callbacks;
     timer->async_wait([pool = std::move(pool), timer, resource = std::move(resource), nested](auto error) mutable {
-        if (error)
-        {
+        if (error) {
             fail("owned callback was unexpectedly cancelled", 45);
         }
-        if (nested)
-        {
+        if (nested) {
             schedule_owned(make_pool(), false, 10ms);
         }
         ++finished_callbacks;
@@ -143,8 +134,7 @@ void schedule_owned(owned_pool pool, bool nested, std::chrono::milliseconds dela
 
 #if defined(ARKNET_ENABLE_SSL)
 void verify_openssl_exit() {
-    if (destroyed_resources.load() != expected_callbacks.load())
-    {
+    if (destroyed_resources.load() != expected_callbacks.load()) {
         fail("OpenSSL cleanup started before owned TLS resources were destroyed", 46);
     }
 }
@@ -158,50 +148,38 @@ int main(int argc, char** argv) {
     // Explicit initialization keeps this direct-pool test equivalent.
     arknet::detail::pool_cleanup();
 #if defined(ARKNET_ENABLE_SSL)
-    if (!OPENSSL_init_ssl(0, nullptr) || !OPENSSL_atexit(verify_openssl_exit))
-    {
+    if (!OPENSSL_init_ssl(0, nullptr) || !OPENSSL_atexit(verify_openssl_exit)) {
         fail("could not initialize OpenSSL exit check", 47);
     }
 #endif
-    if (mode == "global")
-    {
-        if (!global_pool.start())
-        {
+    if (mode == "global") {
+        if (!global_pool.start()) {
             return 48;
         }
         auto timer = std::make_shared<asio::steady_timer>(global_pool.get_context(), 1s);
         auto resource = std::make_shared<callback_resource>();
         ++expected_callbacks;
         timer->async_wait([timer, resource = std::move(resource)](auto error) {
-            if (error)
-            {
+            if (error) {
                 fail("global pool callback was unexpectedly cancelled", 49);
             }
             ++finished_callbacks;
         });
-    }
-    else if (mode == "callback" || mode == "nested")
-    {
+    } else if (mode == "callback" || mode == "nested") {
         schedule_owned(make_pool(), mode == "nested", 1s);
-    }
-    else if (mode == "late")
-    {
+    } else if (mode == "late") {
         check_late_construction = true;
-    }
-    else if (mode == "indirect")
-    {
+    } else if (mode == "indirect") {
         indirect_owner = make_pool();
     }
 #if defined(ARKNET_TEST_MULTI_TU)
-    else if (mode == "external")
-    {
+    else if (mode == "external") {
         multi_tu_exit = true;
         indirect_owner = make_pool();
         arknet_test_hold_external_runtime();
     }
 #endif
-    else
-    {
+    else {
         return 50;
     }
     // Returning while the timer is pending deliberately overlaps ordinary

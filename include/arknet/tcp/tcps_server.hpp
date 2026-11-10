@@ -7,16 +7,14 @@
 
 namespace arknet::detail {
 
-struct template_args_tcps_server
-{
+struct template_args_tcps_server {
     static constexpr bool is_session = false, is_client = false, is_server = true;
 };
 
 template<class Derived, class Session>
 class tcps_server_impl_t
     : public ssl_context_cp<Derived, template_args_tcps_server>
-    , public tcp_server_impl_t<Derived, Session>
-{
+    , public tcp_server_impl_t<Derived, Session> {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_SERVER;
@@ -50,12 +48,10 @@ protected:
     template<class Host, class Port, class Condition>
     bool _do_start(Host&& host, Port&& port, std::shared_ptr<ecs_t<Condition>> policy) {
         auto ec = this->identity_error_;
-        if (!ec)
-        {
+        if (!ec) {
             ec = this->_check_tls_identity();
         }
-        if (ec)
-        {
+        if (ec) {
             set_last_error(ec);
             return false;
         }
@@ -75,8 +71,7 @@ template<class Derived, class Session>
 using tcps_server_impl_t = detail::tcps_server_impl_t<Derived, Session>;
 
 template<class Session>
-class tcps_server_t : public detail::tcps_server_impl_t<tcps_server_t<Session>, Session>
-{
+class tcps_server_t : public detail::tcps_server_impl_t<tcps_server_t<Session>, Session> {
 public:
     using detail::tcps_server_impl_t<tcps_server_t<Session>, Session>::tcps_server_impl_t;
 };

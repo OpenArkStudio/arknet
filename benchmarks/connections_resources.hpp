@@ -12,16 +12,14 @@
 
 namespace connection_load {
 
-struct resource_snapshot
-{
+struct resource_snapshot {
     arknet::benchmark::process_resources metrics;
     double elapsed_seconds{};
     std::optional<double> cpu_interval_seconds;
 };
 
 // Keep independent observers for periodic intervals and the entire run.
-class resource_observer
-{
+class resource_observer {
 public:
     explicit resource_observer(std::chrono::steady_clock::time_point began)
         : began_(began)
@@ -36,8 +34,7 @@ public:
         auto metrics = sampler_.sample();
         const auto elapsed = std::chrono::duration<double>(metrics.monotonic_time - began_).count();
         std::optional<double> interval;
-        if (metrics.cpu_percent.value)
-        {
+        if (metrics.cpu_percent.value) {
             interval = std::chrono::duration<double>(metrics.monotonic_time - previous_).count();
         }
         previous_ = metrics.monotonic_time;
@@ -54,18 +51,13 @@ private:
 inline void write_resource_string(std::ostream& output, std::string_view value) {
     constexpr char hex[] = "0123456789abcdef";
     output << '"';
-    for (const unsigned char character : value)
-    {
-        if (character == '"' || character == '\\')
-        {
+    for (const unsigned char character : value) {
+        if (character == '"' || character == '\\') {
             output << '\\';
         }
-        if (character < 32)
-        {
+        if (character < 32) {
             output << "\\u00" << hex[character >> 4] << hex[character & 15];
-        }
-        else
-        {
+        } else {
             output << static_cast<char>(character);
         }
     }
@@ -74,13 +66,10 @@ inline void write_resource_string(std::ostream& output, std::string_view value) 
 
 inline void write_port_resources(std::ostream& output, const port_resources& sample) {
     output << "{\"ephemeral_ports\":";
-    if (sample.ephemeral_ports.value)
-    {
+    if (sample.ephemeral_ports.value) {
         output << "{\"first\":" << sample.ephemeral_ports.value->first
                << ",\"last\":" << sample.ephemeral_ports.value->last << '}';
-    }
-    else
-    {
+    } else {
         output << "null";
     }
     output << ",\"range_source\":";
@@ -88,12 +77,9 @@ inline void write_port_resources(std::ostream& output, const port_resources& sam
     output << ",\"range_scope\":";
     write_resource_string(output, sample.range_scope);
     output << ",\"tcp_time_wait\":";
-    if (sample.tcp_time_wait.value)
-    {
+    if (sample.tcp_time_wait.value) {
         output << *sample.tcp_time_wait.value;
-    }
-    else
-    {
+    } else {
         output << "null";
     }
     output << ",\"time_wait_source\":";
@@ -109,16 +95,13 @@ inline void write_port_resources(std::ostream& output, const port_resources& sam
 
 // First failure is sampled at the connect callback, before cleanup changes the
 // socket population. Final output does not turn this into an after-cleanup count.
-class connect_failure_observer
-{
+class connect_failure_observer {
 public:
     template<class Query>
     void capture(int error, std::string_view category, std::uint64_t established, Query query) noexcept {
-        try
-        {
+        try {
             const std::lock_guard lock(mutex_);
-            if (attempted_)
-            {
+            if (attempted_) {
                 return;
             }
             attempted_ = true;
@@ -126,9 +109,8 @@ public:
             established_ = established;
             category_ = category;
             sample_ = query();
+        } catch (...) {
         }
-        catch (...)
-        {}
     }
 
     void capture(int error, std::string_view category, std::uint64_t established) noexcept {
@@ -143,8 +125,7 @@ public:
     void write_event(std::ostream& output, std::string_view role, std::uint64_t run, std::uint64_t client,
         bool string_ids = false) const {
         const std::lock_guard lock(mutex_);
-        if (!attempted_)
-        {
+        if (!attempted_) {
             return;
         }
         output << "{\"event\":\"connect_resource_failure\",\"role\":";
@@ -158,8 +139,7 @@ public:
 private:
     void write_fields_unlocked(std::ostream& output) const {
         output << ",\"connect_failure_resources\":";
-        if (!attempted_)
-        {
+        if (!attempted_) {
             output << "null";
             return;
         }
@@ -167,12 +147,9 @@ private:
                << ",\"error_code\":" << error_ << ",\"error_category\":";
         write_resource_string(output, category_);
         output << ",\"network_resources\":";
-        if (sample_)
-        {
+        if (sample_) {
             write_port_resources(output, *sample_);
-        }
-        else
-        {
+        } else {
             output << "{\"unavailable\":\"Failure resource snapshot could not be captured\"}";
         }
         output << '}';
@@ -191,12 +168,9 @@ inline void write_resource_fields(std::ostream& output, const resource_snapshot&
         output << ',';
         write_resource_string(output, name);
         output << ':';
-        if (value)
-        {
+        if (value) {
             output << *value;
-        }
-        else
-        {
+        } else {
             output << "null";
         }
     };
@@ -214,12 +188,10 @@ inline void write_resource_fields(std::ostream& output, const resource_snapshot&
            << ",\"resource_unavailable\":{";
     bool first = true;
     const auto reason = [&](std::string_view name, const auto& value) {
-        if (value.value)
-        {
+        if (value.value) {
             return;
         }
-        if (!first)
-        {
+        if (!first) {
             output << ',';
         }
         first = false;
@@ -235,10 +207,8 @@ inline void write_resource_fields(std::ostream& output, const resource_snapshot&
     reason("nofile_hard", sample.metrics.nofile_hard);
     reason("handle_count", sample.metrics.handle_count);
     reason("thread_count", sample.metrics.thread_count);
-    if (!sample.cpu_interval_seconds)
-    {
-        if (!first)
-        {
+    if (!sample.cpu_interval_seconds) {
+        if (!first) {
             output << ',';
         }
         output << "\"resource_cpu_interval_s\":\"A valid interval CPU percentage is unavailable\"";

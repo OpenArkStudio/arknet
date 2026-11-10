@@ -15,8 +15,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class ssl_stream_cp : public ssl_stream_tag
-{
+class ssl_stream_cp : public ssl_stream_tag {
 public:
     using ssl_socket_type = typename Args::socket_t;
     using ssl_stream_type = asio::ssl::stream<ssl_socket_type&>;
@@ -53,8 +52,7 @@ protected:
     void _ssl_stop(std::shared_ptr<Derived> lifetime, Chain chain) {
         auto& owner = static_cast<Derived&>(*this);
         ARKNET_ASSERT(owner.io_->running_in_this_thread());
-        if (!ssl_stream_)
-        {
+        if (!ssl_stream_) {
             return;
         }
         owner.disp_event(
@@ -63,8 +61,7 @@ protected:
                 auto timer = std::make_shared<asio::steady_timer>(owner.io_->executor());
                 timer->expires_after(owner.get_disconnect_timeout());
                 timer->async_wait(owner._track_async_operation([&owner, lifetime](error_code ec) {
-                    if (!ec)
-                    {
+                    if (!ec) {
                         error_code ignored;
                         owner.socket().cancel(ignored);
                         owner.socket().close(ignored);
@@ -92,14 +89,12 @@ protected:
     void _post_handshake(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
         auto& owner = static_cast<Derived&>(*this);
         ARKNET_ASSERT(owner.io_->running_in_this_thread());
-        if (auto ec = _prepare_handshake())
-        {
+        if (auto ec = _prepare_handshake()) {
             owner._handle_handshake(ec, std::move(lifetime), std::move(policy), std::move(chain));
             return;
         }
 
-        struct deadline
-        {
+        struct deadline {
             asio::steady_timer timer;
             bool expired = false;
 
@@ -110,8 +105,7 @@ protected:
         auto timeout = std::make_shared<deadline>(owner.io_->executor());
         timeout->timer.expires_after(owner.get_connect_timeout());
         timeout->timer.async_wait(owner._track_async_operation([&owner, lifetime, timeout](error_code ec) {
-            if (ec)
-            {
+            if (ec) {
                 return;
             }
             timeout->expired = true;
@@ -136,48 +130,36 @@ protected:
     }
 
     error_code _prepare_handshake() {
-        if constexpr (!Args::is_client)
-        {
+        if constexpr (!Args::is_client) {
             return {};
-        }
-        else
-        {
+        } else {
             const auto& host = static_cast<Derived&>(*this).host_;
-            if (host.empty() || host.find('\0') != std::string::npos)
-            {
+            if (host.empty() || host.find('\0') != std::string::npos) {
                 return asio::error::invalid_argument;
             }
             SSL* ssl = ssl_stream().native_handle();
             auto* identity = SSL_get0_param(ssl);
             ERR_clear_error();
             if (SSL_set_tlsext_host_name(ssl, nullptr) != 1 || X509_VERIFY_PARAM_set1_host(identity, nullptr, 0) != 1 ||
-                X509_VERIFY_PARAM_set1_ip(identity, nullptr, 0) != 1)
-            {
+                X509_VERIFY_PARAM_set1_ip(identity, nullptr, 0) != 1) {
                 return _ssl_configuration_error();
             }
             error_code parse_error;
             const auto address = asio::ip::make_address(host, parse_error);
-            if (parse_error && SSL_set_tlsext_host_name(ssl, host.c_str()) != 1)
-            {
+            if (parse_error && SSL_set_tlsext_host_name(ssl, host.c_str()) != 1) {
                 return _ssl_configuration_error();
             }
-            if (!(SSL_get_verify_mode(ssl) & SSL_VERIFY_PEER))
-            {
+            if (!(SSL_get_verify_mode(ssl) & SSL_VERIFY_PEER)) {
                 return {};
             }
             X509_VERIFY_PARAM_set_hostflags(identity, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
             int accepted;
-            if (parse_error)
-            {
+            if (parse_error) {
                 accepted = SSL_set1_host(ssl, host.c_str());
-            }
-            else if (address.is_v4())
-            {
+            } else if (address.is_v4()) {
                 const auto bytes = address.to_v4().to_bytes();
                 accepted = X509_VERIFY_PARAM_set1_ip(identity, bytes.data(), bytes.size());
-            }
-            else
-            {
+            } else {
                 const auto bytes = address.to_v6().to_bytes();
                 accepted = X509_VERIFY_PARAM_set1_ip(identity, bytes.data(), bytes.size());
             }
@@ -198,12 +180,9 @@ protected:
                                      chain = std::move(chain)]() mutable {
             set_last_error(ec);
             owner._fire_handshake(lifetime);
-            if (ec)
-            {
+            if (ec) {
                 owner._do_disconnect(ec, std::move(lifetime), std::move(chain));
-            }
-            else
-            {
+            } else {
                 owner._done_connect(ec, std::move(lifetime), std::move(policy), std::move(chain));
             }
         });
@@ -221,13 +200,10 @@ protected:
     template<class Condition, class Chain>
     void _handle_handshake(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
-        if constexpr (Args::is_session)
-        {
+        if constexpr (Args::is_session) {
             static_cast<Derived&>(*this)._session_handle_handshake(
                 ec, std::move(lifetime), std::move(policy), std::move(chain));
-        }
-        else
-        {
+        } else {
             static_cast<Derived&>(*this)._client_handle_handshake(
                 ec, std::move(lifetime), std::move(policy), std::move(chain));
         }

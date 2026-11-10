@@ -18,14 +18,12 @@ constexpr std::size_t sender_count = 8;
 constexpr std::size_t payload_size = 256;
 constexpr std::size_t operation_limit = 1024;
 
-class watchdog
-{
+class watchdog {
 public:
     watchdog()
         : thread_([this] {
             std::unique_lock lock(mutex_);
-            if (!ready_.wait_for(lock, 45s, [this] { return finished_; }))
-            {
+            if (!ready_.wait_for(lock, 45s, [this] { return finished_; })) {
                 std::cerr << "concurrent send/stop fixture hung\n";
                 std::_Exit(EXIT_FAILURE);
             }
@@ -47,8 +45,7 @@ private:
     std::thread thread_;
 };
 
-struct io_runner
-{
+struct io_runner {
     asio::io_context context;
     asio::executor_work_guard<asio::io_context::executor_type> work{context.get_executor()};
     std::thread thread{[this] { context.run(); }};
@@ -60,14 +57,12 @@ struct io_runner
     }
 };
 
-struct latch_release
-{
+struct latch_release {
     std::latch& latch;
     bool released{};
 
     void open() {
-        if (!released)
-        {
+        if (!released) {
             released = true;
             latch.count_down();
         }
@@ -78,10 +73,8 @@ struct latch_release
     }
 };
 
-class io_pause
-{
-    struct state
-    {
+class io_pause {
+    struct state {
         std::promise<void> entered;
         std::promise<void> released;
         std::shared_future<void> release = released.get_future().share();
@@ -105,8 +98,7 @@ public:
     }
 
     void open() {
-        if (!state_->open.exchange(true))
-        {
+        if (!state_->open.exchange(true)) {
             state_->released.set_value();
         }
     }
@@ -115,10 +107,8 @@ private:
     std::shared_ptr<state> state_;
 };
 
-class outcomes
-{
-    struct result
-    {
+class outcomes {
+    struct result {
         bool submitted{};
         bool accepted{};
         bool after_stop{};
@@ -132,10 +122,8 @@ public:
     outcomes(std::size_t attempts, bool empty = false)
         : payloads_(attempts)
         , results_(attempts) {
-        for (std::size_t id = 0; id < attempts; ++id)
-        {
-            if (!empty || id + 1 == attempts)
-            {
+        for (std::size_t id = 0; id < attempts; ++id) {
+            if (!empty || id + 1 == attempts) {
                 payloads_[id] = std::to_string(id) + ':';
                 payloads_[id].resize(payload_size, static_cast<char>('A' + id % 26));
             }
@@ -170,23 +158,17 @@ public:
         {
             std::lock_guard lock(mutex_);
             ++received_[side];
-            if (payload.empty())
-            {
+            if (payload.empty()) {
                 ++empty_received_[side];
-            }
-            else
-            {
+            } else {
                 const auto end = payload.find(':');
                 std::size_t id{};
                 const auto parsed = std::from_chars(
                     payload.data(), payload.data() + (end == std::string_view::npos ? payload.size() : end), id);
                 if (end == std::string_view::npos || parsed.ec != std::errc{} || parsed.ptr != payload.data() + end ||
-                    id >= payloads_.size() || payload != payloads_[id])
-                {
+                    id >= payloads_.size() || payload != payloads_[id]) {
                     invalid_payload_ = true;
-                }
-                else
-                {
+                } else {
                     ++results_[id].received[side];
                 }
             }
@@ -195,8 +177,7 @@ public:
     }
 
     void queue_size(std::size_t bytes, std::size_t limit) {
-        if (bytes > limit)
-        {
+        if (bytes > limit) {
             queue_overflow_.store(true);
         }
     }
@@ -208,8 +189,7 @@ public:
     std::size_t accepted() const {
         std::lock_guard lock(mutex_);
         std::size_t count{};
-        for (const auto& result : results_)
-        {
+        for (const auto& result : results_) {
             count += result.submitted && result.accepted;
         }
         return count;
@@ -231,23 +211,17 @@ public:
         check(!invalid_payload_ && !queue_overflow_ && !submission_exception_,
             "invalid data, queue overflow, or send exception");
         std::size_t accepted_empty{};
-        for (std::size_t id = 0; id < results_.size(); ++id)
-        {
+        for (std::size_t id = 0; id < results_.size(); ++id) {
             const auto& result = results_[id];
             const auto size = payloads_[id].size();
             check(result.submitted && result.callbacks == 1, "each submission must complete exactly once");
-            if (!result.accepted)
-            {
+            if (!result.accepted) {
                 check((result.error == asio::error::no_buffer_space || result.error == asio::error::not_connected) &&
                           result.bytes == 0,
                     "rejected send error or byte count");
-            }
-            else if (!result.error)
-            {
+            } else if (!result.error) {
                 check(result.bytes == size, "successful send byte count");
-            }
-            else
-            {
+            } else {
                 bool cancelled =
                     result.error == asio::error::operation_aborted || result.error == asio::error::not_connected ||
                     result.error == asio::error::bad_descriptor || result.error == asio::error::broken_pipe ||
@@ -258,31 +232,24 @@ public:
 #endif
                 check(stopping && result.bytes <= size && cancelled, "accepted send cancellation error or byte count");
             }
-            if (result.after_stop)
-            {
+            if (result.after_stop) {
                 check(!result.accepted && result.error == asio::error::not_connected,
                     "send after stop must reject as not_connected");
             }
             check(result.received[0] <= 1 && result.received[1] <= result.received[0], "duplicate or unexpected echo");
-            if (!result.accepted)
-            {
+            if (!result.accepted) {
                 check(result.received[0] == 0, "rejected payload must never reach the server");
             }
-            if (!stopping && result.accepted)
-            {
-                if (size == 0)
-                {
+            if (!stopping && result.accepted) {
+                if (size == 0) {
                     ++accepted_empty;
-                }
-                else
-                {
+                } else {
                     check(result.received[0] == 1 && result.received[1] == 1,
                         "accepted payload must arrive unchanged once");
                 }
             }
         }
-        if (!stopping)
-        {
+        if (!stopping) {
             check(empty_received_[0] == accepted_empty && empty_received_[1] == accepted_empty,
                 "empty payload delivery count");
         }
@@ -302,15 +269,13 @@ private:
 };
 
 template<class Client, class Server>
-struct shutdown
-{
+struct shutdown {
     Client& client;
     Server& server;
     bool stopped{};
 
     void stop() {
-        if (!stopped)
-        {
+        if (!stopped) {
             client.stop();
             server.stop();
             stopped = true;
@@ -326,8 +291,7 @@ template<class Client, class Server>
 void connect(Client& client, Server& server, outcomes& results, const std::string& certificates) {
     client.set_auto_reconnect(false);
     client.set_disconnect_timeout(2s);
-    if constexpr (requires { client.ssl_stream(); })
-    {
+    if constexpr (requires { client.ssl_stream(); }) {
         server.set_cert_file("", certificates + "/server.pem", certificates + "/server-key.pem", "");
         check(!arknet::get_last_error(), "concurrency server identity");
         client.load_verify_file(certificates + "/ca.pem");
@@ -337,13 +301,10 @@ void connect(Client& client, Server& server, outcomes& results, const std::strin
         session->async_send(data);
     });
     client.bind_recv([&](std::string_view data) { results.receive(1, data); });
-    if constexpr (requires { client.ws_stream(); })
-    {
+    if constexpr (requires { client.ws_stream(); }) {
         check(server.start("127.0.0.1", 0), "concurrency WebSocket server start");
         check(client.start("127.0.0.1", server.get_listen_port(), "/concurrency"), "concurrency WebSocket connect");
-    }
-    else
-    {
+    } else {
         check(server.start("127.0.0.1", 0, arknet::use_dgram), "concurrency TCP server start");
         check(client.start("127.0.0.1", server.get_listen_port(), arknet::use_dgram), "concurrency TCP connect");
     }
@@ -351,15 +312,14 @@ void connect(Client& client, Server& server, outcomes& results, const std::strin
 
 template<class Client>
 void submit(Client& client, outcomes& results, std::size_t id, std::size_t limit, bool after_stop = false) {
-    try
-    {
+    try {
         const bool accepted = client.async_send(std::string_view(results.payload(id)),
             [&, id](const arknet::error_code& error, std::size_t bytes) { results.complete(id, error, bytes); });
         results.submitted(id, accepted, after_stop);
         results.queue_size(client.get_queued_send_buffer_size(), limit);
+    } catch (...) {
+        results.submission_threw();
     }
-    catch (...)
-    { results.submission_threw(); }
 }
 
 template<class Client, class Server>
@@ -374,18 +334,15 @@ void backpressure(Client& client, Server& server, bool operations, const std::st
     io_pause pause(client);
     std::barrier start(static_cast<std::ptrdiff_t>(sender_count));
     std::vector<std::jthread> senders;
-    for (std::size_t thread = 0; thread < sender_count; ++thread)
-    {
+    for (std::size_t thread = 0; thread < sender_count; ++thread) {
         senders.emplace_back([&, thread] {
             start.arrive_and_wait();
-            for (std::size_t row = 0; row < rows; ++row)
-            {
+            for (std::size_t row = 0; row < rows; ++row) {
                 submit(client, results, thread * rows + row, limit);
             }
         });
     }
-    for (auto& sender : senders)
-    {
+    for (auto& sender : senders) {
         sender.join();
     }
     const auto admitted = results.accepted();
@@ -418,21 +375,18 @@ void stop_race(Client& client, Server& server, bool from_callback) {
     std::latch racing_sent(sender_count);
     std::latch stopped(1);
     std::vector<std::jthread> senders;
-    for (std::size_t thread = 0; thread < sender_count; ++thread)
-    {
+    for (std::size_t thread = 0; thread < sender_count; ++thread) {
         senders.emplace_back([&, thread] {
             const auto base = thread * rows;
             submit(client, results, base, limit);
             initial_sent.count_down();
             race.wait();
-            for (std::size_t row = 1; row <= racing_rows; ++row)
-            {
+            for (std::size_t row = 1; row <= racing_rows; ++row) {
                 submit(client, results, base + row, limit);
             }
             racing_sent.count_down();
             stopped.wait();
-            for (std::size_t row = racing_rows + 1; row < rows; ++row)
-            {
+            for (std::size_t row = racing_rows + 1; row < rows; ++row) {
                 submit(client, results, base + row, limit, true);
             }
         });
@@ -443,39 +397,31 @@ void stop_race(Client& client, Server& server, bool from_callback) {
     latch_release release_senders{stopped};
     std::optional<std::jthread> owner;
     const auto request = [&] {
-        try
-        {
+        try {
             client.stop();
             stop_done.set_value();
+        } catch (...) {
+            stop_done.set_exception(std::current_exception());
         }
-        catch (...)
-        { stop_done.set_exception(std::current_exception()); }
     };
-    if (from_callback)
-    {
+    if (from_callback) {
         client.post([&] {
             bool released{};
-            try
-            {
+            try {
                 client.stop();
                 race.count_down();
                 released = true;
                 // Finish concurrent admission while stop completion is still pending.
                 racing_sent.wait();
                 stop_done.set_value();
-            }
-            catch (...)
-            {
-                if (!released)
-                {
+            } catch (...) {
+                if (!released) {
                     race.count_down();
                 }
                 stop_done.set_exception(std::current_exception());
             }
         });
-    }
-    else
-    {
+    } else {
         owner.emplace([&] {
             race.wait();
             request();
@@ -484,14 +430,12 @@ void stop_race(Client& client, Server& server, bool from_callback) {
     }
     pause.open();
     await(completion);
-    if (owner)
-    {
+    if (owner) {
         owner->join();
     }
     check(client.wait_stopped(), "concurrent send/stop owner completion");
     release_senders.open();
-    for (auto& sender : senders)
-    {
+    for (auto& sender : senders) {
         sender.join();
     }
     results.wait_completions(sender_count * rows);
@@ -508,8 +452,7 @@ void stop_before_write() {
     std::promise<arknet::error_code> accepted;
     auto connected = accepted.get_future();
     listener.async_accept(peer, [&](arknet::error_code ec) {
-        if (!ec)
-        {
+        if (!ec) {
             peer.set_option(asio::socket_base::receive_buffer_size(4096), ec);
         }
         accepted.set_value(ec);
@@ -527,8 +470,7 @@ void stop_before_write() {
     check(!await(connected), "stop-before-write nonreading peer accept");
     peer_watchdog.expires_after(2s);
     peer_watchdog.async_wait([&](const arknet::error_code& ec) {
-        if (!ec)
-        {
+        if (!ec) {
             expired = true;
             arknet::error_code ignored;
             peer.close(ignored);
@@ -542,8 +484,7 @@ void stop_before_write() {
         client.stop();
         // Inline send admission can precede the stop event queued by this callback.
         const bool admitted = client.async_send(payload, [&](const arknet::error_code& ec, std::size_t bytes) {
-            if (calls.fetch_add(1) == 0)
-            {
+            if (calls.fetch_add(1) == 0) {
                 sent.set_value({ec, bytes});
             }
         });
@@ -578,30 +519,25 @@ void stop_before_write() {
 template<class Client, class Server, class Function>
 void transport(bool external, Function&& function) {
     std::optional<io_runner> runner;
-    if (external)
-    {
+    if (external) {
         runner.emplace();
     }
     auto server = external ? std::make_unique<Server>(runner->context) : std::make_unique<Server>();
     auto client = external ? std::make_unique<Client>(runner->context) : std::make_unique<Client>();
     function(*client, *server);
-    if (external)
-    {
+    if (external) {
         check(!runner->context.stopped(), "concurrent fixture must preserve external context");
     }
 }
 
 template<class Client, class Server>
 void cases(const char* protocol) {
-    for (bool external : {false, true})
-    {
-        for (bool operations : {false, true})
-        {
+    for (bool external : {false, true}) {
+        for (bool operations : {false, true}) {
             transport<Client, Server>(
                 external, [&](auto& client, auto& server) { backpressure(client, server, operations, ""); });
         }
-        for (bool callback : {false, true})
-        {
+        for (bool callback : {false, true}) {
             transport<Client, Server>(
                 external, [&](auto& client, auto& server) { stop_race(client, server, callback); });
         }
@@ -621,8 +557,7 @@ namespace {
 DOCTEST_TEST_CASE("TCP auto reconnect rejects a send copied in the previous generation") {
     watchdog timeout;
 
-    class paused_client : public arknet::tcp_client_t<paused_client>
-    {
+    class paused_client : public arknet::tcp_client_t<paused_client> {
     public:
         using arknet::tcp_client_t<paused_client>::tcp_client_t;
         std::promise<void> entered;
@@ -633,8 +568,7 @@ DOCTEST_TEST_CASE("TCP auto reconnect rejects a send copied in the previous gene
         }
 
         std::string_view data_filter_before_send(std::string_view data) {
-            if (data == "old-generation")
-            {
+            if (data == "old-generation") {
                 entered.set_value();
                 released.wait();
             }
@@ -659,16 +593,14 @@ DOCTEST_TEST_CASE("TCP auto reconnect rejects a send copied in the previous gene
     server.bind_connect([](auto& session) { session->set_disconnect_timeout(200ms); });
     server.bind_recv([&](auto&, std::string_view data) {
         received.push(data);
-        if (data == "current-generation" && fresh_receipts.fetch_add(1) == 0)
-        {
+        if (data == "current-generation" && fresh_receipts.fetch_add(1) == 0) {
             fresh_received.set_value();
         }
     });
     client.set_auto_reconnect(true, 20ms);
     client.set_disconnect_timeout(200ms);
     client.bind_connect([&] {
-        if (!arknet::get_last_error())
-        {
+        if (!arknet::get_last_error()) {
             connections.push(std::to_string(client.generation()));
         }
     });
@@ -678,18 +610,16 @@ DOCTEST_TEST_CASE("TCP auto reconnect rejects a send copied in the previous gene
     const auto previous_generation = connections.wait(1).front();
     auto filtered = client.entered.get_future();
     std::jthread sender([&] {
-        try
-        {
+        try {
             submitted.set_value(client.async_send(
                 std::string_view("old-generation"), [&](const arknet::error_code& ec, std::size_t bytes) {
-                    if (old_calls.fetch_add(1) == 0)
-                    {
+                    if (old_calls.fetch_add(1) == 0) {
                         old_sent.set_value({ec, bytes});
                     }
                 }));
+        } catch (...) {
+            submitted.set_exception(std::current_exception());
         }
-        catch (...)
-        { submitted.set_exception(std::current_exception()); }
     });
     latch_release release{client.released};
     await(filtered);
@@ -738,8 +668,7 @@ DOCTEST_TEST_CASE("WebSocket concurrent admission, recovery, and stop") {
 #if ARKNET_USE_BOOST_ASIO
 DOCTEST_TEST_CASE("WebSocket TLS concurrent admission and recovery") {
     watchdog timeout;
-    for (bool external : {false, true})
-    {
+    for (bool external : {false, true}) {
         transport<arknet::wss_client, arknet::wss_server>(
             external, [&](auto& client, auto& server) { backpressure(client, server, false, ARKNET_TEST_CERT_DIR); });
     }
@@ -758,8 +687,7 @@ DOCTEST_TEST_CASE("One io_context with four workers serializes each IO lane") {
     std::barrier rendezvous(4);
     std::mutex workers_mutex;
     std::set<std::thread::id> workers;
-    for (std::size_t i = 0; i < actors.size(); ++i)
-    {
+    for (std::size_t i = 0; i < actors.size(); ++i) {
         actors[i] = std::make_unique<arknet::timer>(runtime.context_at());
         actors[i]->post([&, i] {
             {
@@ -769,17 +697,13 @@ DOCTEST_TEST_CASE("One io_context with four workers serializes each IO lane") {
             rendezvous.arrive_and_wait();
         });
     }
-    for (std::size_t i = 0; i < actors.size(); ++i)
-    {
-        for (unsigned task = 0; task < 200; ++task)
-        {
+    for (std::size_t i = 0; i < actors.size(); ++i) {
+        for (unsigned task = 0; task < 200; ++task) {
             actors[i]->post([&, i] {
-                if (active[i].fetch_add(1) != 0)
-                {
+                if (active[i].fetch_add(1) != 0) {
                     ++overlaps;
                 }
-                if (!actors[i]->running_in_this_thread())
-                {
+                if (!actors[i]->running_in_this_thread()) {
                     ++wrong_executor;
                 }
                 ++counts[i];
@@ -788,8 +712,7 @@ DOCTEST_TEST_CASE("One io_context with four workers serializes each IO lane") {
             });
         }
     }
-    for (auto& actor : actors)
-    {
+    for (auto& actor : actors) {
         auto drained = actor->post([] {}, asio::use_future);
         await(drained);
         actor->stop();

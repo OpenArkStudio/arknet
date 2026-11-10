@@ -14,8 +14,7 @@
 
 namespace {
 
-class lossy_relay
-{
+class lossy_relay {
 public:
     explicit lossy_relay(asio::ip::udp::endpoint server)
         : work_(asio::make_work_guard(context_))
@@ -43,12 +42,10 @@ private:
 
     void receive() {
         socket_.async_receive_from(asio::buffer(buffer_), sender_, [this](arknet::error_code error, std::size_t count) {
-            if (error)
-            {
+            if (error) {
                 return;
             }
-            if (sender_ != server_)
-            {
+            if (sender_ != server_) {
                 client_ = sender_;
             }
             const auto target = sender_ == server_ ? client_ : server_;
@@ -58,42 +55,30 @@ private:
                                                        arknet::detail::rudp_is_fec_control(*bytes, 4));
             const bool ack = sender_ == server_ && (arknet::detail::rudp_is_control(*bytes, 2) ||
                                                        arknet::detail::rudp_is_fec_control(*bytes, 5));
-            if (syn)
-            {
+            if (syn) {
                 ++syn_attempts_;
             }
             // Lose the first SYN, then every initial ACK. Both initial ACKs must
             // be lost so another client SYN is required to recover the handshake.
-            if (syn && syn_attempts_ == 1)
-            {
+            if (syn && syn_attempts_ == 1) {
                 ++dropped_syn;
                 ++dropped;
-            }
-            else if (ack && syn_attempts_ < 3)
-            {
+            } else if (ack && syn_attempts_ < 3) {
                 ++dropped_ack;
                 ++dropped;
-            }
-            else if (index % 7 == 1)
-            {
+            } else if (index % 7 == 1) {
                 ++dropped;
-            }
-            else if (index % 4 == 0)
-            {
+            } else if (index % 4 == 0) {
                 ++reordered;
                 auto timer = std::make_shared<asio::steady_timer>(context_, 25ms);
                 timer->async_wait([this, bytes, target, timer](arknet::error_code error) {
-                    if (!error)
-                    {
+                    if (!error) {
                         send(bytes, target);
                     }
                 });
-            }
-            else
-            {
+            } else {
                 send(bytes, target);
-                if (index % 5 == 0)
-                {
+                if (index % 5 == 0) {
                     ++duplicated;
                     send(bytes, target);
                 }
@@ -113,15 +98,13 @@ private:
 } // namespace
 
 DOCTEST_TEST_CASE("RUDP reassembles empty binary and fragmented messages on IPv4 and IPv6") {
-    for (const auto* host : {"127.0.0.1", "::1"})
-    {
+    for (const auto* host : {"127.0.0.1", "::1"}) {
         DOCTEST_INFO(host);
         messages received;
         std::atomic<unsigned> connects{}, handshakes{}, client_handshakes{}, disconnects{};
         arknet::rudp_server server;
         server.bind_handshake([&](auto&, arknet::error_code error) {
-            if (!error)
-            {
+            if (!error) {
                 ++handshakes;
             }
         });
@@ -143,12 +126,10 @@ DOCTEST_TEST_CASE("RUDP reassembles empty binary and fragmented messages on IPv4
         client.bind_recv([&](std::string_view bytes) { received.push(bytes); });
         const std::vector<std::string> expected{
             "", std::string("a\0b", 3), std::string(4119, 'r'), std::string(16384, 'k')};
-        for (unsigned round = 0; round < 2; ++round)
-        {
+        for (unsigned round = 0; round < 2; ++round) {
             check(server.start(host, 0), "RUDP server start/restart");
             check(client.start(host, server.get_listen_port()), "RUDP start completes handshake");
-            for (unsigned i = 0; i < expected.size(); ++i)
-            {
+            for (unsigned i = 0; i < expected.size(); ++i) {
                 auto sent = client.async_send(expected[i], asio::use_future);
                 const auto [error, count] = await(sent);
                 check(!error && count == expected[i].size(), "RUDP send accepts a complete message");
@@ -165,8 +146,7 @@ DOCTEST_TEST_CASE("RUDP reassembles empty binary and fragmented messages on IPv4
 }
 
 DOCTEST_TEST_CASE("RUDP handshake and data recover from real UDP drop duplicate and reorder") {
-    for (const auto mode : {arknet::fec::policy::disabled, arknet::fec::policy::fixed, arknet::fec::policy::adaptive})
-    {
+    for (const auto mode : {arknet::fec::policy::disabled, arknet::fec::policy::fixed, arknet::fec::policy::adaptive}) {
         DOCTEST_INFO(static_cast<int>(mode));
         messages received;
         std::atomic<unsigned> connects{}, server_handshakes{}, client_handshakes{};
@@ -192,8 +172,7 @@ DOCTEST_TEST_CASE("RUDP handshake and data recover from real UDP drop duplicate 
         check(client.start("127.0.0.1", relay.port()), "handshake retries dropped SYN and ACK datagrams");
         check(relay.dropped_syn == 1 && relay.dropped_ack >= 2, "relay loses the SYN and every initial ACK");
         std::vector<std::string> expected;
-        for (unsigned i = 0; i < 24; ++i)
-        {
+        for (unsigned i = 0; i < 24; ++i) {
             auto value = std::to_string(i) + ':';
             value.resize(i % 2 ? 4119 : 16384, static_cast<char>(i));
             expected.push_back(value);
@@ -304,8 +283,7 @@ DOCTEST_TEST_CASE("RUDP handshake rejection drains retained sessions without a c
     asio::post(context, [&] { server.stop(); });
     context.run_for(100ms);
     const bool drained = context.stopped();
-    if (!drained)
-    {
+    if (!drained) {
         asio::post(context, [&] { retained.reset(); });
         context.run_for(100ms);
     }
@@ -321,8 +299,7 @@ DOCTEST_TEST_CASE("RUDP receive memory limits disconnect once with no buffer spa
     std::promise<arknet::error_code> disconnected;
     auto completion = disconnected.get_future();
     server.bind_disconnect([&](auto&) {
-        if (++calls == 1)
-        {
+        if (++calls == 1) {
             disconnected.set_value(arknet::get_last_error());
         }
     });
@@ -339,16 +316,14 @@ DOCTEST_TEST_CASE("RUDP receive memory limits disconnect once with no buffer spa
 }
 
 DOCTEST_TEST_CASE("RUDP sessions work with one io_context and multiple threads") {
-    for (const auto* model : {"shared", "sharded"})
-    {
+    for (const auto* model : {"shared", "sharded"}) {
         benchmark_runtime runtime(model, 4);
         arknet::rudp_server server(runtime.server_lanes(4));
         server.bind_recv([](auto& session, std::string_view data) { session->async_send(data); });
         check(server.start("127.0.0.1", 0), "external-context server starts");
         std::vector<std::unique_ptr<arknet::rudp_client>> clients;
         std::array<messages, 4> received;
-        for (unsigned index = 0; index < 4; ++index)
-        {
+        for (unsigned index = 0; index < 4; ++index) {
             auto client = std::make_unique<arknet::rudp_client>(runtime.context_at(index + 1));
             client->set_auto_reconnect(false);
             client->bind_recv([&, index](std::string_view data) { received[index].push(data); });
@@ -356,22 +331,18 @@ DOCTEST_TEST_CASE("RUDP sessions work with one io_context and multiple threads")
             clients.push_back(std::move(client));
         }
         std::vector<std::string> expected;
-        for (unsigned i = 0; i < 32; ++i)
-        {
+        for (unsigned i = 0; i < 32; ++i) {
             std::string payload = std::to_string(i) + ':';
             payload.resize(4119, static_cast<char>(i));
             expected.push_back(payload);
-            for (const auto& client : clients)
-            {
+            for (const auto& client : clients) {
                 check(client->async_send(payload), "concurrent-client send admission");
             }
         }
-        for (auto& data : received)
-        {
+        for (auto& data : received) {
             check(data.wait(expected.size()) == expected, "strands preserve per-session message order");
         }
-        for (auto& client : clients)
-        {
+        for (auto& client : clients) {
             client->stop();
         }
         server.stop();
@@ -387,8 +358,7 @@ DOCTEST_TEST_CASE("RUDP automatic reconnect replaces conversations after server 
     arknet::rudp_client client;
     client.set_auto_reconnect(true, 50ms).set_connect_timeout(200ms);
     client.bind_connect([&] {
-        if (!arknet::get_last_error())
-        {
+        if (!arknet::get_last_error()) {
             connections.push("connected");
         }
     });
@@ -434,13 +404,11 @@ DOCTEST_TEST_CASE("RUDP unacknowledged messages exhaust retries and disconnect")
     std::function<void()> receive;
     receive = [&] {
         peer.async_receive_from(asio::buffer(storage), sender, [&](arknet::error_code error, std::size_t count) {
-            if (error)
-            {
+            if (error) {
                 return;
             }
             const std::string_view bytes(storage.data(), count);
-            if (arknet::detail::rudp_is_control(bytes, 1))
-            {
+            if (arknet::detail::rudp_is_control(bytes, 1)) {
                 auto ack = std::make_shared<std::string>(
                     arknet::detail::rudp_control(2, arknet::detail::rudp_read_id(bytes.data() + 1), 42));
                 peer.async_send_to(asio::buffer(*ack), sender, [ack](arknet::error_code, std::size_t) {});

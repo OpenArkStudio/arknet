@@ -10,8 +10,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args = void>
-class user_data_cp
-{
+class user_data_cp {
 public:
     template<class T>
     Derived& set_user_data(T&& value) {
@@ -31,27 +30,19 @@ public:
 
     template<class T>
     T get_user_data() noexcept {
-        if constexpr (std::is_pointer_v<T>)
-        {
-            if (auto* pointer = std::any_cast<T>(&user_data_))
-            {
+        if constexpr (std::is_pointer_v<T>) {
+            if (auto* pointer = std::any_cast<T>(&user_data_)) {
                 return *pointer;
             }
             return std::any_cast<std::remove_pointer_t<T>>(&user_data_);
-        }
-        else
-        {
-            if (auto* value = std::any_cast<std::remove_reference_t<T>>(&user_data_))
-            {
+        } else {
+            if (auto* value = std::any_cast<std::remove_reference_t<T>>(&user_data_)) {
                 return *value;
             }
-            if constexpr (std::is_reference_v<T>)
-            {
+            if constexpr (std::is_reference_v<T>) {
                 static std::remove_reference_t<T> empty{};
                 return empty;
-            }
-            else
-            {
+            } else {
                 return {};
             }
         }

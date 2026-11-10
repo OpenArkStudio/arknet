@@ -43,28 +43,24 @@
 namespace arknet::benchmark {
 
 template<class value_type>
-struct resource_metric
-{
+struct resource_metric {
     std::optional<value_type> value;
     std::string unavailable_reason;
 };
 
-struct file_descriptor_limit
-{
+struct file_descriptor_limit {
     std::uint64_t descriptors{};
     bool unlimited{};
 };
 
 inline std::ostream& operator<<(std::ostream& output, const file_descriptor_limit& value) {
-    if (value.unlimited)
-    {
+    if (value.unlimited) {
         return output << "\"unlimited\"";
     }
     return output << value.descriptors;
 }
 
-struct process_resources
-{
+struct process_resources {
     std::chrono::steady_clock::time_point monotonic_time;
     resource_metric<double> cpu_percent;
     resource_metric<std::uint64_t> current_rss_bytes;
@@ -92,8 +88,7 @@ inline std::string system_failure(const char* operation, int error) {
 template<class Query>
 void read_file_descriptor_limits(process_resources& result, Query query) {
     rlimit limits{};
-    if (query(&limits) != 0)
-    {
+    if (query(&limits) != 0) {
         const auto reason = system_failure("getrlimit(RLIMIT_NOFILE)", errno);
         result.nofile_soft = unavailable<file_descriptor_limit>(reason);
         result.nofile_hard = unavailable<file_descriptor_limit>(reason);
@@ -125,21 +120,17 @@ inline void read_file_descriptor_limits(process_resources& result) {
 }
 
 inline resource_metric<double> interval_cpu_percent(double previous, double current, double seconds) {
-    if (!std::isfinite(previous) || !std::isfinite(current) || previous < 0 || current < 0)
-    {
+    if (!std::isfinite(previous) || !std::isfinite(current) || previous < 0 || current < 0) {
         return unavailable<double>("Process CPU counter is not finite and nonnegative");
     }
-    if (!std::isfinite(seconds) || seconds <= 0)
-    {
+    if (!std::isfinite(seconds) || seconds <= 0) {
         return unavailable<double>("Monotonic sampling interval is not positive and finite");
     }
-    if (current < previous)
-    {
+    if (current < previous) {
         return unavailable<double>("Process CPU counter moved backwards");
     }
     const double percentage = 100.0 * ((current - previous) / seconds);
-    if (!std::isfinite(percentage))
-    {
+    if (!std::isfinite(percentage)) {
         return unavailable<double>("CPU percentage is outside the representable range");
     }
     return {percentage, {}};
@@ -149,8 +140,7 @@ inline resource_metric<double> read_cpu(process_resources& result) {
 #ifdef _WIN32
     (void)result;
     FILETIME created{}, exited{}, kernel{}, user{};
-    if (!GetProcessTimes(GetCurrentProcess(), &created, &exited, &kernel, &user))
-    {
+    if (!GetProcessTimes(GetCurrentProcess(), &created, &exited, &kernel, &user)) {
         return unavailable<double>(system_failure("GetProcessTimes", static_cast<int>(GetLastError())));
     }
     const auto seconds = [](FILETIME value) {
@@ -160,8 +150,7 @@ inline resource_metric<double> read_cpu(process_resources& result) {
     return {seconds(kernel) + seconds(user), {}};
 #elif defined(__APPLE__) || defined(__linux__)
     rusage usage{};
-    if (getrusage(RUSAGE_SELF, &usage) != 0)
-    {
+    if (getrusage(RUSAGE_SELF, &usage) != 0) {
         const auto reason = system_failure("getrusage(RUSAGE_SELF)", errno);
         result.peak_rss_bytes = unavailable<std::uint64_t>(reason);
         return unavailable<double>(reason);
@@ -172,12 +161,9 @@ inline resource_metric<double> read_cpu(process_resources& result) {
 #else
     constexpr std::uint64_t rss_scale = 1024;
 #endif
-    if (usage.ru_maxrss < 0 || static_cast<std::uint64_t>(usage.ru_maxrss) > maximum / rss_scale)
-    {
+    if (usage.ru_maxrss < 0 || static_cast<std::uint64_t>(usage.ru_maxrss) > maximum / rss_scale) {
         result.peak_rss_bytes = unavailable<std::uint64_t>("getrusage returned an invalid peak RSS");
-    }
-    else
-    {
+    } else {
         result.peak_rss_bytes = {static_cast<std::uint64_t>(usage.ru_maxrss) * rss_scale, {}};
     }
     const double seconds =
@@ -194,31 +180,25 @@ inline resource_metric<double> read_cpu(process_resources& result) {
 inline resource_metric<std::uint64_t> read_fd_count() {
     errno = 0;
     const int required = proc_pidinfo(getpid(), PROC_PIDLISTFDS, 0, nullptr, 0);
-    if (required < 0 || (required == 0 && errno != 0))
-    {
+    if (required < 0 || (required == 0 && errno != 0)) {
         return unavailable<std::uint64_t>(system_failure("proc_pidinfo(PROC_PIDLISTFDS)", errno));
     }
     std::size_t capacity = static_cast<std::size_t>(required) / sizeof(proc_fdinfo) + 32;
-    for (int attempt = 0; attempt != 3; ++attempt)
-    {
-        if (capacity > static_cast<std::size_t>((std::numeric_limits<int>::max)()) / sizeof(proc_fdinfo))
-        {
+    for (int attempt = 0; attempt != 3; ++attempt) {
+        if (capacity > static_cast<std::size_t>((std::numeric_limits<int>::max)()) / sizeof(proc_fdinfo)) {
             return unavailable<std::uint64_t>("FD list exceeds the proc_pidinfo buffer size limit");
         }
         std::vector<proc_fdinfo> entries(capacity);
         const auto bytes = static_cast<int>(entries.size() * sizeof(proc_fdinfo));
         errno = 0;
         const int received = proc_pidinfo(getpid(), PROC_PIDLISTFDS, 0, entries.data(), bytes);
-        if (received < 0 || (received == 0 && errno != 0))
-        {
+        if (received < 0 || (received == 0 && errno != 0)) {
             return unavailable<std::uint64_t>(system_failure("proc_pidinfo(PROC_PIDLISTFDS)", errno));
         }
-        if (received % sizeof(proc_fdinfo) != 0)
-        {
+        if (received % sizeof(proc_fdinfo) != 0) {
             return unavailable<std::uint64_t>("proc_pidinfo returned an incomplete FD record");
         }
-        if (received < bytes)
-        {
+        if (received < bytes) {
             return {static_cast<std::uint64_t>(received / sizeof(proc_fdinfo)), {}};
         }
         capacity *= 2;
@@ -228,29 +208,24 @@ inline resource_metric<std::uint64_t> read_fd_count() {
 #elif defined(__linux__)
 inline resource_metric<std::uint64_t> read_fd_count() {
     std::unique_ptr<DIR, decltype(&closedir)> directory(opendir("/proc/self/fd"), &closedir);
-    if (!directory)
-    {
+    if (!directory) {
         return unavailable<std::uint64_t>(system_failure("opendir(/proc/self/fd)", errno));
     }
     const int own_fd = dirfd(directory.get());
-    if (own_fd < 0)
-    {
+    if (own_fd < 0) {
         return unavailable<std::uint64_t>(system_failure("dirfd(/proc/self/fd)", errno));
     }
     std::uint64_t count = 0;
     errno = 0;
-    while (const auto* entry = readdir(directory.get()))
-    {
+    while (const auto* entry = readdir(directory.get())) {
         char* end = nullptr;
         const auto descriptor = std::strtoll(entry->d_name, &end, 10);
-        if (end != entry->d_name && *end == '\0' && descriptor >= 0 && descriptor != own_fd)
-        {
+        if (end != entry->d_name && *end == '\0' && descriptor >= 0 && descriptor != own_fd) {
             ++count;
         }
         errno = 0;
     }
-    if (errno != 0)
-    {
+    if (errno != 0) {
         return unavailable<std::uint64_t>(system_failure("readdir(/proc/self/fd)", errno));
     }
     return {count, {}};
@@ -262,52 +237,38 @@ inline void read_memory_and_counts(process_resources& result) {
     result.fd_count = unavailable<std::uint64_t>("POSIX file-descriptor count is unavailable on Windows");
     PROCESS_MEMORY_COUNTERS memory{};
     memory.cb = sizeof(memory);
-    if (GetProcessMemoryInfo(GetCurrentProcess(), &memory, sizeof(memory)))
-    {
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &memory, sizeof(memory))) {
         result.current_rss_bytes = {static_cast<std::uint64_t>(memory.WorkingSetSize), {}};
         result.peak_rss_bytes = {static_cast<std::uint64_t>(memory.PeakWorkingSetSize), {}};
-    }
-    else
-    {
+    } else {
         const auto reason = system_failure("GetProcessMemoryInfo", static_cast<int>(GetLastError()));
         result.current_rss_bytes = unavailable<std::uint64_t>(reason);
         result.peak_rss_bytes = unavailable<std::uint64_t>(reason);
     }
     DWORD handles = 0;
-    if (GetProcessHandleCount(GetCurrentProcess(), &handles))
-    {
+    if (GetProcessHandleCount(GetCurrentProcess(), &handles)) {
         result.handle_count = {handles, {}};
-    }
-    else
-    {
+    } else {
         result.handle_count =
             unavailable<std::uint64_t>(system_failure("GetProcessHandleCount", static_cast<int>(GetLastError())));
     }
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0603
     HPSS snapshot = nullptr;
     const DWORD captured = PssCaptureSnapshot(GetCurrentProcess(), PSS_CAPTURE_THREADS, 0, &snapshot);
-    if (captured == ERROR_SUCCESS)
-    {
+    if (captured == ERROR_SUCCESS) {
         PSS_THREAD_INFORMATION threads{};
         const DWORD queried = PssQuerySnapshot(snapshot, PSS_QUERY_THREAD_INFORMATION, &threads, sizeof(threads));
         const DWORD freed = PssFreeSnapshot(GetCurrentProcess(), snapshot);
-        if (queried != ERROR_SUCCESS)
-        {
+        if (queried != ERROR_SUCCESS) {
             result.thread_count =
                 unavailable<std::uint64_t>(system_failure("PssQuerySnapshot", static_cast<int>(queried)));
-        }
-        else if (freed != ERROR_SUCCESS)
-        {
+        } else if (freed != ERROR_SUCCESS) {
             result.thread_count =
                 unavailable<std::uint64_t>(system_failure("PssFreeSnapshot", static_cast<int>(freed)));
-        }
-        else
-        {
+        } else {
             result.thread_count = {threads.ThreadsCaptured, {}};
         }
-    }
-    else
-    {
+    } else {
         result.thread_count =
             unavailable<std::uint64_t>(system_failure("PssCaptureSnapshot", static_cast<int>(captured)));
     }
@@ -318,15 +279,12 @@ inline void read_memory_and_counts(process_resources& result) {
     result.handle_count = unavailable<std::uint64_t>("Windows handle count is unavailable on macOS");
     proc_taskinfo task{};
     errno = 0;
-    if (proc_pidinfo(getpid(), PROC_PIDTASKINFO, 0, &task, sizeof(task)) == sizeof(task))
-    {
+    if (proc_pidinfo(getpid(), PROC_PIDTASKINFO, 0, &task, sizeof(task)) == sizeof(task)) {
         result.current_rss_bytes = {task.pti_resident_size, {}};
         result.thread_count = task.pti_threadnum > 0
                                   ? resource_metric<std::uint64_t>{static_cast<std::uint64_t>(task.pti_threadnum), {}}
                                   : unavailable<std::uint64_t>("proc_pidinfo returned an invalid thread count");
-    }
-    else
-    {
+    } else {
         const auto reason = errno != 0 ? system_failure("proc_pidinfo(PROC_PIDTASKINFO)", errno)
                                        : "proc_pidinfo(PROC_PIDTASKINFO) returned an unexpected structure size";
         result.current_rss_bytes = unavailable<std::uint64_t>(reason);
@@ -340,36 +298,27 @@ inline void read_memory_and_counts(process_resources& result) {
         const int open_error = errno;
         unsigned long long virtual_pages = 0, resident_pages = 0;
         const auto page_size = sysconf(_SC_PAGESIZE);
-        if (!statm)
-        {
+        if (!statm) {
             result.current_rss_bytes =
                 unavailable<std::uint64_t>(system_failure("fopen(/proc/self/statm)", open_error));
-        }
-        else if (std::fscanf(statm.get(), "%llu %llu", &virtual_pages, &resident_pages) != 2 || page_size <= 0 ||
-                 resident_pages > (std::numeric_limits<std::uint64_t>::max)() / static_cast<std::uint64_t>(page_size))
-        {
+        } else if (std::fscanf(statm.get(), "%llu %llu", &virtual_pages, &resident_pages) != 2 || page_size <= 0 ||
+                   resident_pages >
+                       (std::numeric_limits<std::uint64_t>::max)() / static_cast<std::uint64_t>(page_size)) {
             result.current_rss_bytes = unavailable<std::uint64_t>("Invalid /proc/self/statm RSS or system page size");
-        }
-        else
-        {
+        } else {
             result.current_rss_bytes = {resident_pages * static_cast<std::uint64_t>(page_size), {}};
         }
     }
     {
         std::unique_ptr<std::FILE, decltype(&std::fclose)> status(std::fopen("/proc/self/status", "r"), &std::fclose);
         result.thread_count = unavailable<std::uint64_t>("/proc/self/status has no valid Threads entry");
-        if (!status)
-        {
+        if (!status) {
             result.thread_count = unavailable<std::uint64_t>(system_failure("fopen(/proc/self/status)", errno));
-        }
-        else
-        {
+        } else {
             char line[512];
-            while (std::fgets(line, sizeof(line), status.get()))
-            {
+            while (std::fgets(line, sizeof(line), status.get())) {
                 unsigned long long threads = 0;
-                if (std::sscanf(line, "Threads: %llu", &threads) == 1 && threads > 0)
-                {
+                if (std::sscanf(line, "Threads: %llu", &threads) == 1 && threads > 0) {
                     result.thread_count = {threads, {}};
                     break;
                 }
@@ -389,8 +338,7 @@ inline void read_memory_and_counts(process_resources& result) {
 
 // Call sample() from one thread. The individual OS counters are not an atomic snapshot.
 // No timer, worker thread, PID selection or modification of system limits is performed.
-class process_resource_sampler
-{
+class process_resource_sampler {
 public:
     process_resources sample() {
         process_resources result;
@@ -398,20 +346,14 @@ public:
         const auto cpu = process_resource_detail::read_cpu(result);
         const auto after = std::chrono::steady_clock::now();
         result.monotonic_time = before + (after - before) / 2;
-        if (!cpu.value)
-        {
+        if (!cpu.value) {
             result.cpu_percent = process_resource_detail::unavailable<double>(cpu.unavailable_reason);
             previous_.reset();
-        }
-        else
-        {
-            if (previous_)
-            {
+        } else {
+            if (previous_) {
                 result.cpu_percent = process_resource_detail::interval_cpu_percent(previous_->second, *cpu.value,
                     std::chrono::duration<double>(result.monotonic_time - previous_->first).count());
-            }
-            else
-            {
+            } else {
                 result.cpu_percent = process_resource_detail::unavailable<double>(
                     "A previous successful CPU sample is required to establish an interval");
             }

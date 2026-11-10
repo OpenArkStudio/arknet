@@ -11,8 +11,7 @@ namespace arknet::detail {
 template<class Derived, class Args = template_args_tcp_session>
 class tcps_session_impl_t
     : public tcp_session_impl_t<Derived, Args>
-    , public ssl_stream_cp<Derived, Args>
-{
+    , public ssl_stream_cp<Derived, Args> {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_SERVER;
@@ -90,14 +89,12 @@ template<class Derived, class Args>
 using tcps_session_impl_t = detail::tcps_session_impl_t<Derived, Args>;
 
 template<class Derived>
-class tcps_session_t : public detail::tcps_session_impl_t<Derived>
-{
+class tcps_session_t : public detail::tcps_session_impl_t<Derived> {
 public:
     using detail::tcps_session_impl_t<Derived>::tcps_session_impl_t;
 };
 
-class tcps_session : public tcps_session_t<tcps_session>
-{
+class tcps_session : public tcps_session_t<tcps_session> {
 public:
     using tcps_session_t::tcps_session_t;
 };

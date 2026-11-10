@@ -25,8 +25,7 @@ namespace {
 
 using clock_type = std::chrono::steady_clock;
 
-struct options
-{
+struct options {
     std::string host = "127.0.0.1";
     std::string port = "6379";
     std::string username;
@@ -44,8 +43,7 @@ struct options
 std::size_t integer(std::string_view text) {
     std::size_t value = 0;
     const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
-    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size())
-    {
+    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size()) {
         throw std::invalid_argument("Invalid integer option");
     }
     return value;
@@ -54,8 +52,7 @@ std::size_t integer(std::string_view text) {
 double duration(std::string_view text) {
     double value = 0;
     const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
-    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || !std::isfinite(value))
-    {
+    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || !std::isfinite(value)) {
         throw std::invalid_argument("Invalid duration option");
     }
     return value;
@@ -63,11 +60,9 @@ double duration(std::string_view text) {
 
 options arguments(int argc, char** argv) {
     options result;
-    for (int i = 1; i < argc; ++i)
-    {
+    for (int i = 1; i < argc; ++i) {
         const std::string key = argv[i];
-        if (key == "--help")
-        {
+        if (key == "--help") {
             std::cout << "arknet_redis_benchmark --host HOST --port PORT --username USER --tls --ca FILE "
                          "--clients N --pipeline N --window N --payload BYTES --rounds N "
                          "--seconds SECONDS --warmup SECONDS\n"
@@ -78,83 +73,55 @@ options arguments(int argc, char** argv) {
                          "In-flight command payload plus per-command overhead is capped at 64 MiB per connection.\n";
             std::exit(0);
         }
-        if (key == "--tls")
-        {
+        if (key == "--tls") {
             result.tls = true;
             continue;
         }
-        if (++i == argc)
-        {
+        if (++i == argc) {
             throw std::invalid_argument("Missing value for " + key);
         }
         const std::string value = argv[i];
-        if (key == "--host")
-        {
+        if (key == "--host") {
             result.host = value;
-        }
-        else if (key == "--port")
-        {
+        } else if (key == "--port") {
             result.port = value;
-        }
-        else if (key == "--username")
-        {
+        } else if (key == "--username") {
             result.username = value;
-        }
-        else if (key == "--ca")
-        {
+        } else if (key == "--ca") {
             result.ca = value;
-        }
-        else if (key == "--clients")
-        {
+        } else if (key == "--clients") {
             result.clients = integer(value);
-        }
-        else if (key == "--pipeline")
-        {
+        } else if (key == "--pipeline") {
             result.pipeline = integer(value);
-        }
-        else if (key == "--window")
-        {
+        } else if (key == "--window") {
             result.window = integer(value);
-        }
-        else if (key == "--payload")
-        {
+        } else if (key == "--payload") {
             result.payload = integer(value);
-        }
-        else if (key == "--rounds")
-        {
+        } else if (key == "--rounds") {
             result.rounds = integer(value);
-        }
-        else if (key == "--seconds")
-        {
+        } else if (key == "--seconds") {
             result.seconds = duration(value);
-        }
-        else if (key == "--warmup")
-        {
+        } else if (key == "--warmup") {
             result.warmup = duration(value);
-        }
-        else
-        {
+        } else {
             throw std::invalid_argument("Unknown option: " + key);
         }
     }
     if (result.host.empty() || result.port.empty() || !result.clients || result.clients > 128 || !result.pipeline ||
         result.pipeline > 1024 || !result.window || result.window > 64 || result.payload > 1024 * 1024 ||
         !result.rounds || result.rounds > 100 || result.seconds <= 0 || result.seconds > 3600 || result.warmup < 0 ||
-        result.warmup > 3600 || (!result.tls && !result.ca.empty()))
-    {
+        result.warmup > 3600 || (!result.tls && !result.ca.empty())) {
         throw std::invalid_argument("Invalid benchmark dimensions; use --help");
     }
     constexpr std::size_t budget = 64 * 1024 * 1024;
     const auto bytes_per_command = result.payload + std::max<std::size_t>(64, sizeof(arknet::redis::value));
-    if (result.pipeline > budget / bytes_per_command || result.window > budget / bytes_per_command / result.pipeline)
-    {
+    if (result.pipeline > budget / bytes_per_command || result.window > budget / bytes_per_command / result.pipeline) {
         throw std::invalid_argument("In-flight data exceeds the 64 MiB per-connection budget");
     }
     return result;
 }
 
-struct phase
-{
+struct phase {
     clock_type::time_point stop;
     std::atomic<std::size_t> running;
     std::promise<void> finished;
@@ -166,8 +133,7 @@ struct phase
 };
 
 template<class Client>
-struct request_chain : std::enable_shared_from_this<request_chain<Client>>
-{
+struct request_chain : std::enable_shared_from_this<request_chain<Client>> {
     std::shared_ptr<Client> client;
     std::shared_ptr<phase> measurement;
     std::vector<arknet::redis::command> commands;
@@ -184,53 +150,36 @@ struct request_chain : std::enable_shared_from_this<request_chain<Client>>
         const auto began = clock_type::now();
         client->async_pipeline(commands, [self = this->shared_from_this(), began](arknet::redis::result result) {
             bool valid = bool(result) && result.replies.size() == self->commands.size();
-            for (const auto& reply : result.replies)
-            {
+            for (const auto& reply : result.replies) {
                 valid = valid && reply.type == arknet::redis::value_type::bulk_string && reply.text == self->payload;
             }
-            if (valid)
-            {
+            if (valid) {
                 self->successes += self->commands.size();
                 ++self->batches;
                 const auto latency = std::chrono::duration<double, std::micro>(clock_type::now() - began).count();
-                if (self->samples.size() < self->sample_capacity)
-                {
+                if (self->samples.size() < self->sample_capacity) {
                     self->samples.push_back(latency);
-                }
-                else
-                {
+                } else {
                     const auto index = std::uniform_int_distribution<std::uint64_t>(0, self->batches - 1)(self->random);
-                    if (index < self->samples.size())
-                    {
+                    if (index < self->samples.size()) {
                         self->samples[static_cast<std::size_t>(index)] = latency;
                     }
                 }
-            }
-            else
-            {
+            } else {
                 self->failures += self->commands.size();
-                if (self->failure_reason.empty())
-                {
-                    if (result.transport_error)
-                    {
+                if (self->failure_reason.empty()) {
+                    if (result.transport_error) {
                         self->failure_reason = result.transport_error.message();
-                    }
-                    else if (result.error != arknet::redis::client_errc::none)
-                    {
+                    } else if (result.error != arknet::redis::client_errc::none) {
                         self->failure_reason = "client error " + std::to_string(static_cast<int>(result.error));
-                    }
-                    else
-                    {
+                    } else {
                         self->failure_reason = "ECHO reply verification failed";
                     }
                 }
             }
-            if (valid && clock_type::now() < self->measurement->stop)
-            {
+            if (valid && clock_type::now() < self->measurement->stop) {
                 self->submit();
-            }
-            else if (self->measurement->running.fetch_sub(1) == 1)
-            {
+            } else if (self->measurement->running.fetch_sub(1) == 1) {
                 self->measurement->finished.set_value();
             }
         });
@@ -244,14 +193,11 @@ bool measure(const options& settings, const std::vector<std::shared_ptr<Client>>
     auto finished = measurement->finished.get_future();
     std::vector<std::shared_ptr<request_chain<Client>>> chains;
     std::string payload(settings.payload, '\0');
-    for (std::size_t i = 0; i < payload.size(); ++i)
-    {
+    for (std::size_t i = 0; i < payload.size(); ++i) {
         payload[i] = static_cast<char>(i % 256);
     }
-    for (const auto& client : clients)
-    {
-        for (std::size_t i = 0; i < settings.window; ++i)
-        {
+    for (const auto& client : clients) {
+        for (std::size_t i = 0; i < settings.window; ++i) {
             auto chain = std::make_shared<request_chain<Client>>();
             chain->client = client;
             chain->measurement = measurement;
@@ -268,14 +214,11 @@ bool measure(const options& settings, const std::vector<std::shared_ptr<Client>>
     const auto cpu_measured_start = process_cpu();
     measurement->stop =
         started + std::chrono::duration_cast<clock_type::duration>(std::chrono::duration<double>(seconds));
-    for (const auto& chain : chains)
-    {
+    for (const auto& chain : chains) {
         chain->submit();
     }
-    if (finished.wait_for(std::chrono::duration<double>(seconds + 10)) != std::future_status::ready)
-    {
-        for (const auto& client : clients)
-        {
+    if (finished.wait_for(std::chrono::duration<double>(seconds + 10)) != std::future_status::ready) {
+        for (const auto& client : clients) {
             client->close();
         }
         finished.wait_for(std::chrono::seconds(10));
@@ -286,28 +229,23 @@ bool measure(const options& settings, const std::vector<std::shared_ptr<Client>>
     std::uint64_t successes = 0;
     std::uint64_t failures = 0;
 
-    struct latency_sample
-    {
+    struct latency_sample {
         double microseconds;
         double weight;
     };
 
     std::vector<latency_sample> samples;
     std::string failure_reason;
-    for (const auto& chain : chains)
-    {
+    for (const auto& chain : chains) {
         successes += chain->successes;
         failures += chain->failures;
-        if (!chain->samples.empty())
-        {
+        if (!chain->samples.empty()) {
             const auto weight = static_cast<double>(chain->batches) / chain->samples.size();
-            for (const auto latency : chain->samples)
-            {
+            for (const auto latency : chain->samples) {
                 samples.push_back({latency, weight});
             }
         }
-        if (failure_reason.empty())
-        {
+        if (failure_reason.empty()) {
             failure_reason = chain->failure_reason;
         }
     }
@@ -315,25 +253,21 @@ bool measure(const options& settings, const std::vector<std::shared_ptr<Client>>
         [](const auto& left, const auto& right) { return left.microseconds < right.microseconds; });
     const auto percentile = [&](double fraction) {
         long double total = 0;
-        for (const auto& sample : samples)
-        {
+        for (const auto& sample : samples) {
             total += sample.weight;
         }
         const auto target = total * fraction;
         long double cumulative = 0;
-        for (const auto& sample : samples)
-        {
+        for (const auto& sample : samples) {
             cumulative += sample.weight;
-            if (cumulative >= target)
-            {
+            if (cumulative >= target) {
                 return sample.microseconds;
             }
         }
         return samples.empty() ? 0.0 : samples.back().microseconds;
     };
     const bool passed = failures == 0 && successes != 0;
-    if (report && passed)
-    {
+    if (report && passed) {
         std::ostringstream output;
         output.imbue(std::locale::classic());
         output << std::setprecision(12)
@@ -353,21 +287,15 @@ bool measure(const options& settings, const std::vector<std::shared_ptr<Client>>
                << ",\"commands_per_second\":" << successes / elapsed
                << ",\"batch_roundtrip_p50_us\":" << percentile(0.50)
                << ",\"batch_roundtrip_p99_us\":" << percentile(0.99) << ",\"client_cpu_percent_of_one_core\":";
-        if (cpu_measured_start && cpu_end)
-        {
+        if (cpu_measured_start && cpu_end) {
             output << (*cpu_end - *cpu_measured_start) / elapsed * 100;
-        }
-        else
-        {
+        } else {
             output << "null";
         }
         output << ",\"process_peak_rss_bytes\":";
-        if (const auto memory = peak_rss())
-        {
+        if (const auto memory = peak_rss()) {
             output << *memory;
-        }
-        else
-        {
+        } else {
             output << "null";
         }
         output << ",\"latency_sample_count\":" << samples.size()
@@ -375,12 +303,10 @@ bool measure(const options& settings, const std::vector<std::shared_ptr<Client>>
                << (!failures && successes ? "true" : "false") << "}\n";
         reports.push_back(output.str());
     }
-    if (!passed)
-    {
+    if (!passed) {
         std::cerr << (report ? "Measurement round " + std::to_string(round) : "Warmup") << " failed: " << failures
                   << " commands failed, " << successes << " commands succeeded";
-        if (!failure_reason.empty())
-        {
+        if (!failure_reason.empty()) {
             std::cerr << " (" << failure_reason << ')';
         }
         std::cerr << '\n';
@@ -396,8 +322,7 @@ int run(const options& settings) {
     target.port = settings.port;
     target.username = settings.username;
     target.client_name = "arknet_benchmark";
-    if (const auto* password = std::getenv("ARKNET_REDIS_PASSWORD"))
-    {
+    if (const auto* password = std::getenv("ARKNET_REDIS_PASSWORD")) {
         target.password = password;
     }
     arknet::redis::client_options configuration;
@@ -405,33 +330,27 @@ int run(const options& settings) {
     configuration.max_pending_bytes = 64 * 1024 * 1024;
     configuration.command_timeout = std::chrono::seconds(5);
     configuration.tls_certificate_authority = settings.ca;
-    for (std::size_t i = 0; i < settings.clients; ++i)
-    {
+    for (std::size_t i = 0; i < settings.clients; ++i) {
         auto client = std::make_shared<Client>(configuration);
         auto completion = std::make_shared<std::promise<bool>>();
         auto connected = completion->get_future();
         client->async_connect(
             target, [completion](arknet::redis::result result) { completion->set_value(bool(result)); });
         clients.push_back(std::move(client));
-        if (connected.wait_for(std::chrono::seconds(10)) != std::future_status::ready || !connected.get())
-        {
+        if (connected.wait_for(std::chrono::seconds(10)) != std::future_status::ready || !connected.get()) {
             throw std::runtime_error("Redis connection or authentication failed");
         }
     }
     std::vector<std::string> reports;
     bool passed = settings.warmup == 0 || measure(settings, clients, settings.warmup, 0, false, reports);
-    for (std::size_t round = 1; passed && round <= settings.rounds; ++round)
-    {
+    for (std::size_t round = 1; passed && round <= settings.rounds; ++round) {
         passed = measure(settings, clients, settings.seconds, round, true, reports);
     }
-    for (const auto& client : clients)
-    {
+    for (const auto& client : clients) {
         client->close();
     }
-    if (passed)
-    {
-        for (const auto& report : reports)
-        {
+    if (passed) {
+        for (const auto& report : reports) {
             std::cout << report;
         }
     }
@@ -441,12 +360,10 @@ int run(const options& settings) {
 } // namespace
 
 int main(int argc, char** argv) {
-    try
-    {
+    try {
         std::cout.imbue(std::locale::classic());
         const auto settings = arguments(argc, argv);
-        if (settings.tls)
-        {
+        if (settings.tls) {
 #if defined(ARKNET_ENABLE_SSL)
             return run<arknet::redis::tls_client>(settings);
 #else
@@ -454,9 +371,7 @@ int main(int argc, char** argv) {
 #endif
         }
         return run<arknet::redis::client>(settings);
-    }
-    catch (const std::exception& error)
-    {
+    } catch (const std::exception& error) {
         std::cerr << "Redis benchmark: " << error.what() << '\n';
         return 1;
     }

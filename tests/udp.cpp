@@ -12,10 +12,8 @@
 
 namespace {
 
-struct udp_send_probe : arknet::detail::udp_send_op<udp_send_probe, void>
-{
-    struct test_io
-    {
+struct udp_send_probe : arknet::detail::udp_send_op<udp_send_probe, void> {
+    struct test_io {
         bool running_in_this_thread() const {
             return true;
         }
@@ -23,8 +21,7 @@ struct udp_send_probe : arknet::detail::udp_send_op<udp_send_probe, void>
 
     test_io* io_ = &context;
 
-    struct test_stream
-    {
+    struct test_stream {
         arknet::error_code error;
         std::size_t count{};
 
@@ -58,10 +55,8 @@ DOCTEST_TEST_CASE("UDP send completion reports zero bytes on failure") {
     const std::array<std::pair<arknet::error_code, std::size_t>, 5> results{
         {{asio::error::message_size, 65508}, {arknet::error_code(1784, asio::error::get_system_category()), 65508},
             {asio::error::operation_aborted, 8}, {{}, 8}, {{}, 0}}};
-    for (const auto& [error, count] : results)
-    {
-        for (const bool connected : {false, true})
-        {
+    for (const auto& [error, count] : results) {
+        for (const bool connected : {false, true}) {
             DOCTEST_INFO("connected=", connected, ", error=", error.value(), ", bytes=", count);
             udp_send_probe sender;
             sender.socket.error = error;
@@ -83,8 +78,7 @@ DOCTEST_TEST_CASE("UDP send completion reports zero bytes on failure") {
     }
 }
 
-struct udp_io_runner
-{
+struct udp_io_runner {
     asio::io_context context;
     asio::executor_work_guard<asio::io_context::executor_type> work{context.get_executor()};
     std::thread thread{[this] { context.run(); }};
@@ -92,8 +86,7 @@ struct udp_io_runner
     void finish() {
         work.reset();
         context.stop();
-        if (thread.joinable())
-        {
+        if (thread.joinable()) {
             thread.join();
         }
     }
@@ -104,8 +97,7 @@ struct udp_io_runner
 };
 
 DOCTEST_TEST_CASE("UDP clients do not opt into source port reuse by default") {
-    for (const auto* host : {"127.0.0.1", "::1"})
-    {
+    for (const auto* host : {"127.0.0.1", "::1"}) {
         DOCTEST_INFO("host=", std::string(host));
         asio::io_context context;
         const asio::ip::udp::endpoint destination(asio::ip::make_address(host), 0);
@@ -126,8 +118,7 @@ DOCTEST_TEST_CASE("UDP clients do not opt into source port reuse by default") {
         competing.set_option(asio::socket_base::reuse_address(reuse));
         arknet::error_code error;
         competing.bind(local, error);
-        if (!error)
-        {
+        if (!error) {
             competing.connect(peer.local_endpoint(), error);
         }
         DOCTEST_CHECK_MESSAGE(
@@ -153,8 +144,7 @@ DOCTEST_TEST_CASE("UDP sessions preserve first, empty and binary datagrams acros
     arknet::udp_server server(1024, 65536);
     server.bind_connect([&](auto&) { ++connects; });
     server.bind_recv([&](auto& session, std::string_view data) {
-        if (data.size() == 8192)
-        {
+        if (data.size() == 8192) {
             second_endpoint = session->get_remote_port();
         }
         session->async_send(data);
@@ -166,16 +156,14 @@ DOCTEST_TEST_CASE("UDP sessions preserve first, empty and binary datagrams acros
     second.set_auto_reconnect(false);
     second.bind_recv([&](std::string_view data) { second_received.push(data); });
     const std::vector<std::string> expected{"", std::string("a\0b", 3), "third"};
-    for (std::size_t round = 0; round < 2; ++round)
-    {
+    for (std::size_t round = 0; round < 2; ++round) {
         check(server.start("127.0.0.1", 0), "UDP server start/restart");
         check(client.start("127.0.0.1", server.get_listen_port()), "UDP connect/reconnect");
         check(second.start("127.0.0.1", server.get_listen_port()), "second UDP connect");
         const auto first_port = client.get_local_port();
         const auto second_port = second.get_local_port();
         check(first_port != second_port, "UDP clients need distinct endpoints");
-        for (std::size_t i = 0; i < expected.size(); ++i)
-        {
+        for (std::size_t i = 0; i < expected.size(); ++i) {
             client.async_send(expected[i]);
             const auto count = round * expected.size() + i + 1;
             check(received.wait(count)[count - 1] == expected[i], "UDP first/empty/binary datagrams survive");
@@ -235,8 +223,7 @@ DOCTEST_TEST_CASE("UDP cast owns payloads and completes rejected and resolved se
     std::atomic<int> rejection_calls{};
     const bool accepted =
         sender.async_send(target, std::string("x"), [&](const arknet::error_code& ec, std::size_t count) {
-            if (ec == asio::error::no_buffer_space && count == 0)
-            {
+            if (ec == asio::error::no_buffer_space && count == 0) {
                 ++rejection_calls;
             }
         });
@@ -312,8 +299,7 @@ DOCTEST_TEST_CASE("UDP callbacks stop and restart without stopping an external I
     const bool caller_accepted =
         shared_cast.async_send(target, std::string("overflow"), [&](const arknet::error_code& ec, std::size_t count) {
             shared_cast.stop();
-            if (ec == asio::error::no_buffer_space && count == 0)
-            {
+            if (ec == asio::error::no_buffer_space && count == 0) {
                 ++caller_stop_callbacks;
             }
         });
@@ -335,8 +321,7 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
     constexpr std::size_t race_offset = admission_attempts + 1;
     constexpr std::size_t attempts = race_offset + threads * race_rows;
 
-    struct result
-    {
+    struct result {
         bool submitted{};
         bool accepted{};
         bool after_stop{};
@@ -362,8 +347,7 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
     std::size_t limit = 4 * payload_size;
     sender.set_max_send_buffer_size(limit);
     const auto submit = [&](std::size_t id, bool after_stop = false) {
-        try
-        {
+        try {
             std::string payload(payload_size, static_cast<char>('A' + id % 26));
             const bool accepted = sender.async_send(target, asio::const_buffer(payload.data(), payload.size()),
                 [&, id](const arknet::error_code& error, std::size_t bytes) {
@@ -384,13 +368,12 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
                 results[id].accepted = accepted;
                 results[id].after_stop = after_stop;
             }
-            if (sender.get_queued_send_buffer_size() > limit)
-            {
+            if (sender.get_queued_send_buffer_size() > limit) {
                 queue_overflow = true;
             }
+        } catch (...) {
+            ++submission_exceptions;
         }
-        catch (...)
-        { ++submission_exceptions; }
     };
     const auto wait_completions = [&](std::size_t count) {
         std::unique_lock lock(result_mutex);
@@ -406,32 +389,27 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
         released.wait();
     });
     const bool io_paused = entered.wait_for(5s) == std::future_status::ready;
-    if (!io_paused)
-    {
+    if (!io_paused) {
         release->set_value();
     }
     check(io_paused, "cast IO admission gate entered");
     std::barrier start(static_cast<std::ptrdiff_t>(threads));
     std::vector<std::jthread> senders;
-    for (std::size_t thread = 0; thread < threads; ++thread)
-    {
+    for (std::size_t thread = 0; thread < threads; ++thread) {
         senders.emplace_back([&, thread] {
             start.arrive_and_wait();
-            for (std::size_t row = 0; row < admission_rows; ++row)
-            {
+            for (std::size_t row = 0; row < admission_rows; ++row) {
                 submit(thread * admission_rows + row);
             }
         });
     }
-    for (auto& thread : senders)
-    {
+    for (auto& thread : senders) {
         thread.join();
     }
     std::size_t admitted{};
     {
         std::lock_guard lock(result_mutex);
-        for (std::size_t id = 0; id < admission_attempts; ++id)
-        {
+        for (std::size_t id = 0; id < admission_attempts; ++id) {
             admitted += results[id].accepted;
         }
     }
@@ -463,8 +441,7 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
         released.wait();
     });
     const bool race_paused = entered.wait_for(5s) == std::future_status::ready;
-    if (!race_paused)
-    {
+    if (!race_paused) {
         release->set_value();
     }
     check(race_paused, "cast IO stop-race gate entered");
@@ -472,15 +449,13 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
     std::latch stopped(1);
     std::barrier race(static_cast<std::ptrdiff_t>(threads + 1));
     senders.clear();
-    for (std::size_t thread = 0; thread < threads; ++thread)
-    {
+    for (std::size_t thread = 0; thread < threads; ++thread) {
         senders.emplace_back([&, thread] {
             const auto base = race_offset + thread * race_rows;
             submit(base);
             seeded.count_down();
             race.arrive_and_wait();
-            for (std::size_t row = 1; row + 1 < race_rows; ++row)
-            {
+            for (std::size_t row = 1; row + 1 < race_rows; ++row) {
                 submit(base + row);
             }
             stopped.wait();
@@ -491,15 +466,15 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
     const auto seeded_bytes = sender.get_queued_send_buffer_size();
     std::jthread stopper([&] {
         race.arrive_and_wait();
-        try
-        { sender.stop(); }
-        catch (...)
-        { stop_exception = true; }
+        try {
+            sender.stop();
+        } catch (...) {
+            stop_exception = true;
+        }
         stopped.count_down();
     });
     release->set_value();
-    for (auto& thread : senders)
-    {
+    for (auto& thread : senders) {
         thread.join();
     }
     stopper.join();
@@ -517,25 +492,19 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
     check(submission_exceptions == 0 && !queue_overflow,
         "cast concurrent submissions do not throw or exceed the byte limit");
     std::lock_guard lock(result_mutex);
-    for (std::size_t id = 0; id < attempts; ++id)
-    {
+    for (std::size_t id = 0; id < attempts; ++id) {
         DOCTEST_CAPTURE(id);
         const auto& value = results[id];
         DOCTEST_INFO("accepted=", value.accepted, ", callbacks=", value.callbacks, ", error=", value.error.value(), " ",
             value.error.message(), ", bytes=", value.bytes);
         check(value.submitted && value.callbacks == 1, "every cast submission completes exactly once");
-        if (!value.accepted)
-        {
+        if (!value.accepted) {
             check(value.bytes == 0 && (value.error == asio::error::no_buffer_space ||
                                           (id >= race_offset && value.error == asio::error::not_connected)),
                 "cast rejection reports a queue or stopped-state error without bytes");
-        }
-        else if (!value.error)
-        {
+        } else if (!value.error) {
             check(value.bytes == payload_size, "successful cast send reports the full payload size");
-        }
-        else
-        {
+        } else {
             check(
                 id >= race_offset && value.bytes <= payload_size &&
                     (value.error == asio::error::operation_aborted || value.error == asio::error::not_connected ||
@@ -543,8 +512,7 @@ DOCTEST_TEST_CASE("UDP cast concurrent admission and stop complete every submiss
                         value.error == asio::error::connection_reset || value.error == asio::error::broken_pipe),
                 "accepted cast send reports only a valid stop cancellation");
         }
-        if (value.after_stop)
-        {
+        if (value.after_stop) {
             check(!value.accepted && value.error == asio::error::not_connected,
                 "cast sends after completed stop reject as not_connected");
         }
@@ -561,8 +529,7 @@ DOCTEST_TEST_CASE("UDP cast preserves empty, binary, and maximum IPv4 payloads")
     check(sender.start("127.0.0.1", 0), "datagram sender start");
     auto endpoint = asio::ip::udp::endpoint(asio::ip::make_address("127.0.0.1"), receiver.get_local_port());
     const std::vector<std::string> payloads{"", std::string("a\0z", 3), std::string(65507, 'm')};
-    for (std::size_t index = 0; index < payloads.size(); ++index)
-    {
+    for (std::size_t index = 0; index < payloads.size(); ++index) {
         auto completion = sender.async_send(endpoint, payloads[index], asio::use_future);
         const auto [error, count] = await(completion);
         check(!error && count == payloads[index].size(), "UDP send reports every payload byte");
@@ -586,16 +553,14 @@ DOCTEST_TEST_CASE("UDP cast preserves empty, binary, and maximum IPv4 payloads")
 }
 
 DOCTEST_TEST_CASE("UDP cast rejects a send copied before callback stop and restart") {
-    class filtered_cast : public arknet::udp_cast_t<filtered_cast>
-    {
+    class filtered_cast : public arknet::udp_cast_t<filtered_cast> {
     public:
         using arknet::udp_cast_t<filtered_cast>::udp_cast_t;
         std::promise<void> entered;
         std::latch release{1};
 
         std::string_view data_filter_before_send(std::string_view bytes) {
-            if (bytes == "previous")
-            {
+            if (bytes == "previous") {
                 entered.set_value();
                 release.wait();
             }
@@ -611,8 +576,7 @@ DOCTEST_TEST_CASE("UDP cast rejects a send copied before callback stop and resta
     check(receiver.start("127.0.0.1", 0), "generation receiver start");
     filtered_cast sender(runner.context);
     sender.bind_start([&] {
-        if (!arknet::get_last_error())
-        {
+        if (!arknet::get_last_error()) {
             started.push("started");
         }
     });
@@ -626,14 +590,12 @@ DOCTEST_TEST_CASE("UDP cast rejects a send copied before callback stop and resta
             [&](const arknet::error_code& error, std::size_t count) { sent.set_value({error, count}); });
     });
 
-    struct unlock
-    {
+    struct unlock {
         std::latch& latch;
         bool armed = true;
 
         void open() {
-            if (std::exchange(armed, false))
-            {
+            if (std::exchange(armed, false)) {
                 latch.count_down();
             }
         }
@@ -663,8 +625,7 @@ DOCTEST_TEST_CASE("UDP cast rejects a send copied before callback stop and resta
 }
 
 DOCTEST_TEST_CASE("UDP custom session can stop during connect without delivering its first datagram") {
-    class custom_session : public arknet::udp_session_t<custom_session>
-    {
+    class custom_session : public arknet::udp_session_t<custom_session> {
     public:
         using arknet::udp_session_t<custom_session>::udp_session_t;
     };
@@ -675,8 +636,7 @@ DOCTEST_TEST_CASE("UDP custom session can stop during connect without delivering
     auto disconnected = rejected.get_future();
     arknet::udp_server_t<custom_session> server;
     server.bind_connect([&](auto& session) {
-        if (++connect_count == 1)
-        {
+        if (++connect_count == 1) {
             session->stop();
             rejected.set_value();
         }
@@ -700,8 +660,7 @@ DOCTEST_TEST_CASE("UDP custom session can stop during connect without delivering
     server.stop();
 }
 
-class udp_delayed_session : public arknet::udp_session_t<udp_delayed_session>
-{
+class udp_delayed_session : public arknet::udp_session_t<udp_delayed_session> {
 public:
     using arknet::udp_session_t<udp_delayed_session>::udp_session_t;
 
@@ -741,13 +700,11 @@ DOCTEST_TEST_CASE("UDP session routing does not wait for a connect callback send
 }
 
 DOCTEST_TEST_CASE("UDP cast request_stop does not retain an already stopped shared object") {
-    for (const bool was_started : {false, true})
-    {
+    for (const bool was_started : {false, true}) {
         std::weak_ptr<arknet::udp_cast> lifetime;
         {
             auto endpoint = std::make_shared<arknet::udp_cast>();
-            if (was_started)
-            {
+            if (was_started) {
                 check(endpoint->start("127.0.0.1", 0), "shared UDP cast start");
                 endpoint->stop();
             }
@@ -813,12 +770,9 @@ DOCTEST_TEST_CASE("UDP cast accepts generic move-only send completions") {
     auto direct = direct_done.get_future();
     check(sender.async_send(target, "direct",
               [state = std::make_unique<int>(6), &direct_done](const auto& error, auto count) mutable {
-                  if (static_cast<std::size_t>(*state) == count)
-                  {
+                  if (static_cast<std::size_t>(*state) == count) {
                       direct_done.set_value({error, count});
-                  }
-                  else
-                  {
+                  } else {
                       direct_done.set_value({asio::error::fault, count});
                   }
               }),

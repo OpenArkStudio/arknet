@@ -13,8 +13,7 @@
 
 namespace {
 
-struct capture_lifetime
-{
+struct capture_lifetime {
     std::atomic<unsigned>& destroyed;
     std::thread::id& destruction_thread;
 
@@ -50,8 +49,7 @@ DOCTEST_TEST_CASE("Manual runtime posts from other threads but runs only when it
     std::atomic<unsigned> calls{};
     std::vector<std::thread::id> threads;
     std::thread producer([&] {
-        for (unsigned index = 0; index < 8; ++index)
-        {
+        for (unsigned index = 0; index < 8; ++index) {
             asio::post(executor, [&] {
                 threads.push_back(std::this_thread::get_id());
                 ++calls;
@@ -63,8 +61,7 @@ DOCTEST_TEST_CASE("Manual runtime posts from other threads but runs only when it
     DOCTEST_CHECK(runtime.poll(8) == 8);
     DOCTEST_CHECK(calls == 8);
     DOCTEST_REQUIRE(threads.size() == 8);
-    for (const auto thread : threads)
-    {
+    for (const auto thread : threads) {
         DOCTEST_CHECK(thread == owner);
     }
     DOCTEST_CHECK(runtime.poll() == 0);
@@ -75,8 +72,7 @@ DOCTEST_TEST_CASE("Manual runtime remains usable after idle polls and honors its
     DOCTEST_CHECK(runtime.poll() == 0);
     DOCTEST_CHECK(runtime.poll() == 0);
     unsigned calls{};
-    for (unsigned index = 0; index < 5; ++index)
-    {
+    for (unsigned index = 0; index < 5; ++index) {
         asio::post(runtime.get_executor(), [&] { ++calls; });
     }
     DOCTEST_CHECK(runtime.poll(0) == 0);
@@ -135,10 +131,11 @@ DOCTEST_TEST_CASE("Manual runtime rejects foreign-thread polling without executi
     asio::post(runtime.get_executor(), [&] { ++calls; });
     bool rejected{};
     std::thread foreign([&] {
-        try
-        { runtime.poll(); }
-        catch (const std::logic_error&)
-        { rejected = true; }
+        try {
+            runtime.poll();
+        } catch (const std::logic_error&) {
+            rejected = true;
+        }
     });
     foreign.join();
     DOCTEST_CHECK(rejected);
@@ -182,15 +179,13 @@ DOCTEST_TEST_CASE("Manual runtime resumes timer coroutines and their completion 
     });
     DOCTEST_CHECK(threads.empty());
     DOCTEST_CHECK_FALSE(completed);
-    for (unsigned attempt = 0; attempt < 1024 && !completed; ++attempt)
-    {
+    for (unsigned attempt = 0; attempt < 1024 && !completed; ++attempt) {
         DOCTEST_CHECK(runtime.poll(1) <= 1);
     }
     DOCTEST_REQUIRE(completed);
     DOCTEST_CHECK_FALSE(bool(failure));
     DOCTEST_REQUIRE(threads.size() == 3);
-    for (const auto thread : threads)
-    {
+    for (const auto thread : threads) {
         DOCTEST_CHECK(thread == owner);
     }
 }
@@ -203,8 +198,7 @@ DOCTEST_TEST_CASE("Manual coroutine exceptions arrive at co_spawn completion and
         failure = std::move(error);
         completed = true;
     });
-    for (unsigned attempt = 0; attempt < 1024 && !completed; ++attempt)
-    {
+    for (unsigned attempt = 0; attempt < 1024 && !completed; ++attempt) {
         runtime.poll(1);
     }
     DOCTEST_REQUIRE(completed);

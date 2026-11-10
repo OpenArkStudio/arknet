@@ -23,16 +23,14 @@ using arknet::fec::transport;
 
 std::string message(unsigned id, std::size_t size = 64) {
     std::string result(size, '\0');
-    for (std::size_t i = 0; i < size; ++i)
-    {
+    for (std::size_t i = 0; i < size; ++i) {
         result[i] = static_cast<char>((i * 47 + id * 13) & 255);
     }
     return result;
 }
 
 void put(std::string& bytes, std::size_t offset, std::uint64_t value, unsigned count) {
-    for (unsigned i = 0; i < count; ++i)
-    {
+    for (unsigned i = 0; i < count; ++i) {
         bytes[offset + i] = static_cast<char>(value >> (i * 8));
     }
 }
@@ -51,8 +49,7 @@ arknet::fec::options fixed(unsigned k = 4, unsigned p = 2) {
     return result;
 }
 
-struct fec_pair
-{
+struct fec_pair {
     std::vector<std::string> wire, feedback, received;
     transport sender, receiver;
 
@@ -68,8 +65,7 @@ struct fec_pair
 
     std::vector<std::string> send(unsigned count, std::uint32_t now = 0) {
         std::vector<std::string> original;
-        for (unsigned i = 0; i < count; ++i)
-        {
+        for (unsigned i = 0; i < count; ++i) {
             original.push_back(message(i, 64 + i));
             check(sender.send(original.back(), now), "datagram queues");
         }
@@ -105,8 +101,7 @@ DOCTEST_TEST_CASE("Rejected FEC metadata cannot advance the receive replay windo
 }
 
 DOCTEST_TEST_CASE("FEC input allocation failure releases incomplete recovery state and permits retry") {
-    for (const unsigned index : {1U, 2U})
-    {
+    for (const unsigned index : {1U, 2U}) {
         DOCTEST_CAPTURE(index);
         const auto settings = fixed(2, 1);
         arknet::arq::options arq_settings;
@@ -125,8 +120,7 @@ DOCTEST_TEST_CASE("FEC input allocation failure releases incomplete recovery sta
             conversation, mtu, settings, [&](auto bytes) { wire.emplace_back(bytes); }, [](auto) { return true; });
         arq_sender.set_output([&](auto bytes) { sender.send(bytes, 0); });
         const std::vector<std::string> original{message(0), message(1)};
-        for (const auto& bytes : original)
-        {
+        for (const auto& bytes : original) {
             check(arq_sender.send(bytes) == 0, "complete message queues in ARQ");
         }
         arq_sender.update(0);
@@ -136,10 +130,11 @@ DOCTEST_TEST_CASE("FEC input allocation failure releases incomplete recovery sta
         bool threw = false;
         {
             scoped_allocation_failure::scope failure;
-            try
-            { receiver.input(wire[index], 0); }
-            catch (const std::bad_alloc&)
-            { threw = true; }
+            try {
+                receiver.input(wire[index], 0);
+            } catch (const std::bad_alloc&) {
+                threw = true;
+            }
         }
         check(threw && scoped_allocation_failure::injections == before + 1,
             "systematic delivery staging or parity storage allocation fails once");
@@ -151,8 +146,7 @@ DOCTEST_TEST_CASE("FEC input allocation failure releases incomplete recovery sta
         check(receiver.input(wire[index == 1 ? 0 : 1], 1), "an intact original completes the replacement group");
         std::vector<std::string> received;
         std::string bytes;
-        while (arq_receiver.receive(bytes))
-        {
+        while (arq_receiver.receive(bytes)) {
             received.push_back(bytes);
         }
         check(forwarded == 3, "the discarded group permits a previously forwarded original to reach ARQ again");
@@ -170,8 +164,7 @@ DOCTEST_TEST_CASE("FEC staging cleanup preserves delivery callback exception sem
     transport receiver(
         conversation, mtu, fixed(2, 1), [](auto) {},
         [&](auto bytes) {
-            if (throw_delivery)
-            {
+            if (throw_delivery) {
                 throw std::bad_alloc();
             }
             received.emplace_back(bytes);
@@ -192,8 +185,7 @@ DOCTEST_TEST_CASE("Adaptive FEC compares segment and datagram loss ratios indepe
     auto settings = arknet::fec::options::adaptive();
     transport sender(conversation, mtu, settings, [](auto) {}, [](auto) { return true; });
     sender.adapt(0, 0, 0, 10, 0, 4096);
-    for (unsigned i = 0; i < 100; ++i)
-    {
+    for (unsigned i = 0; i < 100; ++i) {
         check(sender.send(message(i), 0), "systematic data sends without parity");
     }
     check(sender.input(feedback(1, 100, 10, 0), 1000), "valid peer datagram loss feedback accepted");
@@ -216,14 +208,12 @@ DOCTEST_TEST_CASE("FEC supports maximum shard counts and wire MTU with mixed pay
             received.emplace_back(value);
             return true;
         });
-    for (unsigned i = 0; i < 32; ++i)
-    {
+    for (unsigned i = 0; i < 32; ++i) {
         original.push_back(message(i, wire_mtu - transport::overhead - i * 19));
         check(sender.send(original.back(), 0), "maximum sized datagram queues");
     }
     check(wire.size() == 48, "maximum requested parity emitted within byte budget");
-    for (std::size_t i = 16; i < wire.size(); ++i)
-    {
+    for (std::size_t i = 16; i < wire.size(); ++i) {
         check(wire[i].size() <= wire_mtu, "all headers and parity fit maximum wire MTU");
         check(receiver.input(wire[i], 0), "any 32 surviving shards reconstruct the group");
         check(receiver.snapshot().retained_bytes <= settings.max_buffer_bytes, "retained allocation stays bounded");
@@ -294,16 +284,14 @@ DOCTEST_TEST_CASE("FEC immediately delivers systematic datagrams and suppresses 
     fec_pair connection;
     const auto original = connection.send(4);
     check(connection.wire.size() == 6, "four systematic and two parity shards");
-    for (std::size_t i = 0; i < original.size(); ++i)
-    {
+    for (std::size_t i = 0; i < original.size(); ++i) {
         check(kind(connection.wire[i]) == 0, "systematic frame type");
         check(connection.receiver.input(connection.wire[i], 0), "systematic shard accepted");
         check(connection.received.size() == i + 1 && connection.received.back() == original[i],
             "no decode wait for intact data");
         check(!connection.receiver.input(connection.wire[i], 0), "same shard rejected as duplicate");
     }
-    for (std::size_t i = 4; i < connection.wire.size(); ++i)
-    {
+    for (std::size_t i = 4; i < connection.wire.size(); ++i) {
         connection.receiver.input(connection.wire[i], 0);
     }
     check(connection.received == original, "parity never repeats delivered datagrams");
@@ -315,20 +303,16 @@ DOCTEST_TEST_CASE("FEC immediately delivers systematic datagrams and suppresses 
 }
 
 DOCTEST_TEST_CASE("FEC repairs every pair of lost shards despite reversal and duplication") {
-    for (unsigned survivors = 0; survivors < 64; ++survivors)
-    {
-        if (std::popcount(survivors) != 4)
-        {
+    for (unsigned survivors = 0; survivors < 64; ++survivors) {
+        if (std::popcount(survivors) != 4) {
             continue;
         }
         DOCTEST_CAPTURE(survivors);
         fec_pair connection;
         auto original = connection.send(4);
         unsigned lost_data = 0;
-        for (int index = 5; index >= 0; --index)
-        {
-            if (!(survivors & (1U << index)))
-            {
+        for (int index = 5; index >= 0; --index) {
+            if (!(survivors & (1U << index))) {
                 lost_data += index < 4;
                 continue;
             }
@@ -401,16 +385,13 @@ DOCTEST_TEST_CASE("FEC bounds group wait and bypasses control datagrams") {
         "only feedback is added before group deadline");
     connection.sender.update(2);
     std::vector<std::string> payload_frames;
-    for (const auto& bytes : connection.wire)
-    {
-        if (kind(bytes) == 0 || kind(bytes) == 1)
-        {
+    for (const auto& bytes : connection.wire) {
+        if (kind(bytes) == 0 || kind(bytes) == 1) {
             payload_frames.push_back(bytes);
         }
     }
     check(payload_frames.size() == 3, "deadline flushes two data plus one budget-safe parity frame");
-    for (const auto& bytes : payload_frames)
-    {
+    for (const auto& bytes : payload_frames) {
         connection.receiver.input(bytes, 2);
     }
     check(connection.received.size() == 3 && connection.received[1] == original[0] &&
@@ -424,8 +405,7 @@ DOCTEST_TEST_CASE("FEC emits independently valid frames when redundancy budget d
     fec_pair connection(settings);
     const auto original = connection.send(4);
     check(connection.wire.size() == 4, "zero budget emits only data");
-    for (const auto& bytes : connection.wire)
-    {
+    for (const auto& bytes : connection.wire) {
         check(connection.receiver.input(bytes, 0), "each data-only frame is valid");
     }
     check(connection.received == original, "budget reduction never loses accepted data");
@@ -452,10 +432,8 @@ DOCTEST_TEST_CASE("FEC handles deadline and group-id wrap without duplicate deli
     check(connection.sender.snapshot().data_packets_tx == 0, "one millisecond remains before wrap");
     connection.sender.update(0);
     check(connection.sender.snapshot().data_packets_tx == 2, "wrapped deadline flushes on time");
-    for (const auto& value : connection.wire)
-    {
-        if (kind(value) == 0 || kind(value) == 1)
-        {
+    for (const auto& value : connection.wire) {
+        if (kind(value) == 0 || kind(value) == 1) {
             connection.receiver.input(value, start);
         }
     }
@@ -465,8 +443,7 @@ DOCTEST_TEST_CASE("FEC handles deadline and group-id wrap without duplicate deli
     fec_pair ungrouped(arknet::fec::options{});
     check(ungrouped.sender.send(message(7), 0), "ungrouped datagram queued");
     const auto frame = ungrouped.wire[0];
-    for (std::uint32_t id : {0xfffffffeU, 0xffffffffU, 0U, 1U})
-    {
+    for (std::uint32_t id : {0xfffffffeU, 0xffffffffU, 0U, 1U}) {
         auto wrapped = frame;
         put(wrapped, 16, id, 4);
         check(ungrouped.receiver.input(wrapped, 0), "group sequence crossing zero is accepted");
@@ -486,8 +463,7 @@ DOCTEST_TEST_CASE("FEC applies receive group and aggregate byte limits") {
     check(connection.receiver.snapshot().retained_groups <= 1, "receive group count never exceeds configured bound");
     check(connection.receiver.snapshot().retained_bytes <= settings.max_buffer_bytes, "receive bytes bounded");
     check(connection.receiver.snapshot().evicted_groups >= 1, "admission loss is observable");
-    for (std::size_t index : {std::size_t(7), std::size_t(8), std::size_t(9)})
-    {
+    for (std::size_t index : {std::size_t(7), std::size_t(8), std::size_t(9)}) {
         check(connection.receiver.input(connection.wire[index], 1),
             "group saturation still forwards every intact original");
     }
@@ -495,8 +471,7 @@ DOCTEST_TEST_CASE("FEC applies receive group and aggregate byte limits") {
     auto aggregate = fixed(32, 2);
     aggregate.max_buffer_bytes = 4096;
     fec_pair bounded(aggregate);
-    for (unsigned i = 0; i < 31; ++i)
-    {
+    for (unsigned i = 0; i < 31; ++i) {
         bounded.sender.send(message(i, 900), i);
         check(bounded.sender.snapshot().retained_bytes <= aggregate.max_buffer_bytes,
             "pending transmit data is also bounded");
@@ -514,8 +489,7 @@ DOCTEST_TEST_CASE("FEC applies receive group and aggregate byte limits") {
 DOCTEST_TEST_CASE("FEC feedback is valid before and after recovery groups expire") {
     fec_pair connection;
     connection.send(4);
-    for (std::size_t index : {std::size_t(2), std::size_t(3), std::size_t(4), std::size_t(5)})
-    {
+    for (std::size_t index : {std::size_t(2), std::size_t(3), std::size_t(4), std::size_t(5)}) {
         check(connection.receiver.input(connection.wire[index], 0), "loss pattern accepted");
     }
     connection.receiver.update(0);
@@ -593,8 +567,7 @@ DOCTEST_TEST_CASE("FEC tolerates stop called synchronously from output or delive
             emitting->stop();
         },
         [](auto) { return true; });
-    for (unsigned i = 0; i < 4; ++i)
-    {
+    for (unsigned i = 0; i < 4; ++i) {
         emitting->send(message(i), 0);
     }
     check(output_count == 1, "stop aborts remaining encode callbacks");
@@ -616,8 +589,7 @@ DOCTEST_TEST_CASE("FEC tolerates stop called synchronously from output or delive
     DOCTEST_CHECK_NOTHROW(receiving->input(source.wire[0], 0));
     check(deliveries == 1 && receiving->snapshot().retained_bytes == 0,
         "systematic delivery stop leaves no live group reference");
-    for (const auto& bytes : source.wire)
-    {
+    for (const auto& bytes : source.wire) {
         check(!receiving->input(bytes, 1), "stopped transport rejects future packets");
     }
     bool stop_on_recovery = false;
@@ -626,8 +598,7 @@ DOCTEST_TEST_CASE("FEC tolerates stop called synchronously from output or delive
         conversation, mtu, settings, [](auto) {},
         [&](auto) {
             ++deliveries;
-            if (stop_on_recovery)
-            {
+            if (stop_on_recovery) {
                 receiving->stop();
             }
             return true;
@@ -646,14 +617,12 @@ DOCTEST_TEST_CASE("FEC validates malformed frames before allocation and survives
     source.send(4);
     fec_pair target;
     const auto valid = source.wire.front();
-    for (std::size_t length = 0; length < valid.size(); ++length)
-    {
+    for (std::size_t length = 0; length < valid.size(); ++length) {
         check(!target.receiver.input(std::string_view(valid).substr(0, length), 0),
             "every truncated systematic frame rejected");
     }
     for (const auto& [offset, value] : std::vector<std::pair<std::size_t, unsigned>>{
-             {0, 'X'}, {4, 2}, {5, 4}, {6, 0}, {6, 33}, {7, 17}, {8, 6}, {9, 1}, {12, 0}, {20, 0}, {22, 0}})
-    {
+             {0, 'X'}, {4, 2}, {5, 4}, {6, 0}, {6, 33}, {7, 17}, {8, 6}, {9, 1}, {12, 0}, {20, 0}, {22, 0}}) {
         auto malformed = valid;
         malformed[offset] = static_cast<char>(value);
         check(!target.receiver.input(malformed, 0), "invalid header, length, or CRC rejected");
@@ -665,19 +634,16 @@ DOCTEST_TEST_CASE("FEC validates malformed frames before allocation and survives
         random = random * 1664525U + 1013904223U;
         return random;
     };
-    for (unsigned iteration = 0; iteration < 4000; ++iteration)
-    {
+    for (unsigned iteration = 0; iteration < 4000; ++iteration) {
         std::string bytes(next() % 1400, '\0');
-        for (auto& byte : bytes)
-        {
+        for (auto& byte : bytes) {
             byte = static_cast<char>(next() >> 24);
         }
         DOCTEST_CHECK_NOTHROW(target.receiver.input(bytes, iteration));
         check(target.receiver.snapshot().retained_bytes <= fixed().max_buffer_bytes,
             "arbitrary bytes cannot exceed memory bound");
     }
-    for (unsigned iteration = 0; iteration < 1000; ++iteration)
-    {
+    for (unsigned iteration = 0; iteration < 1000; ++iteration) {
         auto bytes = source.wire[next() % source.wire.size()];
         bytes[next() % bytes.size()] ^= static_cast<char>(1U << (next() % 8));
         DOCTEST_CHECK_NOTHROW(target.receiver.input(bytes, 4000 + iteration));

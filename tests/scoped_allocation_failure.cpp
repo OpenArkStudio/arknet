@@ -12,8 +12,7 @@
 namespace {
 
 void before_allocation() {
-    if (scoped_allocation_failure::armed)
-    {
+    if (scoped_allocation_failure::armed) {
         scoped_allocation_failure::disarm();
         ++scoped_allocation_failure::injections;
         throw std::bad_alloc();
@@ -22,8 +21,7 @@ void before_allocation() {
 
 void* allocate(std::size_t size) {
     before_allocation();
-    if (auto* pointer = std::malloc(size ? size : 1))
-    {
+    if (auto* pointer = std::malloc(size ? size : 1)) {
         return pointer;
     }
     throw std::bad_alloc();
@@ -36,13 +34,11 @@ void* allocate_aligned(std::size_t size, std::align_val_t alignment) {
     auto* pointer = _aligned_malloc(size ? size : 1, value);
 #else
     void* pointer{};
-    if (posix_memalign(&pointer, value < sizeof(void*) ? sizeof(void*) : value, size ? size : 1))
-    {
+    if (posix_memalign(&pointer, value < sizeof(void*) ? sizeof(void*) : value, size ? size : 1)) {
         pointer = nullptr;
     }
 #endif
-    if (pointer)
-    {
+    if (pointer) {
         return pointer;
     }
     throw std::bad_alloc();
@@ -67,10 +63,11 @@ void* operator new[](std::size_t size) {
 }
 
 void* operator new(std::size_t size, const std::nothrow_t&) noexcept {
-    try
-    { return allocate(size); }
-    catch (...)
-    { return nullptr; }
+    try {
+        return allocate(size);
+    } catch (...) {
+        return nullptr;
+    }
 }
 
 void* operator new[](std::size_t size, const std::nothrow_t&) noexcept {
@@ -110,10 +107,11 @@ void* operator new[](std::size_t size, std::align_val_t alignment) {
 }
 
 void* operator new(std::size_t size, std::align_val_t alignment, const std::nothrow_t&) noexcept {
-    try
-    { return allocate_aligned(size, alignment); }
-    catch (...)
-    { return nullptr; }
+    try {
+        return allocate_aligned(size, alignment);
+    } catch (...) {
+        return nullptr;
+    }
 }
 
 void* operator new[](std::size_t size, std::align_val_t alignment, const std::nothrow_t&) noexcept {

@@ -9,8 +9,7 @@
 #include <arknet/base/session_mgr.hpp>
 #include "check.hpp"
 
-struct test_option : arknet::detail::component_tag
-{
+struct test_option : arknet::detail::component_tag {
     int value = 7;
 };
 
@@ -24,10 +23,11 @@ DOCTEST_TEST_CASE("Move-only function wrappers replace, reset and remove themsel
     moved.reset();
     check(!moved, "empty callable");
     bool bad_call = false;
-    try
-    { moved(1); }
-    catch (const std::bad_function_call&)
-    { bad_call = true; }
+    try {
+        moved(1);
+    } catch (const std::bad_function_call&) {
+        bad_call = true;
+    }
     check(bad_call, "empty callable throws");
 
     std::unique_ptr<arknet::detail::function<int()>> self_removing;
@@ -63,13 +63,11 @@ DOCTEST_TEST_CASE("ECS clone owns independent delimiter and component state") {
 }
 
 DOCTEST_TEST_CASE("Datagram matchers retain incomplete frames and find complete boundaries") {
-    for (auto size : {std::size_t(253), std::size_t(254), std::size_t(65536)})
-    {
+    for (auto size : {std::size_t(253), std::size_t(254), std::size_t(65536)}) {
         const std::size_t header = size < 254 ? 1 : size <= 65535 ? 3 : 9;
         std::string wire(header + size, 'x');
         wire[0] = static_cast<char>(header == 1 ? size : header == 3 ? 254 : 255);
-        for (std::size_t i = 1; i < header; ++i)
-        {
+        for (std::size_t i = 1; i < header; ++i) {
             wire[i] = static_cast<char>((std::uint64_t(size) >> ((i - 1) * 8)) & 0xff);
         }
 
@@ -110,18 +108,20 @@ DOCTEST_TEST_CASE("Linear buffers enforce limits after compaction and capacity r
     check(std::string_view(static_cast<const char*>(data.data()), data.size()) == "ghijklmnopqrstuv",
         "compaction preserves unread data");
     bool bounded = false;
-    try
-    { buffer.prepare(1); }
-    catch (const std::length_error&)
-    { bounded = true; }
+    try {
+        buffer.prepare(1);
+    } catch (const std::length_error&) {
+        bounded = true;
+    }
     check(bounded && buffer.size() == 16, "full buffer rejects another byte");
     buffer.consume(16);
     check(buffer.capacity() >= 16, "capacity retained for reuse");
     bounded = false;
-    try
-    { buffer.prepare(17); }
-    catch (const std::length_error&)
-    { bounded = true; }
+    try {
+        buffer.prepare(17);
+    } catch (const std::length_error&) {
+        bounded = true;
+    }
     check(bounded && buffer.size() == 0, "retained capacity does not bypass the limit");
     buffer.prepare(16);
     buffer.commit(100);
@@ -140,8 +140,7 @@ DOCTEST_TEST_CASE("Handler allocators use reusable storage and aligned heap fall
     check(reused == first, "local storage reused after release");
     memory.deallocate(reused, 1);
 
-    struct alignas(64) aligned_value
-    {
+    struct alignas(64) aligned_value {
         std::array<std::byte, 64> bytes{};
     };
 
@@ -151,10 +150,11 @@ DOCTEST_TEST_CASE("Handler allocators use reusable storage and aligned heap fall
     check(reinterpret_cast<std::uintptr_t>(aligned) % alignof(aligned_value) == 0, "overaligned heap allocation");
     allocator.deallocate(aligned, 2);
     bool overflow = false;
-    try
-    { allocator.allocate(std::numeric_limits<std::size_t>::max()); }
-    catch (const std::bad_array_new_length&)
-    { overflow = true; }
+    try {
+        allocator.allocate(std::numeric_limits<std::size_t>::max());
+    } catch (const std::bad_array_new_length&) {
+        overflow = true;
+    }
     check(overflow, "allocator rejects multiplication overflow");
 }
 
@@ -174,8 +174,7 @@ DOCTEST_TEST_CASE("Listeners can replace and clear themselves during notificatio
     listener.notify(event_type::start);
     check(value == 11, "listener replacement and removal remain valid");
 
-    struct receiver
-    {
+    struct receiver {
         int value = 0;
 
         void receive(int increment) {
@@ -200,14 +199,12 @@ DOCTEST_TEST_CASE("Listeners can replace and clear themselves during notificatio
 struct queue_fixture
     : arknet::detail::event_queue_cp<queue_fixture>
     , arknet::detail::post_cp<queue_fixture>
-    , std::enable_shared_from_this<queue_fixture>
-{
+    , std::enable_shared_from_this<queue_fixture> {
     explicit queue_fixture(std::shared_ptr<asio::io_context> context)
         : io_(std::make_shared<arknet::detail::io_t>(std::move(context))) {}
 
     ~queue_fixture() {
-        if (destroyed)
-        {
+        if (destroyed) {
             *destroyed = true;
         }
     }
@@ -234,8 +231,7 @@ DOCTEST_TEST_CASE("Event queues drain long synchronous completion chains without
     queue_fixture queue(context);
     std::size_t completed = 0;
     queue.post_event([&](arknet::detail::event_queue_guard<queue_fixture>) {
-        for (std::size_t i = 0; i < 50000; ++i)
-        {
+        for (std::size_t i = 0; i < 50000; ++i) {
             queue.push_event([&](arknet::detail::event_queue_guard<queue_fixture>) { ++completed; });
         }
     });
@@ -261,8 +257,7 @@ DOCTEST_TEST_CASE("Event queues retain their owner through synchronous final-own
     DOCTEST_CHECK(destroyed);
 }
 
-struct managed_session_fixture
-{
+struct managed_session_fixture {
     using args_type = void;
     using key_type = int;
 
@@ -297,8 +292,7 @@ DOCTEST_TEST_CASE("Session registries keep the active session when duplicate can
     check(active_erased && sessions.empty(), "active session can still be removed");
 }
 
-struct condition_fixture : arknet::condition_event
-{
+struct condition_fixture : arknet::condition_event {
     using condition_event::async_wait;
     using condition_event::condition_event;
 };

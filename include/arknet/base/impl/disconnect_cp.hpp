@@ -12,8 +12,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class disconnect_cp
-{
+class disconnect_cp {
 public:
     using self = disconnect_cp;
 
@@ -44,12 +43,9 @@ protected:
     template<class Chain>
     void _handle_disconnect(const error_code& error, std::shared_ptr<Derived> owner, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
-        if (object.reading_)
-        {
+        if (object.reading_) {
             object._make_readend_timer(error, std::move(owner), std::move(chain));
-        }
-        else
-        {
+        } else {
             object._handle_readend(error, std::move(owner), std::move(chain));
         }
     }
@@ -58,16 +54,14 @@ protected:
     void _handle_readend(const error_code& error, std::shared_ptr<Derived> owner, Chain chain) {
         auto& object = static_cast<Derived&>(*this);
         object.disconnecting_ = false;
-        if constexpr (Args::is_session)
-        {
+        if constexpr (Args::is_session) {
             object._do_stop(error, std::move(owner), std::move(chain));
         }
     }
 
     template<class Chain>
     void _make_readend_timer(const error_code& error, std::shared_ptr<Derived> owner, Chain chain) {
-        if (readend_timer_)
-        {
+        if (readend_timer_) {
             readend_timer_->cancel();
         }
         auto& object = static_cast<Derived&>(*this);
@@ -78,8 +72,7 @@ protected:
     template<class Chain>
     void _post_readend_timer(
         const error_code& error, std::shared_ptr<Derived> owner, Chain chain, std::shared_ptr<safe_timer> timer) {
-        if (timer != readend_timer_)
-        {
+        if (timer != readend_timer_) {
             return;
         }
         auto& object = static_cast<Derived&>(*this);
@@ -95,8 +88,7 @@ protected:
     template<class Chain>
     void _handle_readend_timer(const error_code&, const error_code& error, std::shared_ptr<Derived> owner, Chain chain,
         std::shared_ptr<safe_timer> timer) {
-        if (timer != readend_timer_)
-        {
+        if (timer != readend_timer_) {
             return;
         }
         readend_timer_.reset();
@@ -105,8 +97,7 @@ protected:
 
     void _stop_readend_timer(std::shared_ptr<Derived> owner) {
         static_cast<Derived&>(*this).dispatch([this, owner = std::move(owner)] {
-            if (readend_timer_)
-            {
+            if (readend_timer_) {
                 readend_timer_->cancel();
             }
         });

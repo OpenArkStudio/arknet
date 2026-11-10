@@ -14,49 +14,38 @@ using iterator = asio::buffers_iterator<asio::streambuf::const_buffers_type>;
 using diff_type = iterator::difference_type;
 
 inline std::pair<iterator, bool> dgram_match_role(iterator first, iterator last) noexcept {
-    if (first == last)
-    {
+    if (first == last) {
         return {first, false};
     }
     const auto marker = static_cast<unsigned char>(*first);
     const auto prefix = marker < 254 ? 1 : marker == 254 ? 3 : 9;
-    if (last - first < prefix)
-    {
+    if (last - first < prefix) {
         return {first, false};
     }
     std::uint64_t length = marker;
-    if (prefix != 1)
-    {
+    if (prefix != 1) {
         length = 0;
-        for (int index = 1; index < prefix; ++index)
-        {
+        for (int index = 1; index < prefix; ++index) {
             length |= std::uint64_t(static_cast<unsigned char>(first[index])) << (8 * (index - 1));
         }
         const auto minimum = prefix == 3 ? 254u : 65536u;
-        if (length < minimum || length > std::uint64_t(std::numeric_limits<diff_type>::max()))
-        {
+        if (length < minimum || length > std::uint64_t(std::numeric_limits<diff_type>::max())) {
             return {first, true};
         }
     }
     const auto payload = first + prefix;
-    if (std::uint64_t(last - payload) < length)
-    {
+    if (std::uint64_t(last - payload) < length) {
         return {first, false};
     }
     return {payload + static_cast<diff_type>(length), true};
 }
 
-struct use_dgram_t
-{
-};
+struct use_dgram_t {};
 
-struct hook_buffer_t
-{
-};
+struct hook_buffer_t {};
 
 template<class T>
-class condition_t
-{
+class condition_t {
 public:
     using type = T;
 
@@ -79,16 +68,11 @@ public:
     }
 
     decltype(auto) lowest() noexcept {
-        if constexpr (std::is_same_v<T, use_dgram_t>)
-        {
+        if constexpr (std::is_same_v<T, use_dgram_t>) {
             return &dgram_match_role;
-        }
-        else if constexpr (std::is_same_v<T, hook_buffer_t>)
-        {
+        } else if constexpr (std::is_same_v<T, hook_buffer_t>) {
             return asio::transfer_at_least(1);
-        }
-        else
-        {
+        } else {
             return (value_);
         }
     }
@@ -101,8 +85,7 @@ template<class T>
 condition_t(T) -> condition_t<std::remove_cvref_t<T>>;
 
 template<>
-class condition_t<void>
-{
+class condition_t<void> {
 public:
     using type = void;
 

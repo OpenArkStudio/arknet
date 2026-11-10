@@ -13,10 +13,8 @@ namespace arknet {
 // A caller-driven execution context. It creates no worker to run user handlers:
 // poll() dispatches them on the constructing thread. Asio platform services may
 // still use internal helper threads, such as Windows timers or DNS resolution.
-class manual_runtime
-{
-    struct state
-    {
+class manual_runtime {
+    struct state {
         const std::thread::id owner = std::this_thread::get_id();
         asio::io_context context{1};
         asio::executor_work_guard<asio::io_context::executor_type> work{context.get_executor()};
@@ -47,17 +45,14 @@ public:
         // A handler may release the façade. Keep its execution context and
         // polling flag alive until this invocation has completely returned.
         auto runtime = state_;
-        if (std::this_thread::get_id() != runtime->owner)
-        {
+        if (std::this_thread::get_id() != runtime->owner) {
             throw std::logic_error("manual_runtime::poll requires its constructing thread");
         }
-        if (runtime->polling)
-        {
+        if (runtime->polling) {
             throw std::logic_error("manual_runtime::poll does not permit reentrant calls");
         }
 
-        struct poll_guard
-        {
+        struct poll_guard {
             bool& active;
 
             explicit poll_guard(bool& flag) noexcept
@@ -71,10 +66,8 @@ public:
         } guard(runtime->polling);
 
         std::size_t completed{};
-        while (completed < max_handlers)
-        {
-            if (!runtime->context.poll_one())
-            {
+        while (completed < max_handlers) {
+            if (!runtime->context.poll_one()) {
                 break;
             }
             ++completed;

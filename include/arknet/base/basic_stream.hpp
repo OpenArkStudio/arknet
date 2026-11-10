@@ -13,8 +13,7 @@ using unlimited_rate_policy = beast::unlimited_rate_policy;
 using simple_rate_policy = beast::simple_rate_policy;
 
 template<class Protocol, class Executor = asio::any_io_executor, class RatePolicy = unlimited_rate_policy>
-class basic_stream : public beast::basic_stream<Protocol, Executor, RatePolicy>
-{
+class basic_stream : public beast::basic_stream<Protocol, Executor, RatePolicy> {
 public:
     using super = beast::basic_stream<Protocol, Executor, RatePolicy>;
     using super::super;

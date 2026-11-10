@@ -35,14 +35,12 @@
 
 namespace arknet::mysql {
 
-enum class tls_mode
-{
+enum class tls_mode {
     required,
     disabled
 };
 
-enum class connection_errc
-{
+enum class connection_errc {
     none,
     invalid_options,
     already_started,
@@ -62,8 +60,7 @@ enum class connection_errc
     server
 };
 
-struct connection_result
-{
+struct connection_result {
     connection_errc code = connection_errc::none;
     error_code transport_error;
     std::uint16_t server_code = 0;
@@ -76,8 +73,7 @@ struct connection_result
     }
 };
 
-struct connect_options
-{
+struct connect_options {
     std::string host = "localhost";
     std::uint16_t port = 3306;
     std::string username;
@@ -106,16 +102,14 @@ using datetime_value = detail::datetime_value;
 using time_value = detail::time_value;
 using request_id = std::uint64_t;
 
-struct query_options
-{
+struct query_options {
     std::chrono::milliseconds timeout{10000};
     std::size_t max_rows = 100000;
     std::size_t max_columns = 4096;
     std::size_t max_result_bytes = detail::default_message_limit;
 };
 
-struct query_result
-{
+struct query_result {
     connection_result status;
     std::vector<column_definition> columns;
     std::vector<row_values> rows;
@@ -132,12 +126,10 @@ struct query_result
 class connection;
 class pool;
 
-class prepared_statement
-{
+class prepared_statement {
     friend class connection;
 
-    struct control
-    {
+    struct control {
         std::weak_ptr<void> owner;
         std::uint64_t generation = 0;
         std::uint64_t session_version = 0;
@@ -148,8 +140,7 @@ class prepared_statement
         std::function<void()> cleanup;
 
         ~control() {
-            if (!closed.exchange(true) && cleanup)
-            {
+            if (!closed.exchange(true) && cleanup) {
                 cleanup();
             }
         }
@@ -174,8 +165,7 @@ public:
     }
 };
 
-struct prepare_result
-{
+struct prepare_result {
     connection_result status;
     prepared_statement statement;
 
@@ -189,8 +179,7 @@ struct prepare_result
 // synchronously on their caller. close() cancels a pending connect and can be
 // called in its handler.
 // The connection itself may also be destroyed in a completion handler.
-class connection
-{
+class connection {
     friend class pool;
 
 public:
@@ -200,8 +189,7 @@ public:
     using result_handler = std::function<void(connection_result)>;
 
 private:
-    struct attempt
-    {
+    struct attempt {
         connect_options options;
         connect_handler completion;
         std::uint64_t generation;
@@ -246,16 +234,14 @@ private:
         }
     };
 
-    enum class command_kind
-    {
+    enum class command_kind {
         query,
         prepare,
         execute,
         close_statement,
         reset
     };
-    enum class command_phase
-    {
+    enum class command_phase {
         first,
         columns,
         column_end,
@@ -266,8 +252,7 @@ private:
         prepare_column_end
     };
 
-    struct command
-    {
+    struct command {
         request_id id = 0;
         command_kind kind = command_kind::query;
         command_phase phase = command_phase::first;
@@ -303,8 +288,7 @@ private:
 
     using statement_lifetime_list = std::vector<std::weak_ptr<prepared_statement::control>>;
 
-    struct state : std::enable_shared_from_this<state>
-    {
+    struct state : std::enable_shared_from_this<state> {
         // Destroyed last, after the resolver, timer and SSL stream.
         std::shared_ptr<arknet::detail::io_pool> pool;
         asio::any_io_executor executor;
@@ -339,8 +323,7 @@ private:
             , executor(pool->get()->executor())
             , owns_runtime(owned) {}
 
-        class publication
-        {
+        class publication {
             inline static thread_local publication* current_{};
             state* owner_{};
             publication* previous_{};
@@ -348,8 +331,7 @@ private:
         public:
             explicit publication(state& owner) {
                 std::lock_guard lock(owner.publishing_mutex);
-                if (!owner.terminating)
-                {
+                if (!owner.terminating) {
                     ++owner.publishers;
                     owner_ = &owner;
                     previous_ = current_;
@@ -361,8 +343,7 @@ private:
             publication& operator=(const publication&) = delete;
 
             ~publication() {
-                if (owner_)
-                {
+                if (owner_) {
                     current_ = previous_;
                     {
                         std::lock_guard lock(owner_->publishing_mutex);
@@ -377,10 +358,8 @@ private:
             }
 
             static bool active_on_this_thread(const state& owner) noexcept {
-                for (auto* current = current_; current; current = current->previous_)
-                {
-                    if (current->owner_ == &owner)
-                    {
+                for (auto* current = current_; current; current = current->previous_) {
+                    if (current->owner_ == &owner) {
                         return true;
                     }
                 }
@@ -397,28 +376,22 @@ private:
         }
 
         void finish(const std::shared_ptr<attempt>& operation, connection_result result) {
-            if (operation->completed)
-            {
+            if (operation->completed) {
                 return;
             }
-            if (result && operation->generation != generation.load())
-            {
+            if (result && operation->generation != generation.load()) {
                 result =
                     failure(connection_errc::cancelled, "MySQL connection cancelled", asio::error::operation_aborted);
             }
             operation->completed = true;
             operation->deadline.cancel();
-            if (!result)
-            {
+            if (!result) {
                 operation->cancel();
-                if (current == operation)
-                {
+                if (current == operation) {
                     open = false;
                     current.reset();
                 }
-            }
-            else
-            {
+            } else {
                 {
                     std::lock_guard lock(admission_mutex);
                     admission_ready = operation->generation == generation.load();
@@ -436,8 +409,7 @@ private:
                 operation->outgoing.clear();
             }
             auto handler = std::move(operation->completion);
-            if (handler)
-            {
+            if (handler) {
                 handler(std::move(result));
             }
         }
@@ -452,19 +424,15 @@ private:
         }
 
         void start(connect_options options, connect_handler handler, std::uint64_t epoch) {
-            if (epoch != generation.load())
-            {
-                if (handler)
-                {
+            if (epoch != generation.load()) {
+                if (handler) {
                     handler(failure(
                         connection_errc::cancelled, "MySQL connection cancelled", asio::error::operation_aborted));
                 }
                 return;
             }
-            if (current)
-            {
-                if (handler)
-                {
+            if (current) {
+                if (handler) {
                     handler(failure(connection_errc::already_started, "MySQL connection already active"));
                 }
                 return;
@@ -473,10 +441,8 @@ private:
             if (options.host.empty() || options.port == 0 || !deadline || options.max_message_size == 0 ||
                 options.max_message_size > detail::default_message_limit || contains_null(options.host) ||
                 contains_null(options.username) || contains_null(options.password) || contains_null(options.database) ||
-                contains_null(options.server_name) || contains_null(options.ca_file))
-            {
-                if (handler)
-                {
+                contains_null(options.server_name) || contains_null(options.ca_file)) {
+                if (handler) {
                     handler(failure(connection_errc::invalid_options, "Invalid MySQL connection options"));
                 }
                 return;
@@ -485,8 +451,7 @@ private:
             current = operation;
             operation->deadline.expires_at(*deadline);
             operation->deadline.async_wait([self = shared_from_this(), operation](error_code error) {
-                if (!error && self->active(operation))
-                {
+                if (!error && self->active(operation)) {
                     self->fail(operation, connection_errc::timeout, "MySQL connection deadline exceeded",
                         asio::error::timed_out);
                 }
@@ -494,23 +459,19 @@ private:
             operation->resolver.async_resolve(operation->options.host, std::to_string(operation->options.port),
                 [self = shared_from_this(), operation](
                     error_code error, asio::ip::tcp::resolver::results_type endpoints) {
-                    if (!self->active(operation))
-                    {
+                    if (!self->active(operation)) {
                         return;
                     }
-                    if (error)
-                    {
+                    if (error) {
                         self->fail(operation, connection_errc::transport, "MySQL name resolution failed", error);
                         return;
                     }
                     asio::async_connect(operation->stream.next_layer(), endpoints,
                         [self, operation](error_code connect_error, const asio::ip::tcp::endpoint&) {
-                            if (!self->active(operation))
-                            {
+                            if (!self->active(operation)) {
                                 return;
                             }
-                            if (connect_error)
-                            {
+                            if (connect_error) {
                                 self->fail(operation, connection_errc::transport, "MySQL TCP connection failed",
                                     connect_error);
                                 return;
@@ -521,8 +482,7 @@ private:
         }
 
         void read_message(const std::shared_ptr<attempt>& operation, bool greeting) {
-            if (!active(operation))
-            {
+            if (!active(operation)) {
                 return;
             }
             std::string payload;
@@ -530,53 +490,39 @@ private:
             const auto before = input.size();
             const auto status = operation->decoder.consume(input, payload);
             operation->incoming.erase(0, before - input.size());
-            if (status == detail::packet_status::complete)
-            {
+            if (status == detail::packet_status::complete) {
                 operation->sequence = operation->decoder.expected_sequence();
-                if (greeting)
-                {
+                if (greeting) {
                     accept_greeting(operation, payload);
-                }
-                else
-                {
+                } else {
                     accept_auth_reply(operation, payload);
                 }
                 return;
             }
-            if (status != detail::packet_status::incomplete)
-            {
+            if (status != detail::packet_status::incomplete) {
                 fail(operation, connection_errc::protocol,
                     status == detail::packet_status::sequence_mismatch ? "MySQL packet sequence mismatch"
                                                                        : "MySQL packet exceeds message limit");
                 return;
             }
             auto handler = [self = shared_from_this(), operation, greeting](error_code error, std::size_t size) {
-                if (!self->active(operation))
-                {
+                if (!self->active(operation)) {
                     return;
                 }
                 // Asio may report both bytes and EOF; consume any delivered
                 // bytes before a subsequent read reports the terminal error.
-                if (size)
-                {
+                if (size) {
                     operation->incoming.append(operation->read_buffer.data(), size);
                     self->read_message(operation, greeting);
-                }
-                else if (error)
-                {
+                } else if (error) {
                     self->fail(operation, connection_errc::transport, "MySQL packet read failed", error);
-                }
-                else
-                {
+                } else {
                     self->fail(operation, connection_errc::protocol, "Empty MySQL transport read");
                 }
             };
-            if (operation->encrypted)
-            {
+            if (operation->encrypted) {
                 operation->stream.async_read_some(asio::buffer(operation->read_buffer), std::move(handler));
-            }
-            else
-            {
+            } else {
                 operation->stream.next_layer().async_read_some(
                     asio::buffer(operation->read_buffer), std::move(handler));
             }
@@ -584,37 +530,30 @@ private:
 
         void send_message(
             const std::shared_ptr<attempt>& operation, std::string_view payload, std::function<void()> continuation) {
-            if (!active(operation))
-            {
+            if (!active(operation)) {
                 return;
             }
             operation->outgoing.clear();
             if (!detail::encode_message(
-                    payload, operation->sequence, operation->outgoing, operation->options.max_message_size))
-            {
+                    payload, operation->sequence, operation->outgoing, operation->options.max_message_size)) {
                 fail(operation, connection_errc::protocol, "MySQL outgoing message exceeds limit");
                 return;
             }
             operation->decoder.reset(operation->sequence);
             auto handler = [self = shared_from_this(), operation, continuation = std::move(continuation)](
                                error_code error, std::size_t) mutable {
-                if (!self->active(operation))
-                {
+                if (!self->active(operation)) {
                     return;
                 }
-                if (error)
-                {
+                if (error) {
                     self->fail(operation, connection_errc::transport, "MySQL packet write failed", error);
                     return;
                 }
                 continuation();
             };
-            if (operation->encrypted)
-            {
+            if (operation->encrypted) {
                 asio::async_write(operation->stream, asio::buffer(operation->outgoing), std::move(handler));
-            }
-            else
-            {
+            } else {
                 asio::async_write(
                     operation->stream.next_layer(), asio::buffer(operation->outgoing), std::move(handler));
             }
@@ -622,17 +561,13 @@ private:
 
         bool accept_error(
             const std::shared_ptr<attempt>& operation, std::string_view payload, std::uint32_t capabilities) {
-            if (payload.empty() || static_cast<unsigned char>(payload.front()) != 0xff)
-            {
+            if (payload.empty() || static_cast<unsigned char>(payload.front()) != 0xff) {
                 return false;
             }
             detail::error_packet error;
-            if (detail::parse_error(payload, capabilities, error) != detail::handshake_status::complete)
-            {
+            if (detail::parse_error(payload, capabilities, error) != detail::handshake_status::complete) {
                 fail(operation, connection_errc::protocol, "Malformed MySQL error packet");
-            }
-            else
-            {
+            } else {
                 finish(operation, {capabilities ? connection_errc::authentication : connection_errc::server, {},
                                       error.code, std::move(error.sql_state), std::move(error.message)});
             }
@@ -640,105 +575,85 @@ private:
         }
 
         void accept_greeting(const std::shared_ptr<attempt>& operation, std::string_view payload) {
-            if (accept_error(operation, payload, 0))
-            {
+            if (accept_error(operation, payload, 0)) {
                 return;
             }
-            if (detail::parse_greeting(payload, operation->greeting) != detail::handshake_status::complete)
-            {
+            if (detail::parse_greeting(payload, operation->greeting) != detail::handshake_status::complete) {
                 fail(operation, connection_errc::protocol, "Unsupported or malformed MySQL greeting");
                 return;
             }
             constexpr auto required = detail::capability::protocol_41;
             constexpr auto auth_capabilities = detail::capability::secure_connection | detail::capability::plugin_auth;
             if ((operation->greeting.capabilities & required) != required ||
-                !(operation->greeting.capabilities & auth_capabilities))
-            {
+                !(operation->greeting.capabilities & auth_capabilities)) {
                 fail(operation, connection_errc::protocol, "MySQL server lacks required protocol capabilities");
                 return;
             }
             operation->capabilities =
                 required | (operation->greeting.capabilities & (auth_capabilities | detail::capability::transactions));
             operation->auth_plugin = operation->greeting.auth_plugin_name;
-            if (!operation->options.database.empty())
-            {
-                if (!(operation->greeting.capabilities & detail::capability::connect_with_db))
-                {
+            if (!operation->options.database.empty()) {
+                if (!(operation->greeting.capabilities & detail::capability::connect_with_db)) {
                     fail(operation, connection_errc::protocol, "MySQL server cannot select initial database");
                     return;
                 }
                 operation->capabilities |= detail::capability::connect_with_db;
             }
-            if (operation->options.tls == tls_mode::disabled)
-            {
+            if (operation->options.tls == tls_mode::disabled) {
                 send_handshake_response(operation);
                 return;
             }
-            if (!(operation->greeting.capabilities & detail::capability::ssl))
-            {
+            if (!(operation->greeting.capabilities & detail::capability::ssl)) {
                 fail(operation, connection_errc::tls_required, "MySQL server does not offer required TLS");
                 return;
             }
             operation->capabilities |= detail::capability::ssl;
             error_code error;
             operation->stream.set_verify_mode(asio::ssl::verify_peer, error);
-            if (!error)
-            {
-                if (operation->options.ca_file.empty())
-                {
+            if (!error) {
+                if (operation->options.ca_file.empty()) {
                     operation->tls_context.set_default_verify_paths(error);
-                }
-                else
-                {
+                } else {
                     operation->tls_context.load_verify_file(operation->options.ca_file, error);
                 }
             }
             const auto& identity =
                 operation->options.server_name.empty() ? operation->options.host : operation->options.server_name;
-            if (!error)
-            {
+            if (!error) {
                 operation->stream.set_verify_callback(asio::ssl::host_name_verification(identity), error);
             }
-            if (!error && !SSL_set_min_proto_version(operation->stream.native_handle(), TLS1_2_VERSION))
-            {
+            if (!error && !SSL_set_min_proto_version(operation->stream.native_handle(), TLS1_2_VERSION)) {
                 error = error_code(static_cast<int>(ERR_get_error()), asio::error::get_ssl_category());
-                if (!error)
-                {
+                if (!error) {
                     error = asio::error::operation_not_supported;
                 }
             }
             error_code address_error;
             asio::ip::make_address(identity, address_error);
             if (!error && address_error &&
-                !SSL_set_tlsext_host_name(operation->stream.native_handle(), identity.c_str()))
-            {
+                !SSL_set_tlsext_host_name(operation->stream.native_handle(), identity.c_str())) {
                 error = error_code(static_cast<int>(ERR_get_error()), asio::error::get_ssl_category());
-                if (!error)
-                {
+                if (!error) {
                     error = asio::error::operation_not_supported;
                 }
             }
-            if (error)
-            {
+            if (error) {
                 fail(operation, connection_errc::tls, "MySQL TLS configuration failed", error);
                 return;
             }
             std::string request;
             if (detail::encode_ssl_request(operation->capabilities,
                     static_cast<std::uint32_t>(operation->options.max_message_size), 45,
-                    request) != detail::handshake_status::complete)
-            {
+                    request) != detail::handshake_status::complete) {
                 fail(operation, connection_errc::protocol, "Invalid MySQL SSLRequest");
                 return;
             }
             send_message(operation, request, [self = shared_from_this(), operation] {
                 operation->stream.async_handshake(asio::ssl::stream_base::client, [self, operation](error_code error) {
-                    if (!self->active(operation))
-                    {
+                    if (!self->active(operation)) {
                         return;
                     }
-                    if (error)
-                    {
+                    if (error) {
                         self->fail(
                             operation, connection_errc::tls, "MySQL TLS verification or handshake failed", error);
                         return;
@@ -753,20 +668,17 @@ private:
             const std::shared_ptr<attempt>& operation, std::string_view challenge, std::string& response) {
             std::string_view scramble;
             const auto normalized = detail::password_scramble(operation->auth_plugin, challenge, scramble);
-            if (normalized == detail::handshake_status::unsupported)
-            {
+            if (normalized == detail::handshake_status::unsupported) {
                 fail(operation, connection_errc::unsupported_auth, "Unsupported MySQL authentication plugin");
                 return false;
             }
-            if (normalized != detail::handshake_status::complete)
-            {
+            if (normalized != detail::handshake_status::complete) {
                 fail(operation, connection_errc::protocol, "Invalid MySQL authentication challenge");
                 return false;
             }
             const auto status =
                 detail::make_auth_response(operation->auth_plugin, operation->options.password, scramble, response);
-            if (status != detail::auth_status::complete)
-            {
+            if (status != detail::auth_status::complete) {
                 fail(operation,
                     status == detail::auth_status::unsupported_plugin ? connection_errc::unsupported_auth
                                                                       : connection_errc::authentication,
@@ -778,8 +690,7 @@ private:
 
         void send_handshake_response(const std::shared_ptr<attempt>& operation) {
             std::string response;
-            if (!make_response(operation, operation->greeting.auth_plugin_data, response))
-            {
+            if (!make_response(operation, operation->greeting.auth_plugin_data, response)) {
                 return;
             }
             detail::handshake_response settings;
@@ -792,8 +703,7 @@ private:
                                             ? operation->auth_plugin
                                             : std::string_view{};
             std::string payload;
-            if (detail::encode_handshake_response(settings, payload) != detail::handshake_status::complete)
-            {
+            if (detail::encode_handshake_response(settings, payload) != detail::handshake_status::complete) {
                 fail(operation, connection_errc::protocol, "Invalid MySQL HandshakeResponse41");
                 return;
             }
@@ -802,38 +712,31 @@ private:
         }
 
         void accept_auth_reply(const std::shared_ptr<attempt>& operation, std::string_view payload) {
-            if (++operation->auth_rounds > 16 || payload.empty())
-            {
+            if (++operation->auth_rounds > 16 || payload.empty()) {
                 fail(operation, connection_errc::protocol, "Invalid MySQL authentication exchange");
                 return;
             }
-            if (accept_error(operation, payload, operation->capabilities))
-            {
+            if (accept_error(operation, payload, operation->capabilities)) {
                 return;
             }
             const auto marker = static_cast<unsigned char>(payload.front());
-            if (marker == 0)
-            {
+            if (marker == 0) {
                 detail::ok_packet packet;
-                if (detail::parse_ok(payload, operation->capabilities, packet) != detail::handshake_status::complete)
-                {
+                if (detail::parse_ok(payload, operation->capabilities, packet) != detail::handshake_status::complete) {
                     fail(operation, connection_errc::protocol, "Malformed MySQL authentication OK packet");
                     return;
                 }
                 finish(operation, {});
                 return;
             }
-            if (operation->fast_auth_complete)
-            {
+            if (operation->fast_auth_complete) {
                 fail(operation, connection_errc::protocol, "Expected final MySQL authentication OK packet");
                 return;
             }
-            if (marker == 0xfe)
-            {
+            if (marker == 0xfe) {
                 detail::auth_switch_request request;
                 const auto status = detail::parse_auth_switch(payload, request);
-                if (status != detail::handshake_status::complete)
-                {
+                if (status != detail::handshake_status::complete) {
                     fail(operation,
                         status == detail::handshake_status::unsupported ? connection_errc::unsupported_auth
                                                                         : connection_errc::protocol,
@@ -842,26 +745,21 @@ private:
                 }
                 operation->auth_plugin = std::move(request.auth_plugin_name);
                 std::string response;
-                if (!make_response(operation, request.auth_plugin_data, response))
-                {
+                if (!make_response(operation, request.auth_plugin_data, response)) {
                     return;
                 }
                 send_message(operation, response,
                     [self = shared_from_this(), operation] { self->read_message(operation, false); });
                 return;
             }
-            if (marker == 1 && payload.size() == 2 && operation->auth_plugin == "caching_sha2_password")
-            {
-                if (payload[1] == 3)
-                {
+            if (marker == 1 && payload.size() == 2 && operation->auth_plugin == "caching_sha2_password") {
+                if (payload[1] == 3) {
                     operation->fast_auth_complete = true;
                     read_message(operation, false);
                     return;
                 }
-                if (payload[1] == 4)
-                {
-                    if (!operation->encrypted)
-                    {
+                if (payload[1] == 4) {
+                    if (!operation->encrypted) {
                         fail(operation, connection_errc::tls_required,
                             "MySQL full password authentication requires verified TLS");
                         return;
@@ -882,43 +780,35 @@ private:
         connection_result reserve_command(const std::shared_ptr<command>& operation) {
             std::size_t bytes = operation->request.capacity();
             const auto add = [&](std::size_t amount) {
-                if (amount > detail::default_message_limit - bytes)
-                {
+                if (amount > detail::default_message_limit - bytes) {
                     return false;
                 }
                 bytes += amount;
                 return true;
             };
-            if (bytes > detail::default_message_limit)
-            {
+            if (bytes > detail::default_message_limit) {
                 return failure(connection_errc::queue_full, "MySQL request exceeds admission byte limit");
             }
             if (operation->parameters.capacity() > (detail::default_message_limit - bytes) / sizeof(field_value) ||
-                !add(operation->parameters.capacity() * sizeof(field_value)))
-            {
+                !add(operation->parameters.capacity() * sizeof(field_value))) {
                 return failure(connection_errc::queue_full, "MySQL parameter storage exceeds admission byte limit");
             }
-            for (const auto& value : operation->parameters)
-            {
-                if (const auto* text = std::get_if<std::string>(&value); text && !add(text->capacity()))
-                {
+            for (const auto& value : operation->parameters) {
+                if (const auto* text = std::get_if<std::string>(&value); text && !add(text->capacity())) {
                     return failure(connection_errc::queue_full, "MySQL parameter storage exceeds admission byte limit");
                 }
             }
             // EXECUTE/CLOSE headers are generated later on the owned lane.
             if ((operation->kind == command_kind::execute || operation->kind == command_kind::close_statement) &&
-                !add(16))
-            {
+                !add(16)) {
                 return failure(connection_errc::queue_full, "MySQL request exceeds admission byte limit");
             }
             std::lock_guard lock(admission_mutex);
-            if (!admission_ready || operation->generation != generation.load())
-            {
+            if (!admission_ready || operation->generation != generation.load()) {
                 return failure(connection_errc::not_connected, "MySQL connection is not authenticated");
             }
             if (admitted_count >= admission_count_limit || admitted_bytes > admission_byte_limit ||
-                bytes > admission_byte_limit - admitted_bytes)
-            {
+                bytes > admission_byte_limit - admitted_bytes) {
                 return failure(connection_errc::queue_full, "MySQL outstanding request admission limit exceeded");
             }
             ++admitted_count;
@@ -930,8 +820,7 @@ private:
 
         void release_command(const std::shared_ptr<command>& operation) {
             std::lock_guard lock(admission_mutex);
-            if (operation->admitted)
-            {
+            if (operation->admitted) {
                 --admitted_count;
                 admitted_bytes -= operation->admission_bytes;
                 operation->admitted = false;
@@ -956,10 +845,8 @@ private:
         }
 
         void invalidate_statements() {
-            for (auto& [id, weak] : statements)
-            {
-                if (auto statement = weak.lock())
-                {
+            for (auto& [id, weak] : statements) {
+                if (auto statement = weak.lock()) {
                     statement->closed = true;
                 }
             }
@@ -969,8 +856,7 @@ private:
         bool draining_commands = false;
 
         void complete_command(const std::shared_ptr<command>& operation, connection_result result) {
-            if (operation->completed)
-            {
+            if (operation->completed) {
                 return;
             }
             operation->completed = true;
@@ -981,67 +867,51 @@ private:
             std::vector<field_value>{}.swap(operation->parameters);
             release_command(operation);
             operation->deadline.cancel();
-            if (active_command == operation)
-            {
+            if (active_command == operation) {
                 active_command.reset();
-            }
-            else
-            {
+            } else {
                 const auto position = std::find(pending.begin(), pending.end(), operation);
-                if (position != pending.end())
-                {
+                if (position != pending.end()) {
                     pending_bytes -= operation->queue_bytes;
                     pending.erase(position);
                 }
             }
-            if (operation->kind == command_kind::prepare)
-            {
+            if (operation->kind == command_kind::prepare) {
                 prepare_result prepared{std::move(result), std::move(operation->prepared)};
                 auto handler = std::move(operation->prepare_completion);
-                if (handler)
-                {
+                if (handler) {
                     handler(std::move(prepared));
                 }
-            }
-            else if (operation->kind == command_kind::close_statement || operation->kind == command_kind::reset)
-            {
+            } else if (operation->kind == command_kind::close_statement || operation->kind == command_kind::reset) {
                 auto handler = std::move(operation->result_completion);
-                if (handler)
-                {
+                if (handler) {
                     handler(std::move(result));
                 }
-            }
-            else
-            {
+            } else {
                 operation->result.status = std::move(result);
                 auto handler = std::move(operation->query_completion);
-                if (handler)
-                {
+                if (handler) {
                     handler(std::move(operation->result));
                 }
             }
-            if (!draining_commands)
-            {
+            if (!draining_commands) {
                 start_next_command();
             }
         }
 
         void abort_commands(connection_result reason, bool advance_generation = true) {
             stop_admission();
-            if (advance_generation)
-            {
+            if (advance_generation) {
                 ++generation;
             }
             open = false;
-            if (current)
-            {
+            if (current) {
                 current->cancel();
                 current.reset();
             }
             invalidate_statements();
             draining_commands = true;
-            if (auto operation = active_command)
-            {
+            if (auto operation = active_command) {
                 auto result = reason;
                 result.outcome_unknown = operation->sent;
                 complete_command(operation, std::move(result));
@@ -1049,8 +919,7 @@ private:
             auto queued = std::move(pending);
             pending.clear();
             pending_bytes = 0;
-            for (auto& operation : queued)
-            {
+            for (auto& operation : queued) {
                 complete_command(
                     operation, failure(connection_errc::cancelled, "MySQL connection closed before command was sent",
                                    asio::error::operation_aborted));
@@ -1059,8 +928,7 @@ private:
         }
 
         bool charge_result(const std::shared_ptr<command>& operation, std::size_t amount) {
-            if (amount > operation->options.max_result_bytes - operation->result_bytes)
-            {
+            if (amount > operation->options.max_result_bytes - operation->result_bytes) {
                 abort_commands(failure(connection_errc::result_limit, "MySQL accumulated result exceeds memory limit"));
                 return false;
             }
@@ -1069,12 +937,9 @@ private:
         }
 
         void codec_failure(detail::command_status status, std::string message) {
-            if (status == detail::command_status::limit_exceeded)
-            {
+            if (status == detail::command_status::limit_exceeded) {
                 abort_commands(failure(connection_errc::result_limit, std::move(message)));
-            }
-            else
-            {
+            } else {
                 abort_commands(failure(status == detail::command_status::unsupported ? connection_errc::unsupported
                                                                                      : connection_errc::protocol,
                     std::move(message)));
@@ -1082,26 +947,19 @@ private:
         }
 
         bool command_error(const std::shared_ptr<command>& operation, std::string_view payload) {
-            if (payload.empty() || static_cast<unsigned char>(payload.front()) != 0xff)
-            {
+            if (payload.empty() || static_cast<unsigned char>(payload.front()) != 0xff) {
                 return false;
             }
             detail::error_packet error;
             if (detail::parse_error(payload, operation->session->capabilities, error) !=
-                detail::handshake_status::complete)
-            {
+                detail::handshake_status::complete) {
                 abort_commands(failure(connection_errc::protocol, "Malformed MySQL command error packet"));
-            }
-            else
-            {
+            } else {
                 connection_result result{
                     connection_errc::server, {}, error.code, std::move(error.sql_state), std::move(error.message)};
-                if (operation->kind == command_kind::prepare && operation->phase != command_phase::first)
-                {
+                if (operation->kind == command_kind::prepare && operation->phase != command_phase::first) {
                     abort_commands(std::move(result));
-                }
-                else
-                {
+                } else {
                     complete_command(operation, std::move(result));
                 }
             }
@@ -1110,8 +968,7 @@ private:
 
         bool accept_command_status(const std::shared_ptr<command>& operation, const detail::ok_packet& packet) {
             // MULTI_RESULTS and MULTI_STATEMENTS are deliberately not negotiated.
-            if (packet.status_flags & 8)
-            {
+            if (packet.status_flags & 8) {
                 abort_commands(failure(connection_errc::unsupported, "Unexpected MySQL multiple-result response"));
                 return false;
             }
@@ -1123,8 +980,7 @@ private:
         }
 
         void read_command(const std::shared_ptr<command>& operation) {
-            if (!command_active(operation))
-            {
+            if (!command_active(operation)) {
                 return;
             }
             auto& session = *operation->session;
@@ -1133,11 +989,9 @@ private:
             const auto before = input.size();
             const auto status = session.decoder.consume(input, payload);
             session.incoming.erase(0, before - input.size());
-            if (status == detail::packet_status::complete)
-            {
+            if (status == detail::packet_status::complete) {
                 session.sequence = session.decoder.expected_sequence();
-                if (payload.size() > operation->options.max_result_bytes - operation->wire_bytes)
-                {
+                if (payload.size() > operation->options.max_result_bytes - operation->wire_bytes) {
                     abort_commands(
                         failure(connection_errc::result_limit, "MySQL accumulated response exceeds byte limit"));
                     return;
@@ -1146,8 +1000,7 @@ private:
                 accept_command_packet(operation, payload);
                 return;
             }
-            if (status != detail::packet_status::incomplete)
-            {
+            if (status != detail::packet_status::incomplete) {
                 abort_commands(
                     failure(status == detail::packet_status::message_too_large ? connection_errc::result_limit
                                                                                : connection_errc::protocol,
@@ -1155,27 +1008,20 @@ private:
                 return;
             }
             auto handler = [self = shared_from_this(), operation](error_code error, std::size_t count) {
-                if (!self->command_active(operation))
-                {
+                if (!self->command_active(operation)) {
                     return;
                 }
-                if (count)
-                {
+                if (count) {
                     operation->session->incoming.append(operation->session->read_buffer.data(), count);
                     self->read_command(operation);
-                }
-                else
-                {
+                } else {
                     self->abort_commands(failure(connection_errc::transport, "MySQL command read failed",
                         error ? error : error_code(asio::error::eof)));
                 }
             };
-            if (session.encrypted)
-            {
+            if (session.encrypted) {
                 session.stream.async_read_some(asio::buffer(session.read_buffer), std::move(handler));
-            }
-            else
-            {
+            } else {
                 session.stream.next_layer().async_read_some(asio::buffer(session.read_buffer), std::move(handler));
             }
         }
@@ -1186,11 +1032,9 @@ private:
             const auto epoch = record->generation;
             const auto version = record->session_version;
             record->cleanup = [weak = weak_from_this(), id, epoch, version] {
-                if (auto self = weak.lock())
-                {
+                if (auto self = weak.lock()) {
                     publication publishing(*self);
-                    if (publishing)
-                    {
+                    if (publishing) {
                         asio::post(self->executor,
                             [self, id, epoch, version] { self->automatic_statement_close(id, epoch, version); });
                     }
@@ -1202,13 +1046,11 @@ private:
         }
 
         void accept_prepare_packet(const std::shared_ptr<command>& operation, std::string_view payload) {
-            if (operation->phase == command_phase::first)
-            {
+            if (operation->phase == command_phase::first) {
                 detail::prepared_statement_ok response;
                 const auto status =
                     detail::parse_prepare_ok(payload, response, limits(operation), operation->session->capabilities);
-                if (status != detail::command_status::complete)
-                {
+                if (status != detail::command_status::complete) {
                     codec_failure(status, "Invalid MySQL prepare response");
                     return;
                 }
@@ -1219,8 +1061,7 @@ private:
                 record->id = response.statement_id;
                 record->parameter_count = response.parameter_count;
                 if (const auto previous = statements.find(record->id);
-                    previous != statements.end() && !previous->second.expired())
-                {
+                    previous != statements.end() && !previous->second.expired()) {
                     abort_commands(failure(connection_errc::protocol, "MySQL reused an active prepared statement ID"));
                     return;
                 }
@@ -1228,69 +1069,48 @@ private:
                 statements[record->id] = record;
                 operation->remaining_parameters = response.parameter_count;
                 operation->remaining_columns = response.column_count;
-                if (!charge_result(operation, sizeof(prepared_statement::control)))
-                {
+                if (!charge_result(operation, sizeof(prepared_statement::control))) {
                     return;
                 }
-                if (operation->remaining_parameters)
-                {
+                if (operation->remaining_parameters) {
                     operation->phase = command_phase::prepare_parameters;
-                }
-                else if (operation->remaining_columns)
-                {
+                } else if (operation->remaining_columns) {
                     operation->phase = command_phase::prepare_columns;
-                }
-                else
-                {
+                } else {
                     finish_preparation(operation);
                     return;
                 }
-            }
-            else if (operation->phase == command_phase::prepare_parameters ||
-                     operation->phase == command_phase::prepare_columns)
-            {
+            } else if (operation->phase == command_phase::prepare_parameters ||
+                       operation->phase == command_phase::prepare_columns) {
                 column_definition column;
                 const auto status = detail::parse_column(payload, column, limits(operation));
-                if (status != detail::command_status::complete)
-                {
+                if (status != detail::command_status::complete) {
                     codec_failure(status, "Invalid MySQL prepared metadata");
                     return;
                 }
-                if (operation->phase == command_phase::prepare_parameters)
-                {
-                    if (!--operation->remaining_parameters)
-                    {
+                if (operation->phase == command_phase::prepare_parameters) {
+                    if (!--operation->remaining_parameters) {
                         operation->phase = command_phase::prepare_parameter_end;
                     }
-                }
-                else
-                {
-                    if (!charge_result(operation, sizeof(column_definition) + payload.size()))
-                    {
+                } else {
+                    if (!charge_result(operation, sizeof(column_definition) + payload.size())) {
                         return;
                     }
                     operation->prepared.control_->columns.push_back(std::move(column));
-                    if (!--operation->remaining_columns)
-                    {
+                    if (!--operation->remaining_columns) {
                         operation->phase = command_phase::prepare_column_end;
                     }
                 }
-            }
-            else
-            {
+            } else {
                 detail::ok_packet eof;
                 const auto status = detail::parse_eof(payload, eof, limits(operation));
-                if (status != detail::command_status::complete)
-                {
+                if (status != detail::command_status::complete) {
                     codec_failure(status, "Invalid MySQL prepared metadata terminator");
                     return;
                 }
-                if (operation->phase == command_phase::prepare_parameter_end && operation->remaining_columns)
-                {
+                if (operation->phase == command_phase::prepare_parameter_end && operation->remaining_columns) {
                     operation->phase = command_phase::prepare_columns;
-                }
-                else
-                {
+                } else {
                     finish_preparation(operation);
                     return;
                 }
@@ -1299,106 +1119,82 @@ private:
         }
 
         void accept_command_packet(const std::shared_ptr<command>& operation, std::string_view payload) {
-            if (command_error(operation, payload))
-            {
+            if (command_error(operation, payload)) {
                 return;
             }
-            if (operation->kind == command_kind::prepare)
-            {
+            if (operation->kind == command_kind::prepare) {
                 accept_prepare_packet(operation, payload);
                 return;
             }
-            if (operation->phase == command_phase::first)
-            {
-                if (!payload.empty() && payload.front() == 0)
-                {
+            if (operation->phase == command_phase::first) {
+                if (!payload.empty() && payload.front() == 0) {
                     detail::ok_packet packet;
                     if (detail::parse_ok(payload, operation->session->capabilities, packet) !=
-                        detail::handshake_status::complete)
-                    {
+                        detail::handshake_status::complete) {
                         abort_commands(failure(connection_errc::protocol, "Malformed MySQL command OK packet"));
                         return;
                     }
-                    if (!accept_command_status(operation, packet))
-                    {
+                    if (!accept_command_status(operation, packet)) {
                         return;
                     }
-                    if (operation->kind == command_kind::reset)
-                    {
+                    if (operation->kind == command_kind::reset) {
                         ++operation->session->session_version;
                         invalidate_statements();
                     }
                     complete_command(operation, {});
                     return;
                 }
-                if (operation->kind == command_kind::reset)
-                {
+                if (operation->kind == command_kind::reset) {
                     abort_commands(failure(connection_errc::protocol, "Expected MySQL reset OK packet"));
                     return;
                 }
-                if (!payload.empty() && static_cast<unsigned char>(payload.front()) == 0xfb)
-                {
+                if (!payload.empty() && static_cast<unsigned char>(payload.front()) == 0xfb) {
                     abort_commands(failure(connection_errc::unsupported, "MySQL LOCAL INFILE is disabled"));
                     return;
                 }
                 const auto status = detail::parse_column_count(
                     payload, operation->remaining_columns, limits(operation), operation->session->capabilities);
-                if (status != detail::command_status::complete)
-                {
+                if (status != detail::command_status::complete) {
                     codec_failure(status, "Invalid MySQL result column count");
                     return;
                 }
                 operation->phase = command_phase::columns;
-            }
-            else if (operation->phase == command_phase::columns)
-            {
+            } else if (operation->phase == command_phase::columns) {
                 column_definition column;
                 const auto status = detail::parse_column(payload, column, limits(operation));
-                if (status != detail::command_status::complete)
-                {
+                if (status != detail::command_status::complete) {
                     codec_failure(status, "Invalid MySQL column definition");
                     return;
                 }
-                if (!charge_result(operation, sizeof(column_definition) + payload.size()))
-                {
+                if (!charge_result(operation, sizeof(column_definition) + payload.size())) {
                     return;
                 }
                 operation->result.columns.push_back(std::move(column));
-                if (!--operation->remaining_columns)
-                {
+                if (!--operation->remaining_columns) {
                     operation->phase = command_phase::column_end;
                 }
-            }
-            else if (operation->phase == command_phase::column_end ||
-                     (operation->phase == command_phase::rows && !payload.empty() &&
-                         static_cast<unsigned char>(payload.front()) == 0xfe && payload.size() < 9))
-            {
+            } else if (operation->phase == command_phase::column_end ||
+                       (operation->phase == command_phase::rows && !payload.empty() &&
+                           static_cast<unsigned char>(payload.front()) == 0xfe && payload.size() < 9)) {
                 detail::ok_packet packet;
                 const auto status = detail::parse_eof(payload, packet, limits(operation));
-                if (status != detail::command_status::complete)
-                {
+                if (status != detail::command_status::complete) {
                     codec_failure(status, "Invalid MySQL result terminator");
                     return;
                 }
-                if (!accept_command_status(operation, packet))
-                {
+                if (!accept_command_status(operation, packet)) {
                     return;
                 }
-                if (operation->phase == command_phase::rows)
-                {
+                if (operation->phase == command_phase::rows) {
                     complete_command(operation, {});
                     return;
                 }
                 operation->phase = command_phase::rows;
-            }
-            else
-            {
+            } else {
                 if (operation->result.rows.size() >= operation->options.max_rows ||
                     !charge_result(operation,
-                        sizeof(row_values) + operation->result.columns.size() * sizeof(field_value) + payload.size()))
-                {
-                    if (command_active(operation))
-                    {
+                        sizeof(row_values) + operation->result.columns.size() * sizeof(field_value) + payload.size())) {
+                    if (command_active(operation)) {
                         abort_commands(failure(connection_errc::result_limit, "MySQL result exceeds row limit"));
                     }
                     return;
@@ -1408,8 +1204,7 @@ private:
                     operation->kind == command_kind::execute
                         ? detail::parse_binary_row(payload, operation->result.columns, row, limits(operation))
                         : detail::parse_text_row(payload, operation->result.columns, row, limits(operation));
-                if (status != detail::command_status::complete)
-                {
+                if (status != detail::command_status::complete) {
                     codec_failure(status, "Invalid MySQL result row");
                     return;
                 }
@@ -1426,82 +1221,68 @@ private:
         }
 
         void start_next_command() {
-            if (draining_commands || active_command || pending.empty())
-            {
+            if (draining_commands || active_command || pending.empty()) {
                 return;
             }
             auto operation = pending.front();
             pending.pop_front();
             pending_bytes -= operation->queue_bytes;
             active_command = operation;
-            if (!current || !open || operation->generation != generation.load() || current != operation->session)
-            {
+            if (!current || !open || operation->generation != generation.load() || current != operation->session) {
                 complete_command(operation, failure(connection_errc::not_connected, "MySQL connection is not ready"));
                 return;
             }
-            if (std::chrono::steady_clock::now() >= *operation->expires)
-            {
+            if (std::chrono::steady_clock::now() >= *operation->expires) {
                 complete_command(operation,
                     failure(connection_errc::timeout, "MySQL command expired before sending", asio::error::timed_out));
                 return;
             }
             if ((operation->kind == command_kind::execute || operation->kind == command_kind::close_statement) &&
-                !operation->automatic_close)
-            {
-                if (!valid_statement(operation))
-                {
+                !operation->automatic_close) {
+                if (!valid_statement(operation)) {
                     complete_command(operation, failure(connection_errc::invalid_statement,
                                                     "MySQL statement belongs to a closed or different session"));
                     return;
                 }
                 if (operation->kind == command_kind::execute &&
-                    operation->parameters.size() != operation->statement->parameter_count)
-                {
+                    operation->parameters.size() != operation->statement->parameter_count) {
                     complete_command(operation,
                         failure(connection_errc::invalid_options, "MySQL statement parameter count mismatch"));
                     return;
                 }
             }
-            if (operation->automatic_close && operation->automatic_close_version != current->session_version)
-            {
+            if (operation->automatic_close && operation->automatic_close_version != current->session_version) {
                 complete_command(operation, {});
                 return;
             }
             auto request_limits = limits(operation);
             request_limits.max_bytes = current->options.max_message_size;
             detail::command_status encoded = detail::command_status::complete;
-            if (operation->kind == command_kind::execute)
-            {
+            if (operation->kind == command_kind::execute) {
                 encoded = detail::encode_execute(
                     operation->statement->id, operation->parameters, operation->request, request_limits);
-            }
-            else if (operation->kind == command_kind::close_statement)
-            {
+            } else if (operation->kind == command_kind::close_statement) {
                 const auto id = operation->automatic_close ? operation->automatic_close_id : operation->statement->id;
                 encoded = detail::encode_close(id, operation->request, request_limits);
-                if (operation->statement)
-                {
+                if (operation->statement) {
                     operation->statement->closed = true;
                 }
                 statements.erase(id);
             }
-            if (encoded != detail::command_status::complete)
-            {
+            if (encoded != detail::command_status::complete) {
                 complete_command(operation,
                     failure(connection_errc::invalid_options, "Invalid MySQL statement parameters or request size"));
                 return;
             }
             current->sequence = 0;
             current->outgoing.clear();
-            if (!current->incoming.empty() || current->decoder.buffered_size() != 0)
-            {
+            if (!current->incoming.empty() || current->decoder.buffered_size() != 0) {
                 abort_commands(
                     failure(connection_errc::protocol, "Unexpected buffered MySQL bytes at command boundary"));
                 return;
             }
             if (!detail::encode_message(
-                    operation->request, current->sequence, current->outgoing, current->options.max_message_size))
-            {
+                    operation->request, current->sequence, current->outgoing, current->options.max_message_size)) {
                 complete_command(
                     operation, failure(connection_errc::invalid_options, "MySQL command exceeds message size limit"));
                 return;
@@ -1509,44 +1290,33 @@ private:
             current->decoder = detail::packet_decoder(
                 (std::min)(current->options.max_message_size, operation->options.max_result_bytes), current->sequence);
             auto handler = [self = shared_from_this(), operation](error_code error, std::size_t) {
-                if (!self->command_active(operation))
-                {
+                if (!self->command_active(operation)) {
                     return;
                 }
-                if (error)
-                {
+                if (error) {
                     self->abort_commands(failure(connection_errc::transport, "MySQL command write failed", error));
-                }
-                else if (operation->kind == command_kind::close_statement)
-                {
+                } else if (operation->kind == command_kind::close_statement) {
                     self->complete_command(operation, {});
-                }
-                else
-                {
+                } else {
                     self->read_command(operation);
                 }
             };
             operation->sent = true;
-            if (current->encrypted)
-            {
+            if (current->encrypted) {
                 asio::async_write(current->stream, asio::buffer(current->outgoing), std::move(handler));
-            }
-            else
-            {
+            } else {
                 asio::async_write(current->stream.next_layer(), asio::buffer(current->outgoing), std::move(handler));
             }
         }
 
         void enqueue_command(const std::shared_ptr<command>& operation) {
-            if (operation->generation != generation.load())
-            {
+            if (operation->generation != generation.load()) {
                 complete_command(
                     operation, failure(connection_errc::cancelled, "MySQL command cancelled before submission",
                                    asio::error::operation_aborted));
                 return;
             }
-            if (!current || !open || !current->completed)
-            {
+            if (!current || !open || !current->completed) {
                 complete_command(
                     operation, failure(connection_errc::not_connected, "MySQL connection is not authenticated"));
                 return;
@@ -1554,27 +1324,22 @@ private:
             operation->session = current;
             if (!operation->expires || !operation->options.max_columns || operation->options.max_columns > 65535 ||
                 !operation->options.max_result_bytes ||
-                operation->options.max_result_bytes > detail::default_message_limit)
-            {
+                operation->options.max_result_bytes > detail::default_message_limit) {
                 complete_command(operation, failure(connection_errc::invalid_options, "Invalid MySQL query options"));
                 return;
             }
             operation->queue_bytes = operation->request.size();
-            for (const auto& value : operation->parameters)
-            {
+            for (const auto& value : operation->parameters) {
                 if (operation->queue_bytes > current->options.max_pending_bytes ||
-                    sizeof(field_value) > current->options.max_pending_bytes - operation->queue_bytes)
-                {
+                    sizeof(field_value) > current->options.max_pending_bytes - operation->queue_bytes) {
                     operation->queue_bytes = current->options.max_pending_bytes;
                     complete_command(operation,
                         failure(connection_errc::queue_full, "MySQL command parameters exceed queue byte limit"));
                     return;
                 }
                 operation->queue_bytes += sizeof(field_value);
-                if (const auto* text = std::get_if<std::string>(&value))
-                {
-                    if (text->size() > current->options.max_pending_bytes - operation->queue_bytes)
-                    {
+                if (const auto* text = std::get_if<std::string>(&value)) {
+                    if (text->size() > current->options.max_pending_bytes - operation->queue_bytes) {
                         complete_command(operation,
                             failure(connection_errc::queue_full, "MySQL command parameters exceed queue byte limit"));
                         return;
@@ -1583,25 +1348,20 @@ private:
                 }
             }
             if ((active_command && pending.size() >= current->options.max_pending_commands) ||
-                operation->queue_bytes > current->options.max_pending_bytes - pending_bytes)
-            {
+                operation->queue_bytes > current->options.max_pending_bytes - pending_bytes) {
                 complete_command(
                     operation, failure(connection_errc::queue_full, "MySQL pending command queue limit exceeded"));
                 return;
             }
             operation->deadline.expires_at(*operation->expires);
             operation->deadline.async_wait([self = shared_from_this(), operation](error_code error) {
-                if (error || operation->completed)
-                {
+                if (error || operation->completed) {
                     return;
                 }
-                if (self->active_command == operation)
-                {
+                if (self->active_command == operation) {
                     self->abort_commands(
                         failure(connection_errc::timeout, "MySQL command deadline exceeded", asio::error::timed_out));
-                }
-                else
-                {
+                } else {
                     self->complete_command(operation,
                         failure(connection_errc::timeout, "MySQL command expired in queue", asio::error::timed_out));
                 }
@@ -1612,8 +1372,7 @@ private:
         }
 
         void automatic_statement_close(std::uint32_t id, std::uint64_t epoch, std::uint64_t version) {
-            if (!current || !open || epoch != generation.load() || version != current->session_version)
-            {
+            if (!current || !open || epoch != generation.load() || version != current->session_version) {
                 return;
             }
             auto operation = std::make_shared<command>(executor);
@@ -1626,37 +1385,30 @@ private:
             operation->automatic_close_id = id;
             operation->automatic_close_version = version;
             operation->result_completion = [weak = weak_from_this()](connection_result result) {
-                if (!result && result.code == connection_errc::queue_full)
-                {
-                    if (auto self = weak.lock())
-                    {
+                if (!result && result.code == connection_errc::queue_full) {
+                    if (auto self = weak.lock()) {
                         self->abort_commands(failure(
                             connection_errc::queue_full, "MySQL automatic statement cleanup exceeded queue limit"));
                     }
                 }
             };
             const auto admission = reserve_command(operation);
-            if (!admission)
-            {
+            if (!admission) {
                 complete_command(operation, admission);
-            }
-            else
-            {
+            } else {
                 enqueue_command(operation);
             }
         }
 
         void cancel_command(request_id id) {
-            if (active_command && active_command->id == id)
-            {
+            if (active_command && active_command->id == id) {
                 abort_commands(failure(connection_errc::cancelled, "MySQL command cancelled after sending",
                     asio::error::operation_aborted));
                 return;
             }
             const auto position = std::find_if(
                 pending.begin(), pending.end(), [id](const auto& operation) { return operation->id == id; });
-            if (position != pending.end())
-            {
+            if (position != pending.end()) {
                 auto operation = *position;
                 complete_command(operation, failure(connection_errc::cancelled, "MySQL queued command cancelled",
                                                 asio::error::operation_aborted));
@@ -1669,36 +1421,29 @@ private:
             stop_admission();
             open = false;
             asio::post(executor, [self, cutoff] {
-                if (!self->current || self->current->generation >= cutoff)
-                {
+                if (!self->current || self->current->generation >= cutoff) {
                     return;
                 }
                 auto operation = self->current;
-                if (self->active_command || !self->pending.empty())
-                {
+                if (self->active_command || !self->pending.empty()) {
                     self->abort_commands(
                         failure(connection_errc::cancelled, "MySQL connection closed", asio::error::operation_aborted),
                         false);
                 }
                 self->invalidate_statements();
                 operation->cancel();
-                if (!operation->completed)
-                {
+                if (!operation->completed) {
                     self->fail(operation, connection_errc::cancelled, "MySQL connection cancelled",
                         asio::error::operation_aborted);
-                }
-                else
-                {
+                } else {
                     self->current.reset();
                 }
             });
         }
 
         static void retire_statements(statement_lifetime_list& lifetimes) {
-            for (auto& weak : lifetimes)
-            {
-                if (auto statement = weak.lock())
-                {
+            for (auto& weak : lifetimes) {
+                if (auto statement = weak.lock()) {
                     statement->closed = true;
                     statement->cleanup = {};
                 }
@@ -1723,16 +1468,13 @@ private:
             {
                 std::unique_lock lock(publishing_mutex);
                 if (!owns_runtime || (pool && pool->running_in_threads()) ||
-                    publication::active_on_this_thread(*this) || finalizer == std::this_thread::get_id())
-                {
+                    publication::active_on_this_thread(*this) || finalizer == std::this_thread::get_id()) {
                     arknet::set_last_error(asio::error::operation_not_supported);
                     return false;
                 }
-                if (terminating)
-                {
+                if (terminating) {
                     publishing_changed.wait(lock, [&] { return terminated || shutdown_failure; });
-                    if (shutdown_failure)
-                    {
+                    if (shutdown_failure) {
                         std::rethrow_exception(shutdown_failure);
                     }
                     arknet::clear_last_error();
@@ -1742,8 +1484,7 @@ private:
                 finalizer = std::this_thread::get_id();
                 publishing_changed.wait(lock, [&] { return publishers == 0; });
             }
-            try
-            {
+            try {
                 // All API publications preceding the gate are now enqueued.
                 // The actor cancels protocol IO; worker join retires the outer
                 // Asio handlers and their captures, beyond the actor callback.
@@ -1763,9 +1504,7 @@ private:
                 publishing_changed.notify_all();
                 arknet::clear_last_error();
                 return true;
-            }
-            catch (...)
-            {
+            } catch (...) {
                 {
                     std::lock_guard lock(publishing_mutex);
                     shutdown_failure = std::current_exception();
@@ -1781,16 +1520,12 @@ private:
 
     template<class Result, class Handler>
     static request_id reject_terminated(Handler handler) {
-        if (handler)
-        {
+        if (handler) {
             Result result;
             auto error = state::failure(connection_errc::not_connected, "MySQL connection permanently closed");
-            if constexpr (std::is_same_v<Result, connection_result>)
-            {
+            if constexpr (std::is_same_v<Result, connection_result>) {
                 result = std::move(error);
-            }
-            else
-            {
+            } else {
                 result.status = std::move(error);
             }
             handler(std::move(result));
@@ -1820,27 +1555,20 @@ private:
             : encoded == detail::command_status::complete
                 ? self->reserve_command(operation)
                 : state::failure(connection_errc::invalid_options, "Invalid MySQL command payload or size");
-        if (!admission)
-        {
+        if (!admission) {
             std::string{}.swap(operation->request);
             std::vector<field_value>{}.swap(operation->parameters);
             operation->statement.reset();
         }
-        try
-        {
+        try {
             asio::post(self->executor, [self, operation, admission = std::move(admission)]() mutable {
-                if (!admission)
-                {
+                if (!admission) {
                     self->complete_command(operation, std::move(admission));
-                }
-                else
-                {
+                } else {
                     self->enqueue_command(operation);
                 }
             });
-        }
-        catch (...)
-        {
+        } catch (...) {
             self->release_command(operation);
             throw;
         }
@@ -1849,8 +1577,7 @@ private:
 
     explicit connection(std::shared_ptr<arknet::detail::io_pool> runtime, bool owned = false)
         : state_(std::make_shared<state>(std::move(runtime), owned)) {
-        if (!state_->pool->start())
-        {
+        if (!state_->pool->start()) {
             throw std::runtime_error("Cannot start MySQL IO runtime");
         }
     }
@@ -1874,8 +1601,7 @@ public:
         // A completion on another thread may destroy the facade before post returns.
         const auto self = state_;
         state::publication publishing(*self);
-        if (!publishing)
-        {
+        if (!publishing) {
             reject_terminated<connection_result>(std::move(handler));
             return;
         }
@@ -1891,8 +1617,7 @@ public:
     request_id async_query(std::string sql, query_handler handler, query_options options = {}) {
         const auto self = state_;
         state::publication publishing(*self);
-        if (!publishing)
-        {
+        if (!publishing) {
             return reject_terminated<query_result>(std::move(handler));
         }
         auto operation = make_command(command_kind::query, options);
@@ -1904,8 +1629,7 @@ public:
     request_id async_prepare(std::string sql, prepare_handler handler, query_options options = {}) {
         const auto self = state_;
         state::publication publishing(*self);
-        if (!publishing)
-        {
+        if (!publishing) {
             return reject_terminated<prepare_result>(std::move(handler));
         }
         auto operation = make_command(command_kind::prepare, options);
@@ -1918,8 +1642,7 @@ public:
         query_handler handler, query_options options = {}) {
         const auto self = state_;
         state::publication publishing(*self);
-        if (!publishing)
-        {
+        if (!publishing) {
             return reject_terminated<query_result>(std::move(handler));
         }
         auto operation = make_command(command_kind::execute, options);
@@ -1933,8 +1656,7 @@ public:
         const prepared_statement& statement, result_handler handler = {}, query_options options = {}) {
         const auto self = state_;
         state::publication publishing(*self);
-        if (!publishing)
-        {
+        if (!publishing) {
             return reject_terminated<connection_result>(std::move(handler));
         }
         auto operation = make_command(command_kind::close_statement, options);
@@ -1962,8 +1684,7 @@ public:
     request_id async_reset(result_handler handler, query_options options = {}) {
         const auto self = state_;
         state::publication publishing(*self);
-        if (!publishing)
-        {
+        if (!publishing) {
             return reject_terminated<connection_result>(std::move(handler));
         }
         auto operation = make_command(command_kind::reset, options);
@@ -1975,8 +1696,7 @@ public:
     void cancel(request_id id) {
         const auto self = state_;
         state::publication publishing(*self);
-        if (!publishing)
-        {
+        if (!publishing) {
             return;
         }
         asio::post(self->executor, [self, id] { self->cancel_command(id); });
@@ -1985,8 +1705,7 @@ public:
     void close() {
         const auto self = state_;
         state::publication publishing(*self);
-        if (publishing)
-        {
+        if (publishing) {
             self->request_close();
         }
     }

@@ -18,8 +18,7 @@ namespace benchmark_diagnostics {
 inline LONG WINAPI report_exception(EXCEPTION_POINTERS* exception) {
     // DbgHelp is single-threaded, including when several workers fail together.
     static std::atomic_flag reporting = ATOMIC_FLAG_INIT;
-    if (reporting.test_and_set())
-    {
+    if (reporting.test_and_set()) {
         return EXCEPTION_EXECUTE_HANDLER;
     }
     std::fprintf(stderr, "Windows exception code=0x%08lx address=%p\n",
@@ -46,33 +45,28 @@ inline LONG WINAPI report_exception(EXCEPTION_POINTERS* exception) {
     frame.AddrPC.Mode = frame.AddrFrame.Mode = frame.AddrStack.Mode = AddrModeFlat;
     const auto process = GetCurrentProcess();
     SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
-    if (!SymInitialize(process, nullptr, TRUE))
-    {
+    if (!SymInitialize(process, nullptr, TRUE)) {
         return EXCEPTION_EXECUTE_HANDLER;
     }
     alignas(SYMBOL_INFO) unsigned char storage[sizeof(SYMBOL_INFO) + MAX_SYM_NAME]{};
     auto* symbol = reinterpret_cast<SYMBOL_INFO*>(storage);
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     symbol->MaxNameLen = MAX_SYM_NAME;
-    for (unsigned index = 0; index < 64 && frame.AddrPC.Offset; ++index)
-    {
+    for (unsigned index = 0; index < 64 && frame.AddrPC.Offset; ++index) {
         DWORD64 displacement{};
         std::fprintf(stderr, "#%u 0x%llx", index, static_cast<unsigned long long>(frame.AddrPC.Offset));
-        if (SymFromAddr(process, frame.AddrPC.Offset, &displacement, symbol))
-        {
+        if (SymFromAddr(process, frame.AddrPC.Offset, &displacement, symbol)) {
             std::fprintf(stderr, " %s+0x%llx", symbol->Name, static_cast<unsigned long long>(displacement));
         }
         IMAGEHLP_LINE64 line{};
         line.SizeOfStruct = sizeof(line);
         DWORD line_offset{};
-        if (SymGetLineFromAddr64(process, frame.AddrPC.Offset, &line_offset, &line))
-        {
+        if (SymGetLineFromAddr64(process, frame.AddrPC.Offset, &line_offset, &line)) {
             std::fprintf(stderr, " %s:%lu", line.FileName, static_cast<unsigned long>(line.LineNumber));
         }
         std::fputc('\n', stderr);
         if (!StackWalk64(machine, process, GetCurrentThread(), &frame, &context, nullptr, SymFunctionTableAccess64,
-                SymGetModuleBase64, nullptr))
-        {
+                SymGetModuleBase64, nullptr)) {
             break;
         }
     }

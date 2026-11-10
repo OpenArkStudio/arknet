@@ -8,8 +8,7 @@
 
 namespace arknet::detail {
 
-struct template_args_tcp_client : tcp_tag
-{
+struct template_args_tcp_client : tcp_tag {
     static constexpr bool is_session = false, is_client = true, is_server = false;
     using socket_t = asio::ip::tcp::socket;
     using buffer_t = asio::streambuf;
@@ -27,8 +26,7 @@ class tcp_client_impl_t
     , public tcp_keepalive_cp<Derived, Args>
     , public tcp_send_op<Derived, Args>
     , public tcp_recv_op<Derived, Args>
-    , public tcp_tag
-{
+    , public tcp_tag {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_CLIENT;
@@ -78,16 +76,13 @@ public:
     void stop() {
         this->_set_async_wait_acceptance(false);
         const bool worker = this->iopool().running_in_threads();
-        if (this->is_iopool_stopped())
-        {
-            if (!worker && !this->io_->context().stopped())
-            {
+        if (this->is_iopool_stopped()) {
+            if (!worker && !this->io_->context().stopped()) {
                 this->_wait_async_operations();
             }
             return;
         }
-        if (this->io_->context().stopped() && super::is_stopped())
-        {
+        if (this->io_->context().stopped() && super::is_stopped()) {
             this->stop_iopool();
             return;
         }
@@ -106,8 +101,7 @@ public:
                             },
                     std::move(guard)});
         });
-        if (!worker)
-        {
+        if (!worker) {
             result.get();
             this->_wait_async_operations();
         }
@@ -140,8 +134,7 @@ protected:
         const auto hostname = detail::to_string(std::forward<Host>(host));
         const auto service = detail::to_string(std::forward<Port>(port));
         this->start_iopool();
-        if (!this->is_iopool_started())
-        {
+        if (!this->is_iopool_started()) {
             set_last_error(asio::error::operation_aborted);
             return false;
         }
@@ -153,14 +146,12 @@ protected:
             auto& owner = this->derived();
             defer_event finish{[completion](event_queue_guard<Derived>) { completion->set_value(get_last_error()); },
                 std::move(guard)};
-            if (owner.is_iopool_stop_requested())
-            {
+            if (owner.is_iopool_stop_requested()) {
                 set_last_error(asio::error::operation_aborted);
                 return;
             }
             auto expected = state_t::stopped;
-            if (!owner.state_.compare_exchange_strong(expected, state_t::starting))
-            {
+            if (!owner.state_.compare_exchange_strong(expected, state_t::starting)) {
                 set_last_error(asio::error::already_started);
                 return;
             }
@@ -180,10 +171,8 @@ protected:
             owner._do_init(policy);
             owner.template _start_connect<Async>(std::move(lifetime), std::move(policy), std::move(finish));
         });
-        if constexpr (!Async)
-        {
-            if (!this->iopool().running_in_threads())
-            {
+        if constexpr (!Async) {
+            if (!this->iopool().running_in_threads()) {
                 set_last_error(result.get());
                 return !get_last_error();
             }
@@ -236,8 +225,7 @@ protected:
     void _start_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
         this->derived().dispatch(
             [this, lifetime = std::move(lifetime), policy = std::move(policy), chain = std::move(chain)]() mutable {
-                if constexpr (!std::is_same_v<typename ecs_t<Condition>::condition_lowest_type, hook_buffer_t>)
-                {
+                if constexpr (!std::is_same_v<typename ecs_t<Condition>::condition_lowest_type, hook_buffer_t>) {
                     this->buffer().consume(this->buffer().size());
                 }
                 this->derived()._post_recv(std::move(lifetime), std::move(policy));
@@ -306,13 +294,11 @@ private:
         error_code ignored, option_error;
         asio::socket_base::linger linger;
         auto& socket = this->socket();
-        if (!socket.is_open())
-        {
+        if (!socket.is_open()) {
             return;
         }
         socket.lowest_layer().get_option(linger, option_error);
-        if (!option_error && !(linger.enabled() && linger.timeout() == 0))
-        {
+        if (!option_error && !(linger.enabled() && linger.timeout() == 0)) {
             socket.shutdown(asio::socket_base::shutdown_both, ignored);
         }
         socket.cancel(ignored);
@@ -328,14 +314,12 @@ template<class Derived, class Args>
 using tcp_client_impl_t = detail::tcp_client_impl_t<Derived, Args>;
 
 template<class Derived>
-class tcp_client_t : public detail::tcp_client_impl_t<Derived>
-{
+class tcp_client_t : public detail::tcp_client_impl_t<Derived> {
 public:
     using detail::tcp_client_impl_t<Derived>::tcp_client_impl_t;
 };
 
-class tcp_client : public tcp_client_t<tcp_client>
-{
+class tcp_client : public tcp_client_t<tcp_client> {
 public:
     using tcp_client_t::tcp_client_t;
 };
@@ -345,20 +329,17 @@ public:
 
 namespace arknet {
 
-struct tcp_rate_client_args : tcp_client_args
-{
+struct tcp_rate_client_args : tcp_client_args {
     using socket_t = tcp_stream<simple_rate_policy>;
 };
 
 template<class Derived>
-class tcp_rate_client_t : public tcp_client_impl_t<Derived, tcp_rate_client_args>
-{
+class tcp_rate_client_t : public tcp_client_impl_t<Derived, tcp_rate_client_args> {
 public:
     using tcp_client_impl_t<Derived, tcp_rate_client_args>::tcp_client_impl_t;
 };
 
-class tcp_rate_client : public tcp_rate_client_t<tcp_rate_client>
-{
+class tcp_rate_client : public tcp_rate_client_t<tcp_rate_client> {
 public:
     using tcp_rate_client_t::tcp_rate_client_t;
 };

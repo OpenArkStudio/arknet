@@ -21,8 +21,7 @@
 
 namespace arknet::detail {
 
-struct template_args_udp_cast : udp_tag
-{
+struct template_args_udp_cast : udp_tag {
     using socket_t = asio::ip::udp::socket;
     using buffer_t = arknet::linear_buffer;
     static constexpr std::size_t function_storage_size = 88;
@@ -50,8 +49,7 @@ class udp_cast_impl_t
     , public udp_send_op<Derived, Args>
     , public connect_cp_member_variables<Derived, Args, false>
     , public udp_tag
-    , public cast_tag
-{
+    , public cast_tag {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_UDP_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_UDP_CLIENT;
@@ -100,13 +98,11 @@ public:
     }
 
     void stop() {
-        if (is_stopped())
-        {
+        if (is_stopped()) {
             this->stop_iopool();
             return;
         }
-        if (this->is_iopool_stopped())
-        {
+        if (this->is_iopool_stopped()) {
             return;
         }
         auto& owner = this->derived();
@@ -114,8 +110,7 @@ public:
         auto promise = std::make_shared<std::promise<void>>();
         auto completion = promise->get_future();
         owner.post_event([&owner, lifetime = owner.selfptr(), promise](event_queue_guard<Derived> guard) mutable {
-            if (owner.is_stopped())
-            {
+            if (owner.is_stopped()) {
                 promise->set_value();
                 return;
             }
@@ -123,24 +118,21 @@ public:
             owner.stop_guard_.emplace(std::move(guard));
             owner._do_stop(asio::error::operation_aborted, std::move(lifetime));
         });
-        if (!this->iopool().running_in_threads())
-        {
+        if (!this->iopool().running_in_threads()) {
             completion.get();
         }
         this->stop_iopool();
     }
 
     void request_stop() {
-        if (this->derived().is_stopped())
-        {
+        if (this->derived().is_stopped()) {
             return;
         }
         this->derived().post([this, lifetime = this->selfptr()] { this->derived().stop(); });
     }
 
     bool wait_stopped() {
-        if (this->iopool().running_in_threads())
-        {
+        if (this->iopool().running_in_threads()) {
             set_last_error(asio::error::operation_not_supported);
             return false;
         }
@@ -192,16 +184,14 @@ public:
 protected:
     template<bool Async, class Host, class Service, class Condition>
     bool _do_start(Host&& host, Service&& service, std::shared_ptr<ecs_t<Condition>> condition) {
-        if (buffer_.max_size() < udp_frame_size)
-        {
+        if (buffer_.max_size() < udp_frame_size) {
             set_last_error(asio::error::message_size);
             return false;
         }
         auto host_text = detail::to_string(std::forward<Host>(host));
         auto service_text = detail::to_string(std::forward<Service>(service));
         this->start_iopool();
-        if (!this->is_iopool_started())
-        {
+        if (!this->is_iopool_started()) {
             set_last_error(asio::error::operation_aborted);
             return false;
         }
@@ -211,8 +201,7 @@ protected:
         owner.post_event(
             [&owner, lifetime = owner.selfptr(), condition = std::move(condition), promise, host = std::move(host_text),
                 service = std::move(service_text)](event_queue_guard<Derived>) mutable {
-                if (owner.state_ != state_t::stopped)
-                {
+                if (owner.state_ != state_t::stopped) {
                     promise->set_value(asio::error::already_started);
                     return;
                 }
@@ -225,16 +214,13 @@ protected:
                 error_code error;
                 asio::ip::udp::resolver resolver(owner.io_->executor());
                 auto endpoints = resolver.resolve(owner.host_, owner.port_, asio::ip::resolver_base::passive, error);
-                if (!error && endpoints.empty())
-                {
+                if (!error && endpoints.empty()) {
                     error = asio::error::host_not_found;
                 }
-                if (!error)
-                {
+                if (!error) {
                     auto endpoint = endpoints.begin()->endpoint();
                     owner.socket().open(endpoint.protocol(), error);
-                    if (!error)
-                    {
+                    if (!error) {
                         error_code ignored;
                         owner.socket().set_option(asio::socket_base::reuse_address(true), ignored);
                         clear_last_error();
@@ -245,13 +231,11 @@ protected:
                 owner._handle_start(error, std::move(lifetime), std::move(condition));
                 promise->set_value(error);
             });
-        if constexpr (Async)
-        {
+        if constexpr (Async) {
             set_last_error(asio::error::in_progress);
             return true;
         }
-        if (this->iopool().running_in_threads())
-        {
+        if (this->iopool().running_in_threads()) {
             set_last_error(asio::error::in_progress);
             return owner.is_started();
         }
@@ -262,19 +246,15 @@ protected:
     template<class Condition>
     void _handle_start(
         const error_code& error, std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition) {
-        if (!error)
-        {
+        if (!error) {
             reset_life_id();
             state_ = state_t::started;
         }
         set_last_error(error);
         this->derived()._fire_start();
-        if (error)
-        {
+        if (error) {
             this->derived()._do_stop(error, std::move(lifetime));
-        }
-        else
-        {
+        } else {
             this->derived()._post_recv(std::move(lifetime), std::move(condition));
         }
     }
@@ -287,8 +267,7 @@ protected:
     }
 
     void _do_stop(const error_code& error, std::shared_ptr<Derived> lifetime) {
-        if (state_ == state_t::stopping || state_ == state_t::stopped)
-        {
+        if (state_ == state_t::stopping || state_ == state_t::stopped) {
             return;
         }
         state_ = state_t::stopping;
@@ -299,8 +278,7 @@ protected:
         error_code ignored;
         this->socket().cancel(ignored);
         this->socket().close(ignored);
-        if (!read_pending_)
-        {
+        if (!read_pending_) {
             this->derived()._handle_stop(error, std::move(lifetime));
         }
     }
@@ -316,8 +294,7 @@ protected:
         set_last_error(error);
         this->derived()._fire_stop();
         auto waiters = std::exchange(stop_waiters_, {});
-        for (const auto& waiter : waiters)
-        {
+        for (const auto& waiter : waiters) {
             waiter->set_value();
         }
     }
@@ -329,8 +306,7 @@ protected:
 
     template<class Condition>
     void _post_recv(std::shared_ptr<Derived> lifetime, std::shared_ptr<ecs_t<Condition>> condition) {
-        if (!is_started())
-        {
+        if (!is_started()) {
             return;
         }
         read_pending_ = true;
@@ -345,23 +321,19 @@ protected:
     template<class Condition>
     void _handle_recv(const error_code& error, std::size_t count, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> condition) {
-        if (state_ == state_t::stopping)
-        {
+        if (state_ == state_t::stopping) {
             this->derived()._handle_stop(stop_error_, std::move(lifetime));
             return;
         }
         set_last_error(error);
-        if (!is_started())
-        {
+        if (!is_started()) {
             return;
         }
-        if (error == asio::error::operation_aborted)
-        {
+        if (error == asio::error::operation_aborted) {
             this->derived()._do_stop(error, std::move(lifetime));
             return;
         }
-        if (!error)
-        {
+        if (!error) {
             buffer_.commit(count);
             this->update_alive_time();
             auto bytes = buffer_.data();
@@ -435,14 +407,12 @@ template<class Derived, class Args>
 using udp_cast_impl_t = detail::udp_cast_impl_t<Derived, Args>;
 
 template<class Derived>
-class udp_cast_t : public detail::udp_cast_impl_t<Derived>
-{
+class udp_cast_t : public detail::udp_cast_impl_t<Derived> {
 public:
     using detail::udp_cast_impl_t<Derived>::udp_cast_impl_t;
 };
 
-class udp_cast : public udp_cast_t<udp_cast>
-{
+class udp_cast : public udp_cast_t<udp_cast> {
 public:
     using udp_cast_t<udp_cast>::udp_cast_t;
 };

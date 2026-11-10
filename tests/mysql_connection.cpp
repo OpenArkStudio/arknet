@@ -4,8 +4,7 @@ using namespace mysql_test;
 
 DOCTEST_TEST_CASE("MySQL connection authenticates fragmented native-password exchange and supports reuse") {
     connection client;
-    for (int iteration = 0; iteration < 2; ++iteration)
-    {
+    for (int iteration = 0; iteration < 2; ++iteration) {
         mysql_peer peer([](mysql_peer& server) -> asio::awaitable<void> {
             co_await server.send(greeting(), true);
             check_response(co_await server.receive(), "mysql_native_password", false);
@@ -105,22 +104,21 @@ DOCTEST_TEST_CASE("MySQL TLS is required by default and plaintext full-password 
 }
 
 DOCTEST_TEST_CASE("MySQL verifies certificate trust and DNS identity without downgrade") {
-    for (const bool wrong_identity : {false, true})
-    {
+    for (const bool wrong_identity : {false, true}) {
         mysql_peer peer(
             [](mysql_peer& server) -> asio::awaitable<void> {
                 co_await server.send(greeting("caching_sha2_password", true));
                 CHECK((co_await server.receive()).size() == 32);
-                try
-                { co_await server.upgrade(); }
-                catch (const arknet::system_error& error)
-                { CHECK(bool(error.code())); }
+                try {
+                    co_await server.upgrade();
+                } catch (const arknet::system_error& error) {
+                    CHECK(bool(error.code()));
+                }
             },
             wrong_identity);
         connection client;
         auto options = options_for(peer, true);
-        if (!wrong_identity)
-        {
+        if (!wrong_identity) {
             // This separate client certificate cannot be a trust anchor for
             // the server certificate signed by tests/certs/ca.pem.
             options.ca_file = std::string(ARKNET_TEST_CERT_DIR) + "/client.pem";
@@ -154,24 +152,16 @@ DOCTEST_TEST_CASE("MySQL reports server authentication rejection with code and S
 }
 
 DOCTEST_TEST_CASE("MySQL rejects malformed greetings, wrong sequence and unsupported authentication") {
-    for (int scenario = 0; scenario < 4; ++scenario)
-    {
+    for (int scenario = 0; scenario < 4; ++scenario) {
         mysql_peer peer([scenario](mysql_peer& server) -> asio::awaitable<void> {
-            if (scenario == 0)
-            {
+            if (scenario == 0) {
                 server.sequence = 1;
                 co_await server.send(greeting());
-            }
-            else if (scenario == 1)
-            {
+            } else if (scenario == 1) {
                 co_await server.send(std::string("\x0a", 1));
-            }
-            else if (scenario == 2)
-            {
+            } else if (scenario == 2) {
                 co_await server.send(greeting("mysql_clear_password"));
-            }
-            else
-            {
+            } else {
                 co_await server.send(greeting());
                 co_await server.receive();
                 co_await server.send(std::string("\1\3", 2));
@@ -207,8 +197,7 @@ DOCTEST_TEST_CASE("MySQL uses a single deadline across partial handshake progres
 }
 
 DOCTEST_TEST_CASE("MySQL close cancels pending authentication exactly once and supports callback destruction") {
-    for (const bool destroy_in_callback : {false, true})
-    {
+    for (const bool destroy_in_callback : {false, true}) {
         std::promise<void> received;
         auto received_result = received.get_future();
         mysql_peer peer([&received](mysql_peer& server) -> asio::awaitable<void> {
@@ -223,8 +212,7 @@ DOCTEST_TEST_CASE("MySQL close cancels pending authentication exactly once and s
         std::atomic<int> calls{};
         client->async_connect(options_for(peer), [&](connection_result value) {
             ++calls;
-            if (destroy_in_callback)
-            {
+            if (destroy_in_callback) {
                 client.reset();
             }
             completion.set_value(std::move(value));
@@ -233,8 +221,7 @@ DOCTEST_TEST_CASE("MySQL close cancels pending authentication exactly once and s
         client->close();
         REQUIRE(result.wait_for(5s) == std::future_status::ready);
         CHECK(result.get().code == connection_errc::cancelled);
-        if (client)
-        {
+        if (client) {
             CHECK_FALSE(client->is_open());
         }
         peer.finish();
@@ -350,8 +337,7 @@ DOCTEST_TEST_CASE("MySQL real server verified TLS and password rejection" *
     connection client;
     // The server uses its uncached/full or cached/fast SHA2 path, according to
     // its own authentication cache. Both paths have separate byte-level tests.
-    for (int index = 0; index < 2; ++index)
-    {
+    for (int index = 0; index < 2; ++index) {
         const auto result = connect(client, options);
         CHECK_MESSAGE(bool(result), result.message, " ", result.transport_error.message());
         CHECK(client.is_open());
@@ -417,8 +403,7 @@ DOCTEST_TEST_CASE("MySQL server command errors leave a complete protocol boundar
 }
 
 DOCTEST_TEST_CASE("MySQL result bounds close the socket before an incomplete response can be reused") {
-    for (const bool rows_limit : {false, true})
-    {
+    for (const bool rows_limit : {false, true}) {
         mysql_peer peer([](mysql_peer& server) -> asio::awaitable<void> {
             co_await authenticate(server);
             co_await receive_command(server);
@@ -427,21 +412,18 @@ DOCTEST_TEST_CASE("MySQL result bounds close the socket before an incomplete res
                             "42",
                     3)};
             std::string response;
-            for (const auto& packet : packets)
-            {
+            for (const auto& packet : packets) {
                 std::string encoded;
                 REQUIRE(wire::encode_message(packet, server.sequence, encoded));
                 response += encoded;
             }
-            try
-            { co_await server.write_raw(std::move(response)); }
-            catch (const arknet::system_error& error)
-            {
+            try {
+                co_await server.write_raw(std::move(response));
+            } catch (const arknet::system_error& error) {
                 // The client may reject metadata and close before the entire
                 // response is written. Other peer failures remain test errors.
                 if (error.code() != asio::error::broken_pipe && error.code() != asio::error::connection_reset &&
-                    error.code() != asio::error::eof)
-                {
+                    error.code() != asio::error::eof) {
                     throw;
                 }
             }
@@ -450,12 +432,9 @@ DOCTEST_TEST_CASE("MySQL result bounds close the socket before an incomplete res
         connection client;
         REQUIRE(bool(connect(client, options_for(peer))));
         query_options options;
-        if (rows_limit)
-        {
+        if (rows_limit) {
             options.max_rows = 0;
-        }
-        else
-        {
+        } else {
             options.max_result_bytes = 32;
         }
         const auto result = query(client, "SELECT 42", options);
@@ -475,8 +454,7 @@ DOCTEST_TEST_CASE("MySQL queued cancellation and expiry preserve the active resp
         co_await authenticate(server);
         CHECK(co_await receive_command(server) == std::string("\3first", 6));
         first_received.set_value();
-        while (released.wait_for(0ms) != std::future_status::ready)
-        {
+        while (released.wait_for(0ms) != std::future_status::ready) {
             asio::steady_timer pause(co_await asio::this_coro::executor);
             pause.expires_after(2ms);
             co_await pause.async_wait(asio::use_awaitable);
@@ -514,8 +492,7 @@ DOCTEST_TEST_CASE("MySQL queued cancellation and expiry preserve the active resp
 }
 
 DOCTEST_TEST_CASE("MySQL active cancellation and command deadlines close transport with unknown outcome") {
-    for (const bool timeout : {false, true})
-    {
+    for (const bool timeout : {false, true}) {
         std::promise<void> request_received;
         auto received = request_received.get_future();
         mysql_peer peer([&](mysql_peer& server) -> asio::awaitable<void> {
@@ -533,8 +510,7 @@ DOCTEST_TEST_CASE("MySQL active cancellation and command deadlines close transpo
         const auto id =
             client.async_commit([&](query_result value) { completion.set_value(std::move(value)); }, options);
         REQUIRE(received.wait_for(5s) == std::future_status::ready);
-        if (!timeout)
-        {
+        if (!timeout) {
             client.cancel(id);
         }
         REQUIRE(future.wait_for(5s) == std::future_status::ready);
@@ -547,8 +523,7 @@ DOCTEST_TEST_CASE("MySQL active cancellation and command deadlines close transpo
 }
 
 DOCTEST_TEST_CASE("MySQL pending count and memory limits reject excess requests without sending") {
-    for (const bool bytes_limit : {false, true})
-    {
+    for (const bool bytes_limit : {false, true}) {
         std::promise<void> request_received;
         auto received = request_received.get_future();
         mysql_peer peer([&](mysql_peer& server) -> asio::awaitable<void> {
@@ -678,8 +653,7 @@ DOCTEST_TEST_CASE("MySQL bounds producer admission while its IO lane is blocked 
         co_await receive_command(server);
         co_await server.send(ok_packet);
         // Two 256KiB requests fit the 600KiB total admitted byte budget.
-        for (int index = 0; index < 2; ++index)
-        {
+        for (int index = 0; index < 2; ++index) {
             server.sequence = 0;
             const auto request = co_await server.receive(300 * 1024);
             CHECK(request.size() == 256 * 1024 + 1);
@@ -699,8 +673,7 @@ DOCTEST_TEST_CASE("MySQL bounds producer admission while its IO lane is blocked 
     });
     REQUIRE(entered_result.wait_for(5s) == std::future_status::ready);
     std::vector<std::future<query_result>> futures;
-    for (int index = 0; index < 16; ++index)
-    {
+    for (int index = 0; index < 16; ++index) {
         auto promise = std::make_shared<std::promise<query_result>>();
         futures.push_back(promise->get_future());
         client.async_query(
@@ -709,16 +682,12 @@ DOCTEST_TEST_CASE("MySQL bounds producer admission while its IO lane is blocked 
     release.set_value();
     int accepted = 0;
     int rejected = 0;
-    for (auto& future : futures)
-    {
+    for (auto& future : futures) {
         REQUIRE(future.wait_for(5s) == std::future_status::ready);
         const auto result = future.get();
-        if (result)
-        {
+        if (result) {
             ++accepted;
-        }
-        else
-        {
+        } else {
             CHECK(result.status.code == connection_errc::queue_full);
             CHECK_FALSE(result.status.outcome_unknown);
             ++rejected;
@@ -911,8 +880,7 @@ DOCTEST_TEST_CASE("MySQL supports modern plugin auth without the obsolete secure
 }
 
 DOCTEST_TEST_CASE("MySQL rejects connection deadlines outside the steady-clock range") {
-    for (const auto timeout : {std::chrono::milliseconds::max(), -1ms, 0ms})
-    {
+    for (const auto timeout : {std::chrono::milliseconds::max(), -1ms, 0ms}) {
         connection client;
         connect_options options;
         options.timeout = timeout;
@@ -962,8 +930,7 @@ DOCTEST_TEST_CASE("MySQL invalid command deadlines preserve IDs callbacks and wi
     REQUIRE(bool(connect(client, options_for(peer))));
     const auto caller = std::this_thread::get_id();
     arknet::mysql::request_id previous = 0;
-    for (const auto timeout : {std::chrono::milliseconds::max(), -1ms, 0ms})
-    {
+    for (const auto timeout : {std::chrono::milliseconds::max(), -1ms, 0ms}) {
         query_options options;
         options.timeout = timeout;
         std::atomic<unsigned> callbacks{};
@@ -998,8 +965,7 @@ DOCTEST_TEST_CASE("MySQL invalid command deadlines preserve IDs callbacks and wi
 
 DOCTEST_TEST_CASE("MySQL invalid connect callbacks may destroy their connection safely") {
     const auto caller = std::this_thread::get_id();
-    for (int iteration = 0; iteration < 32; ++iteration)
-    {
+    for (int iteration = 0; iteration < 32; ++iteration) {
         auto client = std::make_unique<connection>();
         std::promise<connection_result> completion;
         auto future = completion.get_future();
@@ -1021,17 +987,14 @@ DOCTEST_TEST_CASE("MySQL invalid connect callbacks may destroy their connection 
 
 DOCTEST_TEST_CASE("MySQL rejected command callbacks may destroy their connection safely") {
     const auto caller = std::this_thread::get_id();
-    for (const bool invalid_deadline : {false, true})
-    {
-        for (int iteration = 0; iteration < 32; ++iteration)
-        {
+    for (const bool invalid_deadline : {false, true}) {
+        for (int iteration = 0; iteration < 32; ++iteration) {
             auto client = std::make_unique<connection>();
             std::promise<query_result> completion;
             auto future = completion.get_future();
             std::atomic<int> calls{};
             query_options options;
-            if (invalid_deadline)
-            {
+            if (invalid_deadline) {
                 options.timeout = 0ms;
             }
             const auto id = client->async_query(

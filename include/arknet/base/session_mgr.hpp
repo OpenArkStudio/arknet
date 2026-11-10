@@ -15,8 +15,7 @@
 namespace arknet::detail {
 
 template<class Session>
-class session_mgr_t
-{
+class session_mgr_t {
     friend Session;
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_BASE;
@@ -39,16 +38,14 @@ public:
 
     template<class Callback>
     void emplace(std::shared_ptr<Session> session, Callback&& callback) {
-        if (!session)
-        {
+        if (!session) {
             return;
         }
         dispatch([this, session = std::move(session), callback = std::forward<Callback>(callback)]() mutable {
             bool inserted = false;
             {
                 arknet::unique_locker lock(mutex_);
-                if (state_.load() == state_t::started)
-                {
+                if (state_.load() == state_t::started) {
                     inserted = sessions_.try_emplace(session->hash_key(), session).second;
                 }
             }
@@ -58,8 +55,7 @@ public:
 
     template<class Callback>
     void erase(std::shared_ptr<Session> session, Callback&& callback) {
-        if (!session)
-        {
+        if (!session) {
             return;
         }
         dispatch([this, session = std::move(session), callback = std::forward<Callback>(callback)]() mutable {
@@ -68,8 +64,7 @@ public:
                 arknet::unique_locker lock(mutex_);
                 const auto found = sessions_.find(session->hash_key());
                 erased = found != sessions_.end() && found->second == session;
-                if (erased)
-                {
+                if (erased) {
                     sessions_.erase(found);
                 }
             }
@@ -89,8 +84,7 @@ public:
 
     template<class Callable>
     void for_each(Callable&& callback) {
-        for (auto& session : snapshot())
-        {
+        for (auto& session : snapshot()) {
             callback(session);
         }
     }
@@ -98,8 +92,7 @@ public:
     template<class Callable>
     void quick_for_each(Callable&& callback) {
         arknet::shared_locker lock(mutex_);
-        for (auto& [key, session] : sessions_)
-        {
+        for (auto& [key, session] : sessions_) {
             callback(session);
         }
     }
@@ -112,10 +105,8 @@ public:
 
     template<class Predicate>
     std::shared_ptr<Session> find_if(Predicate&& predicate) {
-        for (auto& session : snapshot())
-        {
-            if (predicate(session))
-            {
+        for (auto& session : snapshot()) {
+            if (predicate(session)) {
                 return session;
             }
         }
@@ -153,8 +144,7 @@ private:
         std::vector<std::shared_ptr<Session>> result;
         arknet::shared_locker lock(mutex_);
         result.reserve(sessions_.size());
-        for (const auto& [key, session] : sessions_)
-        {
+        for (const auto& [key, session] : sessions_) {
             result.push_back(session);
         }
         return result;

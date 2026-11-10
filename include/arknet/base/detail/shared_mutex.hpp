@@ -5,8 +5,7 @@
 
 namespace arknet {
 
-class shared_mutexer : public std::shared_mutex
-{
+class shared_mutexer : public std::shared_mutex {
 public:
     std::shared_mutex& native_handle() noexcept {
         return *this;

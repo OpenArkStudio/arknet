@@ -12,8 +12,7 @@ template<class Derived, class Args = template_args_tcp_client>
 class tcps_client_impl_t
     : public ssl_context_cp<Derived, Args>
     , public tcp_client_impl_t<Derived, Args>
-    , public ssl_stream_cp<Derived, Args>
-{
+    , public ssl_stream_cp<Derived, Args> {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_CLIENT;
@@ -81,12 +80,9 @@ protected:
     void _handle_connect(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
         set_last_error(ec);
-        if (ec)
-        {
+        if (ec) {
             this->derived()._done_connect(ec, std::move(lifetime), std::move(policy), std::move(chain));
-        }
-        else
-        {
+        } else {
             this->_ssl_start(lifetime, policy, this->socket(), *this);
             this->derived()._post_handshake(std::move(lifetime), std::move(policy), std::move(chain));
         }
@@ -106,14 +102,12 @@ template<class Derived, class Args>
 using tcps_client_impl_t = detail::tcps_client_impl_t<Derived, Args>;
 
 template<class Derived>
-class tcps_client_t : public detail::tcps_client_impl_t<Derived>
-{
+class tcps_client_t : public detail::tcps_client_impl_t<Derived> {
 public:
     using detail::tcps_client_impl_t<Derived>::tcps_client_impl_t;
 };
 
-class tcps_client : public tcps_client_t<tcps_client>
-{
+class tcps_client : public tcps_client_t<tcps_client> {
 public:
     using tcps_client_t::tcps_client_t;
 };

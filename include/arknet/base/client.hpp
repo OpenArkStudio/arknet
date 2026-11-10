@@ -31,8 +31,7 @@
 
 namespace arknet {
 
-class client
-{
+class client {
 public:
     static constexpr bool is_client() noexcept {
         return true;
@@ -71,8 +70,7 @@ class client_impl_t
     , public send_cp<Derived, Args>
     , public post_cp<Derived, Args>
     , public condition_event_cp<Derived, Args>
-    , public reconnect_timer_cp<Derived, Args>
-{
+    , public reconnect_timer_cp<Derived, Args> {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
 
 public:
@@ -134,15 +132,13 @@ public:
     }
 
     void request_stop() {
-        if (!this->derived().is_stopped())
-        {
+        if (!this->derived().is_stopped()) {
             this->post([this] { this->derived().stop(); });
         }
     }
 
     bool wait_stopped() {
-        if (this->iopool().running_in_threads() || this->io_->context().get_executor().running_in_this_thread())
-        {
+        if (this->iopool().running_in_threads() || this->io_->context().get_executor().running_in_this_thread()) {
             set_last_error(asio::error::operation_not_supported);
             return false;
         }

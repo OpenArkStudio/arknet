@@ -23,8 +23,7 @@ using arknet::redis::command;
 using arknet::redis::result;
 using arknet::redis::value_type;
 
-class peer
-{
+class peer {
 public:
     explicit peer(asio::ip::tcp::socket& socket)
         : socket_(socket) {
@@ -33,20 +32,15 @@ public:
 
     command read_command() {
         const auto deadline = std::chrono::steady_clock::now() + 5s;
-        while (std::chrono::steady_clock::now() < deadline)
-        {
+        while (std::chrono::steady_clock::now() < deadline) {
             arknet::redis::value reply;
-            if (decoder_.next(reply) == arknet::redis::detail::resp_status::ready)
-            {
-                if (reply.type != value_type::array)
-                {
+            if (decoder_.next(reply) == arknet::redis::detail::resp_status::ready) {
+                if (reply.type != value_type::array) {
                     throw std::runtime_error("Expected a RESP command array");
                 }
                 command arguments;
-                for (auto& element : reply.elements)
-                {
-                    if (element.type != value_type::bulk_string)
-                    {
+                for (auto& element : reply.elements) {
+                    if (element.type != value_type::bulk_string) {
                         throw std::runtime_error("Expected binary-safe command arguments");
                     }
                     arguments.push_back(std::move(element.text));
@@ -56,17 +50,14 @@ public:
             std::array<char, 4096> bytes;
             arknet::error_code error;
             auto count = socket_.read_some(asio::buffer(bytes), error);
-            if (error == asio::error::would_block || error == asio::error::try_again)
-            {
+            if (error == asio::error::would_block || error == asio::error::try_again) {
                 std::this_thread::sleep_for(1ms);
                 continue;
             }
-            if (error)
-            {
+            if (error) {
                 throw arknet::system_error(error);
             }
-            if (!decoder_.append(std::string_view(bytes.data(), count)))
-            {
+            if (!decoder_.append(std::string_view(bytes.data(), count))) {
                 throw std::runtime_error("Command decoder limit exceeded");
             }
         }
@@ -74,8 +65,7 @@ public:
     }
 
     void expect(command expected) {
-        if (read_command() != expected)
-        {
+        if (read_command() != expected) {
             throw std::runtime_error("Unexpected Redis command");
         }
     }
@@ -83,21 +73,16 @@ public:
     void send(std::string_view data) {
         std::size_t position{};
         const auto deadline = std::chrono::steady_clock::now() + 5s;
-        while (position < data.size() && std::chrono::steady_clock::now() < deadline)
-        {
+        while (position < data.size() && std::chrono::steady_clock::now() < deadline) {
             arknet::error_code error;
             position += socket_.write_some(asio::buffer(data.data() + position, data.size() - position), error);
-            if (error == asio::error::would_block || error == asio::error::try_again)
-            {
+            if (error == asio::error::would_block || error == asio::error::try_again) {
                 std::this_thread::sleep_for(1ms);
-            }
-            else if (error)
-            {
+            } else if (error) {
                 throw arknet::system_error(error);
             }
         }
-        if (position != data.size())
-        {
+        if (position != data.size()) {
             throw std::runtime_error("Timed out sending a response");
         }
     }
@@ -110,12 +95,10 @@ public:
     void wait_closed() {
         const auto deadline = std::chrono::steady_clock::now() + 5s;
         std::array<char, 64> bytes;
-        while (std::chrono::steady_clock::now() < deadline)
-        {
+        while (std::chrono::steady_clock::now() < deadline) {
             arknet::error_code error;
             socket_.read_some(asio::buffer(bytes), error);
-            if (error && error != asio::error::would_block && error != asio::error::try_again)
-            {
+            if (error && error != asio::error::would_block && error != asio::error::try_again) {
                 return;
             }
             std::this_thread::sleep_for(1ms);
@@ -128,8 +111,7 @@ private:
     arknet::redis::detail::resp_decoder decoder_;
 };
 
-class server
-{
+class server {
 public:
     template<class Function>
     explicit server(Function script, std::size_t connections = 1)
@@ -138,25 +120,19 @@ public:
         finished_ = completion_.get_future();
         acceptor_.non_blocking(true);
         worker_ = std::thread([this, script = std::move(script), connections]() mutable {
-            try
-            {
-                for (std::size_t connection_index = 0; connection_index < connections; ++connection_index)
-                {
+            try {
+                for (std::size_t connection_index = 0; connection_index < connections; ++connection_index) {
                     const auto deadline = std::chrono::steady_clock::now() + 5s;
-                    for (;;)
-                    {
+                    for (;;) {
                         arknet::error_code error;
                         acceptor_.accept(socket_, error);
-                        if (!error)
-                        {
+                        if (!error) {
                             break;
                         }
-                        if (error != asio::error::would_block && error != asio::error::try_again)
-                        {
+                        if (error != asio::error::would_block && error != asio::error::try_again) {
                             throw arknet::system_error(error);
                         }
-                        if (std::chrono::steady_clock::now() >= deadline)
-                        {
+                        if (std::chrono::steady_clock::now() >= deadline) {
                             throw std::runtime_error("Timed out accepting Redis client");
                         }
                         std::this_thread::sleep_for(1ms);
@@ -166,9 +142,9 @@ public:
                     socket_.close();
                 }
                 completion_.set_value();
+            } catch (...) {
+                completion_.set_exception(std::current_exception());
             }
-            catch (...)
-            { completion_.set_exception(std::current_exception()); }
         });
     }
 

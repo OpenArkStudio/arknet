@@ -76,8 +76,10 @@ branch or worktree when the existing checkout contains uncommitted changes.
   Call these dependencies, not backends. Preserve machine-readable identifiers
   unless an explicit API or data-format migration is part of the task.
 - Follow `.clang-format` and `scripts/format_spacing.sh`, using clang-format 18.
-  Keep function opening braces on the declaration line, expand short function
-  bodies, use braces for control statements and keep names in `snake_case`.
+  Attach opening braces to declarations and control statements, including classes,
+  structs, enums, unions and functions. Keep `else` and `catch` on the closing-brace
+  line, expand short function and enum bodies, use braces for control statements
+  and keep names in `snake_case`.
 - Group includes as system, third-party, then project headers. Keep required
   platform-header dependencies in a valid order, including Winsock 2 before
   `windows.h` when both are needed. Separate include blocks, namespaces and

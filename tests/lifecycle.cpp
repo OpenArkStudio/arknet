@@ -6,8 +6,7 @@
 #include <arknet/arknet.hpp>
 #include "check.hpp"
 
-struct io_runner
-{
+struct io_runner {
     asio::io_context context;
     asio::executor_work_guard<asio::io_context::executor_type> work{context.get_executor()};
     std::thread thread{[this] { context.run(); }};
@@ -19,8 +18,7 @@ struct io_runner
     }
 };
 
-struct late_deadline_session : arknet::tcp_session_t<late_deadline_session>
-{
+struct late_deadline_session : arknet::tcp_session_t<late_deadline_session> {
     using super = arknet::tcp_session_t<late_deadline_session>;
     using super::super;
 
@@ -65,17 +63,14 @@ DOCTEST_TEST_CASE("Lifecycle status queries tolerate concurrent TCP and UDP tran
         const auto poll = [](const auto& endpoint) {
             return static_cast<std::size_t>(endpoint.is_started()) + static_cast<std::size_t>(endpoint.is_stopped());
         };
-        while (!stop.stop_requested())
-        {
+        while (!stop.stop_requested()) {
             auto states = poll(tcp_server) + poll(tcp_client) + poll(udp_server) + poll(udp_client) + poll(udp_cast);
             {
                 std::lock_guard lock(sessions_mutex);
-                if (tcp_session)
-                {
+                if (tcp_session) {
                     states += poll(*tcp_session);
                 }
-                if (udp_session)
-                {
+                if (udp_session) {
                     states += poll(*udp_session);
                 }
             }
@@ -83,8 +78,7 @@ DOCTEST_TEST_CASE("Lifecycle status queries tolerate concurrent TCP and UDP tran
             std::this_thread::yield();
         }
     });
-    for (std::size_t round = 0; round < 16; ++round)
-    {
+    for (std::size_t round = 0; round < 16; ++round) {
         check(tcp_server.start("127.0.0.1", 0), "polled TCP server starts");
         check(tcp_client.start("127.0.0.1", tcp_server.get_listen_port()), "polled TCP client connects");
         tcp_connections.wait(round + 1);
@@ -98,8 +92,7 @@ DOCTEST_TEST_CASE("Lifecycle status queries tolerate concurrent TCP and UDP tran
         check(udp_server.is_started() && udp_client.is_started() && udp_cast.is_started() && udp_session->is_started(),
             "connected UDP endpoints publish started state");
         const auto previous_samples = samples.load();
-        while (samples.load() == previous_samples)
-        {
+        while (samples.load() == previous_samples) {
             std::this_thread::yield();
         }
         tcp_server.stop();
@@ -187,8 +180,7 @@ DOCTEST_TEST_CASE("TCP auto reconnect recovers after server restart") {
     arknet::tcp_client client;
     client.set_auto_reconnect(true, 20ms);
     client.bind_connect([&] {
-        if (!arknet::get_last_error())
-        {
+        if (!arknet::get_last_error()) {
             connections.push("connected");
         }
     });
@@ -292,8 +284,7 @@ DOCTEST_TEST_CASE("Send completions accept generic move-only and overloaded call
     const auto result = await(completion);
     check(!result.first && result.second == 5, "generic callback reports send result");
 
-    struct overloaded_completion
-    {
+    struct overloaded_completion {
         std::promise<std::size_t>& promise;
 
         void operator()(std::size_t bytes) {
@@ -365,8 +356,7 @@ DOCTEST_TEST_CASE("External timer stop drains canceled waits and releases callba
     std::weak_ptr<int> released = retained;
     std::atomic<unsigned> conditions{};
     std::vector<std::future<int>> delayed;
-    for (unsigned i = 0; i < 32; ++i)
-    {
+    for (unsigned i = 0; i < 32; ++i) {
         timer.start_timer(i, 1h, [retained] {});
         delayed.push_back(timer.post([retained] { return *retained; }, 1h, asio::use_future));
         timer.post_condition_event([retained, &conditions] { ++conditions; });
@@ -377,14 +367,14 @@ DOCTEST_TEST_CASE("External timer stop drains canceled waits and releases callba
     timer.stop();
     check(conditions == 32, "stop waits for all condition completions");
     check(released.expired(), "stop releases canceled timer and post captures");
-    for (auto& future : delayed)
-    {
+    for (auto& future : delayed) {
         check(future.wait_for(0s) == std::future_status::ready, "canceled delayed future ready before stop returns");
         bool canceled = false;
-        try
-        { future.get(); }
-        catch (const std::future_error& error)
-        { canceled = error.code() == std::make_error_code(std::future_errc::broken_promise); }
+        try {
+            future.get();
+        } catch (const std::future_error& error) {
+            canceled = error.code() == std::make_error_code(std::future_errc::broken_promise);
+        }
         check(canceled, "canceled delayed task does not invoke its callback");
     }
     check(!runner.context.stopped(), "timer stop preserves external context");
@@ -418,10 +408,11 @@ DOCTEST_TEST_CASE("Completed future posts release captures before result consump
     check(&reference.get() == &reference_result, "reference result preserves identity");
     check(*delayed.get() == 7, "move-only result preserved");
     bool propagated = false;
-    try
-    { failure.get(); }
-    catch (const std::runtime_error& error)
-    { propagated = std::string_view(error.what()) == "post callback failure"; }
+    try {
+        failure.get();
+    } catch (const std::runtime_error& error) {
+        propagated = std::string_view(error.what()) == "post callback failure";
+    }
     check(propagated, "future preserves the callback exception");
     check(!runner.context.stopped(), "future completion preserves external context");
 }
@@ -451,14 +442,14 @@ DOCTEST_TEST_CASE("Future posts canceled before initialization release captures 
     timer->stop();
     check(released.expired() && unexpected_callbacks == 0,
         "uninitialized futures cannot retain or run canceled callbacks");
-    for (auto& future : canceled)
-    {
+    for (auto& future : canceled) {
         check(future.wait_for(0s) == std::future_status::ready, "uninitialized canceled future is ready after stop");
         bool abandoned = false;
-        try
-        { future.get(); }
-        catch (const std::future_error& error)
-        { abandoned = error.code() == std::make_error_code(std::future_errc::broken_promise); }
+        try {
+            future.get();
+        } catch (const std::future_error& error) {
+            abandoned = error.code() == std::make_error_code(std::future_errc::broken_promise);
+        }
         check(abandoned, "uninitialized task reports broken_promise");
     }
     check(!runner.context.stopped(), "canceling initialization preserves external context");
@@ -494,8 +485,7 @@ DOCTEST_TEST_CASE("Pool and queued-event futures release captures before result 
     check(!runner.context.stopped(), "queued task preserves external context");
 }
 
-struct callback_lifetime_probe
-{
+struct callback_lifetime_probe {
     explicit callback_lifetime_probe(std::promise<void>& result)
         : released(result) {}
 
@@ -592,8 +582,7 @@ DOCTEST_TEST_CASE("Timer queries reject a directly stopped external context") {
 
 namespace {
 
-class context_destruction_probe final : public asio::execution_context::service
-{
+class context_destruction_probe final : public asio::execution_context::service {
 public:
     inline static asio::execution_context::id id;
 
@@ -613,20 +602,15 @@ private:
 
 template<class Endpoint>
 void configure_release_endpoint(Endpoint& endpoint) {
-    if constexpr (Endpoint::is_client())
-    {
+    if constexpr (Endpoint::is_client()) {
         endpoint.set_auto_reconnect(false);
     }
 #if defined(ARKNET_ENABLE_SSL)
-    if constexpr (requires { endpoint.load_verify_file(std::string{}); })
-    {
+    if constexpr (requires { endpoint.load_verify_file(std::string{}); }) {
         const std::string certs = ARKNET_TEST_CERT_DIR;
-        if constexpr (Endpoint::is_client())
-        {
+        if constexpr (Endpoint::is_client()) {
             endpoint.load_verify_file(certs + "/ca.pem");
-        }
-        else
-        {
+        } else {
             endpoint.set_cert_file("", certs + "/server.pem", certs + "/server-key.pem", "");
         }
         check(!arknet::get_last_error(), "endpoint certificate configuration succeeds");
@@ -636,8 +620,7 @@ void configure_release_endpoint(Endpoint& endpoint) {
 
 template<class Endpoint>
 void release_callback_owner(std::uint16_t port = 0) {
-    struct application_owner
-    {
+    struct application_owner {
         std::shared_ptr<Endpoint> endpoint = std::make_shared<Endpoint>(1024, 128 * 1024, 2);
 
         ~application_owner() {
@@ -673,8 +656,7 @@ void release_client_callback_owner() {
 } // namespace
 
 DOCTEST_TEST_CASE("Owned listeners release final callback owners on an IO worker") {
-    for (unsigned repetition = 0; repetition < 8; ++repetition)
-    {
+    for (unsigned repetition = 0; repetition < 8; ++repetition) {
         release_callback_owner<arknet::tcp_server>();
         release_callback_owner<arknet::udp_server>();
         release_callback_owner<arknet::rudp_server>();
@@ -693,8 +675,7 @@ DOCTEST_TEST_CASE("Owned listeners release final callback owners on an IO worker
 }
 
 DOCTEST_TEST_CASE("Owned clients release final callback owners on an IO worker") {
-    for (unsigned repetition = 0; repetition < 8; ++repetition)
-    {
+    for (unsigned repetition = 0; repetition < 8; ++repetition) {
         release_client_callback_owner<arknet::tcp_client, arknet::tcp_server>();
         release_client_callback_owner<arknet::udp_client, arknet::udp_server>();
         release_client_callback_owner<arknet::rudp_client, arknet::rudp_server>();

@@ -20,13 +20,11 @@
 
 namespace connection_load {
 
-struct tcp_kernel_info
-{
+struct tcp_kernel_info {
     std::uint32_t state{}, flags{}, rto_ms{}, send_buffer_bytes{}, send_window_bytes{}, receive_window_bytes{};
     std::uint32_t congestion_window_bytes{}, slow_start_threshold_bytes{};
     std::uint64_t tx_bytes{}, rx_bytes{}, retransmit_bytes{}, out_of_order_bytes{};
-    enum class status
-    {
+    enum class status {
         available,
         unsupported,
         closed,
@@ -44,8 +42,7 @@ inline constexpr std::size_t tcp_kernel_info_required_length =
 #if defined(__APPLE__) && defined(TCP_CONNECTION_INFO)
 inline tcp_kernel_info decode_tcp_kernel_info(const tcp_connection_info& info, std::size_t length) noexcept {
     tcp_kernel_info result;
-    if (length < tcp_kernel_info_required_length)
-    {
+    if (length < tcp_kernel_info_required_length) {
         result.result = tcp_kernel_info::status::short_response;
         return result;
     }
@@ -69,15 +66,13 @@ inline tcp_kernel_info decode_tcp_kernel_info(const tcp_connection_info& info, s
 inline tcp_kernel_info query_tcp_kernel_info(int descriptor) noexcept {
     tcp_kernel_info result;
 #if defined(__APPLE__) && defined(TCP_CONNECTION_INFO)
-    if (descriptor < 0)
-    {
+    if (descriptor < 0) {
         result.result = tcp_kernel_info::status::closed;
         return result;
     }
     tcp_connection_info info{};
     socklen_t length = sizeof(info);
-    if (getsockopt(descriptor, IPPROTO_TCP, TCP_CONNECTION_INFO, &info, &length) != 0)
-    {
+    if (getsockopt(descriptor, IPPROTO_TCP, TCP_CONNECTION_INFO, &info, &length) != 0) {
         result.result = tcp_kernel_info::status::query_failed;
         result.error = errno;
         return result;
@@ -90,8 +85,7 @@ inline tcp_kernel_info query_tcp_kernel_info(int descriptor) noexcept {
 }
 
 // Single IO-worker ownership. No per-session allocation or work in disabled mode.
-class tcp_kernel_samples
-{
+class tcp_kernel_samples {
 public:
     static constexpr std::size_t session_capacity = 16, sample_capacity = 8, memory_limit = 32 * 1024;
     static constexpr std::size_t head_sample_capacity = 4, tail_sample_capacity = 4;
@@ -106,12 +100,10 @@ public:
     }
 
     void release(identity owner) noexcept {
-        if (!data_ || frozen_)
-        {
+        if (!data_ || frozen_) {
             return;
         }
-        if (auto* value = find(owner))
-        {
+        if (auto* value = find(owner)) {
             *value = {};
             value->ever_used = true;
             ++released_;
@@ -119,10 +111,8 @@ public:
     }
 
     void prune(identity owner, bool eligible, std::uint64_t completions) noexcept {
-        if (data_ && !frozen_)
-        {
-            if (auto* value = find(owner); value && (!eligible || value->completions != completions))
-            {
+        if (data_ && !frozen_) {
+            if (auto* value = find(owner); value && (!eligible || value->completions != completions)) {
                 release(owner);
             }
         }
@@ -131,17 +121,13 @@ public:
     template<class Query>
     void sample(identity owner, std::int64_t time_us, std::int64_t idle_us, std::uint64_t completions,
         std::uint64_t next_receive, std::uint64_t next_send, Query query) {
-        if (!data_ || frozen_ || idle_us < inactivity_us)
-        {
+        if (!data_ || frozen_ || idle_us < inactivity_us) {
             return;
         }
         auto* value = find(owner);
-        if (!value)
-        {
-            for (auto& candidate : data_->slots)
-            {
-                if (!candidate.used)
-                {
+        if (!value) {
+            for (auto& candidate : data_->slots) {
+                if (!candidate.used) {
                     value = &candidate;
                     reused_ += value->ever_used;
                     value->used = value->ever_used = true;
@@ -150,8 +136,7 @@ public:
                 }
             }
         }
-        if (!value)
-        {
+        if (!value) {
             ++omitted_;
             return; // Persistent stalls keep their slots; never query omitted identities.
         }
@@ -184,15 +169,12 @@ public:
             << head_sample_capacity << ",\"tail_sample_capacity\":" << tail_sample_capacity
             << ",\"sample_phase\":\"periodic_io_worker\",\"time_unit\":\"microseconds_since_process_start\","
                "\"samples\":[";
-        if (value)
-        {
+        if (value) {
             const auto size = (std::min)(value->total, std::uint64_t{sample_capacity});
             const auto head_size = (std::min)(size, std::uint64_t{head_sample_capacity});
             const auto tail_size = size - head_size;
-            for (std::uint64_t index = 0; index < size; ++index)
-            {
-                if (index)
-                {
+            for (std::uint64_t index = 0; index < size; ++index) {
+                if (index) {
                     out << ',';
                 }
                 const auto ordinal = index < head_size ? index : value->total - tail_size + index - head_size;
@@ -201,8 +183,7 @@ public:
                 out << "{\"sample_ordinal\":" << ordinal + 1 << ",\"sample_time_us\":" << event.time_us
                     << ",\"no_completion_age_us\":" << event.idle_us << ",\"next_receive\":" << event.next_receive
                     << ",\"next_send\":" << event.next_send << ",\"tcp_info\":";
-                if (info.result == tcp_kernel_info::status::available)
-                {
+                if (info.result == tcp_kernel_info::status::available) {
                     out << "{\"state\":" << info.state << ",\"flags\":" << info.flags << ",\"rto_ms\":" << info.rto_ms
                         << ",\"send_buffer_bytes\":" << info.send_buffer_bytes
                         << ",\"send_window_bytes\":" << info.send_window_bytes
@@ -212,36 +193,29 @@ public:
                         << ",\"tx_bytes\":" << info.tx_bytes << ",\"rx_bytes\":" << info.rx_bytes
                         << ",\"retransmit_bytes\":" << info.retransmit_bytes
                         << ",\"out_of_order_bytes\":" << info.out_of_order_bytes << '}';
-                }
-                else
-                {
+                } else {
                     const char* reason = info.result == tcp_kernel_info::status::unsupported ? "unsupported_platform"
                                          : info.result == tcp_kernel_info::status::closed    ? "socket_closed"
                                          : info.result == tcp_kernel_info::status::short_response
                                              ? "short_tcp_connection_info"
                                              : "getsockopt_failed";
                     out << "null,\"unavailable_reason\":\"" << reason << '\"';
-                    if (info.result == tcp_kernel_info::status::query_failed)
-                    {
+                    if (info.result == tcp_kernel_info::status::query_failed) {
                         out << ",\"error\":" << info.error;
                     }
                 }
                 out << '}';
             }
             out << "],\"total_samples\":" << value->total << ",\"overwritten_samples\":" << value->total - size;
-        }
-        else
-        {
+        } else {
             out << "],\"total_samples\":0,\"overwritten_samples\":0";
         }
     }
 
     void write_summary(std::ostream& out) const {
         std::size_t retained{};
-        if (data_)
-        {
-            for (const auto& value : data_->slots)
-            {
+        if (data_) {
+            for (const auto& value : data_->slots) {
                 retained += value.used;
             }
         }
@@ -264,34 +238,29 @@ private:
                    : head_sample_capacity + (ordinal - head_sample_capacity) % tail_sample_capacity;
     }
 
-    struct event
-    {
+    struct event {
         std::int64_t time_us{}, idle_us{};
         std::uint64_t next_receive{}, next_send{};
         tcp_kernel_info info;
     };
 
-    struct slot
-    {
+    struct slot {
         identity owner{};
         std::array<event, sample_capacity> events{};
         std::uint64_t total{}, completions{};
         bool used{}, ever_used{};
     };
 
-    struct storage
-    {
+    struct storage {
         std::array<slot, session_capacity> slots{};
     };
 
     static_assert(sizeof(storage) <= memory_limit);
 
     slot* find(identity owner) const noexcept {
-        for (auto& value : data_->slots)
-        {
+        for (auto& value : data_->slots) {
             if (value.used && value.owner.run == owner.run && value.owner.client == owner.client &&
-                value.owner.connection == owner.connection)
-            {
+                value.owner.connection == owner.connection) {
                 return &value;
             }
         }

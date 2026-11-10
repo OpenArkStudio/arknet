@@ -12,8 +12,7 @@ template<class Derived, class Transport, class Args>
 class websocket_endpoint_impl
     : public Transport
     , public ws_stream_cp<Derived, Args>
-    , public ws_send_op<Derived, Args>
-{
+    , public ws_send_op<Derived, Args> {
     static constexpr bool secure = std::is_base_of_v<ssl_stream_tag, Transport>;
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_TCP_BASE;
@@ -36,8 +35,7 @@ public:
     websocket_endpoint_impl& operator=(const websocket_endpoint_impl&) = delete;
 
     ~websocket_endpoint_impl() {
-        if constexpr (Args::is_client)
-        {
+        if constexpr (Args::is_client) {
             this->stop_before_destroy(*this);
         }
     }
@@ -156,19 +154,13 @@ protected:
     template<class Condition, class Chain>
     void _handle_connect(const error_code& ec, std::shared_ptr<Derived> lifetime,
         std::shared_ptr<ecs_t<Condition>> policy, Chain chain) {
-        if constexpr (secure)
-        {
+        if constexpr (secure) {
             Transport::_handle_connect(ec, std::move(lifetime), std::move(policy), std::move(chain));
-        }
-        else
-        {
+        } else {
             set_last_error(ec);
-            if (ec)
-            {
+            if (ec) {
                 this->derived()._done_connect(ec, std::move(lifetime), std::move(policy), std::move(chain));
-            }
-            else
-            {
+            } else {
                 begin_upgrade(std::move(lifetime), std::move(policy), std::move(chain));
             }
         }
@@ -183,28 +175,19 @@ protected:
                           chain = std::move(chain)]() mutable {
             set_last_error(ec);
             this->derived()._fire_handshake(lifetime);
-            if (ec)
-            {
-                if constexpr (Args::is_session)
-                {
+            if (ec) {
+                if constexpr (Args::is_session) {
                     this->derived()._do_disconnect(ec, std::move(lifetime), std::move(chain));
-                }
-                else
-                {
+                } else {
                     this->derived()._done_connect(ec, std::move(lifetime), std::move(policy), std::move(chain));
                 }
-            }
-            else
-            {
+            } else {
                 begin_upgrade(std::move(lifetime), std::move(policy), std::move(chain));
             }
         };
-        if constexpr (Args::is_session)
-        {
+        if constexpr (Args::is_session) {
             this->sessions_.dispatch(std::move(notify));
-        }
-        else
-        {
+        } else {
             notify();
         }
     }
@@ -226,13 +209,10 @@ protected:
     }
 
     void _fire_upgrade(std::shared_ptr<Derived>& lifetime) {
-        if constexpr (Args::is_session)
-        {
+        if constexpr (Args::is_session) {
             ARKNET_ASSERT(this->sessions_.io().running_in_this_thread());
             this->listener_.notify(event_type::upgrade, lifetime);
-        }
-        else
-        {
+        } else {
             ARKNET_ASSERT(this->io_->running_in_this_thread());
             this->listener_.notify(event_type::upgrade);
         }
@@ -240,23 +220,17 @@ protected:
 
 private:
     auto& transport() noexcept {
-        if constexpr (secure)
-        {
+        if constexpr (secure) {
             return this->ssl_stream();
-        }
-        else
-        {
+        } else {
             return this->socket();
         }
     }
 
     const auto& transport() const noexcept {
-        if constexpr (secure)
-        {
+        if constexpr (secure) {
             return this->ssl_stream();
-        }
-        else
-        {
+        } else {
             return this->socket();
         }
     }
@@ -269,14 +243,11 @@ private:
 
     template<bool Async, class Host, class Port, class First, class... Options>
     bool connect(Host&& host, Port&& port, First&& first, Options&&... options) {
-        if constexpr (detail::can_convert_to_string<std::remove_cvref_t<First>>::value)
-        {
+        if constexpr (detail::can_convert_to_string<std::remove_cvref_t<First>>::value) {
             this->derived().set_upgrade_target(std::forward<First>(first));
             return this->derived().template _do_connect<Async>(std::forward<Host>(host), std::forward<Port>(port),
                 ecs_helper::make_ecs('0', std::forward<Options>(options)...));
-        }
-        else
-        {
+        } else {
             return this->derived().template _do_connect<Async>(std::forward<Host>(host), std::forward<Port>(port),
                 ecs_helper::make_ecs('0', std::forward<First>(first), std::forward<Options>(options)...));
         }
@@ -287,12 +258,9 @@ private:
         this->derived().dispatch([this, lifetime = std::move(lifetime), policy = std::move(policy),
                                      chain = std::move(chain)]() mutable {
             this->_ws_start(lifetime, policy, transport());
-            if constexpr (Args::is_session)
-            {
+            if constexpr (Args::is_session) {
                 this->derived()._post_read_upgrade_request(std::move(lifetime), std::move(policy), std::move(chain));
-            }
-            else
-            {
+            } else {
                 this->derived()._post_control_callback(lifetime, policy);
                 this->derived()._post_upgrade(
                     std::move(lifetime), std::move(policy), upgrade_message_, std::move(chain));
@@ -305,8 +273,7 @@ private:
 };
 
 template<class Derived, class Transport, class Session>
-class websocket_server_impl : public Transport
-{
+class websocket_server_impl : public Transport {
 public:
     template<class... Construction>
     explicit websocket_server_impl(Construction&&... construction)

@@ -11,17 +11,12 @@
 
 namespace arknet::detail {
 
-struct component_tag
-{
-};
+struct component_tag {};
 
-struct component_dummy
-{
-};
+struct component_dummy {};
 
 template<class Match, class... Options>
-class component_t : public component_tag
-{
+class component_t : public component_tag {
 public:
     static constexpr std::size_t componentc = sizeof...(Options);
     using components_type = std::tuple<decltype(to_shared_ptr(std::declval<Options>()))...>;
@@ -29,8 +24,7 @@ public:
     using condition_lowest_type = typename condition_type::type;
 
     template<std::size_t Index>
-    struct components
-    {
+    struct components {
         using type = std::tuple_element_t<Index, components_type>;
         using raw_type = typename type::element_type;
     };
@@ -72,14 +66,12 @@ private:
 template<class Match, class... Options>
 component_t(Match, Options...) -> component_t<Match, Options...>;
 
-struct ecs_base
-{
+struct ecs_base {
     virtual ~ecs_base() = default;
 };
 
 template<class Match>
-class ecs_t : public ecs_base
-{
+class ecs_t : public ecs_base {
 public:
     using component_type = component_dummy;
     using condition_type = condition_t<Match>;
@@ -98,12 +90,9 @@ public:
     ecs_t& operator=(ecs_t&&) = default;
 
     ecs_t clone() {
-        if constexpr (std::is_void_v<Match>)
-        {
+        if constexpr (std::is_void_v<Match>) {
             return {};
-        }
-        else
-        {
+        } else {
             return ecs_t(condition_.clone());
         }
     }
@@ -125,8 +114,7 @@ template<class Match>
 ecs_t(Match) -> ecs_t<std::remove_cvref_t<Match>>;
 
 template<class Match, class... Options>
-class ecs_t<component_t<Match, Options...>> : public ecs_base
-{
+class ecs_t<component_t<Match, Options...>> : public ecs_base {
 public:
     using component_type = component_t<Match, Options...>;
     using condition_type = typename component_type::condition_type;
@@ -154,16 +142,12 @@ private:
     component_type component_;
 };
 
-struct ecs_helper
-{
+struct ecs_helper {
     template<class T>
     static constexpr bool is_component() noexcept {
-        if constexpr (is_template_instance_of_v<std::shared_ptr, T>)
-        {
+        if constexpr (is_template_instance_of_v<std::shared_ptr, T>) {
             return is_component<typename std::remove_cvref_t<T>::element_type>();
-        }
-        else
-        {
+        } else {
             return std::is_base_of_v<component_tag, std::remove_cvref_t<T>>;
         }
     }
@@ -175,23 +159,15 @@ struct ecs_helper
 
     template<class Default, class... Args>
     static auto make_ecs(Default default_match, Args... args) {
-        if constexpr (args_has_match_condition<Args...>())
-        {
-            if constexpr (sizeof...(Args) == 1)
-            {
+        if constexpr (args_has_match_condition<Args...>()) {
+            if constexpr (sizeof...(Args) == 1) {
                 return to_shared_ptr(ecs_t(std::move(args)...));
-            }
-            else
-            {
+            } else {
                 return to_shared_ptr(ecs_t(component_t(std::move(args)...)));
             }
-        }
-        else if constexpr (sizeof...(Args) == 0)
-        {
+        } else if constexpr (sizeof...(Args) == 0) {
             return to_shared_ptr(ecs_t(std::move(default_match)));
-        }
-        else
-        {
+        } else {
             return to_shared_ptr(ecs_t(component_t(std::move(default_match), std::move(args)...)));
         }
     }

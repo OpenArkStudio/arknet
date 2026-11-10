@@ -9,14 +9,12 @@
 #include <arknet/tcp/tcp_server.hpp>
 #include "check.hpp"
 
-class custom_session : public arknet::tcp_session_t<custom_session>
-{
+class custom_session : public arknet::tcp_session_t<custom_session> {
 public:
     using arknet::tcp_session_t<custom_session>::tcp_session_t;
 };
 
-class guarded_client : public arknet::tcp_client_t<guarded_client>
-{
+class guarded_client : public arknet::tcp_client_t<guarded_client> {
 public:
     using arknet::tcp_client_t<guarded_client>::tcp_client_t;
     std::atomic<int> filter_calls{};
@@ -65,8 +63,7 @@ DOCTEST_TEST_CASE("TCP raw sends own buffers and guarded temporary payloads") {
     check(!guarded_result.first && guarded_result.second == 8190, "guarded temporary payload completion");
     const auto chunks = received.wait(1366);
     std::string reconstructed;
-    for (std::size_t i = 1; i < chunks.size(); ++i)
-    {
+    for (std::size_t i = 1; i < chunks.size(); ++i) {
         reconstructed += chunks[i];
     }
     check(reconstructed == std::string(8190, 'g') && client.get_queued_send_buffer_size() == 0,
@@ -104,8 +101,7 @@ DOCTEST_TEST_CASE("TCP datagram framing covers each length prefix boundary") {
     client.bind_recv([&](std::string_view data) { received.push(data); });
     check(client.start("127.0.0.1", server.get_listen_port(), arknet::use_dgram), "boundary connect");
     std::vector<std::string> expected;
-    for (const auto length : {0u, 1u, 253u, 254u, 65535u, 65536u})
-    {
+    for (const auto length : {0u, 1u, 253u, 254u, 65535u, 65536u}) {
         expected.emplace_back(length, static_cast<char>('a' + expected.size()));
         client.async_send(expected.back());
     }
@@ -128,8 +124,7 @@ DOCTEST_TEST_CASE("TCP datagram receives retain split prefixes and consecutive f
     const std::array<unsigned char, 3> prefix{254, 254, 0};
     // A native peer bypasses arknet's sender so receiver and sender cannot share
     // a framing bug. Separate writes also allow incomplete prefix/body reads.
-    for (const auto byte : prefix)
-    {
+    for (const auto byte : prefix) {
         asio::write(peer, asio::buffer(&byte, 1));
     }
     asio::write(peer, asio::buffer(first.data(), 17));
@@ -204,8 +199,7 @@ DOCTEST_TEST_CASE("Stopped TCP clients release ownership after their external co
     client->async_send(std::string("stop"));
     await(received);
     const auto deadline = std::chrono::steady_clock::now() + 5s;
-    while (!client->is_stopped() && std::chrono::steady_clock::now() < deadline)
-    {
+    while (!client->is_stopped() && std::chrono::steady_clock::now() < deadline) {
         std::this_thread::sleep_for(1ms);
     }
     check(client->is_stopped(), "callback stop completed");

@@ -17,8 +17,7 @@ inline void disarm() noexcept {
     armed = false;
 }
 
-class scope
-{
+class scope {
     bool previous_;
 
 public:

@@ -11,8 +11,7 @@
 namespace arknet::detail {
 
 template<class Derived, class Args>
-class connect_timeout_cp
-{
+class connect_timeout_cp {
 public:
     auto get_connect_timeout() const noexcept {
         return connect_timeout_;
@@ -29,8 +28,7 @@ protected:
     void _make_connect_timeout_timer(std::shared_ptr<Derived> owner, std::chrono::duration<Rep, Period> duration) {
         auto& object = static_cast<Derived&>(*this);
         object.dispatch([this, owner = std::move(owner), duration]() mutable {
-            if (connect_timeout_timer_)
-            {
+            if (connect_timeout_timer_) {
                 connect_timeout_timer_->cancel();
             }
             connect_timeout_timer_ = std::make_shared<safe_timer>(static_cast<Derived&>(*this).io_->executor());
@@ -41,8 +39,7 @@ protected:
     template<class Rep, class Period>
     void _post_connect_timeout_timer(std::shared_ptr<Derived> owner, std::shared_ptr<safe_timer> timer,
         std::chrono::duration<Rep, Period> duration) {
-        if (timer != connect_timeout_timer_)
-        {
+        if (timer != connect_timeout_timer_) {
             return;
         }
         timer->timer.expires_after(to_steady_duration(duration));
@@ -56,22 +53,17 @@ protected:
     template<class Object = Derived>
     void _handle_connect_timeout_timer(
         const error_code& error, std::shared_ptr<Object> owner, std::shared_ptr<safe_timer> timer) {
-        if (timer != connect_timeout_timer_)
-        {
+        if (timer != connect_timeout_timer_) {
             return;
         }
         connect_timeout_timer_.reset();
-        if (error || timer->canceled.test(std::memory_order_acquire))
-        {
+        if (error || timer->canceled.test(std::memory_order_acquire)) {
             return;
         }
         auto& object = static_cast<Derived&>(*this);
-        if constexpr (Object::is_session())
-        {
+        if constexpr (Object::is_session()) {
             object._do_disconnect(asio::error::timed_out, std::move(owner));
-        }
-        else
-        {
+        } else {
             error_code ignored;
             object.socket().shutdown(asio::socket_base::shutdown_both, ignored);
             object.socket().cancel(ignored);

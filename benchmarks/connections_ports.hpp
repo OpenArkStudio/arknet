@@ -15,13 +15,11 @@
 
 namespace connection_load {
 
-struct ephemeral_port_range
-{
+struct ephemeral_port_range {
     unsigned first{}, last{};
 };
 
-struct port_resources
-{
+struct port_resources {
     arknet::benchmark::resource_metric<ephemeral_port_range> ephemeral_ports;
     std::string range_source = "unavailable", range_scope = "unavailable";
     arknet::benchmark::resource_metric<std::uint64_t> tcp_time_wait;
@@ -34,8 +32,7 @@ using arknet::benchmark::process_resource_detail::system_failure;
 using arknet::benchmark::process_resource_detail::unavailable;
 
 inline auto checked_range(std::int64_t first, std::int64_t last) {
-    if (first < 1 || last > 65535 || first > last)
-    {
+    if (first < 1 || last > 65535 || first > last) {
         return unavailable<ephemeral_port_range>("Invalid ephemeral port range returned by OS query");
     }
     return arknet::benchmark::resource_metric<ephemeral_port_range>{
@@ -46,8 +43,7 @@ inline auto parse_port_range(const std::string& text) {
     std::istringstream input(text);
     std::int64_t first{}, last{};
     std::string extra;
-    if (!(input >> first >> last) || (input >> extra))
-    {
+    if (!(input >> first >> last) || (input >> extra)) {
         return unavailable<ephemeral_port_range>("Malformed ip_local_port_range query result");
     }
     return checked_range(first, last);
@@ -58,40 +54,32 @@ inline auto parse_time_wait(const std::string& text) {
     std::string line;
     std::optional<std::uint64_t> count;
     bool found_tcp = false;
-    while (std::getline(input, line))
-    {
+    while (std::getline(input, line)) {
         std::istringstream fields(line);
         std::string protocol, key, value;
         fields >> protocol;
-        if (protocol != "TCP:")
-        {
+        if (protocol != "TCP:") {
             continue;
         }
-        if (found_tcp)
-        {
+        if (found_tcp) {
             return unavailable<std::uint64_t>("Duplicate TCP entry in /proc/net/sockstat");
         }
         found_tcp = true;
-        while (fields >> key)
-        {
-            if (!(fields >> value))
-            {
+        while (fields >> key) {
+            if (!(fields >> value)) {
                 return unavailable<std::uint64_t>("Truncated TCP entry in /proc/net/sockstat");
             }
-            if (key == "tw")
-            {
+            if (key == "tw") {
                 std::uint64_t parsed{};
                 const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), parsed);
-                if (count || error != std::errc{} || end != value.data() + value.size())
-                {
+                if (count || error != std::errc{} || end != value.data() + value.size()) {
                     return unavailable<std::uint64_t>("Invalid TCP tw entry in /proc/net/sockstat");
                 }
                 count = parsed;
             }
         }
     }
-    if (!count)
-    {
+    if (!count) {
         return unavailable<std::uint64_t>("TCP tw entry unavailable in /proc/net/sockstat");
     }
     return arknet::benchmark::resource_metric<std::uint64_t>{count, {}};
@@ -99,20 +87,17 @@ inline auto parse_time_wait(const std::string& text) {
 
 inline arknet::benchmark::resource_metric<std::string> read_query_file(const char* path) {
     const auto file = std::unique_ptr<std::FILE, decltype(&std::fclose)>(std::fopen(path, "rb"), &std::fclose);
-    if (!file)
-    {
+    if (!file) {
         const auto error = errno;
         return unavailable<std::string>(system_failure(("fopen(" + std::string(path) + ")").c_str(), error));
     }
     char buffer[4096];
     const auto size = std::fread(buffer, 1, sizeof(buffer), file.get());
-    if (std::ferror(file.get()))
-    {
+    if (std::ferror(file.get())) {
         const auto error = errno;
         return unavailable<std::string>(system_failure(("read(" + std::string(path) + ")").c_str(), error));
     }
-    if (size == sizeof(buffer))
-    {
+    if (size == sizeof(buffer)) {
         return unavailable<std::string>("OS query exceeded the 4096-byte diagnostic bound");
     }
     return {std::string(buffer, size), {}};
@@ -122,17 +107,14 @@ template<class Query>
 auto read_macos_range(Query query) {
     int first{}, last{};
     for (const auto& [name, value] :
-        {std::pair{"net.inet.ip.portrange.first", &first}, std::pair{"net.inet.ip.portrange.last", &last}})
-    {
+        {std::pair{"net.inet.ip.portrange.first", &first}, std::pair{"net.inet.ip.portrange.last", &last}}) {
         std::size_t length = sizeof(*value);
-        if (query(name, value, &length) != 0)
-        {
+        if (query(name, value, &length) != 0) {
             const auto error = errno;
             return unavailable<ephemeral_port_range>(
                 system_failure(("sysctlbyname(" + std::string(name) + ")").c_str(), error));
         }
-        if (length != sizeof(*value))
-        {
+        if (length != sizeof(*value)) {
             return unavailable<ephemeral_port_range>(
                 "Unexpected integer size from sysctlbyname(" + std::string(name) + ")");
         }

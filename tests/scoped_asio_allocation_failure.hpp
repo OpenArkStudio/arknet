@@ -31,8 +31,7 @@
 namespace scoped_allocation_failure {
 
 inline void* asio_aligned_malloc(std::size_t size, std::size_t alignment) noexcept {
-    if (armed)
-    {
+    if (armed) {
         disarm();
         ++injections;
         // Let Asio's actual allocation path throw its normal bad_alloc.

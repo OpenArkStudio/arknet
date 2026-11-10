@@ -2,14 +2,12 @@
 #include <arknet/http/ws_server.hpp>
 #include "check.hpp"
 
-class custom_ws_client : public arknet::ws_client_t<custom_ws_client>
-{
+class custom_ws_client : public arknet::ws_client_t<custom_ws_client> {
 public:
     using arknet::ws_client_t<custom_ws_client>::ws_client_t;
 };
 
-class custom_ws_session : public arknet::ws_session_t<custom_ws_session>
-{
+class custom_ws_session : public arknet::ws_session_t<custom_ws_session> {
 public:
     using arknet::ws_session_t<custom_ws_session>::ws_session_t;
 };
@@ -56,8 +54,7 @@ DOCTEST_TEST_CASE("WebSocket custom endpoints preserve upgrade decorators and ta
             [](websocket::response_type& response) { response.set(http::field::server, "arknet-custom"); }));
     });
     server.bind_upgrade([&](auto& session) {
-        if (!arknet::get_last_error())
-        {
+        if (!arknet::get_last_error()) {
             requests.push(session->get_upgrade_request().target());
         }
     });

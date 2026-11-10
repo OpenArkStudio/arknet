@@ -19,8 +19,7 @@ using connection_load::operation_ring;
 using connection_load::socket_trace_clock;
 
 // Deterministic AsyncReadStream/AsyncWriteStream: no sockets, workers or sleeps.
-struct fake_stream
-{
+struct fake_stream {
     using executor_type = asio::io_context::executor_type;
     asio::io_context& context;
     std::string input, output;
@@ -39,53 +38,41 @@ struct fake_stream
         const auto executor = asio::get_associated_executor(handler, get_executor());
         const auto allocator = asio::get_associated_allocator(handler);
         auto slot = asio::get_associated_cancellation_slot(handler);
-        if (expected_executor)
-        {
+        if (expected_executor) {
             DOCTEST_CHECK(asio::any_io_executor(executor) == *expected_executor);
         }
-        if (expected_immediate_executor)
-        {
+        if (expected_immediate_executor) {
             DOCTEST_CHECK(asio::any_io_executor(asio::get_associated_immediate_executor(handler, get_executor())) ==
                           *expected_immediate_executor);
         }
-        if (expected_allocator)
-        {
-            if constexpr (requires { allocator.resource(); })
-            {
+        if (expected_allocator) {
+            if constexpr (requires { allocator.resource(); }) {
                 DOCTEST_CHECK(allocator.resource() == expected_allocator);
-            }
-            else
-            {
+            } else {
                 DOCTEST_FAIL("associated allocator was lost");
             }
         }
-        if (expected_slot.is_connected())
-        {
+        if (expected_slot.is_connected()) {
             DOCTEST_CHECK(slot == expected_slot);
         }
         auto cancelled = std::make_shared<bool>(false);
-        if (slot.is_connected())
-        {
+        if (slot.is_connected()) {
             slot.assign([cancelled](asio::cancellation_type) { *cancelled = true; });
         }
         asio::post(executor,
             asio::bind_allocator(allocator, [this, buffers, handler = std::move(handler), cancelled, read]() mutable {
-                if (*cancelled)
-                {
+                if (*cancelled) {
                     std::move(handler)(asio::error::operation_aborted, 0);
                     return;
                 }
                 const auto size = (std::min)(chunk, asio::buffer_size(buffers));
-                if constexpr (asio::is_mutable_buffer_sequence<Buffers>::value)
-                {
+                if constexpr (asio::is_mutable_buffer_sequence<Buffers>::value) {
                     DOCTEST_REQUIRE(read);
                     const auto received = (std::min)(size, input.size());
                     asio::buffer_copy(buffers, asio::buffer(input), received);
                     input.erase(0, received);
                     std::move(handler)(error, received);
-                }
-                else
-                {
+                } else {
                     DOCTEST_REQUIRE_FALSE(read);
                     std::string bytes(size, '\0');
                     asio::buffer_copy(asio::buffer(bytes), buffers, size);
@@ -174,8 +161,7 @@ DOCTEST_TEST_CASE("Socket trace distinguishes a partial buffer-sequence write fr
     DOCTEST_CHECK(stream.writes == 3);
     DOCTEST_CHECK(stream.output == "abcdef");
     DOCTEST_REQUIRE(ring.size() == 6);
-    for (std::size_t index = 0; index < ring.size(); index += 2)
-    {
+    for (std::size_t index = 0; index < ring.size(); index += 2) {
         DOCTEST_CHECK(ring.at(index).bytes == 6 - index);
         DOCTEST_CHECK(ring.at(index + 1).bytes == 2);
         DOCTEST_CHECK(ring.at(index).sequence == 9);

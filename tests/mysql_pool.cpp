@@ -54,8 +54,7 @@ query_result execute(
 }
 
 asio::awaitable<void> wait_for_signal(std::future<void>& signal) {
-    while (signal.wait_for(0ms) != std::future_status::ready)
-    {
+    while (signal.wait_for(0ms) != std::future_status::ready) {
         asio::steady_timer pause(co_await asio::this_coro::executor);
         pause.expires_after(2ms);
         co_await pause.async_wait(asio::use_awaitable);
@@ -95,8 +94,7 @@ DOCTEST_TEST_CASE("MySQL pool returns a connection only after a real server rese
 DOCTEST_TEST_CASE("MySQL pool waiters cancel and expire without breaking FIFO lease ownership") {
     mysql_peer peer([](mysql_peer& server) -> asio::awaitable<void> {
         co_await authenticate(server);
-        for (int index = 0; index < 2; ++index)
-        {
+        for (int index = 0; index < 2; ++index) {
             CHECK(co_await receive_command(server) == std::string(1, '\x1f'));
             co_await server.send(ok_packet);
             CHECK(co_await receive_command(server) == std::string(1, '\3') + "USE `test-db`");
@@ -281,8 +279,7 @@ DOCTEST_TEST_CASE("MySQL pool waiter admission remains bounded before executor d
     });
     REQUIRE(entered_result.wait_for(5s) == std::future_status::ready);
     std::vector<std::future<mysql_pool::acquire_result>> futures;
-    for (int index = 0; index < 16; ++index)
-    {
+    for (int index = 0; index < 16; ++index) {
         auto promise = std::make_shared<std::promise<mysql_pool::acquire_result>>();
         futures.push_back(promise->get_future());
         pool.async_acquire([promise](auto result) { promise->set_value(std::move(result)); });
@@ -291,14 +288,12 @@ DOCTEST_TEST_CASE("MySQL pool waiter admission remains bounded before executor d
     REQUIRE(initial_result.wait_for(5s) == std::future_status::ready);
     auto active = initial_result.get();
     REQUIRE(bool(active));
-    for (std::size_t index = 2; index < futures.size(); ++index)
-    {
+    for (std::size_t index = 2; index < futures.size(); ++index) {
         REQUIRE(futures[index].wait_for(5s) == std::future_status::ready);
         CHECK(futures[index].get().status.code == connection_errc::queue_full);
     }
     pool.close();
-    for (std::size_t index = 0; index < 2; ++index)
-    {
+    for (std::size_t index = 0; index < 2; ++index) {
         REQUIRE(futures[index].wait_for(5s) == std::future_status::ready);
         CHECK(futures[index].get().status.code == connection_errc::cancelled);
     }
@@ -422,8 +417,7 @@ DOCTEST_TEST_CASE("MySQL pool discards connections when database restoration fai
             co_await server.send(ok_packet);
             CHECK(co_await receive_command(server) == std::string(1, '\3') + "USE `test-db`");
             restoration_received.set_value();
-            if (!timeout)
-            {
+            if (!timeout) {
                 std::string error(1, '\xff');
                 wire::append_integer(error, 1049, 2);
                 error.append("#42000Database no longer exists");
@@ -445,8 +439,7 @@ DOCTEST_TEST_CASE("MySQL pool discards connections when database restoration fai
         REQUIRE(discarded_result.wait_for(2s) == std::future_status::ready);
         const auto elapsed = std::chrono::steady_clock::now() - started;
         DOCTEST_INFO("return elapsed ms = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
-        if (timeout)
-        {
+        if (timeout) {
             // The pool rounds remaining query time down to whole milliseconds.
             CHECK(elapsed >= options.reset_timeout - 1ms);
         }
@@ -533,11 +526,9 @@ DOCTEST_TEST_CASE("MySQL real pool shares IO while preserving concurrent exclusi
 }
 
 DOCTEST_TEST_CASE("MySQL pool rejects invalid limits before starting IO") {
-    for (int setting = 0; setting < 5; ++setting)
-    {
+    for (int setting = 0; setting < 5; ++setting) {
         pool_options options;
-        switch (setting)
-        {
+        switch (setting) {
         case 0:
             options.max_connections = 0;
             break;
@@ -559,21 +550,14 @@ DOCTEST_TEST_CASE("MySQL pool rejects invalid limits before starting IO") {
 }
 
 DOCTEST_TEST_CASE("MySQL pool rejects unrepresentable configured deadlines before starting IO") {
-    for (const auto timeout : {std::chrono::milliseconds::max(), -1ms, 0ms})
-    {
-        for (int setting = 0; setting < 3; ++setting)
-        {
+    for (const auto timeout : {std::chrono::milliseconds::max(), -1ms, 0ms}) {
+        for (int setting = 0; setting < 3; ++setting) {
             pool_options options;
-            if (setting == 0)
-            {
+            if (setting == 0) {
                 options.acquire_timeout = timeout;
-            }
-            else if (setting == 1)
-            {
+            } else if (setting == 1) {
                 options.reset_timeout = timeout;
-            }
-            else
-            {
+            } else {
                 options.connection.timeout = timeout;
             }
             CHECK_THROWS_AS(mysql_pool{options}, std::invalid_argument);
@@ -591,8 +575,7 @@ DOCTEST_TEST_CASE("MySQL pool validates acquire overrides and preserves zero as 
     mysql_pool pool(options);
     const auto caller = std::this_thread::get_id();
     arknet::mysql::request_id previous = 0;
-    for (const auto timeout : {std::chrono::milliseconds::max(), -1ms})
-    {
+    for (const auto timeout : {std::chrono::milliseconds::max(), -1ms}) {
         std::atomic<unsigned> callbacks{};
         std::promise<mysql_pool::acquire_result> completion;
         auto future = completion.get_future();

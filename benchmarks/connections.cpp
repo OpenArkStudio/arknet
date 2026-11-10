@@ -56,8 +56,7 @@ void request_interrupt(int signal) {
     interrupted.store(signal, std::memory_order_relaxed);
 }
 
-struct options
-{
+struct options {
     std::string role, scenario = "idle", host;
     std::uint64_t run{}, client{};
     std::size_t port{}, connections = 1, expected{}, maximum = 4096;
@@ -70,8 +69,7 @@ struct options
 std::uint64_t integer(std::string_view text) {
     std::uint64_t value{};
     const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
-    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size())
-    {
+    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size()) {
         throw std::invalid_argument("expected an unsigned decimal integer");
     }
     return value;
@@ -80,8 +78,7 @@ std::uint64_t integer(std::string_view text) {
 double duration(const std::string& text) {
     char* end{};
     const auto value = std::strtod(text.c_str(), &end);
-    if (text.empty() || end != text.c_str() + text.size() || !std::isfinite(value))
-    {
+    if (text.empty() || end != text.c_str() + text.size() || !std::isfinite(value)) {
         throw std::invalid_argument("expected a finite duration");
     }
     return value;
@@ -112,129 +109,77 @@ options arguments(int argc, char** argv) {
 #endif
     bool port_set = false;
     std::string address_option;
-    for (int index = 1; index < argc; ++index)
-    {
+    for (int index = 1; index < argc; ++index) {
         const std::string key = argv[index];
-        if (key == "--help")
-        {
+        if (key == "--help") {
             help();
             std::exit(0);
         }
-        if (++index == argc)
-        {
+        if (++index == argc) {
             throw std::invalid_argument("missing value for " + key);
         }
         const std::string value = argv[index];
-        if (key == "--role")
-        {
+        if (key == "--role") {
             result.role = value;
-        }
-        else if (key == "--scenario")
-        {
+        } else if (key == "--scenario") {
             result.scenario = value;
-        }
-        else if (key == "--listen" || key == "--target")
-        {
+        } else if (key == "--listen" || key == "--target") {
             result.host = value;
             address_option = key;
-        }
-        else if (key == "--port")
-        {
+        } else if (key == "--port") {
             result.port = integer(value);
             port_set = true;
-        }
-        else if (key == "--run-id")
-        {
+        } else if (key == "--run-id") {
             result.run = integer(value);
-        }
-        else if (key == "--client-id")
-        {
+        } else if (key == "--client-id") {
             result.client = integer(value);
-        }
-        else if (key == "--connections")
-        {
+        } else if (key == "--connections") {
             result.connections = integer(value);
-        }
-        else if (key == "--expected-connections")
-        {
+        } else if (key == "--expected-connections") {
             result.expected = integer(value);
-        }
-        else if (key == "--max-connections")
-        {
+        } else if (key == "--max-connections") {
             result.maximum = integer(value);
-        }
-        else if (key == "--connect-rate")
-        {
+        } else if (key == "--connect-rate") {
             result.rate = integer(value);
-        }
-        else if (key == "--connect-parallel")
-        {
+        } else if (key == "--connect-parallel") {
             result.parallel = integer(value);
-        }
-        else if (key == "--io-threads")
-        {
+        } else if (key == "--io-threads") {
             result.threads = integer(value);
-        }
-        else if (key == "--payload")
-        {
+        } else if (key == "--payload") {
             result.payload = integer(value);
-        }
-        else if (key == "--window")
-        {
+        } else if (key == "--window") {
             result.window = integer(value);
-        }
-        else if (key == "--connect-timeout-ms")
-        {
+        } else if (key == "--connect-timeout-ms") {
             result.connect_timeout_ms = integer(value);
-        }
-        else if (key == "--request-timeout-ms")
-        {
+        } else if (key == "--request-timeout-ms") {
             result.request_timeout_ms = integer(value);
-        }
-        else if (key == "--max-buffer-bytes")
-        {
+        } else if (key == "--max-buffer-bytes") {
             result.maximum_buffer = integer(value);
-        }
-        else if (key == "--max-inflight-bytes")
-        {
+        } else if (key == "--max-inflight-bytes") {
             result.inflight_limit = integer(value);
-        }
-        else if (key == "--buffer-budget-bytes")
-        {
+        } else if (key == "--buffer-budget-bytes") {
             result.buffer_budget = integer(value);
-        }
-        else if (key == "--sample-ms")
-        {
+        } else if (key == "--sample-ms") {
             result.sample_ms = integer(value);
-        }
-        else if (key == "--hold-seconds")
-        {
+        } else if (key == "--hold-seconds") {
             result.hold_seconds = duration(value);
-        }
-        else if (key == "--deadline-seconds")
-        {
+        } else if (key == "--deadline-seconds") {
             result.deadline_seconds = duration(value);
-        }
-        else if (key == "--cleanup-seconds")
-        {
+        } else if (key == "--cleanup-seconds") {
             result.cleanup_seconds = duration(value);
-        }
-        else
-        {
+        } else {
             throw std::invalid_argument("unknown argument: " + key);
         }
     }
     if ((result.role != "server" && result.role != "client") ||
         (result.scenario != "idle" && result.scenario != "traffic") || !result.run || !result.client || !port_set ||
         result.port > 65535 || (result.role == "client" && !result.port) || result.host.empty() ||
-        address_option != (result.role == "server" ? "--listen" : "--target"))
-    {
+        address_option != (result.role == "server" ? "--listen" : "--target")) {
         throw std::invalid_argument("specify role, matching listen/target address, port and nonzero run-id");
     }
     arknet::error_code error;
     const auto address = asio::ip::make_address(result.host, error);
-    if (error || address.is_multicast() || (result.role == "client" && address.is_unspecified()))
-    {
+    if (error || address.is_multicast() || (result.role == "client" && address.is_unspecified())) {
         throw std::invalid_argument("listen/target must be a valid unicast numeric IPv4 or IPv6 address");
     }
     if (result.maximum < 1 || result.maximum > 200000 || result.connections < 1 ||
@@ -249,8 +194,7 @@ options arguments(int argc, char** argv) {
         result.deadline_seconds > 86400 || result.cleanup_seconds < 1 || result.cleanup_seconds > 60 ||
         result.sample_ms < 100 || result.sample_ms > 60000 || result.inflight_limit < header_bytes + result.payload ||
         result.inflight_limit > 1024ULL * 1024 * 1024 || result.buffer_budget < 4096 ||
-        result.buffer_budget > 16ULL * 1024 * 1024 * 1024)
-    {
+        result.buffer_budget > 16ULL * 1024 * 1024 * 1024) {
         throw std::invalid_argument("argument out of range; see CONNECTIONS.md for limits");
     }
     const auto count = result.role == "client" ? result.connections : result.maximum;
@@ -258,13 +202,11 @@ options arguments(int argc, char** argv) {
                                 ? result.connections * result.window * sizeof(clock_type::time_point)
                                 : 0;
     const auto reserved = std::uint64_t(count) * result.maximum_buffer + timestamps + result.inflight_limit;
-    if (reserved > result.buffer_budget)
-    {
+    if (reserved > result.buffer_budget) {
         throw std::invalid_argument("declared receive/send/timestamp buffer reservation exceeds buffer budget");
     }
     if (result.role == "client" && result.scenario == "traffic" &&
-        std::uint64_t(result.connections) * result.window * (header_bytes + result.payload) > result.inflight_limit)
-    {
+        std::uint64_t(result.connections) * result.window * (header_bytes + result.payload) > result.inflight_limit) {
         throw std::invalid_argument("connection windows exceed max-inflight-bytes");
     }
     return result;
@@ -272,18 +214,13 @@ options arguments(int argc, char** argv) {
 
 std::string quoted(std::string_view text) {
     std::string result = "\"";
-    for (const unsigned char character : text)
-    {
-        if (character == '"' || character == '\\')
-        {
+    for (const unsigned char character : text) {
+        if (character == '"' || character == '\\') {
             result += '\\';
         }
-        if (character < 32)
-        {
+        if (character < 32) {
             result += '?';
-        }
-        else
-        {
+        } else {
             result += static_cast<char>(character);
         }
     }
@@ -296,13 +233,11 @@ std::int64_t tick() {
 
 void raise_peak(std::atomic<std::uint64_t>& peak, std::uint64_t value) {
     auto current = peak.load();
-    while (current < value && !peak.compare_exchange_weak(current, value))
-    {
+    while (current < value && !peak.compare_exchange_weak(current, value)) {
     }
 }
 
-struct counters
-{
+struct counters {
     std::atomic<bool> failed{}, closing{};
     std::atomic<std::uint64_t> attempted{}, connecting{}, established{}, accepted{}, admitted{}, active{}, peak{};
     std::atomic<std::uint64_t> ready{}, started{}, finished{}, disconnected{}, connect_failures{}, timeouts{};
@@ -317,26 +252,24 @@ struct counters
 
     void fail(std::string_view reason) noexcept {
         failed = true;
-        try
-        {
+        try {
             std::lock_guard lock(error_mutex);
-            if (first_error.empty())
-            {
+            if (first_error.empty()) {
                 first_error = reason;
             }
+        } catch (...) {
         }
-        catch (...)
-        {}
     }
 
     template<class Function>
     void guard(Function&& function) noexcept {
-        try
-        { function(); }
-        catch (const std::exception& error)
-        { fail(error.what()); }
-        catch (...)
-        { fail("unknown callback exception"); }
+        try {
+            function();
+        } catch (const std::exception& error) {
+            fail(error.what());
+        } catch (...) {
+            fail("unknown callback exception");
+        }
     }
 
     void connected() {
@@ -344,25 +277,21 @@ struct counters
     }
 };
 
-class cleanup_watchdog
-{
+class cleanup_watchdog {
 public:
     explicit cleanup_watchdog(clock_type::time_point deadline)
         : worker_([this, deadline] {
             std::unique_lock lock(mutex_);
-            if (!changed_.wait_until(lock, deadline, [this] { return complete_; }))
-            {
+            if (!changed_.wait_until(lock, deadline, [this] { return complete_; })) {
             // Neither reporting nor sanitizer exit interceptors may hold
             // up the last-resort failure path on a full output pipe.
 #ifdef _WIN32
                 TerminateProcess(GetCurrentProcess(), 124);
 #else
-                if (kill(getpid(), SIGKILL) == 0)
-                {
+                if (kill(getpid(), SIGKILL) == 0) {
                     // Signal delivery need not precede kill() returning. Do
                     // not race it with the C-runtime fallback exit below.
-                    for (;;)
-                    {
+                    for (;;) {
                         pause();
                     }
                 }
@@ -388,8 +317,7 @@ private:
     std::thread worker_;
 };
 
-class observation
-{
+class observation {
 public:
     observation(const options& settings, counters& values, clock_type::time_point began)
         : settings_(settings)
@@ -400,8 +328,7 @@ public:
 
     void sample() {
         const auto now = clock_type::now();
-        if (now - sampled_ < std::chrono::milliseconds(settings_.sample_ms))
-        {
+        if (now - sampled_ < std::chrono::milliseconds(settings_.sample_ms)) {
             return;
         }
         // Monotonic phase counts bracket the CPU query: a full START count at
@@ -431,8 +358,7 @@ void send_frame(
     Endpoint& endpoint, std::string bytes, counters& values, const options& settings, Completion completion) {
     const auto size = bytes.size();
     const auto reserved = values.pending_bytes.fetch_add(size) + size;
-    if (reserved > settings.inflight_limit)
-    {
+    if (reserved > settings.inflight_limit) {
         values.pending_bytes -= size;
         ++values.rejected;
         values.fail("global pending-send byte limit exceeded");
@@ -440,38 +366,28 @@ void send_frame(
     }
     raise_peak(values.peak_pending_bytes, reserved);
     ++values.pending_sends;
-    try
-    {
+    try {
         endpoint.async_send(
             std::move(bytes), [&values, size, completion = std::move(completion)](
                                   const arknet::error_code& error, std::size_t transferred) mutable noexcept {
                 --values.pending_sends;
                 values.pending_bytes -= size;
                 values.guard([&] {
-                    if (error || transferred != size)
-                    {
-                        if (values.closing)
-                        {
+                    if (error || transferred != size) {
+                        if (values.closing) {
                             ++values.shutdown_cancelled_sends;
-                        }
-                        else
-                        {
+                        } else {
                             ++values.send_errors;
                         }
-                        if (!values.closing)
-                        {
+                        if (!values.closing) {
                             values.fail(error ? error.message() : "short send completion");
                         }
-                    }
-                    else
-                    {
+                    } else {
                         completion();
                     }
                 });
             });
-    }
-    catch (...)
-    {
+    } catch (...) {
         --values.pending_sends;
         values.pending_bytes -= size;
         throw;
@@ -483,8 +399,7 @@ void send_frame(Endpoint& endpoint, std::string bytes, counters& values, const o
     send_frame(endpoint, std::move(bytes), values, settings, [] {});
 }
 
-struct client_connection
-{
+struct client_connection {
     client_connection(const options& settings, asio::io_context& context, std::size_t index)
         : endpoint((std::min)(std::size_t{4096}, settings.maximum_buffer), settings.maximum_buffer, context)
         , owner{settings.run, settings.client, index}
@@ -498,8 +413,7 @@ struct client_connection
     std::uint64_t next_send = 1, next_receive = 1;
 };
 
-class client_run
-{
+class client_run {
 public:
     client_run(const options& settings, counters& values, arknet::io_pool& runtime)
         : settings_(settings)
@@ -523,15 +437,12 @@ public:
             const auto error = arknet::get_last_error();
             values_.guard([&] {
                 --values_.connecting;
-                if (error)
-                {
+                if (error) {
                     ++values_.connect_failures;
-                    if (error == asio::error::timed_out)
-                    {
+                    if (error == asio::error::timed_out) {
                         ++values_.timeouts;
                     }
-                    if (!values_.closing)
-                    {
+                    if (!values_.closing) {
                         values_.connect_resources.capture(
                             error.value(), error.category().name(), values_.established.load());
                         values_.fail("connect: " + error.message());
@@ -542,8 +453,7 @@ public:
                 ++values_.established;
                 values_.connected();
                 state->endpoint.set_no_delay(true);
-                if (arknet::get_last_error())
-                {
+                if (arknet::get_last_error()) {
                     throw std::runtime_error("setting TCP_NODELAY failed");
                 }
                 state->pending_since = tick();
@@ -556,13 +466,11 @@ public:
         state->endpoint.bind_recv(
             [this, state](std::string_view bytes) noexcept { values_.guard([&] { receive(*state, bytes); }); });
         state->endpoint.bind_disconnect([this, state]() noexcept {
-            if (state->connected)
-            {
+            if (state->connected) {
                 state->connected = false;
                 --values_.active;
                 ++values_.disconnected;
-                if (!values_.closing && !state->finished)
-                {
+                if (!values_.closing && !state->finished) {
                     ++values_.unexpected_disconnects;
                     values_.fail("unexpected server disconnect");
                 }
@@ -571,8 +479,7 @@ public:
         connections_.push_back(std::move(connection));
         ++values_.attempted;
         ++values_.connecting;
-        if (!state->endpoint.async_start(settings_.host, settings_.port, arknet::use_dgram))
-        {
+        if (!state->endpoint.async_start(settings_.host, settings_.port, arknet::use_dgram)) {
             --values_.connecting;
             ++values_.connect_failures;
             values_.connect_resources.capture(0, "connect_submission_rejected", values_.established.load());
@@ -581,8 +488,7 @@ public:
     }
 
     void start() {
-        for (const auto& connection : connections_)
-        {
+        for (const auto& connection : connections_) {
             auto* state = connection.get();
             state->endpoint.post([this, state] {
                 values_.guard([&] {
@@ -596,20 +502,17 @@ public:
 
     void traffic() {
         values_.work_begin = tick();
-        if (settings_.scenario == "idle")
-        {
+        if (settings_.scenario == "idle") {
             return;
         }
-        for (const auto& connection : connections_)
-        {
+        for (const auto& connection : connections_) {
             auto* state = connection.get();
             state->endpoint.post([this, state] { values_.guard([&] { fill(*state); }); });
         }
     }
 
     void finish() {
-        for (const auto& connection : connections_)
-        {
+        for (const auto& connection : connections_) {
             auto* state = connection.get();
             state->endpoint.post([this, state] {
                 values_.guard([&] {
@@ -622,17 +525,14 @@ public:
 
     void check_timeouts() {
         const auto now = tick();
-        if (now < next_timeout_scan_)
-        {
+        if (now < next_timeout_scan_) {
             return;
         }
         const auto timeout = std::int64_t(settings_.request_timeout_ms) * 1000000;
         next_timeout_scan_ = now + (std::max)(std::int64_t{1000000}, (std::min)(timeout / 4, std::int64_t{50000000}));
-        for (const auto& connection : connections_)
-        {
+        for (const auto& connection : connections_) {
             const auto since = connection->pending_since.load();
-            if (since && now - since >= timeout)
-            {
+            if (since && now - since >= timeout) {
                 ++values_.timeouts;
                 values_.fail("protocol response deadline exceeded");
                 return;
@@ -641,34 +541,28 @@ public:
     }
 
     void stop() {
-        if (stopped_)
-        {
+        if (stopped_) {
             return;
         }
         values_.closing = true;
         std::vector<std::future<void>> requests;
         values_.guard([&] {
             requests.reserve(connections_.size());
-            for (const auto& connection : connections_)
-            {
+            for (const auto& connection : connections_) {
                 auto* state = connection.get();
                 requests.push_back(state->endpoint.post([state] { state->endpoint.stop(); }, asio::use_future));
             }
         });
-        for (auto& request : requests)
-        {
+        for (auto& request : requests) {
             values_.guard([&] { request.get(); });
         }
         // Worker calls request shutdown without waiting. Keep every endpoint and
         // its shared runtime alive until these owner calls drain native callbacks.
-        for (const auto& connection : connections_)
-        {
+        for (const auto& connection : connections_) {
             connection->endpoint.stop();
         }
-        for (const auto& connection : connections_)
-        {
-            if (!connection->endpoint.is_stopped())
-            {
+        for (const auto& connection : connections_) {
+            if (!connection->endpoint.is_stopped()) {
                 values_.fail("client did not reach stopped state");
             }
         }
@@ -678,28 +572,22 @@ public:
 private:
     void receive(client_connection& state, std::string_view bytes) {
         frame_header header;
-        if (!connection_load::decode(bytes, header) || header.owner != state.owner)
-        {
+        if (!connection_load::decode(bytes, header) || header.owner != state.owner) {
             ++values_.content_errors;
             values_.fail("invalid response identity or body");
             return;
         }
-        if (header.kind == frame_kind::hello_ack && !state.hello && !state.started && !header.sequence)
-        {
+        if (header.kind == frame_kind::hello_ack && !state.hello && !state.started && !header.sequence) {
             state.hello = true;
             state.pending_since = 0;
             ++values_.ready;
-        }
-        else if (header.kind == frame_kind::start_ack && state.hello && !state.started && !header.sequence)
-        {
+        } else if (header.kind == frame_kind::start_ack && state.hello && !state.started && !header.sequence) {
             state.started = true;
             state.pending_since = 0;
             ++values_.started;
-        }
-        else if (header.kind == frame_kind::data && state.started && !state.finished &&
-                 header.body_bytes == settings_.payload && header.sequence == state.next_receive &&
-                 header.sequence < state.next_send)
-        {
+        } else if (header.kind == frame_kind::data && state.started && !state.finished &&
+                   header.body_bytes == settings_.payload && header.sequence == state.next_receive &&
+                   header.sequence < state.next_send) {
             const auto sent = state.times[(state.next_receive - 1) % settings_.window];
             const auto elapsed =
                 std::chrono::duration_cast<std::chrono::microseconds>(clock_type::now() - sent).count();
@@ -712,25 +600,18 @@ private:
                                             state.times[(state.next_receive - 1) % settings_.window].time_since_epoch())
                                             .count()
                                       : 0;
-            if (!state.draining && !values_.failed && !values_.closing)
-            {
+            if (!state.draining && !values_.failed && !values_.closing) {
                 fill(state);
-            }
-            else
-            {
+            } else {
                 finish_if_drained(state);
             }
-        }
-        else if (header.kind == frame_kind::finish_ack && state.finish_sent && !state.finished &&
-                 header.sequence == state.next_send - 1)
-        {
+        } else if (header.kind == frame_kind::finish_ack && state.finish_sent && !state.finished &&
+                   header.sequence == state.next_send - 1) {
             state.finished = true;
             state.pending_since = 0;
             values_.work_end = tick();
             ++values_.finished;
-        }
-        else
-        {
+        } else {
             ++values_.sequence_errors;
             values_.fail("response kind, sequence or payload size mismatch");
         }
@@ -738,17 +619,14 @@ private:
 
     void fill(client_connection& state) {
         while (!state.draining && !values_.failed && !values_.closing &&
-               state.next_send - state.next_receive < settings_.window)
-        {
-            if (state.next_send == (std::numeric_limits<std::uint64_t>::max)())
-            {
+               state.next_send - state.next_receive < settings_.window) {
+            if (state.next_send == (std::numeric_limits<std::uint64_t>::max)()) {
                 values_.fail("sequence space exhausted");
                 return;
             }
             const auto sequence = state.next_send++;
             state.times[(sequence - 1) % settings_.window] = clock_type::now();
-            if (sequence == state.next_receive)
-            {
+            if (sequence == state.next_receive) {
                 state.pending_since = tick();
             }
             ++values_.sent;
@@ -760,8 +638,7 @@ private:
     }
 
     void finish_if_drained(client_connection& state) {
-        if (state.draining && !state.finish_sent && state.next_receive == state.next_send && !values_.failed)
-        {
+        if (state.draining && !state.finish_sent && state.next_receive == state.next_send && !values_.failed) {
             state.finish_sent = true;
             state.pending_since = tick();
             send_frame(state.endpoint,
@@ -777,15 +654,13 @@ private:
     bool stopped_{};
 };
 
-struct server_connection
-{
+struct server_connection {
     identity owner;
     bool hello{}, started{}, finished{};
     std::uint64_t next_sequence = 1;
 };
 
-class server_run
-{
+class server_run {
 public:
     server_run(const options& settings, counters& values, arknet::io_pool& runtime)
         : settings_(settings)
@@ -795,13 +670,11 @@ public:
         endpoint_.bind_accept([this](auto& session) noexcept {
             const auto error = arknet::get_last_error();
             values_.guard([&] {
-                if (error)
-                {
+                if (error) {
                     return;
                 }
                 ++values_.accepted;
-                if (values_.admitted >= settings_.maximum)
-                {
+                if (values_.admitted >= settings_.maximum) {
                     ++values_.rejected;
                     values_.fail("maximum admitted connection count exceeded");
                     session->stop();
@@ -818,8 +691,7 @@ public:
         endpoint_.bind_connect([this](auto& session) noexcept {
             values_.guard([&] {
                 session->set_no_delay(true);
-                if (arknet::get_last_error())
-                {
+                if (arknet::get_last_error()) {
                     throw std::runtime_error("setting TCP_NODELAY failed");
                 }
             });
@@ -829,14 +701,12 @@ public:
         });
         endpoint_.bind_disconnect([this](auto& session) noexcept {
             auto state = session->template get_user_data<std::shared_ptr<server_connection>>();
-            if (!state)
-            {
+            if (!state) {
                 return;
             }
             --values_.active;
             ++values_.disconnected;
-            if (!values_.closing && !state->finished)
-            {
+            if (!values_.closing && !state->finished) {
                 ++values_.unexpected_disconnects;
                 values_.fail("client disconnected before FIN acknowledgement");
             }
@@ -856,14 +726,12 @@ public:
     }
 
     void stop() {
-        if (stopped_)
-        {
+        if (stopped_) {
             return;
         }
         values_.closing = true;
         endpoint_.stop();
-        if (!endpoint_.is_stopped() || endpoint_.session_count())
-        {
+        if (!endpoint_.is_stopped() || endpoint_.session_count()) {
             values_.fail("server did not reach empty stopped state");
         }
         stopped_ = true;
@@ -872,8 +740,7 @@ public:
 private:
     static std::vector<asio::io_context*> lanes(arknet::io_pool& runtime) {
         std::vector<asio::io_context*> contexts;
-        for (std::size_t index = 0; index < runtime.size(); ++index)
-        {
+        for (std::size_t index = 0; index < runtime.size(); ++index) {
             contexts.push_back(&runtime.get_context(index));
         }
         return contexts;
@@ -883,19 +750,16 @@ private:
         auto state = session->get_user_data<std::shared_ptr<server_connection>>();
         frame_header header;
         if (!state || !connection_load::decode(bytes, header) || header.owner.run != settings_.run ||
-            !header.owner.client || !header.owner.connection)
-        {
+            !header.owner.client || !header.owner.connection) {
             ++values_.content_errors;
             values_.fail("invalid request identity or body");
             return;
         }
         if (header.kind == frame_kind::hello && !state->hello &&
-            header.sequence == (settings_.scenario == "traffic" ? 1 : 0))
-        {
+            header.sequence == (settings_.scenario == "traffic" ? 1 : 0)) {
             {
                 std::lock_guard lock(identities_mutex_);
-                if (!identities_.emplace(header.owner.client, header.owner.connection).second)
-                {
+                if (!identities_.emplace(header.owner.client, header.owner.connection).second) {
                     ++values_.content_errors;
                     values_.fail("duplicate client/connection identity");
                     return;
@@ -905,36 +769,28 @@ private:
             state->hello = true;
             ++values_.ready;
             send_frame(*session, connection_load::make_frame(frame_kind::hello_ack, state->owner), values_, settings_);
-        }
-        else if (state->hello && header.owner == state->owner && header.kind == frame_kind::start && !state->started &&
-                 !header.sequence)
-        {
+        } else if (state->hello && header.owner == state->owner && header.kind == frame_kind::start &&
+                   !state->started && !header.sequence) {
             state->started = true;
             std::int64_t unset{};
             values_.work_begin.compare_exchange_strong(unset, tick());
             ++values_.started;
             send_frame(*session, connection_load::make_frame(frame_kind::start_ack, state->owner), values_, settings_);
-        }
-        else if (state->started && header.owner == state->owner && header.kind == frame_kind::data &&
-                 settings_.scenario == "traffic" && !state->finished && header.sequence == state->next_sequence &&
-                 header.body_bytes == settings_.payload)
-        {
+        } else if (state->started && header.owner == state->owner && header.kind == frame_kind::data &&
+                   settings_.scenario == "traffic" && !state->finished && header.sequence == state->next_sequence &&
+                   header.body_bytes == settings_.payload) {
             ++state->next_sequence;
             ++values_.received;
             send_frame(*session, std::string(bytes), values_, settings_, [this] { ++values_.sent; });
-        }
-        else if (state->started && header.owner == state->owner && header.kind == frame_kind::finish &&
-                 !state->finished && header.sequence == state->next_sequence - 1)
-        {
+        } else if (state->started && header.owner == state->owner && header.kind == frame_kind::finish &&
+                   !state->finished && header.sequence == state->next_sequence - 1) {
             state->finished = true;
             send_frame(*session, connection_load::make_frame(frame_kind::finish_ack, state->owner, header.sequence),
                 values_, settings_, [this] {
                     values_.work_end = tick();
                     ++values_.finished;
                 });
-        }
-        else
-        {
+        } else {
             ++values_.sequence_errors;
             values_.fail("request kind, sequence or payload size mismatch");
         }
@@ -994,23 +850,17 @@ void result(const options& settings, const counters& values, std::string_view ou
     values.connect_resources.write_fields(std::cout);
     std::cout << ",\"first_error\":" << quoted(values.first_error)
               << ",\"latency_observations\":" << values.latency.total();
-    for (const auto percent : {50, 95, 99})
-    {
+    for (const auto percent : {50, 95, 99}) {
         std::cout << ",\"rtt_p" << percent << "_upper_us\":";
-        if (values.latency.total())
-        {
+        if (values.latency.total()) {
             std::cout << values.latency.percentile(percent);
-        }
-        else
-        {
+        } else {
             std::cout << "null";
         }
     }
     std::cout << ",\"rtt_buckets\":[";
-    for (std::size_t index = 0; index < connection_load::latency_distribution::bucket_count; ++index)
-    {
-        if (index)
-        {
+    for (std::size_t index = 0; index < connection_load::latency_distribution::bucket_count; ++index) {
+        if (index) {
             std::cout << ',';
         }
         std::cout << values.latency.count(index);
@@ -1030,8 +880,7 @@ int run(const options& settings) {
     connection_load::write_resource_startup(
         std::cout, overall_resources.initial_snapshot(), settings.role, settings.run, settings.client, true);
     arknet::io_pool runtime(settings.threads);
-    if (!runtime.start())
-    {
+    if (!runtime.start()) {
         throw std::runtime_error("IO pool start failed");
     }
     double measurement{};
@@ -1039,110 +888,85 @@ int run(const options& settings) {
     std::size_t actual_port = settings.port;
     std::string outcome = "failed";
     auto wait = [&] {
-        if (interrupted.load(std::memory_order_relaxed))
-        {
+        if (interrupted.load(std::memory_order_relaxed)) {
             values.fail("interrupted by signal");
         }
         samples.sample();
         std::this_thread::sleep_for(1ms);
     };
-    if (settings.role == "server")
-    {
+    if (settings.role == "server") {
         server_run server(settings, values, runtime);
-        if (!server.start())
-        {
+        if (!server.start()) {
             throw std::runtime_error("listen: " + arknet::get_last_error().message());
         }
         actual_port = server.port();
         std::cout << "{\"event\":\"ready\",\"role\":\"server\",\"host\":" << quoted(settings.host)
                   << ",\"port\":" << actual_port << ",\"run_id\":" << quoted(std::to_string(settings.run)) << "}\n"
                   << std::flush;
-        while (!values.failed && clock_type::now() < deadline)
-        {
+        while (!values.failed && clock_type::now() < deadline) {
             if (settings.expected && values.finished == settings.expected && values.disconnected == settings.expected &&
-                values.admitted == settings.expected && !values.active && !values.pending_sends)
-            {
+                values.admitted == settings.expected && !values.active && !values.pending_sends) {
                 break;
             }
             wait();
         }
-        if (!values.failed)
-        {
-            if (!settings.expected)
-            {
+        if (!values.failed) {
+            if (!settings.expected) {
                 outcome = "observation_complete";
-            }
-            else if (values.finished == settings.expected && values.disconnected == settings.expected &&
-                     values.admitted == settings.expected && values.ready == settings.expected &&
-                     values.started == settings.expected && !values.active && !values.pending_sends)
-            {
+            } else if (values.finished == settings.expected && values.disconnected == settings.expected &&
+                       values.admitted == settings.expected && values.ready == settings.expected &&
+                       values.started == settings.expected && !values.active && !values.pending_sends) {
                 outcome = "target_complete";
-            }
-            else
-            {
+            } else {
                 ++values.timeouts;
                 values.fail("server target deadline exceeded");
             }
         }
         active_before_stop = values.active;
         server.stop();
-    }
-    else
-    {
+    } else {
         client_run client(settings, values, runtime);
         auto next_launch = began;
-        while (!values.failed && values.ready < settings.connections && clock_type::now() < deadline)
-        {
+        while (!values.failed && values.ready < settings.connections && clock_type::now() < deadline) {
             if (values.attempted < settings.connections && values.connecting < settings.parallel &&
-                clock_type::now() >= next_launch)
-            {
+                clock_type::now() >= next_launch) {
                 client.launch();
                 next_launch = clock_type::now() + std::chrono::nanoseconds(1000000000 / settings.rate);
             }
             client.check_timeouts();
             wait();
         }
-        if (!values.failed && values.ready == settings.connections)
-        {
+        if (!values.failed && values.ready == settings.connections) {
             client.start();
-            while (!values.failed && values.started < settings.connections && clock_type::now() < deadline)
-            {
+            while (!values.failed && values.started < settings.connections && clock_type::now() < deadline) {
                 client.check_timeouts();
                 wait();
             }
         }
-        if (!values.failed && values.started == settings.connections)
-        {
+        if (!values.failed && values.started == settings.connections) {
             const auto started = clock_type::now();
             const auto until = started + std::chrono::duration_cast<clock_type::duration>(
                                              std::chrono::duration<double>(settings.hold_seconds));
             client.traffic();
-            while (!values.failed && clock_type::now() < until && clock_type::now() < deadline)
-            {
+            while (!values.failed && clock_type::now() < until && clock_type::now() < deadline) {
                 client.check_timeouts();
                 wait();
             }
             measurement = std::chrono::duration<double>(clock_type::now() - started).count();
-            if (!values.failed && clock_type::now() < deadline)
-            {
+            if (!values.failed && clock_type::now() < deadline) {
                 client.finish();
                 while (!values.failed && (values.finished < settings.connections || values.pending_sends) &&
-                       clock_type::now() < deadline)
-                {
+                       clock_type::now() < deadline) {
                     client.check_timeouts();
                     wait();
                 }
             }
         }
-        if (!values.failed)
-        {
+        if (!values.failed) {
             if (values.finished == settings.connections && !values.outstanding && !values.pending_sends &&
-                (settings.scenario == "idle" || (values.received > 0 && values.received == values.sent)))
-            {
+                (settings.scenario == "idle" || (values.received > 0 && values.received == values.sent))) {
                 outcome = "target_complete";
-            }
-            else
-            {
+            } else {
                 ++values.timeouts;
                 values.fail("client target deadline exceeded");
             }
@@ -1153,12 +977,10 @@ int run(const options& settings) {
     }
     runtime.stop();
     const bool clean = runtime.stopped() && !values.active && !values.pending_sends && !values.pending_bytes;
-    if (!clean)
-    {
+    if (!clean) {
         values.fail("cleanup counters did not reach terminal state");
     }
-    if (values.failed)
-    {
+    if (values.failed) {
         outcome = "failed";
     }
     const auto resources = overall_resources.sample();
@@ -1171,15 +993,12 @@ int run(const options& settings) {
 
 #ifndef ARKNET_CONNECTION_BENCHMARK_NO_MAIN
 int main(int argc, char** argv) {
-    try
-    {
+    try {
         std::signal(SIGINT, request_interrupt);
         std::signal(SIGTERM, request_interrupt);
         std::cout << std::setprecision(9);
         return run(arguments(argc, argv));
-    }
-    catch (const std::exception& error)
-    {
+    } catch (const std::exception& error) {
         std::cerr << "{\"event\":\"error\",\"reason\":" << quoted(error.what()) << "}\n";
         return 2;
     }

@@ -14,33 +14,25 @@ namespace arknet::detail {
 inline constexpr std::size_t min_size = 512;
 
 template<class T, class = void>
-struct buffer_has_limit : std::bool_constant<std::is_constructible_v<T, std::size_t>>
-{
-};
+struct buffer_has_limit : std::bool_constant<std::is_constructible_v<T, std::size_t>> {};
 
 template<class T, class = void>
-    struct buffer_has_max_size : std::bool_constant < requires(const T& buffer)
-{
+    struct buffer_has_max_size : std::bool_constant < requires(const T& buffer) {
     buffer.max_size();
 } > {};
 
-struct callback_helper
-{
+struct callback_helper {
     template<class Callback>
     static void call(Callback& callback, std::size_t count) {
-        if constexpr (std::is_invocable_v<Callback&, std::size_t>)
-        {
+        if constexpr (std::is_invocable_v<Callback&, std::size_t>) {
             std::invoke(callback, count);
-        }
-        else
-        {
+        } else {
             std::invoke(callback);
         }
     }
 };
 
-struct empty_buffer
-{
+struct empty_buffer {
     using size_type = std::size_t;
 
     constexpr size_type size() const noexcept {
@@ -69,8 +61,7 @@ struct empty_buffer
 };
 
 template<class Buffer>
-struct proxy_buffer
-{
+struct proxy_buffer {
     using size_type = std::size_t;
     proxy_buffer() = default;
 
@@ -112,21 +103,16 @@ struct proxy_buffer
 };
 
 template<class T>
-struct buffer_identity : std::type_identity<T>
-{
-};
+struct buffer_identity : std::type_identity<T> {};
 
 template<class T>
-struct buffer_identity<proxy_buffer<T>> : std::type_identity<T>
-{
-};
+struct buffer_identity<proxy_buffer<T>> : std::type_identity<T> {};
 } // namespace arknet::detail
 
 namespace arknet {
 
 template<class Buffer, bool Limited = detail::buffer_has_limit<Buffer>::value>
-class buffer_wrap : public Buffer
-{
+class buffer_wrap : public Buffer {
 public:
     using buffer_type = typename detail::buffer_identity<Buffer>::type;
     using size_type = std::size_t;
@@ -148,8 +134,7 @@ public:
         : Buffer(maximum)
         , pre_(initial)
         , max_(maximum) {
-        if constexpr (!requires { this->b_; })
-        {
+        if constexpr (!requires { this->b_; }) {
             Buffer::prepare(std::min(initial, maximum));
         }
     }
@@ -159,52 +144,39 @@ public:
         : Buffer()
         , pre_(initial)
         , max_(maximum) {
-        if constexpr (!requires { this->b_; })
-        {
+        if constexpr (!requires { this->b_; }) {
             Buffer::prepare(std::min(initial, maximum));
         }
     }
 
     buffer_type& base() noexcept {
-        if constexpr (requires { this->b_; })
-        {
+        if constexpr (requires { this->b_; }) {
             return *this->b_;
-        }
-        else
-        {
+        } else {
             return *this;
         }
     }
 
     const buffer_type& base() const noexcept {
-        if constexpr (requires { this->b_; })
-        {
+        if constexpr (requires { this->b_; }) {
             return *this->b_;
-        }
-        else
-        {
+        } else {
             return *this;
         }
     }
 
     size_type pre_size() const noexcept {
-        if constexpr (std::is_same_v<Buffer, detail::empty_buffer>)
-        {
+        if constexpr (std::is_same_v<Buffer, detail::empty_buffer>) {
             return 0;
-        }
-        else
-        {
+        } else {
             return pre_;
         }
     }
 
     size_type max_size() const noexcept {
-        if constexpr (detail::buffer_has_max_size<Buffer>::value)
-        {
+        if constexpr (detail::buffer_has_max_size<Buffer>::value) {
             return Buffer::max_size();
-        }
-        else
-        {
+        } else {
             return max_;
         }
     }
@@ -215,8 +187,7 @@ public:
     }
 
     buffer_wrap& max_size(size_type size) noexcept {
-        if constexpr (!Limited)
-        {
+        if constexpr (!Limited) {
             max_ = size;
         }
         return *this;

@@ -32,8 +32,7 @@ std::string read_file(const std::string& path) {
     return std::string(std::istreambuf_iterator<char>(input), {});
 }
 
-struct child
-{
+struct child {
     pid_t pid = -1;
     std::string log;
     bool reaped{};
@@ -43,21 +42,17 @@ struct child
         log = directory + "/" + std::to_string(++serial) + ".log";
         arguments.insert(arguments.begin(), executable);
         std::vector<char*> argv;
-        for (auto& value : arguments)
-        {
+        for (auto& value : arguments) {
             argv.push_back(value.data());
         }
         argv.push_back(nullptr);
         pid = fork();
-        if (pid == -1)
-        {
+        if (pid == -1) {
             throw std::runtime_error("fork failed");
         }
-        if (!pid)
-        {
+        if (!pid) {
             const auto fd = open(log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
-            if (fd == -1 || dup2(fd, STDOUT_FILENO) == -1 || dup2(fd, STDERR_FILENO) == -1)
-            {
+            if (fd == -1 || dup2(fd, STDOUT_FILENO) == -1 || dup2(fd, STDERR_FILENO) == -1) {
                 std::_Exit(127);
             }
             close(fd);
@@ -67,28 +62,23 @@ struct child
     }
 
     ~child() {
-        if (!reaped && pid > 0)
-        {
+        if (!reaped && pid > 0) {
             kill(pid, SIGKILL);
-            while (waitpid(pid, nullptr, 0) == -1 && errno == EINTR)
-            {
+            while (waitpid(pid, nullptr, 0) == -1 && errno == EINTR) {
             }
         }
     }
 
     bool poll() {
-        if (reaped)
-        {
+        if (reaped) {
             return true;
         }
         int status{};
         const auto result = waitpid(pid, &status, WNOHANG);
-        if (result == -1 && errno != EINTR)
-        {
+        if (result == -1 && errno != EINTR) {
             throw std::runtime_error("waitpid failed");
         }
-        if (result == pid)
-        {
+        if (result == pid) {
             reaped = true;
             exit_code = WIFEXITED(status) ? WEXITSTATUS(status) : 128 + WTERMSIG(status);
         }
@@ -97,10 +87,8 @@ struct child
 
     int wait() {
         const auto until = clock_type::now() + std::chrono::seconds(8);
-        while (clock_type::now() < until)
-        {
-            if (poll())
-            {
+        while (clock_type::now() < until) {
+            if (poll()) {
                 std::ofstream(log + ".exit") << exit_code << '\n';
                 return exit_code;
             }
@@ -111,22 +99,18 @@ struct child
 
     std::string port() {
         const auto until = clock_type::now() + std::chrono::seconds(2);
-        while (clock_type::now() < until)
-        {
+        while (clock_type::now() < until) {
             const auto output = read_file(log);
             const auto offset = output.find("\"port\":");
-            if (offset != std::string::npos)
-            {
+            if (offset != std::string::npos) {
                 const auto begin = offset + 7;
                 const auto end = output.find_first_not_of("0123456789", begin);
                 const auto value = output.substr(begin, end - begin);
-                if (!value.empty())
-                {
+                if (!value.empty()) {
                     return value;
                 }
             }
-            if (poll())
-            {
+            if (poll()) {
                 break;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(2));
@@ -138,16 +122,14 @@ struct child
 std::uint64_t counter(const std::string& line, const std::string& name) {
     const auto key = "\"" + name + "\":";
     const auto offset = line.find(key);
-    if (offset == std::string::npos)
-    {
+    if (offset == std::string::npos) {
         throw std::runtime_error("missing counter " + name + ": " + line);
     }
     const auto begin = line.data() + offset + key.size();
     std::uint64_t value{};
     const auto parsed = std::from_chars(begin, line.data() + line.size(), value);
     if (parsed.ec != std::errc{} || parsed.ptr == line.data() + line.size() ||
-        (*parsed.ptr != ',' && *parsed.ptr != '}'))
-    {
+        (*parsed.ptr != ',' && *parsed.ptr != '}')) {
         throw std::runtime_error("invalid counter " + name + ": " + line);
     }
     return value;
@@ -159,25 +141,20 @@ void sample_phases(const std::string& path, unsigned count, bool native) {
     bool before_start{}, previous_idle{}, idle_interval{}, complete{};
     unsigned samples{};
     std::string line;
-    while (std::getline(lines, line))
-    {
-        if (line.find("\"event\":\"sample\"") != std::string::npos)
-        {
+    while (std::getline(lines, line)) {
+        if (line.find("\"event\":\"sample\"") != std::string::npos) {
             ++samples;
             const auto ready = counter(line, "ready");
             const auto started = counter(line, "started");
             const auto finished = counter(line, "finished");
             if (ready < previous_ready || started < previous_started || finished < previous_finished || ready > count ||
-                started > count || finished > count)
-            {
+                started > count || finished > count) {
                 throw std::runtime_error("nonmonotonic phase counter: " + path + " " + line);
             }
-            if (native && counter(line, "sample_interval_ms") != 1000)
-            {
+            if (native && counter(line, "sample_interval_ms") != 1000) {
                 throw std::runtime_error("native sampling cadence changed: " + path);
             }
-            if (line.find("\"resource_cpu_interval_s\":") == std::string::npos)
-            {
+            if (line.find("\"resource_cpu_interval_s\":") == std::string::npos) {
                 throw std::runtime_error("missing CPU interval evidence: " + path);
             }
             before_start = before_start || (ready < count && !started && !finished);
@@ -188,15 +165,12 @@ void sample_phases(const std::string& path, unsigned count, bool native) {
             previous_ready = ready;
             previous_started = started;
             previous_finished = finished;
-        }
-        else if (line.find("\"event\":\"result\"") != std::string::npos)
-        {
+        } else if (line.find("\"event\":\"result\"") != std::string::npos) {
             complete = counter(line, "ready") == count && counter(line, "started") == count &&
                        counter(line, "finished") == count;
         }
     }
-    if (!before_start || !idle_interval || !complete)
-    {
+    if (!before_start || !idle_interval || !complete) {
         throw std::runtime_error("missing handshake/idle interval/finish evidence: " + path + "\n" + read_file(path));
     }
     std::cout << "phase samples=" << samples << " include consecutive idle endpoints and completed FIN: " << path
@@ -208,8 +182,7 @@ void pair(const std::string& server_binary, const std::string& client_binary, un
     std::vector<std::string> common{"--run-id", "71", "--scenario", scenario, "--payload", std::to_string(payload),
         "--window", "4", "--max-connections", std::to_string(count), "--hold-seconds", phases ? "3.2" : "0.03",
         "--deadline-seconds", phases ? "7" : "5", "--cleanup-seconds", "1"};
-    if (trace)
-    {
+    if (trace) {
         common.insert(common.end(), {"--operation-trace", "on"});
     }
     auto server_args = common;
@@ -223,39 +196,32 @@ void pair(const std::string& server_binary, const std::string& client_binary, un
     child client(client_binary, client_args);
     const auto client_status = client.wait();
     const auto server_status = server.wait();
-    if (client_status || server_status)
-    {
+    if (client_status || server_status) {
         throw std::runtime_error(
             "pair failed: " + client.log + " " + server.log + "\n" + read_file(client.log) + read_file(server.log));
     }
-    for (const auto& path : {client.log, server.log})
-    {
+    for (const auto& path : {client.log, server.log}) {
         const auto output = read_file(path);
         if (output.find("\"event\":\"result\"") == std::string::npos ||
-            output.find("\"finished\":" + std::to_string(count)) == std::string::npos)
-        {
+            output.find("\"finished\":" + std::to_string(count)) == std::string::npos) {
             throw std::runtime_error("missing final target evidence: " + path);
         }
         if (output.find("arknet_asio_connection_control") != std::string::npos &&
             (output.find("\"success\":true") == std::string::npos ||
                 output.find("\"cleanup_complete\":true") == std::string::npos ||
                 output.find("\"controller_on_io_worker\":false") == std::string::npos ||
-                output.find("\"initial_buffer_bytes\":4096") == std::string::npos))
-        {
+                output.find("\"initial_buffer_bytes\":4096") == std::string::npos)) {
             throw std::runtime_error("native terminal/cleanup evidence missing: " + path);
         }
         if (trace &&
             (output.find("\"operation_trace_enabled\":true,\"operation_trace_emitted\":false") == std::string::npos ||
-                output.find("\"event\":\"operation_trace\"") != std::string::npos))
-        {
+                output.find("\"event\":\"operation_trace\"") != std::string::npos)) {
             throw std::runtime_error("successful opt-in run emitted a failure trace: " + path);
         }
-        if (!trace && output.find("operation_trace") != std::string::npos)
-        {
+        if (!trace && output.find("operation_trace") != std::string::npos) {
             throw std::runtime_error("default run changed diagnostic output: " + path);
         }
-        if (phases)
-        {
+        if (phases) {
             sample_phases(path, count, output.find("arknet_asio_connection_control") != std::string::npos);
         }
     }
@@ -269,13 +235,11 @@ void invalid_arguments(const std::string& executable) {
              {"--hold-seconds", "inf"}, {"--port", "2"}, {"--unknown", "1"}, {"--connections"},
              {"--connections", "5000", "--window", "4", "--max-inflight", "19999"}, {"--operation-trace", "true"},
              {"--operation-trace", "ON"}, {"--operation-trace"},
-             {"--operation-trace", "on", "--operation-trace", "off"}})
-    {
+             {"--operation-trace", "on", "--operation-trace", "off"}}) {
         auto args = base;
         args.insert(args.end(), suffix.begin(), suffix.end());
         child value(executable, args);
-        if (value.wait() != 1 || read_file(value.log).find("native control:") == std::string::npos)
-        {
+        if (value.wait() != 1 || read_file(value.log).find("native control:") == std::string::npos) {
             throw std::runtime_error("invalid arguments not rejected: " + value.log);
         }
     }
@@ -288,20 +252,17 @@ void invalid_arguments(const std::string& executable) {
     const auto output = read_file(server.log);
     if (status != 1 || output.find("\"success\":false") == std::string::npos ||
         output.find("\"cleanup_complete\":true") == std::string::npos ||
-        output.find("deadline: target incomplete") == std::string::npos)
-    {
+        output.find("deadline: target incomplete") == std::string::npos) {
         throw std::runtime_error("deadline/cleanup evidence missing: " + server.log);
     }
 }
 
 void silent_peer(const std::string& executable, bool trace = false) {
-    struct listener
-    {
+    struct listener {
         int fd = socket(AF_INET, SOCK_STREAM, 0);
 
         ~listener() {
-            if (fd != -1)
-            {
+            if (fd != -1) {
                 close(fd);
             }
         }
@@ -311,21 +272,18 @@ void silent_peer(const std::string& executable, bool trace = false) {
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     if (peer.fd == -1 || fcntl(peer.fd, F_SETFD, FD_CLOEXEC) == -1 ||
-        bind(peer.fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == -1 || listen(peer.fd, 1) == -1)
-    {
+        bind(peer.fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == -1 || listen(peer.fd, 1) == -1) {
         throw std::runtime_error("silent peer setup failed");
     }
     socklen_t length = sizeof(address);
-    if (getsockname(peer.fd, reinterpret_cast<sockaddr*>(&address), &length) == -1)
-    {
+    if (getsockname(peer.fd, reinterpret_cast<sockaddr*>(&address), &length) == -1) {
         throw std::runtime_error("silent peer port lookup failed");
     }
     // The kernel accepts the connection, but no application replies to HELLO.
     std::vector<std::string> args{"--role", "client", "--target", "127.0.0.1", "--port",
         std::to_string(ntohs(address.sin_port)), "--run-id", "41", "--connections", "1", "--request-timeout-ms",
         trace ? "1200" : "100", "--hold-seconds", "0.01", "--deadline-seconds", "3", "--cleanup-seconds", "1"};
-    if (trace)
-    {
+    if (trace) {
         args.insert(args.end(), {"--operation-trace", "on"});
     }
     child client(executable, args);
@@ -340,13 +298,11 @@ void silent_peer(const std::string& executable, bool trace = false) {
         output.find("\"last_write_kind\":1") == std::string::npos ||
         output.find("\"incomplete_sessions\":1,\"emitted\":1,\"omitted\":0") == std::string::npos ||
         output.find("\"cleanup_complete\":true") == std::string::npos ||
-        output.find("request timeout:") == std::string::npos)
-    {
+        output.find("request timeout:") == std::string::npos) {
         throw std::runtime_error("pre-cancel connection diagnostics missing: " + client.log);
     }
     const auto trace_position = output.find("\"event\":\"operation_trace\"");
-    if (trace)
-    {
+    if (trace) {
         const auto summary = output.find("\"event\":\"operation_trace_summary\"");
         if (trace_position == std::string::npos || summary == std::string::npos || summary >= snapshot ||
             trace_position >= summary ||
@@ -358,29 +314,23 @@ void silent_peer(const std::string& executable, bool trace = false) {
             output.find("\"output_truncated\":false") == std::string::npos ||
             output.find("\"emitted_sessions\":1,\"omitted_incomplete_sessions\":0") == std::string::npos ||
             output.find("\"operation_trace_enabled\":true,\"operation_trace_emitted\":true") == std::string::npos ||
-            counter(output.substr(summary), "worker_markers_completed") < 1 || snapshot - trace_position > 256 * 1024)
-        {
+            counter(output.substr(summary), "worker_markers_completed") < 1 || snapshot - trace_position > 256 * 1024) {
             throw std::runtime_error("bounded frozen trace/worker progress evidence missing: " + client.log);
         }
-    }
-    else if (output.find("operation_trace") != std::string::npos)
-    {
+    } else if (output.find("operation_trace") != std::string::npos) {
         throw std::runtime_error("disabled diagnostics emitted a trace: " + client.log);
     }
 }
 
 void progress_then_stall(const std::string& executable) {
-    struct raw_peer
-    {
+    struct raw_peer {
         int listener = socket(AF_INET, SOCK_STREAM, 0), connection = -1;
 
         ~raw_peer() {
-            if (connection != -1)
-            {
+            if (connection != -1) {
                 close(connection);
             }
-            if (listener != -1)
-            {
+            if (listener != -1) {
                 close(listener);
             }
         }
@@ -391,13 +341,11 @@ void progress_then_stall(const std::string& executable) {
     address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     if (peer.listener == -1 || fcntl(peer.listener, F_SETFD, FD_CLOEXEC) == -1 ||
         fcntl(peer.listener, F_SETFL, O_NONBLOCK) == -1 ||
-        bind(peer.listener, reinterpret_cast<sockaddr*>(&address), sizeof(address)) || listen(peer.listener, 1))
-    {
+        bind(peer.listener, reinterpret_cast<sockaddr*>(&address), sizeof(address)) || listen(peer.listener, 1)) {
         throw std::runtime_error("kernel sample peer listener setup failed");
     }
     socklen_t length = sizeof(address);
-    if (getsockname(peer.listener, reinterpret_cast<sockaddr*>(&address), &length))
-    {
+    if (getsockname(peer.listener, reinterpret_cast<sockaddr*>(&address), &length)) {
         throw std::runtime_error("kernel sample peer port query failed");
     }
     child client(executable,
@@ -407,46 +355,38 @@ void progress_then_stall(const std::string& executable) {
             "--operation-trace", "on", "--tcp-kernel-samples", "on", "--socket-observer", "on"});
     const auto deadline = clock_type::now() + std::chrono::seconds(6);
     auto wait_ready = [&](int fd, short events) {
-        while (clock_type::now() < deadline)
-        {
+        while (clock_type::now() < deadline) {
             pollfd descriptor{fd, events, 0};
             const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - clock_type::now());
             const auto wait_ms = remaining.count() > 0 ? remaining.count() : 0;
             const auto result = ::poll(&descriptor, 1, static_cast<int>(wait_ms) + 1);
-            if (result > 0)
-            {
+            if (result > 0) {
                 return;
             }
-            if (result < 0 && errno != EINTR)
-            {
+            if (result < 0 && errno != EINTR) {
                 throw std::runtime_error("kernel sample peer poll failed");
             }
         }
         throw std::runtime_error("kernel sample peer IO deadline exceeded: " + client.log);
     };
-    while (peer.connection == -1)
-    {
+    while (peer.connection == -1) {
         wait_ready(peer.listener, POLLIN);
         peer.connection = accept(peer.listener, nullptr, nullptr);
-        if (peer.connection == -1 && errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
-        {
+        if (peer.connection == -1 && errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
             throw std::runtime_error("kernel sample peer accept failed");
         }
     }
-    if (fcntl(peer.connection, F_SETFD, FD_CLOEXEC) == -1 || fcntl(peer.connection, F_SETFL, O_NONBLOCK) == -1)
-    {
+    if (fcntl(peer.connection, F_SETFD, FD_CLOEXEC) == -1 || fcntl(peer.connection, F_SETFL, O_NONBLOCK) == -1) {
         throw std::runtime_error("kernel sample peer socket setup failed");
     }
 #if defined(SO_NOSIGPIPE)
     const int no_sigpipe = 1;
-    if (setsockopt(peer.connection, SOL_SOCKET, SO_NOSIGPIPE, &no_sigpipe, sizeof(no_sigpipe)))
-    {
+    if (setsockopt(peer.connection, SOL_SOCKET, SO_NOSIGPIPE, &no_sigpipe, sizeof(no_sigpipe))) {
         throw std::runtime_error("kernel sample peer SIGPIPE setup failed");
     }
 #endif
     auto send_bytes = [&](std::string_view bytes) {
-        while (!bytes.empty())
-        {
+        while (!bytes.empty()) {
             wait_ready(peer.connection, POLLOUT);
 #if defined(MSG_NOSIGNAL)
             constexpr int flags = MSG_NOSIGNAL;
@@ -454,12 +394,9 @@ void progress_then_stall(const std::string& executable) {
             constexpr int flags = 0;
 #endif
             const auto size = send(peer.connection, bytes.data(), bytes.size(), flags);
-            if (size > 0)
-            {
+            if (size > 0) {
                 bytes.remove_prefix(static_cast<std::size_t>(size));
-            }
-            else if (size != -1 || (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
-            {
+            } else if (size != -1 || (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)) {
                 throw std::runtime_error("kernel sample peer send failed: " + client.log);
             }
         }
@@ -467,21 +404,16 @@ void progress_then_stall(const std::string& executable) {
     auto receive_exact = [&](const std::string& expected) {
         std::string received(expected.size(), '\0');
         std::size_t offset{};
-        while (offset < received.size())
-        {
+        while (offset < received.size()) {
             wait_ready(peer.connection, POLLIN);
             const auto size = recv(peer.connection, received.data() + offset, received.size() - offset, 0);
-            if (size > 0)
-            {
+            if (size > 0) {
                 offset += static_cast<std::size_t>(size);
-            }
-            else if (size != -1 || (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
-            {
+            } else if (size != -1 || (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)) {
                 throw std::runtime_error("kernel sample peer receive failed: " + client.log);
             }
         }
-        if (received != expected)
-        {
+        if (received != expected) {
             throw std::runtime_error("kernel sample peer frame mismatch: " + client.log);
         }
     };
@@ -509,8 +441,7 @@ void progress_then_stall(const std::string& executable) {
     if (status != 1 || history_position == std::string::npos || summary_position == std::string::npos ||
         snapshot_position == std::string::npos || result_position == std::string::npos ||
         !(history_position < summary_position && summary_position < snapshot_position &&
-            snapshot_position < result_position))
-    {
+            snapshot_position < result_position)) {
         throw std::runtime_error("periodic kernel sample output missing: " + client.log);
     }
     const auto history = output.substr(history_position, output.find('\n', history_position) - history_position);
@@ -536,18 +467,15 @@ void progress_then_stall(const std::string& executable) {
         result.find("\"operation_trace_enabled\":true,\"operation_trace_emitted\":true") == std::string::npos ||
         result.find("\"tcp_kernel_samples_enabled\":true") == std::string::npos ||
         output.find("socket_operation_trace_enabled") != std::string::npos || counter(result, "data_received") != 1 ||
-        counter(result, "finished") != 0)
-    {
+        counter(result, "finished") != 0) {
         throw std::runtime_error("periodic kernel sample scope/drain evidence missing: " + client.log);
     }
 #if defined(__APPLE__)
-    if (history.find("\"tcp_info\":{\"state\":4,") == std::string::npos)
-    {
+    if (history.find("\"tcp_info\":{\"state\":4,") == std::string::npos) {
         throw std::runtime_error("periodic established Apple TCP info missing: " + client.log);
     }
 #else
-    if (history.find("\"tcp_info\":null,\"unavailable_reason\":\"unsupported_platform\"") == std::string::npos)
-    {
+    if (history.find("\"tcp_info\":null,\"unavailable_reason\":\"unsupported_platform\"") == std::string::npos) {
         throw std::runtime_error("unsupported periodic TCP info reason missing: " + client.log);
     }
 #endif
@@ -558,33 +486,28 @@ void progress_then_stall(const std::string& executable) {
         output.find("\"read_pending\":true,\"input_bytes\":0,\"input_frame_ready\":false", observation) ==
             std::string::npos ||
         counter(output.substr(observation), "global_marker_completed_us") < 1 ||
-        counter(output.substr(observation), "strand_probe_submitted_us") < 1)
-    {
+        counter(output.substr(observation), "strand_probe_submitted_us") < 1) {
         throw std::runtime_error("independent controller observation missing: " + client.log);
     }
     if (output.find("\"event\":\"socket_observer_before_cancel\"") == std::string::npos ||
         output.find("\"clock_anchor\":{\"steady_before_ns\":\"", observation) == std::string::npos ||
-        output.find("\"query_completed_steady_ns\":\"", observation) == std::string::npos)
-    {
+        output.find("\"query_completed_steady_ns\":\"", observation) == std::string::npos) {
         throw std::runtime_error("observer wall/steady anchors missing: " + client.log);
     }
     bool strand_completed = false;
     for (auto position = observation; position != std::string::npos;
-         position = output.find("\"event\":\"socket_observation\"", position + 1))
-    {
+         position = output.find("\"event\":\"socket_observation\"", position + 1)) {
         const auto line = output.substr(position, output.find('\n', position) - position);
         strand_completed = strand_completed ||
                            counter(line, "strand_probe_completed_us") >= counter(line, "strand_probe_submitted_us");
     }
-    if (!strand_completed)
-    {
+    if (!strand_completed) {
         throw std::runtime_error("session strand probe did not complete: " + client.log);
     }
 #if defined(__APPLE__)
     if (counter(output.substr(observation), "tcp_requested_length") < 100 ||
         counter(output.substr(observation), "tcp_returned_length") < 100 ||
-        output.find("\"tcp_raw_hex\":\"\"", observation) != std::string::npos)
-    {
+        output.find("\"tcp_raw_hex\":\"\"", observation) != std::string::npos) {
         throw std::runtime_error("raw TCP ABI provenance missing: " + client.log);
     }
 #endif
@@ -600,26 +523,22 @@ void fragmented_window(const std::string& executable) {
             "--hold-seconds", "0.01", "--deadline-seconds", "5", "--cleanup-seconds", "1"});
     const auto port = std::stoi(server.port());
 
-    struct raw_peer
-    {
+    struct raw_peer {
         int fd = socket(AF_INET, SOCK_STREAM, 0);
 
         ~raw_peer() {
-            if (fd != -1)
-            {
+            if (fd != -1) {
                 close(fd);
             }
         }
     } peer;
 
-    if (peer.fd == -1 || fcntl(peer.fd, F_SETFD, FD_CLOEXEC) == -1)
-    {
+    if (peer.fd == -1 || fcntl(peer.fd, F_SETFD, FD_CLOEXEC) == -1) {
         throw std::runtime_error("fragmented peer socket setup failed");
     }
 #if defined(SO_NOSIGPIPE)
     const int no_sigpipe = 1;
-    if (setsockopt(peer.fd, SOL_SOCKET, SO_NOSIGPIPE, &no_sigpipe, sizeof(no_sigpipe)))
-    {
+    if (setsockopt(peer.fd, SOL_SOCKET, SO_NOSIGPIPE, &no_sigpipe, sizeof(no_sigpipe))) {
         throw std::runtime_error("fragmented peer SIGPIPE setup failed");
     }
 #endif
@@ -628,31 +547,26 @@ void fragmented_window(const std::string& executable) {
     address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     address.sin_port = htons(static_cast<unsigned short>(port));
     if (connect(peer.fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) ||
-        fcntl(peer.fd, F_SETFL, O_NONBLOCK) == -1)
-    {
+        fcntl(peer.fd, F_SETFL, O_NONBLOCK) == -1) {
         throw std::runtime_error("fragmented peer connect failed");
     }
     const auto deadline = clock_type::now() + std::chrono::seconds(4);
     auto wait_ready = [&](short events) {
-        while (clock_type::now() < deadline)
-        {
+        while (clock_type::now() < deadline) {
             pollfd descriptor{peer.fd, events, 0};
             const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - clock_type::now());
             const auto result = ::poll(&descriptor, 1, static_cast<int>(remaining.count()) + 1);
-            if (result > 0)
-            {
+            if (result > 0) {
                 return;
             }
-            if (result < 0 && errno != EINTR)
-            {
+            if (result < 0 && errno != EINTR) {
                 throw std::runtime_error("fragmented peer poll failed");
             }
         }
         throw std::runtime_error("fragmented peer IO deadline exceeded: " + server.log);
     };
     auto send_bytes = [&](std::string_view bytes) {
-        while (!bytes.empty())
-        {
+        while (!bytes.empty()) {
             wait_ready(POLLOUT);
 #if defined(MSG_NOSIGNAL)
             constexpr int flags = MSG_NOSIGNAL;
@@ -660,16 +574,11 @@ void fragmented_window(const std::string& executable) {
             constexpr int flags = 0;
 #endif
             const auto written = send(peer.fd, bytes.data(), bytes.size(), flags);
-            if (written > 0)
-            {
+            if (written > 0) {
                 bytes.remove_prefix(static_cast<std::size_t>(written));
-            }
-            else if (written == -1 && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK))
-            {
+            } else if (written == -1 && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)) {
                 continue;
-            }
-            else
-            {
+            } else {
                 throw std::runtime_error("fragmented peer send failed: " + server.log);
             }
         }
@@ -677,37 +586,27 @@ void fragmented_window(const std::string& executable) {
     auto receive_exact = [&](const std::string& expected) {
         std::string received(expected.size(), '\0');
         std::size_t offset{};
-        while (offset < received.size())
-        {
+        while (offset < received.size()) {
             wait_ready(POLLIN);
             const auto size = recv(peer.fd, received.data() + offset, received.size() - offset, 0);
-            if (size > 0)
-            {
+            if (size > 0) {
                 offset += static_cast<std::size_t>(size);
-            }
-            else if (size == -1 && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK))
-            {
+            } else if (size == -1 && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)) {
                 continue;
-            }
-            else
-            {
+            } else {
                 throw std::runtime_error("fragmented peer receive failed: " + server.log);
             }
         }
-        if (received != expected)
-        {
+        if (received != expected) {
             throw std::runtime_error("fragmented peer response content/order mismatch: " + server.log);
         }
     };
     auto wire = [&](frame_kind kind, std::uint64_t sequence = 0) {
         const auto body = connection_load::make_frame(kind, owner, sequence, kind == frame_kind::data ? 1024 : 0);
         std::string prefix;
-        if (body.size() < 254)
-        {
+        if (body.size() < 254) {
             prefix += static_cast<char>(body.size());
-        }
-        else
-        {
+        } else {
             prefix += '\xfe';
             prefix += static_cast<char>(body.size());
             prefix += static_cast<char>(body.size() >> 8);
@@ -719,8 +618,7 @@ void fragmented_window(const std::string& executable) {
         // only gates this withheld-byte phase; elapsed time is not a throughput assertion.
         pollfd descriptor{peer.fd, POLLIN, 0};
         const auto result = ::poll(&descriptor, 1, 100);
-        if (result != 0)
-        {
+        if (result != 0) {
             throw std::runtime_error("incomplete frame unexpectedly produced socket input: " + server.log);
         }
     };
@@ -729,12 +627,10 @@ void fragmented_window(const std::string& executable) {
     send_bytes(wire(frame_kind::start));
     receive_exact(wire(frame_kind::start_ack));
     std::string first_window;
-    for (unsigned sequence = 1; sequence <= 4; ++sequence)
-    {
+    for (unsigned sequence = 1; sequence <= 4; ++sequence) {
         first_window += wire(frame_kind::data, sequence);
     }
-    if (first_window.size() != 4364)
-    {
+    if (first_window.size() != 4364) {
         throw std::runtime_error("fragmented window no longer covers the 4096-byte receive cap");
     }
     send_bytes(std::string_view(first_window).substr(0, 1)); // Partial three-byte prefix.
@@ -744,8 +640,7 @@ void fragmented_window(const std::string& executable) {
     send_bytes(std::string_view(first_window).substr(1090)); // Complete frame plus three queued frames.
     receive_exact(first_window);
     std::string second_window;
-    for (unsigned sequence = 5; sequence <= 8; ++sequence)
-    {
+    for (unsigned sequence = 5; sequence <= 8; ++sequence) {
         second_window += wire(frame_kind::data, sequence);
     }
     send_bytes(second_window); // One application write larger than the receive cap.
@@ -759,8 +654,7 @@ void fragmented_window(const std::string& executable) {
     const auto output = read_file(server.log);
     if (status || output.find("\"finished\":1") == std::string::npos ||
         output.find("\"data_sent\":8,") == std::string::npos ||
-        output.find("\"data_received\":8,") == std::string::npos)
-    {
+        output.find("\"data_received\":8,") == std::string::npos) {
         throw std::runtime_error("fragmented window did not finish cleanly: " + server.log + "\n" + output);
     }
     std::cout << "fragmented prefix/body and two 4364-byte windows recovered 8 exact Echo frames: " << server.log
@@ -769,22 +663,18 @@ void fragmented_window(const std::string& executable) {
 } // namespace
 
 int main(int argc, char** argv) {
-    try
-    {
-        if (argc != 3)
-        {
+    try {
+        if (argc != 3) {
             throw std::runtime_error("usage: native_control_test NATIVE_EXECUTABLE ARKNET_EXECUTABLE");
         }
         char path[] = "/tmp/arknet-native-process-test-XXXXXX";
         const auto result = mkdtemp(path);
-        if (!result)
-        {
+        if (!result) {
             throw std::runtime_error("mkdtemp failed");
         }
         directory = result;
         std::cout << "child logs and exits: " << directory << '\n';
-        if (std::string_view(argv[2]) == "--observer-only")
-        {
+        if (std::string_view(argv[2]) == "--observer-only") {
             progress_then_stall(argv[1]);
             return 0;
         }
@@ -798,8 +688,7 @@ int main(int argc, char** argv) {
         pair(argv[1], argv[1], 1, "idle");
         pair(argv[1], argv[1], 3, "idle", 1024, true);
         pair(argv[2], argv[2], 3, "idle", 1024, true);
-        for (const auto count : {1u, 8u, 32u})
-        {
+        for (const auto count : {1u, 8u, 32u}) {
             pair(argv[1], argv[1], count);
         }
         pair(argv[1], argv[1], 1, "traffic", 1);
@@ -807,9 +696,7 @@ int main(int argc, char** argv) {
         pair(argv[1], argv[2], 8);
         pair(argv[2], argv[1], 8);
         return 0;
-    }
-    catch (const std::exception& error)
-    {
+    } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';
         return 1;
     }

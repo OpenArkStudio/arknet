@@ -48,8 +48,7 @@ void pipeline_echo(Server& server, Client& client) {
     server.stop();
 }
 
-struct raw_peer
-{
+struct raw_peer {
     asio::io_context io;
     asio::ip::tcp::socket socket{io};
     asio::streambuf buffer;
@@ -76,8 +75,7 @@ struct raw_peer
 
 // Redirect only resolver service lookup so default ports need no privileged listener.
 template<template<class> class Base>
-struct redirected_client : Base<redirected_client<Base>>
-{
+struct redirected_client : Base<redirected_client<Base>> {
     std::string resolve_service;
 
     template<class... T>
@@ -108,10 +106,8 @@ void default_port_echo(Server& server, Client& client, std::string host, std::st
 } // namespace
 
 DOCTEST_TEST_CASE("HTTP host-only clients default to port 80 for names and IP literals") {
-    for (const auto* host : {"localhost", "127.0.0.1", "::1"})
-    {
-        for (bool async : {false, true})
-        {
+    for (const auto* host : {"localhost", "127.0.0.1", "::1"}) {
+        for (bool async : {false, true}) {
             arknet::http_server server;
             redirected_client<arknet::http_client_t> client;
             default_port_echo(server, client, host, "80", async);
@@ -126,8 +122,7 @@ DOCTEST_TEST_CASE("HTTP owns requests and preserves keep-alive pipeline order") 
 }
 
 DOCTEST_TEST_CASE("HTTP works with an external io_context and a custom session") {
-    struct custom_session : arknet::http_session_t<custom_session>
-    {
+    struct custom_session : arknet::http_session_t<custom_session> {
         using http_session_t::http_session_t;
     };
 
@@ -135,8 +130,7 @@ DOCTEST_TEST_CASE("HTTP works with an external io_context and a custom session")
     auto work = asio::make_work_guard(io);
     std::thread worker([&] { io.run(); });
 
-    struct joiner
-    {
+    struct joiner {
         asio::io_context& io;
         std::thread& worker;
 
@@ -173,8 +167,7 @@ DOCTEST_TEST_CASE("HTTP client skips HEAD bodies while keeping the following res
     arknet::tcp_server server;
     std::atomic<unsigned> writes{};
     server.bind_recv([&](auto& session, std::string_view) {
-        if (writes.fetch_add(1) == 0)
-        {
+        if (writes.fetch_add(1) == 0) {
             session->async_send(
                 std::string("HTTP/1.1 200 OK\r\nContent-Length: 999\r\n\r\n"
                             "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nget\r\n0\r\n\r\n"));
@@ -230,8 +223,7 @@ DOCTEST_TEST_CASE("HTTP sends 100 Continue before waiting for a request body") {
 
 DOCTEST_TEST_CASE("HTTP rejects missing or duplicate Host and unsupported expectations") {
     for (const auto& [headers, expected] : std::vector<std::pair<std::string, unsigned>>{
-             {"", 400}, {"Host: a\r\nHost: b\r\n", 400}, {"Host: localhost\r\nExpect: unsupported\r\n", 417}})
-    {
+             {"", 400}, {"Host: a\r\nHost: b\r\n", 400}, {"Host: localhost\r\nExpect: unsupported\r\n", 417}}) {
         arknet::http_server server;
         std::atomic<unsigned> calls{};
         server.bind_recv([&](auto&, request&) { ++calls; });
@@ -254,8 +246,7 @@ DOCTEST_TEST_CASE("HTTP parser rejects ambiguous framing and configured limits")
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             "aa"
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\r\n\r"
-            "\n"})
-    {
+            "\n"}) {
         arknet::http_server server;
         server.set_http_body_limit(32).set_http_header_limit(128);
         std::promise<arknet::error_code> disconnected;
@@ -367,8 +358,7 @@ DOCTEST_TEST_CASE("HTTP bounded send rejects large bodies and recovers") {
 #ifdef ARKNET_ENABLE_SSL
 DOCTEST_TEST_CASE("HTTPS host-only clients default to port 443 and verify DNS identity") {
     const std::string certs = ARKNET_TEST_CERT_DIR;
-    for (bool async : {false, true})
-    {
+    for (bool async : {false, true}) {
         arknet::https_server server;
         server.set_cert_file("", certs + "/server.pem", certs + "/server-key.pem", "");
         redirected_client<arknet::https_client_t> client;
@@ -388,15 +378,13 @@ DOCTEST_TEST_CASE("HTTPS verifies identity and preserves HTTP pipeline behavior"
 
 DOCTEST_TEST_CASE("HTTPS rejects untrusted and mismatched server certificates") {
     const std::string certs = ARKNET_TEST_CERT_DIR;
-    for (const auto* certificate : {"server.pem", "wrong.pem"})
-    {
+    for (const auto* certificate : {"server.pem", "wrong.pem"}) {
         arknet::https_server server;
         server.set_cert_file("", certs + "/" + certificate, certs + "/server-key.pem", "");
         check(server.start("127.0.0.1", 0), "HTTPS rejection server start");
         arknet::https_client client;
         client.set_auto_reconnect(false);
-        if (std::string_view(certificate) == "wrong.pem")
-        {
+        if (std::string_view(certificate) == "wrong.pem") {
             client.load_verify_file(certs + "/ca.pem");
         }
         check(!client.start("localhost", server.get_listen_port()), "HTTPS certificate rejection");

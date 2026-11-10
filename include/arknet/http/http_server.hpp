@@ -9,8 +9,7 @@ template<class Derived, class Session>
 using http_server_impl_t = detail::http_server_impl_t<Derived, Session, detail::tcp_server_impl_t>;
 
 template<class Session>
-class http_server_t : public http_server_impl_t<http_server_t<Session>, Session>
-{
+class http_server_t : public http_server_impl_t<http_server_t<Session>, Session> {
 public:
     using http_server_impl_t<http_server_t<Session>, Session>::http_server_impl_t;
 };

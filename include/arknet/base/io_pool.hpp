@@ -28,18 +28,14 @@ namespace arknet::detail {
 
 using io_context_work_guard = asio::executor_work_guard<asio::io_context::executor_type>;
 
-class io_t
-{
-    struct lane_state
-    {
+class io_t {
+    struct lane_state {
         explicit lane_state(std::shared_ptr<asio::io_context> context, bool serialize)
             : context(std::move(context)) {
-            if (!this->context)
-            {
+            if (!this->context) {
                 throw std::invalid_argument("null IO context");
             }
-            if (serialize)
-            {
+            if (serialize) {
                 strand.emplace(this->context->get_executor());
             }
             executor = strand ? asio::any_io_executor(*strand) : this->context->get_executor();
@@ -112,8 +108,7 @@ public:
     }
 
     std::thread::id get_thread_id() const noexcept {
-        if (lane_->context->get_executor().running_in_this_thread())
-        {
+        if (lane_->context->get_executor().running_in_this_thread()) {
             return std::this_thread::get_id();
         }
         std::lock_guard lock(lane_->identity_mutex);
@@ -122,8 +117,7 @@ public:
 
     template<class Object>
     void regobj(Object* object) {
-        if (!object)
-        {
+        if (!object) {
             return;
         }
         asio::dispatch(executor(), [lane = lane_, object, owner = object->derived().selfptr()]() mutable {
@@ -135,8 +129,7 @@ public:
 
     template<class Object>
     void unregobj(Object* object) {
-        if (!object)
-        {
+        if (!object) {
             return;
         }
         asio::post(
@@ -147,31 +140,27 @@ public:
         // A stopped context may never run this callback; do not retain its owner.
         asio::post(executor(), [weak = std::weak_ptr(lane_)] {
             auto lane = weak.lock();
-            if (!lane)
-            {
+            if (!lane) {
                 return;
             }
-            for (auto* timer : lane->timers)
-            {
-                try
-                { timer->cancel(); }
-                catch (const system_error&)
-                {}
+            for (auto* timer : lane->timers) {
+                try {
+                    timer->cancel();
+                } catch (const system_error&) {
+                }
             }
             lane->timers.clear();
             // Detach owners before callbacks can unregister or stop another owner.
             auto owners = std::move(lane->owners);
             lane->owners.clear();
-            for (auto& [key, stop] : owners)
-            {
+            for (auto& [key, stop] : owners) {
                 stop();
             }
         });
     }
 };
 
-class iopool_base
-{
+class iopool_base {
 public:
     virtual ~iopool_base() = default;
     virtual bool start() = 0;
@@ -196,8 +185,7 @@ inline constinit std::atomic<std::size_t> owned_pool_lifetimes{};
 
 // A callback can release the last endpoint owner on one of its own workers.
 // Keep accepting deferred deletion until every owned pool has fully drained.
-class owned_pool_cleanup
-{
+class owned_pool_cleanup {
     std::mutex executor_mutex_;
     std::unique_ptr<asio::thread_pool> executor_;
 
@@ -206,37 +194,31 @@ public:
 #if defined(ARKNET_ENABLE_SSL)
         // Register OpenSSL's normal atexit cleanup before this singleton's
         // destructor, including when the first TLS context is created later.
-        if (!OPENSSL_init_ssl(0, nullptr))
-        {
+        if (!OPENSSL_init_ssl(0, nullptr)) {
             throw std::runtime_error("could not initialize OpenSSL for owned IO runtime");
         }
 #endif
     }
 
     ~owned_pool_cleanup() {
-        for (;;)
-        {
+        for (;;) {
             auto live = owned_pool_lifetimes.load(std::memory_order_acquire);
-            if (!live)
-            {
-                if (owned_pool_lifetimes.compare_exchange_weak(live, owned_pool_closed, std::memory_order_acq_rel))
-                {
+            if (!live) {
+                if (owned_pool_lifetimes.compare_exchange_weak(live, owned_pool_closed, std::memory_order_acq_rel)) {
                     break;
                 }
                 continue;
             }
             owned_pool_lifetimes.wait(live, std::memory_order_acquire);
         }
-        if (executor_)
-        {
+        if (executor_) {
             executor_->join();
         }
     }
 
     void ensure_executor() {
         std::lock_guard lock(executor_mutex_);
-        if (!executor_)
-        {
+        if (!executor_) {
             executor_ = std::make_unique<asio::thread_pool>(1);
         }
     }
@@ -264,8 +246,7 @@ namespace {
 
 } // namespace
 
-class owned_pool_membership
-{
+class owned_pool_membership {
     static void unregister() noexcept {
         owned_pool_lifetimes.fetch_sub(1, std::memory_order_acq_rel);
         owned_pool_lifetimes.notify_all();
@@ -274,29 +255,22 @@ class owned_pool_membership
 public:
     owned_pool_membership() {
         auto live = owned_pool_lifetimes.load(std::memory_order_acquire);
-        for (;;)
-        {
-            if (live & owned_pool_closed)
-            {
+        for (;;) {
+            if (live & owned_pool_closed) {
                 throw std::logic_error("owned IO runtime has already shut down");
             }
-            if (live == owned_pool_closed - 1)
-            {
+            if (live == owned_pool_closed - 1) {
                 throw std::length_error("too many owned IO pools");
             }
-            if (owned_pool_lifetimes.compare_exchange_weak(live, live + 1, std::memory_order_acq_rel))
-            {
+            if (owned_pool_lifetimes.compare_exchange_weak(live, live + 1, std::memory_order_acq_rel)) {
                 break;
             }
         }
-        try
-        {
+        try {
             // Fail worker initialization from pool construction, before its
             // callbacks can release their last owner on an IO worker.
             pool_cleanup().ensure_executor();
-        }
-        catch (...)
-        {
+        } catch (...) {
             unregister();
             throw;
         }
@@ -310,10 +284,8 @@ public:
     }
 };
 
-class io_pool : public iopool_base
-{
-    enum class phase
-    {
+class io_pool : public iopool_base {
+    enum class phase {
         idle,
         running,
         draining
@@ -330,8 +302,7 @@ class io_pool : public iopool_base
 
     void drain_until_stopped(const std::shared_ptr<io_t>& target) {
         std::unique_lock lock(lifecycle_mutex_);
-        while (!target->context().stopped())
-        {
+        while (!target->context().stopped()) {
             lock.unlock();
             cancel();
             lock.lock();
@@ -348,8 +319,7 @@ class io_pool : public iopool_base
                 return std::apply(std::move(function), std::move(arguments));
             });
         std::lock_guard lock(lifecycle_mutex_);
-        if (phase_ != phase::running)
-        {
+        if (phase_ != phase::running) {
             std::promise<result_type> rejected;
             result = rejected.get_future();
             rejected.set_exception(std::make_exception_ptr(system_error(asio::error::operation_aborted)));
@@ -357,16 +327,13 @@ class io_pool : public iopool_base
         }
         auto lane = get(index);
         ++lane->pending();
-        try
-        {
+        try {
             asio::post(lane->executor(), [lane, task = std::move(task)]() mutable {
                 task();
                 --lane->pending();
                 lane->pending().notify_all();
             });
-        }
-        catch (...)
-        {
+        } catch (...) {
             --lane->pending();
             lane->pending().notify_all();
             throw;
@@ -376,13 +343,11 @@ class io_pool : public iopool_base
 
 public:
     explicit io_pool(std::size_t count = 0) {
-        if (!count)
-        {
+        if (!count) {
             count = (std::max)(1u, std::thread::hardware_concurrency());
         }
         lanes_.reserve(count);
-        for (std::size_t index = 0; index < count; ++index)
-        {
+        for (std::size_t index = 0; index < count; ++index) {
             lanes_.push_back(std::make_shared<io_t>(std::make_shared<asio::io_context>(1), false));
         }
     }
@@ -391,8 +356,7 @@ public:
     io_pool& operator=(const io_pool&) = delete;
 
     ~io_pool() override {
-        if (running_in_threads())
-        {
+        if (running_in_threads()) {
             std::terminate();
         }
         stop();
@@ -401,20 +365,16 @@ public:
     bool start() override {
         clear_last_error();
         std::unique_lock lock(lifecycle_mutex_);
-        if (phase_ == phase::running)
-        {
+        if (phase_ == phase::running) {
             return true;
         }
-        if (phase_ != phase::idle || lanes_.empty())
-        {
+        if (phase_ != phase::idle || lanes_.empty()) {
             set_last_error(asio::error::operation_aborted);
             return false;
         }
         std::latch ready(lanes_.size());
-        try
-        {
-            for (auto& lane : lanes_)
-            {
+        try {
+            for (auto& lane : lanes_) {
                 lane->context().restart();
                 work_.push_back(asio::make_work_guard(lane->context()));
                 workers_.emplace_back([this, lane, &ready] {
@@ -431,15 +391,11 @@ public:
             ready.wait();
             phase_ = phase::running;
             return true;
-        }
-        catch (...)
-        {
-            for (auto& lane : lanes_)
-            {
+        } catch (...) {
+            for (auto& lane : lanes_) {
                 lane->context().stop();
             }
-            for (auto& worker : workers_)
-            {
+            for (auto& worker : workers_) {
                 worker.join();
             }
             workers_.clear();
@@ -449,41 +405,34 @@ public:
     }
 
     void stop() override {
-        if (running_in_threads())
-        {
+        if (running_in_threads()) {
             cancel();
             return;
         }
         {
             std::unique_lock lock(lifecycle_mutex_);
             lifecycle_changed_.wait(lock, [&] { return phase_ != phase::draining; });
-            if (phase_ == phase::idle)
-            {
+            if (phase_ == phase::idle) {
                 return;
             }
             phase_ = phase::draining;
         }
         cancel();
-        for (auto& lane : lanes_)
-        {
-            while (lane->pending().load())
-            {
+        for (auto& lane : lanes_) {
+            while (lane->pending().load()) {
                 std::this_thread::yield();
             }
         }
         // The listener remains runnable until its registered sessions release it.
         work_.front().reset();
         drain_until_stopped(lanes_.front());
-        for (auto& guard : work_)
-        {
+        for (auto& guard : work_) {
             guard.reset();
         }
-        for (auto& lane : lanes_)
-        {
+        for (auto& lane : lanes_) {
             drain_until_stopped(lane);
         }
-        for (auto& worker : workers_)
-        {
+        for (auto& worker : workers_) {
             worker.join();
         }
         {
@@ -540,8 +489,7 @@ public:
 
     std::thread::native_handle_type get_thread_handle(std::size_t index) {
         std::lock_guard lock(lifecycle_mutex_);
-        if (workers_.empty())
-        {
+        if (workers_.empty()) {
             throw std::logic_error("IO pool is stopped");
         }
         return workers_[index % workers_.size()].native_handle();
@@ -552,10 +500,8 @@ public:
     }
 
     void cancel() {
-        for (auto& lane : lanes_)
-        {
-            if (!lane->context().stopped())
-            {
+        for (auto& lane : lanes_) {
+            if (!lane->context().stopped()) {
                 lane->cancel();
             }
         }
@@ -585,8 +531,7 @@ public:
 
     template<class Rep, class Period>
     void wait_for(std::chrono::duration<Rep, Period> duration) {
-        if (running_in_threads())
-        {
+        if (running_in_threads()) {
             set_last_error(asio::error::operation_not_supported);
             return;
         }
@@ -601,8 +546,7 @@ public:
 
     template<std::integral... I>
     int wait_signal(I... numbers) {
-        if (running_in_threads())
-        {
+        if (running_in_threads()) {
             set_last_error(asio::error::operation_not_supported);
             return 0;
         }
@@ -622,8 +566,7 @@ public:
 using iopool = io_pool;
 using default_iopool = io_pool;
 
-class user_iopool final : public iopool_base
-{
+class user_iopool final : public iopool_base {
     std::vector<std::shared_ptr<io_t>> lanes_;
     std::atomic<bool> active_{};
     std::atomic<std::size_t> cursor_{};
@@ -632,8 +575,7 @@ class user_iopool final : public iopool_base
 public:
     explicit user_iopool(std::vector<std::shared_ptr<io_t>> lanes)
         : lanes_(std::move(lanes)) {
-        if (lanes_.empty())
-        {
+        if (lanes_.empty()) {
             throw std::invalid_argument("empty IO scheduler");
         }
     }
@@ -645,23 +587,18 @@ public:
     }
 
     void stop() override {
-        if (running_in_threads())
-        {
+        if (running_in_threads()) {
             return;
         }
         std::lock_guard lock(stop_mutex_);
-        if (!active_.exchange(false))
-        {
+        if (!active_.exchange(false)) {
             return;
         }
-        for (auto& lane : lanes_)
-        {
-            while (lane->pending().load())
-            {
+        for (auto& lane : lanes_) {
+            while (lane->pending().load()) {
                 std::this_thread::yield();
             }
-            if (lane->context().stopped())
-            {
+            if (lane->context().stopped()) {
                 continue;
             }
             std::promise<void> barrier;
@@ -702,23 +639,18 @@ public:
     }
 };
 
-struct iopool_deleter
-{
+struct iopool_deleter {
     void operator()(iopool_base* pool) const {
-        if (pool->owns_context() && pool->running_in_threads())
-        {
+        if (pool->owns_context() && pool->running_in_threads()) {
             pool_cleanup().release(pool);
-        }
-        else
-        {
+        } else {
             delete pool;
         }
     }
 };
 
 template<class Derived, class Args = void>
-class iopool_cp
-{
+class iopool_cp {
     std::mutex wait_mutex_;
     std::condition_variable wait_changed_;
     bool stop_requested_ = false;
@@ -727,63 +659,41 @@ class iopool_cp
     template<class T>
     static std::vector<std::shared_ptr<io_t>> to_iots(T&& scheduler) {
         using type = std::remove_cvref_t<T>;
-        if constexpr (std::derived_from<type, iopool_base>)
-        {
+        if constexpr (std::derived_from<type, iopool_base>) {
             std::vector<std::shared_ptr<io_t>> lanes;
-            for (std::size_t index = 0; index < scheduler.size(); ++index)
-            {
+            for (std::size_t index = 0; index < scheduler.size(); ++index) {
                 lanes.push_back(scheduler.get(index));
             }
             return lanes;
-        }
-        else if constexpr (std::same_as<type, std::shared_ptr<asio::io_context>>)
-        {
+        } else if constexpr (std::same_as<type, std::shared_ptr<asio::io_context>>) {
             return {std::make_shared<io_t>(scheduler, true)};
-        }
-        else if constexpr (std::same_as<type, asio::io_context*>)
-        {
+        } else if constexpr (std::same_as<type, asio::io_context*>) {
             return {std::make_shared<io_t>(std::shared_ptr<asio::io_context>(scheduler, [](auto*) {}), true)};
-        }
-        else if constexpr (std::same_as<type, asio::io_context>)
-        {
+        } else if constexpr (std::same_as<type, asio::io_context>) {
             static_assert(std::is_lvalue_reference_v<T>, "external IO contexts must be lvalues");
             return to_iots(std::addressof(scheduler));
-        }
-        else if constexpr (std::same_as<type, std::shared_ptr<io_t>>)
-        {
-            if (!scheduler)
-            {
+        } else if constexpr (std::same_as<type, std::shared_ptr<io_t>>) {
+            if (!scheduler) {
                 throw std::invalid_argument("null IO lane");
             }
             return {scheduler};
-        }
-        else if constexpr (std::same_as<type, io_t*>)
-        {
-            if (!scheduler)
-            {
+        } else if constexpr (std::same_as<type, io_t*>) {
+            if (!scheduler) {
                 throw std::invalid_argument("null IO lane");
             }
             return {std::shared_ptr<io_t>(scheduler, [](auto*) {})};
-        }
-        else if constexpr (std::same_as<type, io_t>)
-        {
+        } else if constexpr (std::same_as<type, io_t>) {
             static_assert(std::is_lvalue_reference_v<T>, "external IO lanes must be lvalues");
             return to_iots(std::addressof(scheduler));
-        }
-        else if constexpr (std::ranges::range<type>)
-        {
+        } else if constexpr (std::ranges::range<type>) {
             std::vector<std::shared_ptr<io_t>> lanes;
-            for (auto&& item : scheduler)
-            {
-                for (auto& lane : to_iots(item))
-                {
+            for (auto&& item : scheduler) {
+                for (auto& lane : to_iots(item)) {
                     lanes.push_back(std::move(lane));
                 }
             }
             return lanes;
-        }
-        else
-        {
+        } else {
             static_assert(sizeof(T) == 0, "unsupported IO scheduler");
         }
     }
@@ -818,12 +728,10 @@ protected:
             std::lock_guard lock(wait_mutex_);
             stop_requested_ = false;
         }
-        if (!iopool_->start())
-        {
+        if (!iopool_->start()) {
             return false;
         }
-        for (auto& lane : iots_)
-        {
+        for (auto& lane : iots_) {
             asio::dispatch(lane->executor(), [lane] { lane->init_thread_id(); });
         }
         return true;
@@ -841,12 +749,9 @@ protected:
     template<class Endpoint>
     void stop_before_destroy(Endpoint& endpoint) {
         // A completed close must not publish new callbacks against a dying object.
-        if (endpoint.is_stopped() && iopool_->running_in_threads())
-        {
+        if (endpoint.is_stopped() && iopool_->running_in_threads()) {
             stop_iopool();
-        }
-        else
-        {
+        } else {
             endpoint.stop();
         }
     }
@@ -859,16 +764,12 @@ protected:
 public:
     template<class T>
     explicit iopool_cp(T&& scheduler) {
-        if constexpr (std::integral<std::remove_cvref_t<T>>)
-        {
+        if constexpr (std::integral<std::remove_cvref_t<T>>) {
             iopool_.reset(new io_pool(static_cast<std::size_t>(scheduler)));
-        }
-        else
-        {
+        } else {
             iopool_.reset(new user_iopool(to_iots(std::forward<T>(scheduler))));
         }
-        for (std::size_t index = 0; index < iopool_->size(); ++index)
-        {
+        for (std::size_t index = 0; index < iopool_->size(); ++index) {
             iots_.push_back(iopool_->get(index));
         }
     }
@@ -882,8 +783,7 @@ public:
     }
 
     void wait_stop() {
-        if (iopool_->running_in_threads())
-        {
+        if (iopool_->running_in_threads()) {
             set_last_error(asio::error::operation_not_supported);
             return;
         }
@@ -894,8 +794,7 @@ public:
 
     template<class Rep, class Period>
     void wait_for(std::chrono::duration<Rep, Period> duration) {
-        if (iopool_->running_in_threads())
-        {
+        if (iopool_->running_in_threads()) {
             set_last_error(asio::error::operation_not_supported);
             return;
         }
@@ -910,8 +809,7 @@ public:
 
     template<std::integral... I>
     int wait_signal(I... numbers) {
-        if (iopool_->running_in_threads())
-        {
+        if (iopool_->running_in_threads()) {
             set_last_error(asio::error::operation_not_supported);
             return 0;
         }

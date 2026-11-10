@@ -34,8 +34,7 @@ std::string summary(const tcp_kernel_samples& samples) {
 std::vector<std::uint64_t> numbers(const std::string& text, const std::string& field) {
     const auto marker = '"' + field + "\":";
     std::vector<std::uint64_t> result;
-    for (auto position = text.find(marker); position != std::string::npos; position = text.find(marker, position))
-    {
+    for (auto position = text.find(marker); position != std::string::npos; position = text.find(marker, position)) {
         position += marker.size();
         std::uint64_t value{};
         const auto parsed = std::from_chars(text.data() + position, text.data() + text.size(), value);
@@ -85,10 +84,8 @@ DOCTEST_TEST_CASE("kernel retention schema preserves every qualifying sample fro
                   "\"time_unit\":\"microseconds_since_process_start\",\"samples\":[],\"total_samples\":0,"
                   "\"overwritten_samples\":0}");
     std::vector<std::uint64_t> ordinals, times;
-    for (std::uint64_t count = 0; count <= 8; ++count)
-    {
-        if (count)
-        {
+    for (std::uint64_t count = 0; count <= 8; ++count) {
+        if (count) {
             ordinals.push_back(count);
             times.push_back(1999999 + count);
             samples.sample(first, times.back(), 1000000, 136, 65, 69, [] { return tcp_kernel_info{}; });
@@ -98,8 +95,7 @@ DOCTEST_TEST_CASE("kernel retention schema preserves every qualifying sample fro
         DOCTEST_CHECK(numbers(text, "sample_time_us") == times);
         DOCTEST_CHECK(numbers(text, "total_samples") == std::vector<std::uint64_t>{count});
         DOCTEST_CHECK(numbers(text, "overwritten_samples") == std::vector<std::uint64_t>{0});
-        if (count == 1)
-        {
+        if (count == 1) {
             DOCTEST_CHECK(
                 text ==
                 "{\"event\":\"tcp_kernel_sample_history\",\"schema\":2,\"clock_domain\":\"local_steady_clock\","
@@ -120,8 +116,7 @@ DOCTEST_TEST_CASE("kernel retention schema preserves every qualifying sample fro
 
 DOCTEST_TEST_CASE("kernel history clock origin uses the supplied steady epoch in microseconds only") {
     tcp_kernel_samples samples(true);
-    for (const auto origin : {std::int64_t{-1234567}, std::int64_t{0}, std::int64_t{1234567}})
-    {
+    for (const auto origin : {std::int64_t{-1234567}, std::int64_t{0}, std::int64_t{1234567}}) {
         std::ostringstream out;
         samples.write_history(out, first, std::chrono::steady_clock::time_point{std::chrono::microseconds{origin}});
         DOCTEST_CHECK(out.str().starts_with("\"clock_domain\":\"local_steady_clock\","));
@@ -171,8 +166,7 @@ DOCTEST_TEST_CASE("kernel sample capacity preserves persistent stalls and reuses
         ++calls;
         return tcp_kernel_info{};
     };
-    for (std::uint64_t index = 1; index <= tcp_kernel_samples::session_capacity; ++index)
-    {
+    for (std::uint64_t index = 1; index <= tcp_kernel_samples::session_capacity; ++index) {
         samples.sample({7, 1, index}, 2000000, 1000000, 4, 2, 3, query);
     }
     const identity extra{7, 1, 17};
@@ -196,15 +190,12 @@ DOCTEST_TEST_CASE("kernel sample capacity preserves persistent stalls and reuses
 
 DOCTEST_TEST_CASE("kernel samples preserve the first four and latest four across repeated tail wraps") {
     tcp_kernel_samples samples(true);
-    for (std::uint64_t count = 1; count <= 20; ++count)
-    {
+    for (std::uint64_t count = 1; count <= 20; ++count) {
         samples.sample(first, 1999999 + count, 1000000 + count, 136, 65, 69, [] { return tcp_kernel_info{}; });
-        if (count > 8)
-        {
+        if (count > 8) {
             const std::vector<std::uint64_t> expected{1, 2, 3, 4, count - 3, count - 2, count - 1, count};
             auto times = expected;
-            for (auto& time : times)
-            {
+            for (auto& time : times) {
                 time += 1999999;
             }
             DOCTEST_CHECK(numbers(history(samples), "sample_ordinal") == expected);
@@ -237,8 +228,7 @@ DOCTEST_TEST_CASE("kernel samples preserve the first four and latest four across
 
 DOCTEST_TEST_CASE("unavailable kernel samples emit null with a reason rather than zero metrics") {
     for (const auto status : {tcp_kernel_info::status::unsupported, tcp_kernel_info::status::closed,
-             tcp_kernel_info::status::query_failed, tcp_kernel_info::status::short_response})
-    {
+             tcp_kernel_info::status::query_failed, tcp_kernel_info::status::short_response}) {
         tcp_kernel_samples samples(true);
         samples.sample(first, 2000000, 1000000, 136, 65, 69, [status] {
             tcp_kernel_info value;
@@ -256,8 +246,7 @@ DOCTEST_TEST_CASE("unavailable kernel samples emit null with a reason rather tha
 
 DOCTEST_TEST_CASE("largest kernel sample history fits the existing bounded record output") {
     tcp_kernel_samples samples(true);
-    for (unsigned index = 0; index < tcp_kernel_samples::sample_capacity; ++index)
-    {
+    for (unsigned index = 0; index < tcp_kernel_samples::sample_capacity; ++index) {
         samples.sample(first, (std::numeric_limits<std::int64_t>::max)(), (std::numeric_limits<std::int64_t>::max)(),
             136, (std::numeric_limits<std::uint64_t>::max)(), (std::numeric_limits<std::uint64_t>::max)(), [] {
                 tcp_kernel_info value;

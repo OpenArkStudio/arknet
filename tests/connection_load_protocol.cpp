@@ -26,8 +26,7 @@ DOCTEST_TEST_CASE("Connection load frames reject malformed control and length fi
     const identity owner{1, 2, 3};
     frame_header header;
     const auto valid = make_frame(frame_kind::hello, owner);
-    for (std::size_t length = 0; length < header_bytes; ++length)
-    {
+    for (std::size_t length = 0; length < header_bytes; ++length) {
         DOCTEST_CHECK_FALSE(decode(std::string_view(valid).substr(0, length), header));
     }
     auto corrupt = valid;
@@ -51,21 +50,18 @@ DOCTEST_TEST_CASE("Connection latency buckets contain every observation and reta
     latency_distribution first, second, combined;
     constexpr std::array<std::uint64_t, 15> observations{0, 1, 2, 7, 8, 9, 15, 16, 17, 127, 128, 1000, 1000000,
         std::uint64_t{1} << 63, (std::numeric_limits<std::uint64_t>::max)()};
-    for (std::size_t index = 0; index < observations.size(); ++index)
-    {
+    for (std::size_t index = 0; index < observations.size(); ++index) {
         const auto value = observations[index];
         const auto position = latency_distribution::bucket(value);
         DOCTEST_REQUIRE(position < latency_distribution::bucket_count);
         DOCTEST_CHECK(latency_distribution::upper_bound(position) >= value);
-        if (position)
-        {
+        if (position) {
             DOCTEST_CHECK(latency_distribution::upper_bound(position - 1) < value);
         }
         (index % 2 ? first : second).observe(value);
         combined.observe(value);
     }
-    for (std::size_t index = 0; index < latency_distribution::bucket_count; ++index)
-    {
+    for (std::size_t index = 0; index < latency_distribution::bucket_count; ++index) {
         DOCTEST_CHECK(first.count(index) + second.count(index) == combined.count(index));
     }
     DOCTEST_CHECK(combined.total() == observations.size());

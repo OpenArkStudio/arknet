@@ -9,8 +9,7 @@
 
 namespace arknet::detail {
 
-struct template_args_udp_client : udp_tag
-{
+struct template_args_udp_client : udp_tag {
     static constexpr bool is_session = false;
     static constexpr bool is_client = true;
     static constexpr bool is_server = false;
@@ -30,8 +29,7 @@ class udp_client_impl_t
     : public client_impl_t<Derived, Args>
     , public udp_send_op<Derived, Args>
     , public udp_recv_op<Derived, Args>
-    , public udp_tag
-{
+    , public udp_tag {
     ARKNET_CLASS_FRIEND_DECLARE_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_UDP_BASE;
     ARKNET_CLASS_FRIEND_DECLARE_UDP_CLIENT;
@@ -80,13 +78,11 @@ public:
     }
 
     void stop() {
-        if (base::is_stopped())
-        {
+        if (base::is_stopped()) {
             this->stop_iopool();
             return;
         }
-        if (this->is_iopool_stopped())
-        {
+        if (this->is_iopool_stopped()) {
             return;
         }
         auto& owner = this->derived();
@@ -104,8 +100,7 @@ public:
                     },
                     std::move(guard)});
         });
-        if (!this->iopool().running_in_threads())
-        {
+        if (!this->iopool().running_in_threads()) {
             completion.get();
         }
         this->stop_iopool();
@@ -138,16 +133,14 @@ public:
 protected:
     template<bool Async, class Host, class Service, class Condition>
     bool _do_connect(Host&& host, Service&& service, std::shared_ptr<ecs_t<Condition>> condition) {
-        if (this->buffer_.max_size() < udp_frame_size)
-        {
+        if (this->buffer_.max_size() < udp_frame_size) {
             set_last_error(asio::error::message_size);
             return false;
         }
         auto host_text = detail::to_string(std::forward<Host>(host));
         auto service_text = detail::to_string(std::forward<Service>(service));
         this->start_iopool();
-        if (!this->is_iopool_started())
-        {
+        if (!this->is_iopool_started()) {
             set_last_error(asio::error::operation_aborted);
             return false;
         }
@@ -159,8 +152,7 @@ protected:
                 service = std::move(service_text), promise](event_queue_guard<Derived> guard) mutable {
                 defer_event chain{
                     [promise](event_queue_guard<Derived>) { promise->set_value(get_last_error()); }, std::move(guard)};
-                if (owner.state_ != state_t::stopped)
-                {
+                if (owner.state_ != state_t::stopped) {
                     set_last_error(asio::error::already_started);
                     return;
                 }
@@ -175,13 +167,11 @@ protected:
                 owner._do_init(condition);
                 owner.template _start_connect<Async>(std::move(lifetime), std::move(condition), std::move(chain));
             });
-        if constexpr (Async)
-        {
+        if constexpr (Async) {
             set_last_error(asio::error::in_progress);
             return true;
         }
-        if (this->iopool().running_in_threads())
-        {
+        if (this->iopool().running_in_threads()) {
             set_last_error(asio::error::in_progress);
             return owner.is_started();
         }
@@ -287,14 +277,12 @@ template<class Derived, class Args>
 using udp_client_impl_t = detail::udp_client_impl_t<Derived, Args>;
 
 template<class Derived>
-class udp_client_t : public detail::udp_client_impl_t<Derived>
-{
+class udp_client_t : public detail::udp_client_impl_t<Derived> {
 public:
     using detail::udp_client_impl_t<Derived>::udp_client_impl_t;
 };
 
-class udp_client : public udp_client_t<udp_client>
-{
+class udp_client : public udp_client_t<udp_client> {
 public:
     using udp_client_t<udp_client>::udp_client_t;
 };

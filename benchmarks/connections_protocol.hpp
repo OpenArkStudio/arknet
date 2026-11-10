@@ -15,8 +15,7 @@ namespace connection_load {
 constexpr std::size_t header_bytes = 64;
 constexpr std::string_view magic = "ARKCON01";
 
-enum class frame_kind : std::uint64_t
-{
+enum class frame_kind : std::uint64_t {
     hello = 1,
     hello_ack,
     start,
@@ -26,31 +25,27 @@ enum class frame_kind : std::uint64_t
     finish_ack
 };
 
-struct identity
-{
+struct identity {
     std::uint64_t run{}, client{}, connection{};
 
     bool operator==(const identity&) const = default;
 };
 
-struct frame_header
-{
+struct frame_header {
     frame_kind kind{};
     identity owner{};
     std::uint64_t sequence{}, body_bytes{};
 };
 
 inline void write_integer(std::string& bytes, std::size_t offset, std::uint64_t value) {
-    for (std::size_t index = 0; index < 8; ++index)
-    {
+    for (std::size_t index = 0; index < 8; ++index) {
         bytes[offset + index] = static_cast<char>(value >> (index * 8));
     }
 }
 
 inline std::uint64_t read_integer(std::string_view bytes, std::size_t offset) {
     std::uint64_t value{};
-    for (std::size_t index = 0; index < 8; ++index)
-    {
+    for (std::size_t index = 0; index < 8; ++index) {
         value |= std::uint64_t(static_cast<unsigned char>(bytes[offset + index])) << (index * 8);
     }
     return value;
@@ -61,8 +56,7 @@ inline char body_byte(const identity& owner, std::uint64_t sequence, std::size_t
 }
 
 inline std::string make_frame(frame_kind kind, identity owner, std::uint64_t sequence = 0, std::size_t body = 0) {
-    if (body > (std::numeric_limits<std::size_t>::max)() - header_bytes)
-    {
+    if (body > (std::numeric_limits<std::size_t>::max)() - header_bytes) {
         throw std::length_error("frame size overflow");
     }
     std::string result(header_bytes + body, '\0');
@@ -73,34 +67,28 @@ inline std::string make_frame(frame_kind kind, identity owner, std::uint64_t seq
     write_integer(result, 32, owner.connection);
     write_integer(result, 40, sequence);
     write_integer(result, 48, body);
-    for (std::size_t index = 0; index < body; ++index)
-    {
+    for (std::size_t index = 0; index < body; ++index) {
         result[header_bytes + index] = body_byte(owner, sequence, index);
     }
     return result;
 }
 
 inline bool decode(std::string_view bytes, frame_header& header) {
-    if (bytes.size() < header_bytes || bytes.substr(0, magic.size()) != magic || read_integer(bytes, 56) != 0)
-    {
+    if (bytes.size() < header_bytes || bytes.substr(0, magic.size()) != magic || read_integer(bytes, 56) != 0) {
         return false;
     }
     const auto kind = read_integer(bytes, 8);
-    if (kind < 1 || kind > 7 || read_integer(bytes, 48) != bytes.size() - header_bytes)
-    {
+    if (kind < 1 || kind > 7 || read_integer(bytes, 48) != bytes.size() - header_bytes) {
         return false;
     }
     header = {static_cast<frame_kind>(kind),
         {read_integer(bytes, 16), read_integer(bytes, 24), read_integer(bytes, 32)}, read_integer(bytes, 40),
         read_integer(bytes, 48)};
-    if (header.kind != frame_kind::data && header.body_bytes != 0)
-    {
+    if (header.kind != frame_kind::data && header.body_bytes != 0) {
         return false;
     }
-    for (std::size_t index = 0; index < header.body_bytes; ++index)
-    {
-        if (bytes[header_bytes + index] != body_byte(header.owner, header.sequence, index))
-        {
+    for (std::size_t index = 0; index < header.body_bytes; ++index) {
+        if (bytes[header_bytes + index] != body_byte(header.owner, header.sequence, index)) {
             return false;
         }
     }
@@ -109,14 +97,12 @@ inline bool decode(std::string_view bytes, frame_header& header) {
 
 // Eight subdivisions per power of two. Values are rounded up to the bucket's
 // integer microsecond upper bound; counters can be added across processes.
-class latency_distribution
-{
+class latency_distribution {
 public:
     static constexpr std::size_t bucket_count = 513;
 
     static std::size_t bucket(std::uint64_t microseconds) noexcept {
-        if (!microseconds)
-        {
+        if (!microseconds) {
             return 0;
         }
         const auto exponent = static_cast<std::size_t>(std::bit_width(microseconds) - 1);
@@ -127,15 +113,13 @@ public:
     }
 
     static std::uint64_t upper_bound(std::size_t index) noexcept {
-        if (!index)
-        {
+        if (!index) {
             return 0;
         }
         const auto exponent = (index - 1) / 8;
         const auto subdivision = (index - 1) % 8;
         const auto base = std::uint64_t{1} << exponent;
-        if (exponent < 3)
-        {
+        if (exponent < 3) {
             return base + (base * (subdivision + 1) + 7) / 8 - 1;
         }
         const auto extension = base / 8 * (subdivision + 1);
@@ -154,8 +138,7 @@ public:
 
     std::uint64_t total() const noexcept {
         std::uint64_t result{};
-        for (const auto& value : counts_)
-        {
+        for (const auto& value : counts_) {
             result += value.load();
         }
         return result;
@@ -164,11 +147,9 @@ public:
     std::uint64_t percentile(unsigned percent) const noexcept {
         const auto target = (total() / 100) * percent + ((total() % 100) * percent + 99) / 100;
         std::uint64_t cumulative{};
-        for (std::size_t index = 0; index < bucket_count; ++index)
-        {
+        for (std::size_t index = 0; index < bucket_count; ++index) {
             cumulative += count(index);
-            if (cumulative >= target)
-            {
+            if (cumulative >= target) {
                 return upper_bound(index);
             }
         }
